@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Shield } from "lucide-react";
+import { Check, ChevronsUpDown, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +17,10 @@ import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
+import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { sports } from "@/lib/sports";
 
 export default function SignUpPage() {
   const router = useRouter();
@@ -28,9 +32,19 @@ export default function SignUpPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  
+  const [open, setOpen] = useState(false);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!sport) {
+      toast({
+        variant: "destructive",
+        title: "Campo Obligatorio",
+        description: "Por favor, selecciona un deporte.",
+      });
+      return;
+    }
     setLoading(true);
 
     try {
@@ -96,7 +110,49 @@ export default function SignUpPage() {
             </div>
              <div className="space-y-2">
               <Label htmlFor="sport">Deporte Principal</Label>
-              <Input id="sport" placeholder="p.ej., Fútbol" required value={sport} onChange={(e) => setSport(e.target.value)} />
+               <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-full justify-between font-normal"
+                  >
+                    {sport
+                      ? sports.find((s) => s.value.toLowerCase() === sport.toLowerCase())?.label
+                      : "Selecciona un deporte..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar deporte..." />
+                    <CommandList>
+                      <CommandEmpty>No se encontró el deporte.</CommandEmpty>
+                      <CommandGroup>
+                        {sports.map((s) => (
+                          <CommandItem
+                            key={s.value}
+                            value={s.value}
+                            onSelect={(currentValue) => {
+                              setSport(currentValue === sport ? "" : currentValue);
+                              setOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                sport === s.value ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {s.label}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
              <div className="space-y-2">
               <Label htmlFor="name">Tu Nombre</Label>
