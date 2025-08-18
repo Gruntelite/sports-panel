@@ -1,33 +1,18 @@
+
 rules_version = '2';
+
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // Allow users to read their own user document
     match /users/{userId} {
-      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
-      // Allow anyone to create a user document (for signup)
-      allow create: if request.auth != null;
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null && request.auth.uid == userId;
     }
-    
-    // Rules for the 'clubs' collection
-    match /clubs/{clubId} {
-      // Anyone can query the list of clubs (to check for name uniqueness)
-      allow list: if true;
-      // Allow anyone to create a new club (for signup)
-      allow create: if request.auth != null;
-      // Allow authenticated users to read club data. 
-      // For more granular control, you might check if user belongs to the club.
-      allow read: if request.auth != null;
-      // Only allow admins (or specific roles) to update/delete. 
-      // This needs to be implemented based on roles stored in user documents.
-      allow update, delete: if request.auth != null;
 
-      // Rules for subcollections within a club
-      match /settings/{settingId} {
-        // Apply similar logic: allow authenticated reads, restricted writes.
-        allow read: if request.auth != null;
-        allow write: if request.auth != null; 
-      }
+    // Allow users to read/write documents in their own club
+    match /clubs/{clubId}/{document=**} {
+      allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
     }
   }
 }
