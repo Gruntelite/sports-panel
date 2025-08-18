@@ -2,11 +2,11 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import type { Team } from "./types";
 
-export const stats = [
-    { title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
-    { title: "Equipos", value: "0", change: "", icon: 'Shield' },
-    { title: "Próximos Eventos", value: "0", change: "", icon: 'Calendar' },
-    { title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
+export const initialStats = [
+    { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
+    { id: "teams", title: "Equipos", value: "0", change: "", icon: 'Shield' },
+    { id: "events", title: "Próximos Eventos", value: "0", change: "", icon: 'Calendar' },
+    { id: "fees", title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
 ];
 
 export const getTeams = async (clubId: string): Promise<Team[]> => {
@@ -24,3 +24,5 @@ export const getTeams = async (clubId: string): Promise<Team[]> => {
 
 export const events: any[] = [
 ];
+
+    

@@ -18,13 +18,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { stats, events } from "@/lib/data";
+import { initialStats, events } from "@/lib/data";
 import { ArrowUpRight, Users, Shield, Calendar, CircleDollarSign, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc,getCountFromServer } from "firebase/firestore";
 import type { Player } from "@/lib/types";
 
 const iconMap = {
@@ -38,6 +38,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [clubId, setClubId] = useState<string | null>(null);
   const [players, setPlayers] = useState<Player[]>([]);
+  const [stats, setStats] = useState(initialStats);
   
   const today = new Date();
   const upcomingEvents = events.filter(event => event.date >= today).slice(0, 5);
@@ -51,7 +52,7 @@ export default function DashboardPage() {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
           if (currentClubId) {
-            fetchPlayers(currentClubId);
+            fetchDashboardData(currentClubId);
           }
         }
       }
@@ -60,22 +61,45 @@ export default function DashboardPage() {
     return () => unsubscribe();
   }, []);
 
-  const fetchPlayers = async (clubId: string) => {
+  const fetchDashboardData = async (clubId: string) => {
     setLoading(true);
-    const playersQuery = query(collection(db, "clubs", clubId, "players"));
-    const playersSnapshot = await getDocs(playersQuery);
-    const playersList = playersSnapshot.docs.map(doc => {
-        const data = doc.data();
-        return { 
-            id: doc.id, 
-            name: data.name,
-            avatar: data.avatar || `https://placehold.co/40x40.png?text=${data.name.charAt(0)}`,
-            teamId: data.teamId,
-            position: data.position,
-        } as Player
-    });
-    setPlayers(playersList);
-    setLoading(false);
+    try {
+        // Fetch Players for recent players list
+        const playersQuery = query(collection(db, "clubs", clubId, "players"));
+        const playersSnapshot = await getDocs(playersQuery);
+        const playersList = playersSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return { 
+                id: doc.id, 
+                name: data.name,
+                avatar: data.avatar || `https://placehold.co/40x40.png?text=${data.name.charAt(0)}`,
+                teamId: data.teamId,
+                position: data.position,
+            } as Player
+        });
+        setPlayers(playersList);
+
+        // Fetch counts for stats
+        const teamsCol = collection(db, "clubs", clubId, "teams");
+        const playersCol = collection(db, "clubs", clubId, "players");
+
+        const teamsCountSnap = await getCountFromServer(teamsCol);
+        const playersCountSnap = await getCountFromServer(playersCol);
+        
+        const teamsCount = teamsCountSnap.data().count;
+        const playersCount = playersCountSnap.data().count;
+
+        setStats(prevStats => prevStats.map(stat => {
+            if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
+            if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
+            return stat;
+        }));
+
+    } catch (error) {
+        console.error("Error fetching dashboard data:", error)
+    } finally {
+        setLoading(false);
+    }
   }
 
   if (loading) {
@@ -191,5 +215,7 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
 
     
