@@ -7,16 +7,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { teams as initialTeams, venues as initialVenues } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2 } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
 type ScheduleEntry = {
+  id: string; // Unique ID for each entry
   teamId: string;
   teamName: string;
-  time: string;
+  time: string; // e.g., "16:00 - 17:00"
   venueName: string;
 };
+
+type Assignment = {
+    id: string; // Unique id for the assignment itself
+    teamId: string;
+    startTime: string;
+    endTime: string;
+    venueId: string;
+}
 
 type DailySchedule = ScheduleEntry[];
 
@@ -28,14 +37,6 @@ type WeeklySchedule = {
   Viernes: DailySchedule;
   Sábado: DailySchedule;
   Domingo: DailySchedule;
-};
-
-type TeamTime = {
-  id: string;
-  name: string;
-  startTime: string;
-  endTime: string;
-  venueId: string;
 };
 
 type Venue = {
@@ -51,14 +52,17 @@ export default function SchedulesPage() {
   const [schedule, setSchedule] = useState<WeeklySchedule>({
     Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: [],
   });
-  const [teamTimes, setTeamTimes] = useState<TeamTime[]>(initialTeams.map(t => ({ id: t.id, name: t.name, startTime: '', endTime: '', venueId: '' })));
+
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
+  const currentDay: DayOfWeek = daysOfWeek[currentDayIndex];
   
   const [venues, setVenues] = useState<Venue[]>(initialVenues);
   const [newVenueName, setNewVenueName] = useState('');
 
   const [startTime, setStartTime] = useState("16:00");
   const [endTime, setEndTime] = useState("23:00");
+
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
   
   const handleAddVenue = () => {
     if (newVenueName.trim() !== '') {
@@ -70,10 +74,6 @@ export default function SchedulesPage() {
   const handleRemoveVenue = (id: string) => {
     setVenues(prev => prev.filter(v => v.id !== id));
   }
-
-  const handleTimeChange = (teamId: string, type: 'startTime' | 'endTime' | 'venueId', value: string) => {
-    setTeamTimes(prev => prev.map(t => t.id === teamId ? { ...t, [type]: value } : t));
-  };
   
   const generateTimeSlots = (start: string, end: string) => {
     const slots = [];
@@ -89,22 +89,30 @@ export default function SchedulesPage() {
   };
   
   const timeSlots = generateTimeSlots(startTime, endTime);
-  const currentDay: DayOfWeek = daysOfWeek[currentDayIndex];
 
-  const handleAssignSchedules = () => {
+  const handleSaveSchedules = () => {
     const newDailySchedule: DailySchedule = [];
-    teamTimes.forEach(team => {
-      const venue = venues.find(v => v.id === team.venueId);
-      if(team.startTime && team.endTime && venue) {
-        const start = new Date(`1970-01-01T${team.startTime}`);
-        const end = new Date(`1970-01-01T${team.endTime}`);
+
+    assignments.forEach(assignment => {
+      const team = initialTeams.find(t => t.id === assignment.teamId);
+      const venue = venues.find(v => v.id === assignment.venueId);
+
+      if(team && venue && assignment.startTime && assignment.endTime) {
+        const start = new Date(`1970-01-01T${assignment.startTime}`);
+        const end = new Date(`1970-01-01T${assignment.endTime}`);
         let current = start;
 
         while(current < end) {
           const next = new Date(current.getTime() + 60 * 60 * 1000);
           const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
           if (timeSlots.includes(timeSlot)) {
-            newDailySchedule.push({ teamId: team.id, teamName: team.name, time: timeSlot, venueName: venue.name });
+            newDailySchedule.push({
+              id: crypto.randomUUID(),
+              teamId: team.id,
+              teamName: team.name,
+              time: timeSlot,
+              venueName: venue.name
+            });
           }
           current = next;
         }
@@ -118,12 +126,29 @@ export default function SchedulesPage() {
   };
 
   const navigateDay = (direction: 'prev' | 'next') => {
+    // Before changing day, you might want to save current changes or clear them
+    // For now, let's clear assignments for simplicity
+    setAssignments([]);
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
     } else {
         setCurrentDayIndex((prev) => (prev - 1 + daysOfWeek.length) % daysOfWeek.length);
     }
   };
+
+  const handleAddAssignment = (teamId: string) => {
+    if(!teamId) return;
+    setAssignments(prev => [...prev, {id: crypto.randomUUID(), teamId, startTime: '', endTime: '', venueId: ''}]);
+  };
+
+  const handleRemoveAssignment = (id: string) => {
+    setAssignments(prev => prev.filter(a => a.id !== id));
+  };
+  
+  const handleAssignmentChange = (id: string, field: 'startTime' | 'endTime' | 'venueId', value: string) => {
+    setAssignments(prev => prev.map(a => a.id === id ? {...a, [field]: value} : a));
+  };
+
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -150,11 +175,11 @@ export default function SchedulesPage() {
             </Button>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[380px_1fr] gap-6 flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 flex-1">
         <Card>
             <CardHeader>
                 <CardTitle>Configuración de Horarios</CardTitle>
-                <CardDescription>Define el rango horario y asigna tiempos a tus equipos para el día seleccionado.</CardDescription>
+                <CardDescription>Define recintos, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
                  <div className="space-y-4 p-4 border rounded-lg">
@@ -186,31 +211,56 @@ export default function SchedulesPage() {
                     </div>
                 </div>
 
-                <div className="space-y-4">
-                    <h3 className="font-semibold">Asignar Tiempos y Recintos a Equipos</h3>
-                    <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
-                    {teamTimes.map(team => (
-                        <div key={team.id} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-2">
-                            <Label htmlFor={`team-${team.id}`} className="truncate font-medium">{team.name}</Label>
-                            <Input id={`team-${team.id}-start`} type="time" value={team.startTime} onChange={(e) => handleTimeChange(team.id, 'startTime', e.target.value)} className="w-24"/>
-                            <Input id={`team-${team.id}-end`} type="time" value={team.endTime} onChange={(e) => handleTimeChange(team.id, 'endTime', e.target.value)} className="w-24"/>
-                             <Select value={team.venueId} onValueChange={(value) => handleTimeChange(team.id, 'venueId', value)}>
-                                <SelectTrigger className="w-[120px]">
-                                    <SelectValue placeholder="Recinto" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {venues.map(venue => (
-                                        <SelectItem key={venue.id} value={venue.id}>{venue.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    ))}
-                    </div>
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <h3 className="font-semibold text-base">Asignar Tiempos y Recintos</h3>
+                     <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
+                        {assignments.map(assignment => {
+                             const team = initialTeams.find(t => t.id === assignment.teamId);
+                             return (
+                                <div key={assignment.id} className="p-3 bg-muted/50 rounded-lg space-y-2">
+                                    <div className="flex justify-between items-center">
+                                       <Label className="font-semibold">{team?.name}</Label>
+                                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveAssignment(assignment.id)}>
+                                            <X className="h-4 w-4"/>
+                                        </Button>
+                                    </div>
+                                    <div className="grid grid-cols-[1fr_1fr_1fr] items-center gap-2">
+                                        <Input type="time" value={assignment.startTime} onChange={(e) => handleAssignmentChange(assignment.id, 'startTime', e.target.value)} />
+                                        <Input type="time" value={assignment.endTime} onChange={(e) => handleAssignmentChange(assignment.id, 'endTime', e.target.value)} />
+                                         <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentChange(assignment.id, 'venueId', value)}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Recinto" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {venues.map(venue => (
+                                                    <SelectItem key={venue.id} value={venue.id}>{venue.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                             )
+                        })}
+                     </div>
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="outline" className="w-full mt-2">
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Añadir horario a un equipo
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                            {initialTeams.map(team => (
+                                 <DropdownMenuItem key={team.id} onSelect={() => handleAddAssignment(team.id)}>
+                                    {team.name}
+                                 </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                     </DropdownMenu>
                 </div>
-                 <Button onClick={handleAssignSchedules} className="w-full">
+                 <Button onClick={handleSaveSchedules} className="w-full">
                     <Clock className="mr-2 h-4 w-4" />
-                    Asignar Horarios al {currentDay}
+                    Guardar Horarios para el {currentDay}
                 </Button>
             </CardContent>
         </Card>
@@ -231,13 +281,13 @@ export default function SchedulesPage() {
                     </div>
                     <div className="grid grid-cols-1 max-h-[600px] overflow-y-auto">
                     {timeSlots.map(slot => (
-                        <div key={slot} className="grid grid-cols-[120px_1fr] items-center border-b last:border-b-0 min-h-16">
-                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-start border-r h-full">{slot}</div>
+                        <div key={slot} className="grid grid-cols-[120px_1fr] items-start border-b last:border-b-0 min-h-16">
+                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot}</div>
                             <div className="p-2 flex flex-wrap gap-2 self-start">
                                {schedule[currentDay]
                                  .filter(entry => entry.time === slot)
                                  .map(entry => (
-                                     <div key={entry.teamId} className="flex flex-col items-center">
+                                     <div key={entry.id} className="flex flex-col items-center p-1 bg-muted rounded-md">
                                         <Badge>{entry.teamName}</Badge>
                                         <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                             <MapPin className="h-3 w-3" />
@@ -257,3 +307,5 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+    
