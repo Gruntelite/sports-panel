@@ -325,7 +325,6 @@ export default function PlayersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Ver Perfil</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
                           Eliminar
@@ -477,5 +476,7 @@ export default function PlayersPage() {
     </>
   );
 }
+
+    
 
     
