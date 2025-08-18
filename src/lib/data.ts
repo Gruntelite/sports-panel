@@ -1,3 +1,6 @@
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "./firebase";
+
 export const stats = [
     { title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
     { title: "Equipos", value: "0", change: "", icon: 'Shield' },
@@ -8,11 +11,16 @@ export const stats = [
 export const players: any[] = [
 ];
 
-export const teams: any[] = [
-      { id: '1', name: 'Alevín Masculino', category: 'Alevín', sport: 'Baloncesto', players: 12, coaches: 2, image: 'https://placehold.co/600x400.png', hint: 'equipo baloncesto niños' },
-      { id: '2', name: 'Infantil Femenino', category: 'Infantil', sport: 'Baloncesto', players: 14, coaches: 1, image: 'https://placehold.co/600x400.png', hint: 'equipo baloncesto niñas' },
-      { id: '3', name: 'Cadete Masculino', category: 'Cadete', sport: 'Baloncesto', players: 15, coaches: 2, image: 'https://placehold.co/600x400.png', hint: 'equipo baloncesto adolescentes' },
-];
+export const getTeams = async (clubId: string) => {
+    if (!clubId) return [];
+    const teamsCol = collection(db, "clubs", clubId, "teams");
+    const teamSnapshot = await getDocs(teamsCol);
+    const teamList = teamSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return teamList;
+};
+
+// Initial empty array, will be populated from Firestore
+export let teams: any[] = [];
 
 export const events: any[] = [
 ];

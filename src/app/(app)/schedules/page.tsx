@@ -1,24 +1,24 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { teams as initialTeams, venues as initialVenues } from "@/lib/data";
+import { getTeams } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { useToast } from "@/hooks/use-toast";
 
-type ScheduleEntry = {
-  id: string; // Unique ID for each entry
-  teamId: string;
-  teamName: string;
-  time: string; // e.g., "16:00 - 17:00"
-  venueName: string;
-};
+type Venue = {
+    id: string;
+    name: string;
+}
 
 type Assignment = {
     id: string; // Unique id for the assignment itself
@@ -28,52 +28,122 @@ type Assignment = {
     venueId: string;
 }
 
-type DailySchedule = ScheduleEntry[];
+type Team = {
+  id: string;
+  name: string;
+}
 
-type WeeklySchedule = {
-  Lunes: DailySchedule;
-  Martes: DailySchedule;
-  Miércoles: DailySchedule;
-  Jueves: DailySchedule;
-  Viernes: DailySchedule;
-  Sábado: DailySchedule;
-  Domingo: DailySchedule;
+type DailyScheduleEntry = {
+    id: string; // Unique ID for each entry
+    teamId: string;
+    teamName: string;
+    time: string; // e.g., "16:00 - 17:00"
+    venueName: string;
 };
 
-type Venue = {
-    id: string;
-    name: string;
-}
+type WeeklySchedule = {
+  Lunes: DailyScheduleEntry[];
+  Martes: DailyScheduleEntry[];
+  Miércoles: DailyScheduleEntry[];
+  Jueves: DailyScheduleEntry[];
+  Viernes: DailyScheduleEntry[];
+  Sábado: DailyScheduleEntry[];
+  Domingo: DailyScheduleEntry[];
+};
 
 const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
 type DayOfWeek = typeof daysOfWeek[number];
 
 
 export default function SchedulesPage() {
-  const [schedule, setSchedule] = useState<WeeklySchedule>({
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [clubId, setClubId] = useState<string | null>(null);
+  
+  const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>({
     Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: [],
   });
 
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
   const currentDay: DayOfWeek = daysOfWeek[currentDayIndex];
   
-  const [venues, setVenues] = useState<Venue[]>(initialVenues);
+  const [venues, setVenues] = useState<Venue[]>([]);
   const [newVenueName, setNewVenueName] = useState('');
 
   const [startTime, setStartTime] = useState("16:00");
   const [endTime, setEndTime] = useState("23:00");
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   
-  const handleAddVenue = () => {
-    if (newVenueName.trim() !== '') {
-        setVenues(prev => [...prev, {id: crypto.randomUUID(), name: newVenueName.trim()}]);
+  const scheduleTemplateId = "general"; // For now, we use one general template
+
+  const getScheduleRef = useCallback(() => {
+    if (!clubId) return null;
+    return doc(db, "clubs", clubId, "schedules", scheduleTemplateId);
+  }, [clubId]);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const userData = userDocSnap.data();
+          const currentClubId = userData.clubId;
+          setClubId(currentClubId);
+          
+          // Fetch teams
+          const fetchedTeams = await getTeams(currentClubId);
+          setTeams(fetchedTeams);
+
+          // Fetch schedule data
+          const scheduleRef = doc(db, "clubs", currentClubId, "schedules", scheduleTemplateId);
+          const scheduleSnap = await getDoc(scheduleRef);
+
+          if (scheduleSnap.exists()) {
+            const data = scheduleSnap.data();
+            setVenues(data.venues || []);
+            setWeeklySchedule(data.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
+          } else {
+            // If no schedule exists, create one
+            await setDoc(scheduleRef, { 
+                name: "Plantilla General",
+                venues: [],
+                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+            });
+          }
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, [scheduleTemplateId]);
+
+
+  const handleAddVenue = async () => {
+    if (newVenueName.trim() !== '' && clubId) {
+        const newVenue = {id: crypto.randomUUID(), name: newVenueName.trim()};
+        const updatedVenues = [...venues, newVenue];
+        setVenues(updatedVenues);
+        
+        const scheduleRef = getScheduleRef();
+        if (scheduleRef) {
+            await updateDoc(scheduleRef, { venues: updatedVenues });
+        }
         setNewVenueName('');
+        toast({ title: "Recinto añadido", description: "El nuevo recinto se ha guardado." });
     }
   }
 
-  const handleRemoveVenue = (id: string) => {
-    setVenues(prev => prev.filter(v => v.id !== id));
+  const handleRemoveVenue = async (id: string) => {
+    const updatedVenues = venues.filter(v => v.id !== id);
+    setVenues(updatedVenues);
+    const scheduleRef = getScheduleRef();
+    if (scheduleRef) {
+        await updateDoc(scheduleRef, { venues: updatedVenues });
+        toast({ title: "Recinto eliminado", description: "El recinto se ha eliminado." });
+    }
   }
   
   const generateTimeSlots = (start: string, end: string) => {
@@ -91,11 +161,12 @@ export default function SchedulesPage() {
   
   const timeSlots = generateTimeSlots(startTime, endTime);
 
-  const handleSaveSchedules = () => {
-    const newDailySchedule: DailySchedule = [];
+  const handleSaveSchedules = async () => {
+    const newDailySchedule: DailyScheduleEntry[] = [];
+    const timeSlotsSet = new Set(timeSlots);
 
     assignments.forEach(assignment => {
-      const team = initialTeams.find(t => t.id === assignment.teamId);
+      const team = teams.find(t => t.id === assignment.teamId);
       const venue = venues.find(v => v.id === assignment.venueId);
 
       if(team && venue && assignment.startTime && assignment.endTime) {
@@ -106,7 +177,7 @@ export default function SchedulesPage() {
         while(current < end) {
           const next = new Date(current.getTime() + 60 * 60 * 1000);
           const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
-          if (timeSlots.includes(timeSlot)) {
+          if (timeSlotsSet.has(timeSlot)) {
             newDailySchedule.push({
               id: crypto.randomUUID(),
               teamId: team.id,
@@ -120,15 +191,22 @@ export default function SchedulesPage() {
       }
     });
 
-    setSchedule(prev => ({
-      ...prev,
-      [currentDay]: newDailySchedule,
-    }));
+    const updatedWeeklySchedule = {
+        ...weeklySchedule,
+        [currentDay]: newDailySchedule,
+    };
+    
+    setWeeklySchedule(updatedWeeklySchedule);
+    
+    const scheduleRef = getScheduleRef();
+    if (scheduleRef) {
+        await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
+        toast({ title: "Horarios Guardados", description: `Los horarios para el ${currentDay} se han guardado.` });
+    }
+    setAssignments([]);
   };
 
   const navigateDay = (direction: 'prev' | 'next') => {
-    // Before changing day, you might want to save current changes or clear them
-    // For now, let's clear assignments for simplicity
     setAssignments([]);
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
@@ -149,7 +227,14 @@ export default function SchedulesPage() {
   const handleAssignmentChange = (id: string, field: 'startTime' | 'endTime' | 'venueId', value: string) => {
     setAssignments(prev => prev.map(a => a.id === id ? {...a, [field]: value} : a));
   };
-
+  
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    )
+  }
 
   return (
     <div className="flex flex-col gap-6 h-full">
@@ -167,10 +252,10 @@ export default function SchedulesPage() {
                 </SelectTrigger>
                 <SelectContent>
                     <SelectItem value="default">Plantilla General</SelectItem>
-                    <SelectItem value="preseason">Plantilla Pretemporada</SelectItem>
+                    <SelectItem value="preseason" disabled>Plantilla Pretemporada</SelectItem>
                 </SelectContent>
             </Select>
-            <Button className="gap-1">
+            <Button className="gap-1" disabled>
                 <PlusCircle className="h-3.5 w-3.5" />
                 Crear Plantilla
             </Button>
@@ -216,7 +301,7 @@ export default function SchedulesPage() {
                     <h3 className="font-semibold text-base">Asignar Tiempos y Recintos</h3>
                      <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
                         {assignments.map(assignment => {
-                             const team = initialTeams.find(t => t.id === assignment.teamId);
+                             const team = teams.find(t => t.id === assignment.teamId);
                              return (
                                 <div key={assignment.id} className="p-3 bg-muted/50 rounded-lg space-y-2">
                                     <div className="flex justify-between items-center">
@@ -251,7 +336,7 @@ export default function SchedulesPage() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
-                            {initialTeams.map(team => (
+                            {teams.map(team => (
                                  <DropdownMenuItem key={team.id} onSelect={() => handleAddAssignment(team.id)}>
                                     {team.name}
                                  </DropdownMenuItem>
@@ -285,7 +370,7 @@ export default function SchedulesPage() {
                         <div key={slot} className="grid grid-cols-[120px_1fr] items-start border-b last:border-b-0 min-h-16">
                             <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot}</div>
                             <div className="p-2 flex flex-wrap gap-2 self-start">
-                               {schedule[currentDay]
+                               {weeklySchedule[currentDay]
                                  .filter(entry => entry.time === slot)
                                  .map(entry => (
                                      <div key={entry.id} className="flex flex-col items-center p-1 bg-muted rounded-md">
