@@ -126,12 +126,16 @@ export default function SignUpPage() {
       router.push("/dashboard");
 
     } catch (error: any) {
-      console.error("Sign-up error:", error);
-       toast({
-        variant: "destructive",
-        title: "Fallo en el Registro",
-        description: error.message || "Ocurrió un error inesperado.",
-      });
+        console.error("Sign-up error:", error);
+        let description = "Ocurrió un error inesperado.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "El correo electrónico ya está en uso. Por favor, utiliza otro.";
+        }
+        toast({
+            variant: "destructive",
+            title: "Fallo en el Registro",
+            description: description,
+        });
     } finally {
       setLoading(false);
     }
