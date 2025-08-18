@@ -135,8 +135,8 @@ export default function PlayersPage() {
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setPlayerData(prev => ({ ...prev, [id]: value }));
+    const { id, value, type } = e.target;
+    setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -291,6 +291,7 @@ export default function PlayersPage() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Equipo</TableHead>
                 <TableHead>Dorsal</TableHead>
+                <TableHead>Cuota Mensual</TableHead>
                 <TableHead>Contacto</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
@@ -313,6 +314,7 @@ export default function PlayersPage() {
                     <Badge variant="outline">{player.teamName}</Badge>
                   </TableCell>
                   <TableCell>{player.jerseyNumber || 'N/A'}</TableCell>
+                  <TableCell>{player.monthlyFee ? `${player.monthlyFee} €` : 'N/A'}</TableCell>
                   <TableCell>{player.tutorEmail || 'N/A'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -421,7 +423,7 @@ export default function PlayersPage() {
                     
                     <div>
                         <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-4">
                            <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
@@ -440,6 +442,10 @@ export default function PlayersPage() {
                                 <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                             </div>
                             <div className="space-y-2">
+                                <Label htmlFor="monthlyFee">Cuota Mensual (€)</Label>
+                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2 col-span-2 md:col-span-4">
                                 <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
                                 <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                             </div>
@@ -476,7 +482,3 @@ export default function PlayersPage() {
     </>
   );
 }
-
-    
-
-    

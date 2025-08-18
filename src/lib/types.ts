@@ -28,6 +28,7 @@ export type Player = {
     jerseyNumber?: number;
     position?: string;
     avatar?: string;
+    monthlyFee?: number;
 }
 
 export type Coach = {
