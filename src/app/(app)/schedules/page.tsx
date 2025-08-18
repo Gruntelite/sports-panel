@@ -266,7 +266,7 @@ export default function SchedulesPage() {
                 <DropdownMenuItem disabled>Eliminar Plantilla</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button className="gap-1" disabled>
+            <Button className="gap-1">
                 <PlusCircle className="h-3.5 w-3.5" />
                 Crear Plantilla
             </Button>
