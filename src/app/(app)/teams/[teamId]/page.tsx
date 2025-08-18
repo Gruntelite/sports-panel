@@ -246,7 +246,7 @@ export default function EditTeamPage() {
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>Jugador</TableHead>
+                                    <TableHead>Nombre</TableHead>
                                     <TableHead>Posición</TableHead>
                                     <TableHead>Dorsal</TableHead>
                                 </TableRow>
@@ -283,5 +283,3 @@ export default function EditTeamPage() {
     </div>
   );
 }
-
-    
