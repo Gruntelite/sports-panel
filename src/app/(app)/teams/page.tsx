@@ -28,9 +28,11 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, query } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import type { Team } from "@/lib/types";
+import { v4 as uuidv4 } from 'uuid';
 
 export default function TeamsPage() {
   const { toast } = useToast();
@@ -42,6 +44,7 @@ export default function TeamsPage() {
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamMinAge, setNewTeamMinAge] = useState("");
   const [newTeamMaxAge, setNewTeamMaxAge] = useState("");
+  const [newTeamImage, setNewTeamImage] = useState<File | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -72,7 +75,7 @@ export default function TeamsPage() {
         name: data.name,
         minAge: data.minAge,
         maxAge: data.maxAge,
-        image: "https://placehold.co/600x400.png", // Placeholder
+        image: data.image || "https://placehold.co/600x400.png",
         hint: "equipo deportivo",
         players: 0, // Placeholder
         coaches: 0, // Placeholder
@@ -84,15 +87,26 @@ export default function TeamsPage() {
   
   const handleAddTeam = async () => {
     if (!newTeamName || !newTeamMinAge || !newTeamMaxAge || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Todos los campos son obligatorios." });
+        toast({ variant: "destructive", title: "Error", description: "Nombre y rango de edad son obligatorios." });
         return;
     }
     
+    setLoading(true);
+    
     try {
+        let imageUrl = "https://placehold.co/600x400.png";
+        
+        if (newTeamImage) {
+            const imageRef = ref(storage, `team-images/${clubId}/${uuidv4()}`);
+            await uploadBytes(imageRef, newTeamImage);
+            imageUrl = await getDownloadURL(imageRef);
+        }
+
         await addDoc(collection(db, "clubs", clubId, "teams"), {
             name: newTeamName,
             minAge: Number(newTeamMinAge),
             maxAge: Number(newTeamMaxAge),
+            image: imageUrl,
         });
 
         toast({ title: "Equipo creado", description: `El equipo ${newTeamName} ha sido creado.` });
@@ -100,14 +114,17 @@ export default function TeamsPage() {
         setNewTeamName("");
         setNewTeamMinAge("");
         setNewTeamMaxAge("");
+        setNewTeamImage(null);
         fetchTeams(clubId); // Refresh data
     } catch (error) {
         console.error("Error creating team: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo crear el equipo." });
+    } finally {
+        setLoading(false);
     }
   };
 
-  if (loading) {
+  if (loading && !teams.length) {
     return (
         <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -152,12 +169,18 @@ export default function TeamsPage() {
                         <Label htmlFor="team-max-age" className="text-right">Edad Máxima</Label>
                         <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} className="col-span-3" />
                     </div>
+                     <div className="grid grid-cols-4 items-center gap-4">
+                        <Label htmlFor="team-image" className="text-right">Imagen</Label>
+                        <Input id="team-image" type="file" accept="image/*" onChange={(e) => setNewTeamImage(e.target.files ? e.target.files[0] : null)} className="col-span-3" />
+                    </div>
                 </div>
                 <DialogFooter>
                     <DialogClose asChild>
                         <Button type="button" variant="secondary">Cancelar</Button>
                     </DialogClose>
-                    <Button type="button" onClick={handleAddTeam}>Crear Equipo</Button>
+                    <Button type="button" onClick={handleAddTeam} disabled={loading}>
+                        {loading ? <Loader2 className="animate-spin" /> : 'Crear Equipo'}
+                    </Button>
                 </DialogFooter>
             </DialogContent>
           </Dialog>
