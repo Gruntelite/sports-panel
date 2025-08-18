@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 type ScheduleEntry = {
   id: string; // Unique ID for each entry
@@ -307,5 +308,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-    
