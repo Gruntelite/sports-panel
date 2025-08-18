@@ -254,7 +254,9 @@ export default function TeamsPage() {
                   <div className="flex items-start justify-between">
                       <div>
                           <Badge variant="secondary" className="mb-2">Edades: {team.minAge} - {team.maxAge}</Badge>
-                          <CardTitle className="text-xl font-bold">{team.name}</CardTitle>
+                          <Link href={`/teams/${team.id}`}>
+                            <CardTitle className="text-xl font-bold hover:underline">{team.name}</CardTitle>
+                          </Link>
                       </div>
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>
