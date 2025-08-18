@@ -4,9 +4,9 @@ export default function CommunicationsPage() {
   return (
     <div className="flex flex-col gap-6">
        <div>
-        <h1 className="text-2xl font-bold font-headline tracking-tight">Communications</h1>
+        <h1 className="text-2xl font-bold font-headline tracking-tight">Comunicaciones</h1>
         <p className="text-muted-foreground">
-          Generate and manage communications for your club.
+          Genera y gestiona las comunicaciones para tu club.
         </p>
       </div>
       <CommunicationsForm />

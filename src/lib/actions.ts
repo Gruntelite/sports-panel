@@ -8,6 +8,6 @@ export async function generateTemplateAction(input: GenerateCommunicationTemplat
     return { success: true, data: result };
   } catch (error) {
     console.error(error);
-    return { success: false, error: "Failed to generate template. Please try again." };
+    return { success: false, error: "No se pudo generar la plantilla. Por favor, inténtalo de nuevo." };
   }
 }

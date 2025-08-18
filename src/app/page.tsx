@@ -55,8 +55,8 @@ export default function SignUpPage() {
       });
 
       toast({
-        title: "Account Created!",
-        description: "You have successfully signed up.",
+        title: "¡Cuenta Creada!",
+        description: "Te has registrado correctamente.",
       });
 
       router.push("/dashboard");
@@ -65,8 +65,8 @@ export default function SignUpPage() {
       console.error("Sign-up error:", error);
        toast({
         variant: "destructive",
-        title: "Sign-up Failed",
-        description: error.message || "An unexpected error occurred.",
+        title: "Fallo en el Registro",
+        description: error.message || "Ocurrió un error inesperado.",
       });
     } finally {
       setLoading(false);
@@ -82,36 +82,36 @@ export default function SignUpPage() {
             <Shield className="h-8 w-8" />
           </div>
           <CardTitle className="text-2xl font-bold font-headline">
-            Welcome to SportsPanel
+            Bienvenido a SportsPanel
           </CardTitle>
           <CardDescription>
-            Create your admin account to get started.
+            Crea tu cuenta de administrador para empezar.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="club-name">Club Name</Label>
-              <Input id="club-name" placeholder="e.g., Downtown Dynamos" required value={clubName} onChange={(e) => setClubName(e.target.value)} />
+              <Label htmlFor="club-name">Nombre del Club</Label>
+              <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="sport">Primary Sport</Label>
-              <Input id="sport" placeholder="e.g., Soccer" required value={sport} onChange={(e) => setSport(e.target.value)} />
+              <Label htmlFor="sport">Deporte Principal</Label>
+              <Input id="sport" placeholder="p.ej., Fútbol" required value={sport} onChange={(e) => setSport(e.target.value)} />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="name">Your Name</Label>
-              <Input id="name" placeholder="e.g., Alex Smith" required value={name} onChange={(e) => setName(e.target.value)} />
+              <Label htmlFor="name">Tu Nombre</Label>
+              <Input id="name" placeholder="p.ej., Alex García" required value={name} onChange={(e) => setName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="m@example.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
+              <Label htmlFor="email">Correo Electrónico</Label>
+              <Input id="email" type="email" placeholder="m@ejemplo.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Contraseña</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creating Account...' : 'Create Account & Sign In'}
+              {loading ? 'Creando cuenta...' : 'Crear Cuenta e Iniciar Sesión'}
             </Button>
           </form>
         </CardContent>

@@ -18,14 +18,14 @@ export default function TeamsPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight">Teams</h1>
+          <h1 className="text-2xl font-bold font-headline tracking-tight">Equipos</h1>
           <p className="text-muted-foreground">
-            Create and manage your club's teams.
+            Crea y gestiona los equipos de tu club.
           </p>
         </div>
         <Button className="gap-1">
           <PlusCircle className="h-3.5 w-3.5" />
-          Create Team
+          Crear Equipo
         </Button>
       </div>
 
@@ -57,13 +57,13 @@ export default function TeamsPage() {
                             variant="ghost"
                         >
                             <MoreVertical className="h-4 w-4" />
-                            <span className="sr-only">Toggle menu</span>
+                            <span className="sr-only">Alternar menú</span>
                         </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem>Edit</DropdownMenuItem>
-                            <DropdownMenuItem>Manage Roster</DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive">Delete</DropdownMenuItem>
+                            <DropdownMenuItem>Editar</DropdownMenuItem>
+                            <DropdownMenuItem>Gestionar Plantilla</DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
@@ -71,11 +71,11 @@ export default function TeamsPage() {
             <CardFooter className="bg-muted/40 p-4 flex justify-between text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                     <Users className="h-4 w-4" />
-                    <span>{team.players} Players</span>
+                    <span>{team.players} Jugadores</span>
                 </div>
                 <div className="flex items-center gap-1">
                     <Shield className="h-4 w-4" />
-                    <span>{team.coaches} Coaches</span>
+                    <span>{team.coaches} Entrenadores</span>
                 </div>
             </CardFooter>
           </Card>

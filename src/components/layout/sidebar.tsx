@@ -5,12 +5,12 @@ import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UsersCog } fro
 import { cn } from "@/lib/utils";
 
 const menuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/teams", label: "Teams", icon: Shield },
-    { href: "/players", label: "Players", icon: Users },
-    { href: "/calendar", label: "Calendar", icon: Calendar },
-    { href: "/communications", label: "Communications", icon: MessageSquare },
-    { href: "/users", label: "User Management", icon: UsersCog },
+    { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+    { href: "/teams", label: "Equipos", icon: Shield },
+    { href: "/players", label: "Jugadores", icon: Users },
+    { href: "/calendar", label: "Calendario", icon: Calendar },
+    { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
+    { href: "/users", label: "Gestión de Usuarios", icon: UsersCog },
   ];
 
 export function Sidebar() {

@@ -1,38 +1,38 @@
 export const stats = [
-    { title: "Total Players", value: "258", change: "+12 since last month", icon: 'Users' },
-    { title: "Teams", value: "16", change: "2 new teams", icon: 'Shield' },
-    { title: "Upcoming Events", value: "8", change: "3 today", icon: 'Calendar' },
-    { title: "Pending Fees", value: "$4,250", change: "$800 overdue", icon: 'CircleDollarSign' },
+    { title: "Total de Jugadores", value: "258", change: "+12 desde el mes pasado", icon: 'Users' },
+    { title: "Equipos", value: "16", change: "2 equipos nuevos", icon: 'Shield' },
+    { title: "Próximos Eventos", value: "8", change: "3 hoy", icon: 'Calendar' },
+    { title: "Cuotas Pendientes", value: "4.250 €", change: "800 € vencidos", icon: 'CircleDollarSign' },
 ];
 
 export const players = [
-    { id: "1", name: "Alex Johnson", team: "U12 Eagles", position: "Forward", contact: "sarah.j@example.com", avatar: "https://placehold.co/40x40.png" },
-    { id: "2", name: "Maria Garcia", team: "U14 Falcons", position: "Midfielder", contact: "robert.g@example.com", avatar: "https://placehold.co/40x40.png" },
-    { id: "3", name: "David Smith", team: "U12 Eagles", position: "Defender", contact: "linda.s@example.com", avatar: "https://placehold.co/40x40.png" },
-    { id: "4", name: "Chen Wei", team: "U10 Lions", position: "Goalkeeper", contact: "li.w@example.com", avatar: "https://placehold.co/40x40.png" },
-    { id: "5", name: "Fatima Al-Fassi", team: "U14 Falcons", position: "Forward", contact: "youssef.a@example.com", avatar: "https://placehold.co/40x40.png" },
-    { id: "6", name: "Sam O'Connell", team: "Varsity Hoops", position: "Guard", contact: "emily.o@example.com", avatar: "https://placehold.co/40x40.png" },
-    { id: "7", name: "Isabella Rossi", team: "U12 Eagles", position: "Midfielder", contact: "marco.r@example.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "1", name: "Álex Martínez", team: "Águilas Sub-12", position: "Delantero", contact: "sara.m@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "2", name: "María García", team: "Halcones Sub-14", position: "Centrocampista", contact: "roberto.g@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "3", name: "David López", team: "Águilas Sub-12", position: "Defensa", contact: "linda.l@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "4", name: "Chen Wei", team: "Leones Sub-10", position: "Portero", contact: "li.w@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "5", name: "Fátima Al-Fassi", team: "Halcones Sub-14", position: "Delantero", contact: "youssef.a@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "6", name: "Samuel O'Connell", team: "Titanes Baloncesto", position: "Base", contact: "emilia.o@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
+    { id: "7", name: "Isabella Rossi", team: "Águilas Sub-12", position: "Centrocampista", contact: "marco.r@ejemplo.com", avatar: "https://placehold.co/40x40.png" },
 ];
 
 export const teams = [
-    { id: "1", name: "U12 Eagles", sport: "Soccer", category: "U12", players: 18, coaches: 2, image: "https://placehold.co/600x400.png", hint: "kids soccer team" },
-    { id: "2", name: "U14 Falcons", sport: "Soccer", category: "U14", players: 22, coaches: 3, image: "https://placehold.co/600x400.png", hint: "teenagers playing soccer" },
-    { id: "3", name: "U10 Lions", sport: "Soccer", category: "U10", players: 15, coaches: 2, image: "https://placehold.co/600x400.png", hint: "children soccer game" },
-    { id: "4", name: "Varsity Hoops", sport: "Basketball", category: "Varsity", players: 14, coaches: 2, image: "https://placehold.co/600x400.png", hint: "basketball team huddle" },
+    { id: "1", name: "Águilas Sub-12", sport: "Fútbol", category: "Sub-12", players: 18, coaches: 2, image: "https://placehold.co/600x400.png", hint: "equipo de fútbol infantil" },
+    { id: "2", name: "Halcones Sub-14", sport: "Fútbol", category: "Sub-14", players: 22, coaches: 3, image: "https://placehold.co/600x400.png", hint: "adolescentes jugando futbol" },
+    { id: "3", name: "Leones Sub-10", sport: "Fútbol", category: "Sub-10", players: 15, coaches: 2, image: "https://placehold.co/600x400.png", hint: "partido de futbol infantil" },
+    { id: "4", name: "Titanes Baloncesto", sport: "Baloncesto", category: "Absoluta", players: 14, coaches: 2, image: "https://placehold.co/600x400.png", hint: "equipo de baloncesto piña" },
 ];
 
 export const events = [
-    { id: "1", type: "Training", team: "U12 Eagles", date: new Date(), location: "Central Park Field 4", time: "17:00 - 18:30" },
-    { id: "2", type: "Match", team: "U14 Falcons", date: new Date(new Date().setDate(new Date().getDate() + 2)), location: "Eastside Stadium", opponent: "Riverdale FC", time: "14:00" },
-    { id: "3", type: "Training", team: "U10 Lions", date: new Date(new Date().setDate(new Date().getDate() + 1)), location: "Westwood Rec Center", time: "16:30 - 17:30" },
-    { id: "4", type: "Match", team: "Varsity Hoops", date: new Date(new Date().setDate(new Date().getDate() + 3)), location: "High School Gym", opponent: "Northwood High", time: "19:00" },
+    { id: "1", type: "Entrenamiento", team: "Águilas Sub-12", date: new Date(), location: "Campo Central 4", time: "17:00 - 18:30" },
+    { id: "2", type: "Partido", team: "Halcones Sub-14", date: new Date(new Date().setDate(new Date().getDate() + 2)), location: "Estadio Este", opponent: "Riverdale FC", time: "14:00" },
+    { id: "3", type: "Entrenamiento", team: "Leones Sub-10", date: new Date(new Date().setDate(new Date().getDate() + 1)), location: "Poli. Oeste", time: "16:30 - 17:30" },
+    { id: "4", type: "Partido", team: "Titanes Baloncesto", date: new Date(new Date().setDate(new Date().getDate() + 3)), location: "Gimnasio del Instituto", opponent: "Northwood High", time: "19:00" },
 ];
 
 export const users = [
-    { id: "1", name: "John Doe", email: "john.doe@sportspanel.com", role: "Admin", avatar: "https://placehold.co/40x40.png" },
-    { id: "2", name: "Jane Smith", email: "jane.smith@sportspanel.com", role: "Coach", avatar: "https://placehold.co/40x40.png" },
-    { id: "3", name: "Peter Jones", email: "peter.jones@family.com", role: "Parent/Family", avatar: "https://placehold.co/40x40.png" },
-    { id: "4", name: "Susan Williams", email: "susan.williams@sportspanel.com", role: "Coach", avatar: "https://placehold.co/40x40.png" },
-    { id: "5", name: "Admin User", email: "admin@sportspanel.com", role: "Admin", avatar: "https://placehold.co/40x40.png" },
+    { id: "1", name: "Juan Pérez", email: "juan.perez@sportspanel.com", role: "Admin", avatar: "https://placehold.co/40x40.png" },
+    { id: "2", name: "Ana López", email: "ana.lopez@sportspanel.com", role: "Entrenador", avatar: "https://placehold.co/40x40.png" },
+    { id: "3", name: "Pedro Jiménez", email: "pedro.jimenez@familia.com", role: "Padre/Familia", avatar: "https://placehold.co/40x40.png" },
+    { id: "4", name: "Susana Ruiz", email: "susana.ruiz@sportspanel.com", role: "Entrenador", avatar: "https://placehold.co/40x40.png" },
+    { id: "5", name: "Usuario Admin", email: "admin@sportspanel.com", role: "Admin", avatar: "https://placehold.co/40x40.png" },
 ];

@@ -57,14 +57,14 @@ export default function DashboardPage() {
         <Card className="xl:col-span-2">
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
-              <CardTitle>Recent Players</CardTitle>
+              <CardTitle>Jugadores Recientes</CardTitle>
               <CardDescription>
-                Overview of recently added players to the club.
+                Resumen de jugadores añadidos recientemente al club.
               </CardDescription>
             </div>
             <Button asChild size="sm" className="ml-auto gap-1">
               <Link href="/players">
-                View All
+                Ver Todos
                 <ArrowUpRight className="h-4 w-4" />
               </Link>
             </Button>
@@ -73,9 +73,9 @@ export default function DashboardPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Player</TableHead>
-                  <TableHead>Team</TableHead>
-                  <TableHead className="text-right">Position</TableHead>
+                  <TableHead>Jugador</TableHead>
+                  <TableHead>Equipo</TableHead>
+                  <TableHead className="text-right">Posición</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -84,7 +84,7 @@ export default function DashboardPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-9 w-9">
-                          <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="person photo" />
+                          <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
                           <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div className="font-medium">{player.name}</div>
@@ -101,21 +101,21 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Events</CardTitle>
+            <CardTitle>Próximos Eventos</CardTitle>
             <CardDescription>
-              Trainings and matches scheduled for the next few days.
+              Entrenamientos y partidos programados para los próximos días.
             </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4">
             {upcomingEvents.map((event) => (
               <div key={event.id} className="flex items-center gap-4">
                 <div className="flex flex-col items-center justify-center bg-muted p-2 rounded-md">
-                   <span className="text-sm font-bold">{event.date.toLocaleString('en-US', { month: 'short' })}</span>
+                   <span className="text-sm font-bold">{event.date.toLocaleString('es-ES', { month: 'short' })}</span>
                    <span className="text-xl font-bold">{event.date.getDate()}</span>
                 </div>
                 <div className="grid gap-1">
                   <p className="text-sm font-medium leading-none flex items-center gap-2">
-                    {event.type === 'Match' ? 
+                    {event.type === 'Partido' ? 
                       <Badge variant="destructive">{event.type}</Badge> : 
                       <Badge variant="secondary">{event.type}</Badge>
                     }
@@ -128,7 +128,7 @@ export default function DashboardPage() {
             ))}
              <Button asChild size="sm" className="w-full">
               <Link href="/calendar">
-                View Full Calendar
+                Ver Calendario Completo
               </Link>
             </Button>
           </CardContent>

@@ -10,12 +10,12 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const menuItems = [
-    { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-    { href: "/teams", label: "Teams", icon: Shield },
-    { href: "/players", label: "Players", icon: Users },
-    { href: "/calendar", label: "Calendar", icon: Calendar },
-    { href: "/communications", label: "Communications", icon: MessageSquare },
-    { href: "/users", label: "User Management", icon: UsersCog },
+    { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+    { href: "/teams", label: "Equipos", icon: Shield },
+    { href: "/players", label: "Jugadores", icon: Users },
+    { href: "/calendar", label: "Calendario", icon: Calendar },
+    { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
+    { href: "/users", label: "Gestión de Usuarios", icon: UsersCog },
 ];
 
 export function Header() {
@@ -31,7 +31,7 @@ export function Header() {
                         className="shrink-0 md:hidden"
                     >
                         <Menu className="h-5 w-5" />
-                        <span className="sr-only">Toggle navigation menu</span>
+                        <span className="sr-only">Alternar menú de navegación</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col">
@@ -66,7 +66,7 @@ export function Header() {
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
-                            placeholder="Search players, teams..."
+                            placeholder="Buscar jugadores, equipos..."
                             className="w-full appearance-none bg-muted/40 pl-8 shadow-none md:w-2/3 lg:w-1/3"
                         />
                     </div>
@@ -79,17 +79,17 @@ export function Header() {
                           <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
                           <AvatarFallback>AU</AvatarFallback>
                         </Avatar>
-                        <span className="sr-only">Toggle user menu</span>
+                        <span className="sr-only">Alternar menú de usuario</span>
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Admin User</DropdownMenuLabel>
+                    <DropdownMenuLabel>Usuario Admin</DropdownMenuLabel>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem>Settings</DropdownMenuItem>
-                    <DropdownMenuItem>Support</DropdownMenuItem>
+                    <DropdownMenuItem>Ajustes</DropdownMenuItem>
+                    <DropdownMenuItem>Soporte</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem asChild>
-                      <Link href="/">Logout</Link>
+                      <Link href="/">Cerrar Sesión</Link>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>

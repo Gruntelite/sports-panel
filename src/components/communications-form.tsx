@@ -17,9 +17,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, Wand2 } from "lucide-react";
 
 const formSchema = z.object({
-  communicationGoal: z.string().min(1, "Communication goal is required."),
-  targetAudience: z.string().min(1, "Target audience is required."),
-  keyInformation: z.string().min(1, "Key information is required."),
+  communicationGoal: z.string().min(1, "El objetivo de la comunicación es obligatorio."),
+  targetAudience: z.string().min(1, "El público objetivo es obligatorio."),
+  keyInformation: z.string().min(1, "La información clave es obligatoria."),
   tone: z.string().optional(),
   additionalContext: z.string().optional(),
 });
@@ -51,13 +51,13 @@ export function CommunicationsForm() {
     if (response.success && response.data) {
       setResult(response.data);
       toast({
-        title: "Template Generated!",
-        description: "Your new communication template is ready below.",
+        title: "¡Plantilla Generada!",
+        description: "Tu nueva plantilla de comunicación está lista a continuación.",
       });
     } else {
       toast({
         variant: "destructive",
-        title: "Generation Failed",
+        title: "Fallo en la Generación",
         description: response.error,
       });
     }
@@ -68,8 +68,8 @@ export function CommunicationsForm() {
     <div className="grid gap-8 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Generate Communication</CardTitle>
-          <CardDescription>Fill in the details to generate a personalized communication template using AI.</CardDescription>
+          <CardTitle>Generar Comunicación</CardTitle>
+          <CardDescription>Rellena los detalles para generar una plantilla de comunicación personalizada usando IA.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -79,9 +79,9 @@ export function CommunicationsForm() {
                 name="communicationGoal"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Communication Goal</FormLabel>
+                    <FormLabel>Objetivo de la Comunicación</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., Weekly update, Match cancellation" {...field} />
+                      <Input placeholder="p.ej., Actualización semanal, Cancelación de partido" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -92,9 +92,9 @@ export function CommunicationsForm() {
                 name="targetAudience"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Target Audience</FormLabel>
+                    <FormLabel>Público Objetivo</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g., U12 Eagles, Entire club" {...field} />
+                      <Input placeholder="p.ej., Águilas Sub-12, Todo el club" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -105,9 +105,9 @@ export function CommunicationsForm() {
                 name="keyInformation"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Key Information</FormLabel>
+                    <FormLabel>Información Clave</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., Practice is moved to 7 PM at North Field due to weather." {...field} />
+                      <Textarea placeholder="p.ej., El entrenamiento se traslada a las 19:00 en el Campo Norte por el tiempo." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -118,18 +118,18 @@ export function CommunicationsForm() {
                 name="tone"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tone</FormLabel>
+                    <FormLabel>Tono</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Select a tone" />
+                          <SelectValue placeholder="Selecciona un tono" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
                         <SelectItem value="formal">Formal</SelectItem>
                         <SelectItem value="informal">Informal</SelectItem>
-                        <SelectItem value="urgent">Urgent</SelectItem>
-                        <SelectItem value="friendly">Friendly</SelectItem>
+                        <SelectItem value="urgent">Urgente</SelectItem>
+                        <SelectItem value="friendly">Amistoso</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -141,9 +141,9 @@ export function CommunicationsForm() {
                 name="additionalContext"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Additional Context (Optional)</FormLabel>
+                    <FormLabel>Contexto Adicional (Opcional)</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="e.g., Mention the upcoming tournament." {...field} />
+                      <Textarea placeholder="p.ej., Mencionar el próximo torneo." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -153,12 +153,12 @@ export function CommunicationsForm() {
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    Generando...
                   </>
                 ) : (
                   <>
                     <Wand2 className="mr-2 h-4 w-4" />
-                    Generate Template
+                    Generar Plantilla
                   </>
                 )}
               </Button>
@@ -169,29 +169,29 @@ export function CommunicationsForm() {
       
       <Card className="flex flex-col">
         <CardHeader>
-          <CardTitle>Generated Template</CardTitle>
-          <CardDescription>Your AI-generated template will appear here. You can copy and edit it before sending.</CardDescription>
+          <CardTitle>Plantilla Generada</CardTitle>
+          <CardDescription>Tu plantilla generada por IA aparecerá aquí. Puedes copiarla y editarla antes de enviarla.</CardDescription>
         </CardHeader>
         <CardContent className="flex-1 flex flex-col">
           {loading && (
             <div className="flex flex-1 items-center justify-center">
               <div className="text-center text-muted-foreground">
                 <Loader2 className="mx-auto h-8 w-8 animate-spin mb-2" />
-                <p>Generating your template...</p>
+                <p>Generando tu plantilla...</p>
               </div>
             </div>
           )}
           {result && !loading && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="subject" className="text-lg">Subject</Label>
+                <Label htmlFor="subject" className="text-lg">Asunto</Label>
                 <Input id="subject" readOnly value={result.subject} className="mt-1 font-semibold text-base" />
               </div>
               <div>
-                <Label htmlFor="body" className="text-lg">Body</Label>
+                <Label htmlFor="body" className="text-lg">Cuerpo</Label>
                 <Textarea id="body" readOnly value={result.body} className="mt-1 h-64 text-base" />
               </div>
-              <Button variant="outline" className="w-full">Copy Template</Button>
+              <Button variant="outline" className="w-full">Copiar Plantilla</Button>
             </div>
           )}
           {!result && !loading && (
@@ -199,10 +199,10 @@ export function CommunicationsForm() {
                 <div className="flex flex-col items-center gap-1 text-center text-muted-foreground">
                   <Wand2 className="h-10 w-10" />
                   <h3 className="text-lg font-bold tracking-tight">
-                    Ready to create?
+                    ¿Listo para crear?
                   </h3>
                   <p className="text-sm">
-                    Fill out the form to generate your first template.
+                    Rellena el formulario para generar tu primera plantilla.
                   </p>
                 </div>
               </div>

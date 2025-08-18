@@ -16,25 +16,25 @@ import {z} from 'genkit';
 const GenerateCommunicationTemplateInputSchema = z.object({
   communicationGoal: z
     .string()
-    .describe('The purpose of the communication (e.g., announcement, update, reminder).'),
+    .describe('El propósito de la comunicación (p. ej., anuncio, actualización, recordatorio).'),
   targetAudience: z
     .string()
     .describe(
-      'The intended recipients (e.g., whole club, specific team, individual family/player).' + 
-      'If targetting a team or individual, specify the team name or player name.'
+      'Los destinatarios previstos (p. ej., todo el club, un equipo específico, una familia/jugador individual).' + 
+      'Si se dirige a un equipo o individuo, especifique el nombre del equipo o del jugador.'
     ),
   keyInformation: z
     .string()
     .describe(
-      'The core details to be included in the communication, such as dates, times, locations, or important updates.'
+      'Los detalles principales que se incluirán en la comunicación, como fechas, horas, lugares o actualizaciones importantes.'
     ),
   tone: z
     .string()
-    .describe('The desired tone of the communication (e.g., formal, informal, urgent).')
+    .describe('El tono deseado de la comunicación (p. ej., formal, informal, urgente).')
     .optional(),
   additionalContext: z
     .string()
-    .describe('Any extra details that might be relevant to the communication.')
+    .describe('Cualquier detalle adicional que pueda ser relevante para la comunicación.')
     .optional(),
 });
 
@@ -43,8 +43,8 @@ export type GenerateCommunicationTemplateInput = z.infer<
 >;
 
 const GenerateCommunicationTemplateOutputSchema = z.object({
-  subject: z.string().describe('The subject line for the communication.'),
-  body: z.string().describe('The generated communication template body.'),
+  subject: z.string().describe('La línea de asunto para la comunicación.'),
+  body: z.string().describe('El cuerpo de la plantilla de comunicación generada.'),
 });
 
 export type GenerateCommunicationTemplateOutput = z.infer<
@@ -61,17 +61,17 @@ const generateCommunicationTemplatePrompt = ai.definePrompt({
   name: 'generateCommunicationTemplatePrompt',
   input: {schema: GenerateCommunicationTemplateInputSchema},
   output: {schema: GenerateCommunicationTemplateOutputSchema},
-  prompt: `You are an expert in crafting effective communication templates for sports clubs.
+  prompt: `Eres un experto en crear plantillas de comunicación eficaces para clubes deportivos.
 
-  Based on the provided information, generate a communication template that includes a subject line and a body.
-  The template should be suitable for sending to the specified target audience and should effectively convey the key information.
-  Consider the tone and any additional context provided to tailor the communication appropriately.
+  Basándote en la información proporcionada, genera una plantilla de comunicación que incluya una línea de asunto y un cuerpo.
+  La plantilla debe ser adecuada para enviarla al público objetivo especificado y debe transmitir eficazmente la información clave.
+  Considera el tono y cualquier contexto adicional proporcionado para adaptar la comunicación adecuadamente.
 
-  Goal: {{{communicationGoal}}}
-  Audience: {{{targetAudience}}}
-  Key Information: {{{keyInformation}}}
-  Tone: {{{tone}}}
-  Additional Context: {{{additionalContext}}}
+  Objetivo: {{{communicationGoal}}}
+  Público: {{{targetAudience}}}
+  Información Clave: {{{keyInformation}}}
+  Tono: {{{tone}}}
+  Contexto Adicional: {{{additionalContext}}}
   `,
 });
 
