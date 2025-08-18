@@ -40,3 +40,11 @@ export type Coach = {
     teamName?: string;
     avatar?: string;
 }
+
+export type TeamMember = {
+    id: string;
+    name: string;
+    position: string;
+    jerseyNumber: number | string;
+    avatar: string;
+}

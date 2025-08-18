@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -21,16 +22,24 @@ import {
   DialogFooter,
   DialogClose,
   DialogTrigger,
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
 } from "@/components/ui/dialog";
-import { PlusCircle, Users, Shield, MoreVertical, Loader2 } from "lucide-react";
+import { PlusCircle, Users, Shield, MoreVertical, Loader2, Trash2 } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, query } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { collection, getDocs, doc, getDoc, addDoc, query, deleteDoc, where } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 
@@ -45,6 +54,9 @@ export default function TeamsPage() {
   const [newTeamMinAge, setNewTeamMinAge] = useState("");
   const [newTeamMaxAge, setNewTeamMaxAge] = useState("");
   const [newTeamImage, setNewTeamImage] = useState<File | null>(null);
+
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -66,6 +78,16 @@ export default function TeamsPage() {
 
   const fetchTeams = async (clubId: string) => {
     setLoading(true);
+    const playersQuery = query(collection(db, "clubs", clubId, "players"));
+    const playersSnapshot = await getDocs(playersQuery);
+    const playersCountByTeam = playersSnapshot.docs.reduce((acc, doc) => {
+        const teamId = doc.data().teamId;
+        if (teamId) {
+            acc[teamId] = (acc[teamId] || 0) + 1;
+        }
+        return acc;
+    }, {} as {[key: string]: number});
+    
     const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
     const teamsSnapshot = await getDocs(teamsQuery);
     const teamsList = teamsSnapshot.docs.map(doc => {
@@ -77,7 +99,7 @@ export default function TeamsPage() {
         maxAge: data.maxAge,
         image: data.image || "https://placehold.co/600x400.png",
         hint: "equipo deportivo",
-        players: 0, // Placeholder
+        players: playersCountByTeam[doc.id] || 0,
         coaches: 0, // Placeholder
       };
     });
@@ -115,12 +137,37 @@ export default function TeamsPage() {
         setNewTeamMinAge("");
         setNewTeamMaxAge("");
         setNewTeamImage(null);
-        fetchTeams(clubId); // Refresh data
+        if (clubId) fetchTeams(clubId); // Refresh data
     } catch (error) {
         console.error("Error creating team: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo crear el equipo." });
     } finally {
         setLoading(false);
+    }
+  };
+  
+  const handleDeleteTeam = async () => {
+    if (!teamToDelete || !clubId) return;
+
+    setIsDeleting(true);
+    try {
+      // Delete image from storage if it's not the placeholder
+      if (teamToDelete.image && !teamToDelete.image.includes('placehold.co')) {
+        const imageRef = ref(storage, teamToDelete.image);
+        await deleteObject(imageRef);
+      }
+      
+      // Delete team document from firestore
+      await deleteDoc(doc(db, "clubs", clubId, "teams", teamToDelete.id));
+
+      toast({ title: "Equipo eliminado", description: `El equipo ${teamToDelete.name} ha sido eliminado.` });
+      fetchTeams(clubId);
+    } catch (error) {
+        console.error("Error deleting team: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el equipo." });
+    } finally {
+        setIsDeleting(false);
+        setTeamToDelete(null);
     }
   };
 
@@ -190,6 +237,7 @@ export default function TeamsPage() {
           {teams.map(team => (
             <Card key={team.id} className="overflow-hidden">
               <CardHeader className="p-0">
+                <Link href={`/teams/${team.id}`}>
                   <Image
                       alt={team.name}
                       className="aspect-video w-full rounded-t-lg object-cover"
@@ -198,6 +246,7 @@ export default function TeamsPage() {
                       width="600"
                       data-ai-hint={team.hint}
                   />
+                </Link>
               </CardHeader>
               <CardContent className="p-4">
                   <div className="flex items-start justify-between">
@@ -217,9 +266,11 @@ export default function TeamsPage() {
                           </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                              <DropdownMenuItem>Editar</DropdownMenuItem>
-                              <DropdownMenuItem>Gestionar Plantilla</DropdownMenuItem>
-                              <DropdownMenuItem className="text-destructive">Eliminar</DropdownMenuItem>
+                              <DropdownMenuItem asChild><Link href={`/teams/${team.id}`} className="w-full">Editar</Link></DropdownMenuItem>
+                              <DropdownMenuItem className="text-destructive" onClick={() => setTeamToDelete(team)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                              </DropdownMenuItem>
                           </DropdownMenuContent>
                       </DropdownMenu>
                   </div>
@@ -238,6 +289,23 @@ export default function TeamsPage() {
           ))}
         </div>
       </div>
+      <AlertDialog open={!!teamToDelete} onOpenChange={(open) => !open && setTeamToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el equipo
+              y todos sus datos asociados.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   )
 }
