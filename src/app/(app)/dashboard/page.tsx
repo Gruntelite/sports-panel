@@ -69,7 +69,7 @@ export default function DashboardPage() {
         return { 
             id: doc.id, 
             name: data.name,
-            avatar: `https://placehold.co/40x40.png?text=${data.name.charAt(0)}`,
+            avatar: data.avatar || `https://placehold.co/40x40.png?text=${data.name.charAt(0)}`,
             teamId: data.teamId,
             position: data.position,
         } as Player
@@ -191,3 +191,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

@@ -96,7 +96,7 @@ export default function EditTeamPage() {
             return {
                 id: doc.id,
                 name: `${data.name} ${data.lastName}`,
-                avatar: `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+                avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
                 position: data.position || 'N/A',
                 jerseyNumber: data.jerseyNumber || 'N/A',
             } as TeamMember;
@@ -283,3 +283,5 @@ export default function EditTeamPage() {
     </div>
   );
 }
+
+    

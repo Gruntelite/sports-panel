@@ -48,3 +48,5 @@ export type TeamMember = {
     jerseyNumber: number | string;
     avatar: string;
 }
+
+    

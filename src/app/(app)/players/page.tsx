@@ -1,12 +1,15 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import {
   File,
   PlusCircle,
   Filter,
   MoreHorizontal,
   Loader2,
+  Upload,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,7 +29,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -60,9 +62,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player } from "@/lib/types";
+import { v4 as uuidv4 } from 'uuid';
 
 
 export default function PlayersPage() {
@@ -78,6 +82,8 @@ export default function PlayersPage() {
   const [playerData, setPlayerData] = useState<Partial<Player>>({});
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [newImage, setNewImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -115,7 +121,7 @@ export default function PlayersPage() {
           return { 
               id: doc.id, 
               ...data,
-              avatar: `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+              avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
               teamName: team ? team.name : "Sin equipo",
           } as Player
       });
@@ -132,6 +138,14 @@ export default function PlayersPage() {
     const { id, value } = e.target;
     setPlayerData(prev => ({ ...prev, [id]: value }));
   };
+  
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewImage(file);
+      setImagePreview(URL.createObjectURL(file));
+    }
+  };
 
   const handleSelectChange = (id: keyof Player, value: string) => {
     setPlayerData(prev => ({ ...prev, [id]: value }));
@@ -141,6 +155,8 @@ export default function PlayersPage() {
     setModalMode(mode);
     setPlayerData(mode === 'edit' && player ? player : {});
     setIsModalOpen(true);
+    setNewImage(null);
+    setImagePreview(null);
   }
 
   const handleSavePlayer = async () => {
@@ -151,12 +167,34 @@ export default function PlayersPage() {
 
     setLoading(true);
     try {
+      let imageUrl = playerData.avatar;
+
+      if (newImage) {
+        if (playerData.avatar && !playerData.avatar.includes('placehold.co')) {
+            try {
+                const oldImageRef = ref(storage, playerData.avatar);
+                await deleteObject(oldImageRef);
+            } catch (storageError) {
+                console.warn("Could not delete old image:", storageError);
+            }
+        }
+        const imageRef = ref(storage, `player-avatars/${clubId}/${uuidv4()}`);
+        await uploadBytes(imageRef, newImage);
+        imageUrl = await getDownloadURL(imageRef);
+      }
+      
+      const dataToSave = {
+        ...playerData,
+        avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
+      };
+
+
       if (modalMode === 'edit' && playerData.id) {
         const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
-        await updateDoc(playerRef, playerData);
+        await updateDoc(playerRef, dataToSave);
         toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
       } else {
-        await addDoc(collection(db, "clubs", clubId, "players"), playerData);
+        await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
       }
       
@@ -176,6 +214,10 @@ export default function PlayersPage() {
 
     setIsDeleting(true);
     try {
+        if (playerToDelete.avatar && !playerToDelete.avatar.includes('placehold.co')) {
+            const imageRef = ref(storage, playerToDelete.avatar);
+            await deleteObject(imageRef);
+        }
         await deleteDoc(doc(db, "clubs", clubId, "players", playerToDelete.id));
         toast({ title: "Jugador eliminado", description: `${playerToDelete.name} ${playerToDelete.lastName} ha sido eliminado.`});
         fetchData(clubId);
@@ -311,80 +353,99 @@ export default function PlayersPage() {
                     {modalMode === 'add' ? 'Rellena la información para añadir un nuevo jugador al club.' : 'Modifica la información del jugador.'}
                 </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 py-4">
-                <div>
-                    <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Nombre</Label>
-                            <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="lastName">Apellidos</Label>
-                            <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="age">Edad</Label>
-                            <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="dni">DNI</Label>
-                            <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2 col-span-2">
-                            <Label htmlFor="address">Dirección</Label>
-                            <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="city">Ciudad</Label>
-                            <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="postalCode">Código Postal</Label>
-                            <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+            <div className="space-y-6 py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
+                <div className="space-y-4 flex flex-col items-center">
+                    <Label>Foto del Jugador</Label>
+                    <Avatar className="h-32 w-32">
+                        <AvatarImage src={imagePreview || playerData.avatar} />
+                        <AvatarFallback>
+                            {(playerData.name || 'N').charAt(0)}
+                            {(playerData.lastName || 'J').charAt(0)}
+                        </AvatarFallback>
+                    </Avatar>
+                     <Button asChild variant="outline" size="sm">
+                        <label htmlFor="player-image">
+                            <Upload className="mr-2 h-3 w-3"/>
+                            Subir
+                        </label>
+                    </Button>
+                    <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                </div>
+                <div className="space-y-6">
+                    <div>
+                        <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
+                        <div className="grid grid-cols-3 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Nombre</Label>
+                                <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Apellidos</Label>
+                                <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="age">Edad</Label>
+                                <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="dni">DNI</Label>
+                                <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
+                            </div>
+                             <div className="space-y-2">
+                                <Label htmlFor="city">Ciudad</Label>
+                                <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="postalCode">Código Postal</Label>
+                                <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <div>
-                   <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
-                   <div className="grid grid-cols-3 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
-                            <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
-                            <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
-                        </div>
-                   </div>
-                </div>
-                
-                <div>
-                    <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
-                    <div className="grid grid-cols-3 gap-4">
-                       <div className="space-y-2">
-                            <Label htmlFor="teamId">Equipo</Label>
-                            <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona un equipo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teams.map(team => (
-                                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="jerseyNumber">Dorsal</Label>
-                            <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                            <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
-                        </div>
-                   </div>
+                    <div>
+                       <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
+                       <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
+                                <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
+                                <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
+                            </div>
+                       </div>
+                    </div>
+                    
+                    <div>
+                        <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
+                        <div className="grid grid-cols-3 gap-4">
+                           <div className="space-y-2">
+                                <Label htmlFor="teamId">Equipo</Label>
+                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un equipo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teams.map(team => (
+                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
+                            </div>
+                       </div>
+                    </div>
                 </div>
             </div>
             <DialogFooter>
