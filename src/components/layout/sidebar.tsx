@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const menuItems = [
@@ -9,6 +9,7 @@ const menuItems = [
     { href: "/teams", label: "Equipos", icon: Shield },
     { href: "/players", label: "Jugadores", icon: Users },
     { href: "/calendar", label: "Calendario", icon: Calendar },
+    { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
   ];
