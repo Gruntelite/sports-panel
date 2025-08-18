@@ -14,8 +14,17 @@ export type Team = {
 export type Player = {
     id: string;
     name: string;
-    avatar: string;
+    lastName: string;
+    age: number;
+    dni: string;
+    address: string;
+    city: string;
+    postalCode: string;
+    tutorEmail: string;
+    tutorPhone: string;
+    iban: string;
     teamId: string;
-    position: string;
+    teamName?: string; 
+    jerseyNumber: number;
+    avatar?: string;
 }
-

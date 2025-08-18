@@ -52,17 +52,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, query } from "firebase/firestore";
-import type { Team } from "@/lib/types";
+import type { Team, Player } from "@/lib/types";
 
-type Player = {
-    id: string;
-    name: string;
-    avatar: string;
-    teamId: string;
-    teamName: string;
-    position: string;
-    contact: string;
-}
 
 export default function PlayersPage() {
   const { toast } = useToast();
@@ -73,9 +64,7 @@ export default function PlayersPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   
   const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
-  const [newPlayerName, setNewPlayerName] = useState("");
-  const [newPlayerTeam, setNewPlayerTeam] = useState("");
-  const [newPlayerPosition, setNewPlayerPosition] = useState("");
+  const [newPlayerData, setNewPlayerData] = useState<Partial<Player>>({});
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -112,12 +101,9 @@ export default function PlayersPage() {
           const team = teamsList.find(t => t.id === data.teamId);
           return { 
               id: doc.id, 
-              name: data.name,
-              avatar: `https://placehold.co/40x40.png?text=${data.name.charAt(0)}`,
-              teamId: data.teamId,
+              ...data,
+              avatar: `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
               teamName: team ? team.name : "Sin equipo",
-              position: data.position,
-              contact: "N/A" // Placeholder
           } as Player
       });
       setPlayers(playersList);
@@ -128,25 +114,28 @@ export default function PlayersPage() {
     }
     setLoading(false);
   };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setNewPlayerData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleSelectChange = (id: keyof Player, value: string) => {
+    setNewPlayerData(prev => ({ ...prev, [id]: value }));
+  };
   
   const handleAddPlayer = async () => {
-    if (!newPlayerName || !newPlayerTeam || !newPlayerPosition || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Todos los campos son obligatorios." });
+    if (!newPlayerData.name || !newPlayerData.lastName || !newPlayerData.teamId || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y equipo son obligatorios." });
         return;
     }
 
     try {
-        await addDoc(collection(db, "clubs", clubId, "players"), {
-            name: newPlayerName,
-            teamId: newPlayerTeam,
-            position: newPlayerPosition,
-        });
+        await addDoc(collection(db, "clubs", clubId, "players"), newPlayerData);
 
-        toast({ title: "Jugador añadido", description: `${newPlayerName} ha sido añadido al club.` });
+        toast({ title: "Jugador añadido", description: `${newPlayerData.name} ha sido añadido al club.` });
         setIsAddPlayerOpen(false);
-        setNewPlayerName("");
-        setNewPlayerTeam("");
-        setNewPlayerPosition("");
+        setNewPlayerData({});
         fetchData(clubId); // Refresh data
     } catch (error) {
         console.error("Error adding player: ", error);
@@ -207,34 +196,87 @@ export default function PlayersPage() {
                         </span>
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>Añadir Nuevo Jugador</DialogTitle>
                         <DialogDescription>
                             Rellena la información para añadir un nuevo jugador al club.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="name" className="text-right">Nombre</Label>
-                            <Input id="name" value={newPlayerName} onChange={(e) => setNewPlayerName(e.target.value)} className="col-span-3" />
+                    <div className="grid gap-6 py-4">
+                        <h4 className="font-semibold text-base border-b pb-2">Datos Personales</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Nombre</Label>
+                                <Input id="name" value={newPlayerData.name || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="lastName">Apellidos</Label>
+                                <Input id="lastName" value={newPlayerData.lastName || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="team" className="text-right">Equipo</Label>
-                            <Select onValueChange={setNewPlayerTeam} value={newPlayerTeam}>
-                                <SelectTrigger className="col-span-3">
-                                    <SelectValue placeholder="Selecciona un equipo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {teams.map(team => (
-                                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
+                        <div className="grid grid-cols-2 gap-4">
+                             <div className="space-y-2">
+                                <Label htmlFor="age">Edad</Label>
+                                <Input id="age" type="number" value={newPlayerData.age || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="dni">DNI</Label>
+                                <Input id="dni" value={newPlayerData.dni || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="position" className="text-right">Posición</Label>
-                            <Input id="position" value={newPlayerPosition} onChange={(e) => setNewPlayerPosition(e.target.value)} className="col-span-3" />
+                        <div className="space-y-2">
+                            <Label htmlFor="address">Dirección</Label>
+                            <Input id="address" value={newPlayerData.address || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="city">Ciudad</Label>
+                                <Input id="city" value={newPlayerData.city || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="postalCode">Código Postal</Label>
+                                <Input id="postalCode" value={newPlayerData.postalCode || ''} onChange={handleInputChange} />
+                            </div>
+                        </div>
+                        
+                        <h4 className="font-semibold text-base border-b pb-2 pt-4">Datos de Contacto (Tutor/a)</h4>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
+                                <Input id="tutorEmail" type="email" value={newPlayerData.tutorEmail || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
+                                <Input id="tutorPhone" type="tel" value={newPlayerData.tutorPhone || ''} onChange={handleInputChange} />
+                            </div>
+                        </div>
+
+                        <h4 className="font-semibold text-base border-b pb-2 pt-4">Datos Bancarios</h4>
+                        <div className="space-y-2">
+                             <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                             <Input id="iban" value={newPlayerData.iban || ''} onChange={handleInputChange} />
+                        </div>
+
+                        <h4 className="font-semibold text-base border-b pb-2 pt-4">Datos Deportivos</h4>
+                         <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="teamId">Equipo</Label>
+                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={newPlayerData.teamId}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un equipo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {teams.map(team => (
+                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                <Input id="jerseyNumber" type="number" value={newPlayerData.jerseyNumber || ''} onChange={handleInputChange} />
+                            </div>
                         </div>
                     </div>
                     <DialogFooter>
@@ -254,8 +296,8 @@ export default function PlayersPage() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Equipo</TableHead>
-                <TableHead>Posición</TableHead>
-                <TableHead>Contacto Familiar</TableHead>
+                <TableHead>Dorsal</TableHead>
+                <TableHead>Contacto</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -268,16 +310,16 @@ export default function PlayersPage() {
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
                         <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
-                        <AvatarFallback>{player.name.charAt(0)}</AvatarFallback>
+                        <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span>{player.name}</span>
+                      <span>{player.name} {player.lastName}</span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline">{player.teamName}</Badge>
                   </TableCell>
-                  <TableCell>{player.position}</TableCell>
-                  <TableCell>{player.contact}</TableCell>
+                  <TableCell>{player.jerseyNumber || 'N/A'}</TableCell>
+                  <TableCell>{player.tutorEmail || 'N/A'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
