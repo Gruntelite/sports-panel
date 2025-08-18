@@ -375,7 +375,7 @@ export default function PlayersPage() {
                 <div className="space-y-6">
                     <div>
                         <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="name">Nombre</Label>
                                 <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
@@ -388,11 +388,11 @@ export default function PlayersPage() {
                                 <Label htmlFor="age">Edad</Label>
                                 <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 md:col-span-1">
                                 <Label htmlFor="dni">DNI</Label>
                                 <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2 col-span-2">
+                            <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="address">Dirección</Label>
                                 <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
                             </div>
@@ -409,7 +409,7 @@ export default function PlayersPage() {
 
                     <div>
                        <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
-                       <div className="grid grid-cols-2 gap-4">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="space-y-2">
                                 <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
                                 <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
@@ -423,7 +423,7 @@ export default function PlayersPage() {
                     
                     <div>
                         <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
-                        <div className="grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                            <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
@@ -445,7 +445,7 @@ export default function PlayersPage() {
                                 <Label htmlFor="monthlyFee">Cuota Mensual (€)</Label>
                                 <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2 col-span-2 md:col-span-4">
+                            <div className="space-y-2 md:col-span-4">
                                 <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
                                 <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                             </div>
