@@ -388,7 +388,7 @@ export default function PlayersPage() {
                                 <Label htmlFor="age">Edad</Label>
                                 <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2 md:col-span-1">
+                            <div className="space-y-2">
                                 <Label htmlFor="dni">DNI</Label>
                                 <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                             </div>
@@ -423,8 +423,8 @@ export default function PlayersPage() {
                     
                     <div>
                         <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                           <div className="space-y-2">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                           <div className="space-y-2 md:col-span-2">
                                 <Label htmlFor="teamId">Equipo</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
                                     <SelectTrigger>
@@ -442,7 +442,7 @@ export default function PlayersPage() {
                                 <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="monthlyFee">Cuota Mensual (€)</Label>
+                                <Label htmlFor="monthlyFee">Cuota (€)</Label>
                                 <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
                             </div>
                             <div className="space-y-2 md:col-span-4">
@@ -482,3 +482,4 @@ export default function PlayersPage() {
     </>
   );
 }
+
