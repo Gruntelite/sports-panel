@@ -1,3 +1,7 @@
+
+"use client";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,11 +18,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { stats, players, events } from "@/lib/data";
-import { ArrowUpRight, Users, Shield, Calendar, CircleDollarSign } from "lucide-react";
+import { stats, events } from "@/lib/data";
+import { ArrowUpRight, Users, Shield, Calendar, CircleDollarSign, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { auth, db } from "@/lib/firebase";
+import { collection, query, getDocs, doc, getDoc } from "firebase/firestore";
+import type { Player } from "@/lib/types";
 
 const iconMap = {
   Users: Users,
@@ -28,8 +35,57 @@ const iconMap = {
 };
 
 export default function DashboardPage() {
+  const [loading, setLoading] = useState(true);
+  const [clubId, setClubId] = useState<string | null>(null);
+  const [players, setPlayers] = useState<Player[]>([]);
+  
   const today = new Date();
   const upcomingEvents = events.filter(event => event.date >= today).slice(0, 5);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const currentClubId = userDocSnap.data().clubId;
+          setClubId(currentClubId);
+          if (currentClubId) {
+            fetchPlayers(currentClubId);
+          }
+        }
+      }
+      setLoading(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  const fetchPlayers = async (clubId: string) => {
+    setLoading(true);
+    const playersQuery = query(collection(db, "clubs", clubId, "players"));
+    const playersSnapshot = await getDocs(playersQuery);
+    const playersList = playersSnapshot.docs.map(doc => {
+        const data = doc.data();
+        return { 
+            id: doc.id, 
+            name: data.name,
+            avatar: `https://placehold.co/40x40.png?text=${data.name.charAt(0)}`,
+            teamId: data.teamId,
+            position: data.position,
+        } as Player
+    });
+    setPlayers(playersList);
+    setLoading(false);
+  }
+
+  if (loading) {
+    return (
+        <div className="flex items-center justify-center h-full">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+    )
+  }
+
 
   return (
     <div className="flex flex-col gap-6">
@@ -74,7 +130,6 @@ export default function DashboardPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Jugador</TableHead>
-                  <TableHead>Equipo</TableHead>
                   <TableHead className="text-right">Posición</TableHead>
                 </TableRow>
               </TableHeader>
@@ -90,7 +145,6 @@ export default function DashboardPage() {
                         <div className="font-medium">{player.name}</div>
                       </div>
                     </TableCell>
-                    <TableCell>{player.team}</TableCell>
                     <TableCell className="text-right">{player.position}</TableCell>
                   </TableRow>
                 ))}

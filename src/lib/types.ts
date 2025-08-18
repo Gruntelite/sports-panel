@@ -1,4 +1,5 @@
 
+
 export type Team = {
     id: string;
     name: string;
@@ -9,3 +10,12 @@ export type Team = {
     players: number;
     coaches: number;
 };
+
+export type Player = {
+    id: string;
+    name: string;
+    avatar: string;
+    teamId: string;
+    position: string;
+}
+
