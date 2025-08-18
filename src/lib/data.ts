@@ -1,5 +1,6 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "./firebase";
+import type { Team } from "./types";
 
 export const stats = [
     { title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
@@ -8,28 +9,18 @@ export const stats = [
     { title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
 ];
 
-export const players: any[] = [
-];
-
-export const getTeams = async (clubId: string) => {
+export const getTeams = async (clubId: string): Promise<Team[]> => {
     if (!clubId) return [];
-    const teamsCol = collection(db, "clubs", clubId, "teams");
-    const teamSnapshot = await getDocs(teamsCol);
-    const teamList = teamSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    return teamList;
+    try {
+        const teamsCol = collection(db, "clubs", clubId, "teams");
+        const teamSnapshot = await getDocs(teamsCol);
+        const teamList = teamSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+        return teamList;
+    } catch (error) {
+        console.error("Error fetching teams: ", error);
+        return [];
+    }
 };
 
-// Initial empty array, will be populated from Firestore
-export let teams: any[] = [];
-
 export const events: any[] = [
-];
-
-export const users: any[] = [
-];
-
-export const venues: any[] = [
-    { id: '1', name: 'Pista Central' },
-    { id: '2', name: 'Pabellón Norte' },
-    { id: '3', name: 'Gimnasio' },
 ];
