@@ -29,6 +29,16 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
@@ -51,7 +61,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, query } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
 import type { Team, Player } from "@/lib/types";
 
 
@@ -63,8 +73,11 @@ export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   
-  const [isAddPlayerOpen, setIsAddPlayerOpen] = useState(false);
-  const [newPlayerData, setNewPlayerData] = useState<Partial<Player>>({});
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [playerData, setPlayerData] = useState<Partial<Player>>({});
+  const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -117,33 +130,66 @@ export default function PlayersPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value } = e.target;
-    setNewPlayerData(prev => ({ ...prev, [id]: value }));
+    setPlayerData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleSelectChange = (id: keyof Player, value: string) => {
-    setNewPlayerData(prev => ({ ...prev, [id]: value }));
+    setPlayerData(prev => ({ ...prev, [id]: value }));
   };
   
-  const handleAddPlayer = async () => {
-    if (!newPlayerData.name || !newPlayerData.lastName || !newPlayerData.teamId || !clubId) {
+  const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
+    setModalMode(mode);
+    setPlayerData(mode === 'edit' && player ? player : {});
+    setIsModalOpen(true);
+  }
+
+  const handleSavePlayer = async () => {
+    if (!playerData.name || !playerData.lastName || !playerData.teamId || !clubId) {
         toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y equipo son obligatorios." });
         return;
     }
 
+    setLoading(true);
     try {
-        await addDoc(collection(db, "clubs", clubId, "players"), newPlayerData);
-
-        toast({ title: "Jugador añadido", description: `${newPlayerData.name} ha sido añadido al club.` });
-        setIsAddPlayerOpen(false);
-        setNewPlayerData({});
-        fetchData(clubId); // Refresh data
+      if (modalMode === 'edit' && playerData.id) {
+        const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
+        await updateDoc(playerRef, playerData);
+        toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
+      } else {
+        await addDoc(collection(db, "clubs", clubId, "players"), playerData);
+        toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
+      }
+      
+      setIsModalOpen(false);
+      setPlayerData({});
+      fetchData(clubId); // Refresh data
     } catch (error) {
-        console.error("Error adding player: ", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo añadir al jugador." });
+        console.error("Error saving player: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
+    } finally {
+      setLoading(false);
     }
   };
 
-  if (loading) {
+  const handleDeletePlayer = async () => {
+    if (!playerToDelete || !clubId) return;
+
+    setIsDeleting(true);
+    try {
+        await deleteDoc(doc(db, "clubs", clubId, "players", playerToDelete.id));
+        toast({ title: "Jugador eliminado", description: `${playerToDelete.name} ${playerToDelete.lastName} ha sido eliminado.`});
+        fetchData(clubId);
+    } catch (error) {
+        console.error("Error deleting player: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el jugador." });
+    } finally {
+        setIsDeleting(false);
+        setPlayerToDelete(null);
+    }
+  };
+
+
+  if (loading && !players.length) {
     return (
         <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -187,106 +233,12 @@ export default function PlayersPage() {
                   Exportar
                 </span>
               </Button>
-              <Dialog open={isAddPlayerOpen} onOpenChange={setIsAddPlayerOpen}>
-                <DialogTrigger asChild>
-                    <Button size="sm" className="h-8 gap-1">
-                        <PlusCircle className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                            Añadir Jugador
-                        </span>
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl">
-                    <DialogHeader>
-                        <DialogTitle>Añadir Nuevo Jugador</DialogTitle>
-                        <DialogDescription>
-                            Rellena la información para añadir un nuevo jugador al club.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-6 py-4">
-                        <div>
-                            <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
-                            <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name">Nombre</Label>
-                                    <Input id="name" value={newPlayerData.name || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="lastName">Apellidos</Label>
-                                    <Input id="lastName" value={newPlayerData.lastName || ''} onChange={handleInputChange} />
-                                </div>
-                                 <div className="space-y-2">
-                                    <Label htmlFor="age">Edad</Label>
-                                    <Input id="age" type="number" value={newPlayerData.age || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="dni">DNI</Label>
-                                    <Input id="dni" value={newPlayerData.dni || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2 col-span-2">
-                                    <Label htmlFor="address">Dirección</Label>
-                                    <Input id="address" value={newPlayerData.address || ''} onChange={handleInputChange} />
-                                </div>
-                                 <div className="space-y-2">
-                                    <Label htmlFor="city">Ciudad</Label>
-                                    <Input id="city" value={newPlayerData.city || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="postalCode">Código Postal</Label>
-                                    <Input id="postalCode" value={newPlayerData.postalCode || ''} onChange={handleInputChange} />
-                                </div>
-                            </div>
-                        </div>
-
-                        <div>
-                           <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
-                           <div className="grid grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
-                                    <Input id="tutorEmail" type="email" value={newPlayerData.tutorEmail || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
-                                    <Input id="tutorPhone" type="tel" value={newPlayerData.tutorPhone || ''} onChange={handleInputChange} />
-                                </div>
-                           </div>
-                        </div>
-                        
-                        <div>
-                            <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
-                            <div className="grid grid-cols-3 gap-4">
-                               <div className="space-y-2">
-                                    <Label htmlFor="teamId">Equipo</Label>
-                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={newPlayerData.teamId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona un equipo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {teams.map(team => (
-                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                    <Input id="jerseyNumber" type="number" value={newPlayerData.jerseyNumber || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                    <Input id="iban" value={newPlayerData.iban || ''} onChange={handleInputChange} />
-                                </div>
-                           </div>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancelar</Button>
-                        </DialogClose>
-                        <Button type="button" onClick={handleAddPlayer}>Añadir Jugador</Button>
-                    </DialogFooter>
-                </DialogContent>
-              </Dialog>
+              <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Añadir Jugador
+                  </span>
+              </Button>
             </div>
           </div>
         </CardHeader>
@@ -330,10 +282,10 @@ export default function PlayersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
                         <DropdownMenuItem>Ver Perfil</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
                           Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -350,6 +302,119 @@ export default function PlayersPage() {
           </div>
         </CardFooter>
       </Card>
+      
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl">
+            <DialogHeader>
+                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Jugador' : 'Editar Jugador'}</DialogTitle>
+                <DialogDescription>
+                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo jugador al club.' : 'Modifica la información del jugador.'}
+                </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-6 py-4">
+                <div>
+                    <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Nombre</Label>
+                            <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="lastName">Apellidos</Label>
+                            <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="age">Edad</Label>
+                            <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="dni">DNI</Label>
+                            <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2 col-span-2">
+                            <Label htmlFor="address">Dirección</Label>
+                            <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="city">Ciudad</Label>
+                            <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="postalCode">Código Postal</Label>
+                            <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                   <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
+                   <div className="grid grid-cols-3 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
+                            <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
+                            <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
+                        </div>
+                   </div>
+                </div>
+                
+                <div>
+                    <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
+                    <div className="grid grid-cols-3 gap-4">
+                       <div className="space-y-2">
+                            <Label htmlFor="teamId">Equipo</Label>
+                            <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona un equipo" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {teams.map(team => (
+                                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="jerseyNumber">Dorsal</Label>
+                            <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                            <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
+                        </div>
+                   </div>
+                </div>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button type="button" variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button type="button" onClick={handleSavePlayer} disabled={loading}>
+                    {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <AlertDialog open={!!playerToDelete} onOpenChange={(open) => !open && setPlayerToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente al jugador {playerToDelete?.name} {playerToDelete?.lastName}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePlayer} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
+
+    
