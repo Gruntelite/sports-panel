@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getTeams } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2 } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -161,7 +161,7 @@ export default function SchedulesPage() {
   
   const timeSlots = generateTimeSlots(startTime, endTime);
 
-  const handleSaveSchedules = async () => {
+  const handleSaveDailySchedules = () => {
     const newDailySchedule: DailyScheduleEntry[] = [];
     const timeSlotsSet = new Set(timeSlots);
 
@@ -197,17 +197,21 @@ export default function SchedulesPage() {
     };
     
     setWeeklySchedule(updatedWeeklySchedule);
-    
+    setAssignments([]);
+    toast({ title: "Horarios para el " + currentDay + " preparados", description: `Los horarios se guardarán al guardar la plantilla.` });
+  };
+  
+  const handleSaveTemplate = async () => {
     const scheduleRef = getScheduleRef();
     if (scheduleRef) {
-        await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
-        toast({ title: "Horarios Guardados", description: `Los horarios para el ${currentDay} se han guardado.` });
+        await updateDoc(scheduleRef, { weeklySchedule: weeklySchedule });
+        toast({ title: "Plantilla Guardada", description: `Los horarios de la plantilla se han guardado.` });
     }
-    setAssignments([]);
   };
 
+
   const navigateDay = (direction: 'prev' | 'next') => {
-    setAssignments([]);
+    handleSaveDailySchedules();
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
     } else {
@@ -246,15 +250,18 @@ export default function SchedulesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <Select defaultValue="default">
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Seleccionar plantilla" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="default">Plantilla General</SelectItem>
-                    <SelectItem value="preseason" disabled>Plantilla Pretemporada</SelectItem>
-                </SelectContent>
-            </Select>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline">
+                    Plantilla General
+                    <MoreVertical className="ml-2 h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuItem disabled>Editar Nombre</DropdownMenuItem>
+                <DropdownMenuItem disabled>Eliminar Plantilla</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button className="gap-1" disabled>
                 <PlusCircle className="h-3.5 w-3.5" />
                 Crear Plantilla
@@ -272,7 +279,7 @@ export default function SchedulesPage() {
                     <h3 className="font-semibold text-base">Gestionar Recintos</h3>
                      <div className="flex items-center gap-2">
                         <Input placeholder="Nombre del nuevo recinto" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
-                        <Button onClick={handleAddVenue} size="sm"><PlusCircle/></Button>
+                        <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
                     </div>
                     <div className="space-y-2">
                         {venues.map(venue => (
@@ -344,14 +351,14 @@ export default function SchedulesPage() {
                         </DropdownMenuContent>
                      </DropdownMenu>
                 </div>
-                 <Button onClick={handleSaveSchedules} className="w-full">
+                 <Button onClick={handleSaveDailySchedules} className="w-full">
                     <Clock className="mr-2 h-4 w-4" />
                     Guardar Horarios para el {currentDay}
                 </Button>
             </CardContent>
         </Card>
         
-        <Card>
+        <Card className="relative">
             <CardHeader className="flex flex-row items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Button variant="outline" size="icon" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
@@ -388,6 +395,12 @@ export default function SchedulesPage() {
                     </div>
                 </div>
             </CardContent>
+             <div className="absolute bottom-6 right-6">
+                <Button size="lg" className="gap-2" onClick={handleSaveTemplate}>
+                    <Clock className="h-5 w-5"/>
+                    Guardar Plantilla
+                </Button>
+            </div>
         </Card>
       </div>
     </div>
