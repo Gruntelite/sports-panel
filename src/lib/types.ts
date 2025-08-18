@@ -15,16 +15,17 @@ export type Player = {
     id: string;
     name: string;
     lastName: string;
-    age: number;
-    dni: string;
-    address: string;
-    city: string;
-    postalCode: string;
-    tutorEmail: string;
-    tutorPhone: string;
-    iban: string;
+    age?: number;
+    dni?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    tutorEmail?: string;
+    tutorPhone?: string;
+    iban?: string;
     teamId: string;
     teamName?: string; 
-    jerseyNumber: number;
+    jerseyNumber?: number;
+    position?: string;
     avatar?: string;
 }
