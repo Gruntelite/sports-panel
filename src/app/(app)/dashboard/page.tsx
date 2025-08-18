@@ -114,13 +114,13 @@ export default function DashboardPage() {
                    <span className="text-xl font-bold">{event.date.getDate()}</span>
                 </div>
                 <div className="grid gap-1">
-                  <p className="text-sm font-medium leading-none flex items-center gap-2">
+                  <div className="text-sm font-medium leading-none flex items-center gap-2">
                     {event.type === 'Partido' ? 
                       <Badge variant="destructive">{event.type}</Badge> : 
                       <Badge variant="secondary">{event.type}</Badge>
                     }
                     <span>{event.team}</span>
-                  </p>
+                  </div>
                   <p className="text-sm text-muted-foreground">{event.location}</p>
                 </div>
                 <div className="ml-auto font-medium">{event.time}</div>
