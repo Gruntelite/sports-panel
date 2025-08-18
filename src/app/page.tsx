@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, ChevronsUpDown, Shield } from "lucide-react";
+import { Check, ChevronsUpDown, Palette, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
@@ -22,6 +22,47 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { sports } from "@/lib/sports";
 
+function hslToHex(h: number, s: number, l: number): string {
+    l /= 100;
+    const a = s * Math.min(l, 1 - l) / 100;
+    const f = (n: number) => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+    };
+    return `#${f(0)}${f(8)}${f(4)}`;
+}
+
+function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return null;
+
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    return {
+        h: Math.round(h * 360),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100),
+    };
+}
+
+
 export default function SignUpPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -29,6 +70,7 @@ export default function SignUpPage() {
   
   const [clubName, setClubName] = useState('');
   const [sport, setSport] = useState('');
+  const [clubColor, setClubColor] = useState('#2563eb');
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -51,6 +93,8 @@ export default function SignUpPage() {
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      const hslColor = hexToHsl(clubColor);
 
       // Save user info to Firestore
       await setDoc(doc(db, "users", user.uid), {
@@ -66,7 +110,13 @@ export default function SignUpPage() {
         name: clubName,
         sport,
         adminId: user.uid,
+        themeColor: hslColor ? `${hslColor.h} ${hslColor.s}% ${hslColor.l}%` : '217 91% 60%'
       });
+
+      if (hslColor) {
+        localStorage.setItem('clubThemeColor', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
+        document.documentElement.style.setProperty('--primary', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
+      }
 
       toast({
         title: "¡Cuenta Creada!",
@@ -104,9 +154,11 @@ export default function SignUpPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="club-name">Nombre del Club</Label>
-              <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2 col-span-2">
+                <Label htmlFor="club-name">Nombre del Club</Label>
+                <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} />
+              </div>
             </div>
              <div className="space-y-2">
               <Label htmlFor="sport">Deporte Principal</Label>
@@ -153,6 +205,25 @@ export default function SignUpPage() {
                   </Command>
                 </PopoverContent>
               </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="club-color">Color del Club</Label>
+              <div className="flex items-center gap-2">
+                  <Input
+                    id="club-color"
+                    type="color"
+                    value={clubColor}
+                    onChange={(e) => setClubColor(e.target.value)}
+                    className="p-1 h-10 w-14"
+                  />
+                  <Input
+                    type="text"
+                    value={clubColor}
+                    onChange={(e) => setClubColor(e.target.value)}
+                    placeholder="#2563eb"
+                    className="w-full"
+                  />
+              </div>
             </div>
              <div className="space-y-2">
               <Label htmlFor="name">Tu Nombre</Label>
