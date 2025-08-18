@@ -65,6 +65,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
@@ -141,6 +142,10 @@ export default function PlayersPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
     setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
+  };
+  
+  const handleCheckboxChange = (id: keyof Player, checked: boolean) => {
+    setPlayerData(prev => ({ ...prev, [id]: checked }));
   };
   
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -426,13 +431,21 @@ export default function PlayersPage() {
                     <TabsContent value="contact" className="pt-6">
                       <div className="min-h-[280px]">
                         <div className="space-y-6">
+                          <div className="flex items-center space-x-2">
+                              <Checkbox 
+                                id="isOwnTutor" 
+                                checked={playerData.isOwnTutor || false}
+                                onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
+                              />
+                              <Label htmlFor="isOwnTutor" className="font-normal">El jugador es su propio tutor (mayor de 18 años)</Label>
+                          </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
+                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
                                      <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
                                  </div>
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
+                                     <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
                                      <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>
