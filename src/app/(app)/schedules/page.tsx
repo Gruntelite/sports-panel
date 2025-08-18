@@ -93,25 +93,27 @@ export default function SchedulesPage() {
           const currentClubId = userData.clubId;
           setClubId(currentClubId);
           
-          // Fetch teams
-          const fetchedTeams = await getTeams(currentClubId);
-          setTeams(fetchedTeams);
+          if (currentClubId) {
+            // Fetch teams
+            const fetchedTeams = await getTeams(currentClubId);
+            setTeams(fetchedTeams);
 
-          // Fetch schedule data
-          const scheduleRef = doc(db, "clubs", currentClubId, "schedules", scheduleTemplateId);
-          const scheduleSnap = await getDoc(scheduleRef);
+            // Fetch schedule data
+            const scheduleRef = doc(db, "clubs", currentClubId, "schedules", scheduleTemplateId);
+            const scheduleSnap = await getDoc(scheduleRef);
 
-          if (scheduleSnap.exists()) {
-            const data = scheduleSnap.data();
-            setVenues(data.venues || []);
-            setWeeklySchedule(data.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
-          } else {
-            // If no schedule exists, create one
-            await setDoc(scheduleRef, { 
-                name: "Plantilla General",
-                venues: [],
-                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
-            });
+            if (scheduleSnap.exists()) {
+              const data = scheduleSnap.data();
+              setVenues(data.venues || []);
+              setWeeklySchedule(data.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
+            } else {
+              // If no schedule exists, create one
+              await setDoc(scheduleRef, { 
+                  name: "Plantilla General",
+                  venues: [],
+                  weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+              }, { merge: true });
+            }
           }
         }
       }
@@ -125,23 +127,23 @@ export default function SchedulesPage() {
     if (newVenueName.trim() !== '' && clubId) {
         const newVenue = {id: crypto.randomUUID(), name: newVenueName.trim()};
         const updatedVenues = [...venues, newVenue];
-        setVenues(updatedVenues);
         
         const scheduleRef = getScheduleRef();
         if (scheduleRef) {
             await updateDoc(scheduleRef, { venues: updatedVenues });
+            setVenues(updatedVenues);
+            setNewVenueName('');
+            toast({ title: "Recinto añadido", description: "El nuevo recinto se ha guardado." });
         }
-        setNewVenueName('');
-        toast({ title: "Recinto añadido", description: "El nuevo recinto se ha guardado." });
     }
   }
 
   const handleRemoveVenue = async (id: string) => {
     const updatedVenues = venues.filter(v => v.id !== id);
-    setVenues(updatedVenues);
     const scheduleRef = getScheduleRef();
     if (scheduleRef) {
         await updateDoc(scheduleRef, { venues: updatedVenues });
+        setVenues(updatedVenues);
         toast({ title: "Recinto eliminado", description: "El recinto se ha eliminado." });
     }
   }
@@ -198,7 +200,7 @@ export default function SchedulesPage() {
     
     setWeeklySchedule(updatedWeeklySchedule);
     setAssignments([]);
-    toast({ title: "Horarios para el " + currentDay + " preparados", description: `Los horarios se guardarán al guardar la plantilla.` });
+    toast({ title: "Horarios para el " + currentDay + " preparados", description: `Los horarios se guardarán al pulsar "Guardar Plantilla".` });
   };
   
   const handleSaveTemplate = async () => {
@@ -211,7 +213,9 @@ export default function SchedulesPage() {
 
 
   const navigateDay = (direction: 'prev' | 'next') => {
-    handleSaveDailySchedules();
+    if (assignments.length > 0) {
+        handleSaveDailySchedules();
+    }
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
     } else {
@@ -353,7 +357,7 @@ export default function SchedulesPage() {
                 </div>
                  <Button onClick={handleSaveDailySchedules} className="w-full">
                     <Clock className="mr-2 h-4 w-4" />
-                    Guardar Horarios para el {currentDay}
+                    Preparar Horarios para {currentDay}
                 </Button>
             </CardContent>
         </Card>
