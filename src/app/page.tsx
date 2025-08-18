@@ -22,17 +22,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { sports } from "@/lib/sports";
 
-function hslToHex(h: number, s: number, l: number): string {
-    l /= 100;
-    const a = s * Math.min(l, 1 - l) / 100;
-    const f = (n: number) => {
-        const k = (n + h / 30) % 12;
-        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
-        return Math.round(255 * color).toString(16).padStart(2, '0');
-    };
-    return `#${f(0)}${f(8)}${f(4)}`;
-}
-
 function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return null;
@@ -60,6 +49,17 @@ function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
         s: Math.round(s * 100),
         l: Math.round(l * 100),
     };
+}
+
+function getLuminance(hex: string): number {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return 0;
+    
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
 
@@ -109,6 +109,8 @@ export default function SignUpPage() {
       const user = userCredential.user;
       
       const hslColor = hexToHsl(clubColor);
+      const luminance = getLuminance(clubColor);
+      const foregroundColor = luminance > 0.5 ? '0 0% 0%' : '0 0% 100%'; // Black or White
 
       // Create club with a new auto-generated ID
       const newClubRef = doc(collection(db, "clubs"));
@@ -131,13 +133,16 @@ export default function SignUpPage() {
       await setDoc(settingsRef, {
         sport: sport,
         themeColor: hslColor ? `${hslColor.h} ${hslColor.s}% ${hslColor.l}%` : '217 91% 60%',
+        themeColorForeground: foregroundColor,
         billingPlan: null,
       });
 
 
       if (hslColor) {
         localStorage.setItem('clubThemeColor', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
+        localStorage.setItem('clubThemeColorForeground', foregroundColor);
         document.documentElement.style.setProperty('--primary', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
+        document.documentElement.style.setProperty('--primary-foreground', foregroundColor);
       }
 
       toast({

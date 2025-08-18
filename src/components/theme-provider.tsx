@@ -6,16 +6,22 @@ import { doc, getDoc } from 'firebase/firestore';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const applyTheme = (color: string | null) => {
-      if (color) {
-        document.documentElement.style.setProperty('--primary', color);
-        localStorage.setItem('clubThemeColor', color);
+    const applyTheme = (primary: string | null, foreground: string | null) => {
+      if (primary) {
+        document.documentElement.style.setProperty('--primary', primary);
+        localStorage.setItem('clubThemeColor', primary);
+      }
+      if (foreground) {
+        document.documentElement.style.setProperty('--primary-foreground', foreground);
+        localStorage.setItem('clubThemeColorForeground', foreground);
       }
     };
     
     const localTheme = localStorage.getItem('clubThemeColor');
-    if (localTheme) {
-      applyTheme(localTheme);
+    const localThemeForeground = localStorage.getItem('clubThemeColorForeground');
+
+    if (localTheme && localThemeForeground) {
+      applyTheme(localTheme, localThemeForeground);
     } else {
        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -32,9 +38,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
                             const settingsSnap = await getDoc(settingsRef);
 
                             if (settingsSnap.exists()) {
-                                const themeColor = settingsSnap.data()?.themeColor;
-                                if (themeColor) {
-                                   applyTheme(themeColor)
+                                const settingsData = settingsSnap.data();
+                                const themeColor = settingsData?.themeColor;
+                                const themeColorForeground = settingsData?.themeColorForeground;
+                                if (themeColor && themeColorForeground) {
+                                   applyTheme(themeColor, themeColorForeground)
                                 }
                             }
                         }
