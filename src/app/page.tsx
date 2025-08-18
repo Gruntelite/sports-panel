@@ -50,11 +50,9 @@ export default function LoginPage() {
               </div>
               <Input id="password" type="password" required defaultValue="password" />
             </div>
-            <Link href="/dashboard" passHref legacyBehavior>
-              <Button asChild type="submit" className="w-full">
-                <a>Sign In</a>
-              </Button>
-            </Link>
+            <Button asChild type="submit" className="w-full">
+              <Link href="/dashboard">Sign In</Link>
+            </Button>
             <Button variant="outline" className="w-full">
               Sign in with Google
             </Button>
