@@ -40,8 +40,8 @@ export default function TeamsPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [isAddTeamOpen, setIsAddTeamOpen] = useState(false);
   const [newTeamName, setNewTeamName] = useState("");
-  const [newTeamSport, setNewTeamSport] = useState("");
-  const [newTeamCategory, setNewTeamCategory] = useState("");
+  const [newTeamMinAge, setNewTeamMinAge] = useState("");
+  const [newTeamMaxAge, setNewTeamMaxAge] = useState("");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -70,8 +70,8 @@ export default function TeamsPage() {
       return {
         id: doc.id,
         name: data.name,
-        sport: data.sport,
-        category: data.category,
+        minAge: data.minAge,
+        maxAge: data.maxAge,
         image: "https://placehold.co/600x400.png", // Placeholder
         hint: "equipo deportivo",
         players: 0, // Placeholder
@@ -83,7 +83,7 @@ export default function TeamsPage() {
   };
   
   const handleAddTeam = async () => {
-    if (!newTeamName || !newTeamSport || !newTeamCategory || !clubId) {
+    if (!newTeamName || !newTeamMinAge || !newTeamMaxAge || !clubId) {
         toast({ variant: "destructive", title: "Error", description: "Todos los campos son obligatorios." });
         return;
     }
@@ -91,15 +91,15 @@ export default function TeamsPage() {
     try {
         await addDoc(collection(db, "clubs", clubId, "teams"), {
             name: newTeamName,
-            sport: newTeamSport,
-            category: newTeamCategory,
+            minAge: Number(newTeamMinAge),
+            maxAge: Number(newTeamMaxAge),
         });
 
         toast({ title: "Equipo creado", description: `El equipo ${newTeamName} ha sido creado.` });
         setIsAddTeamOpen(false);
         setNewTeamName("");
-        setNewTeamSport("");
-        setNewTeamCategory("");
+        setNewTeamMinAge("");
+        setNewTeamMaxAge("");
         fetchTeams(clubId); // Refresh data
     } catch (error) {
         console.error("Error creating team: ", error);
@@ -145,12 +145,12 @@ export default function TeamsPage() {
                         <Input id="team-name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="team-sport" className="text-right">Deporte</Label>
-                        <Input id="team-sport" value={newTeamSport} onChange={(e) => setNewTeamSport(e.target.value)} className="col-span-3" />
+                        <Label htmlFor="team-min-age" className="text-right">Edad Mínima</Label>
+                        <Input id="team-min-age" type="number" value={newTeamMinAge} onChange={(e) => setNewTeamMinAge(e.target.value)} className="col-span-3" />
                     </div>
                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="team-category" className="text-right">Categoría</Label>
-                        <Input id="team-category" value={newTeamCategory} onChange={(e) => setNewTeamCategory(e.target.value)} className="col-span-3" />
+                        <Label htmlFor="team-max-age" className="text-right">Edad Máxima</Label>
+                        <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} className="col-span-3" />
                     </div>
                 </div>
                 <DialogFooter>
@@ -179,9 +179,8 @@ export default function TeamsPage() {
               <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                       <div>
-                          <Badge variant="secondary" className="mb-2">{team.category}</Badge>
+                          <Badge variant="secondary" className="mb-2">Edades: {team.minAge} - {team.maxAge}</Badge>
                           <CardTitle className="text-xl font-bold">{team.name}</CardTitle>
-                          <CardDescription>{team.sport}</CardDescription>
                       </div>
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>
