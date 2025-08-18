@@ -354,8 +354,8 @@ export default function PlayersPage() {
                     {modalMode === 'add' ? 'Rellena la información para añadir un nuevo jugador al club.' : 'Modifica la información del jugador.'}
                 </DialogDescription>
             </DialogHeader>
-            <div className="space-y-6 py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-8">
-                <div className="space-y-4 flex flex-col items-center">
+            <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
+                <div className="flex flex-col items-center gap-4 pt-5">
                     <Label>Foto del Jugador</Label>
                     <Avatar className="h-32 w-32">
                         <AvatarImage src={imagePreview || playerData.avatar} />
@@ -365,7 +365,7 @@ export default function PlayersPage() {
                         </AvatarFallback>
                     </Avatar>
                      <Button asChild variant="outline" size="sm">
-                        <label htmlFor="player-image">
+                        <label htmlFor="player-image" className="cursor-pointer">
                             <Upload className="mr-2 h-3 w-3"/>
                             Subir
                         </label>
@@ -388,7 +388,7 @@ export default function PlayersPage() {
                                 <Label htmlFor="age">Edad</Label>
                                 <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2">
+                            <div className="space-y-2 md:col-span-1">
                                 <Label htmlFor="dni">DNI</Label>
                                 <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                             </div>
@@ -423,8 +423,8 @@ export default function PlayersPage() {
                     
                     <div>
                         <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
-                           <div className="space-y-2 md:col-span-2">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                           <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
                                     <SelectTrigger>
@@ -445,7 +445,7 @@ export default function PlayersPage() {
                                 <Label htmlFor="monthlyFee">Cuota (€)</Label>
                                 <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2 md:col-span-4">
+                            <div className="space-y-2 md:col-span-3">
                                 <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
                                 <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                             </div>
@@ -482,4 +482,3 @@ export default function PlayersPage() {
     </>
   );
 }
-
