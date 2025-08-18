@@ -10,6 +10,11 @@ import {
   MoreHorizontal,
   Loader2,
   Upload,
+  User,
+  Banknote,
+  Contact,
+  HeartPulse,
+  Shield,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,6 +66,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
@@ -372,57 +378,70 @@ export default function PlayersPage() {
                     </Button>
                     <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                 </div>
-                <div className="space-y-6">
-                    <div>
-                        <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nombre</Label>
-                                <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
+                
+                <Tabs defaultValue="personal" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
+                        <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
+                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
+                        <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="personal" className="pt-6">
+                       <div className="space-y-6">
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="name">Nombre</Label>
+                                   <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
+                               </div>
+                               <div className="space-y-2">
+                                   <Label htmlFor="lastName">Apellidos</Label>
+                                   <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
+                               </div>
+                                <div className="space-y-2">
+                                   <Label htmlFor="age">Edad</Label>
+                                   <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="dni">DNI</Label>
+                                   <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
+                               </div>
+                               <div className="space-y-2 md:col-span-2">
+                                   <Label htmlFor="address">Dirección</Label>
+                                   <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                   <Label htmlFor="city">Ciudad</Label>
+                                   <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
+                               </div>
+                               <div className="space-y-2">
+                                   <Label htmlFor="postalCode">Código Postal</Label>
+                                   <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                       </div>
+                    </TabsContent>
+                    <TabsContent value="contact" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                 <div className="space-y-2">
+                                     <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
+                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
+                                 </div>
+                                 <div className="space-y-2">
+                                     <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
+                                     <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
+                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="lastName">Apellidos</Label>
-                                <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="age">Edad</Label>
-                                <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2 md:col-span-1">
-                                <Label htmlFor="dni">DNI</Label>
-                                <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2 md:col-span-2">
-                                <Label htmlFor="address">Dirección</Label>
-                                <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="city">Ciudad</Label>
-                                <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="postalCode">Código Postal</Label>
-                                <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                             </div>
                         </div>
-                    </div>
-
-                    <div>
-                       <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
-                                <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
-                                <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
-                            </div>
-                       </div>
-                    </div>
-                    
-                    <div>
-                        <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
+                    </TabsContent>
+                    <TabsContent value="sports" className="pt-6">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                            <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
@@ -445,13 +464,9 @@ export default function PlayersPage() {
                                 <Label htmlFor="monthlyFee">Cuota (€)</Label>
                                 <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="space-y-2 md:col-span-3">
-                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
-                            </div>
                        </div>
-                    </div>
-                </div>
+                    </TabsContent>
+                </Tabs>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
