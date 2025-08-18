@@ -6,10 +6,10 @@ import { cn } from "@/lib/utils";
 
 const menuItems = [
     { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
-    { href: "/teams", label: "Equipos", icon: Shield },
     { href: "/players", label: "Jugadores", icon: Users },
-    { href: "/calendar", label: "Calendario", icon: Calendar },
+    { href: "/teams", label: "Equipos", icon: Shield },
     { href: "/schedules", label: "Horarios", icon: Clock },
+    { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
   ];
