@@ -30,6 +30,9 @@ export type Player = {
     avatar?: string;
     monthlyFee?: number;
     isOwnTutor?: boolean;
+    tutorName?: string;
+    tutorLastName?: string;
+    tutorDni?: string;
 }
 
 export type Coach = {

@@ -439,6 +439,27 @@ export default function PlayersPage() {
                               />
                               <Label htmlFor="isOwnTutor" className="font-normal">El jugador es su propio tutor (mayor de 18 años)</Label>
                           </div>
+                            
+                            {!(playerData.isOwnTutor) && (
+                                <div className="space-y-6 p-4 border rounded-md bg-muted/50">
+                                    <h4 className="font-medium">Datos del Tutor/a</h4>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="tutorName">Nombre</Label>
+                                            <Input id="tutorName" value={playerData.tutorName || ''} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="tutorLastName">Apellidos</Label>
+                                            <Input id="tutorLastName" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="tutorDni">DNI del Tutor/a</Label>
+                                        <Input id="tutorDni" value={playerData.tutorDni || ''} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
                                      <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
