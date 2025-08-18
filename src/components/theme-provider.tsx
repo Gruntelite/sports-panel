@@ -25,10 +25,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
                     if (userDocSnap.exists()) {
                         const userData = userDocSnap.data();
-                        const clubName = userData.clubName;
+                        const clubId = userData.clubId;
 
-                        if (clubName) {
-                            const settingsRef = doc(db, "clubs", clubName, "settings", "config");
+                        if (clubId) {
+                            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                             const settingsSnap = await getDoc(settingsRef);
 
                             if (settingsSnap.exists()) {

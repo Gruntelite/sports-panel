@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, getDoc } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, query, where } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -91,10 +91,10 @@ export default function SignUpPage() {
 
     try {
       // Check if club name already exists
-      const clubRef = doc(db, "clubs", clubName);
-      const clubSnap = await getDoc(clubRef);
-
-      if (clubSnap.exists()) {
+      const q = query(collection(db, "clubs"), where("name", "==", clubName));
+      const querySnapshot = await getDocs(q);
+      
+      if (!querySnapshot.empty) {
         toast({
           variant: "destructive",
           title: "Fallo en el Registro",
@@ -110,21 +110,28 @@ export default function SignUpPage() {
       
       const hslColor = hexToHsl(clubColor);
 
-      // Save user info to Firestore
+      // Create club with a new auto-generated ID
+      const newClubRef = doc(collection(db, "clubs"));
+      await setDoc(newClubRef, {
+        name: clubName,
+        adminId: user.uid,
+      });
+      const clubId = newClubRef.id;
+
+      // Save user info to Firestore, linking to the club ID
       await setDoc(doc(db, "users", user.uid), {
         name,
         email,
-        clubName,
+        clubId: clubId,
         role: 'Admin',
       });
 
       // Create club settings subcollection
-      const settingsRef = doc(db, "clubs", clubName, "settings", "config");
+      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
       await setDoc(settingsRef, {
         sport: sport,
         themeColor: hslColor ? `${hslColor.h} ${hslColor.s}% ${hslColor.l}%` : '217 91% 60%',
-        billingPlan: null, // Placeholder for future billing plan
-        adminId: user.uid,
+        billingPlan: null,
       });
 
 
@@ -265,5 +272,3 @@ export default function SignUpPage() {
     </div>
   );
 }
-
-    
