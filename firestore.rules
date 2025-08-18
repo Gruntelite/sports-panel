@@ -1,9 +1,23 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Permite la escritura a cualquier usuario autenticado.
-    // Permite la lectura a cualquier usuario autenticado.
-    match /{document=**} {
+
+    // Allow new users to be created
+    match /users/{userId} {
+      allow create: if request.auth != null;
+      allow read, update: if request.auth.uid == userId;
+    }
+
+    // Allow new clubs and their settings to be created during sign up
+    match /clubs/{clubName} {
+      allow create: if request.auth != null;
+      
+      match /settings/{settingId} {
+        allow create: if request.auth != null;
+      }
+      
+      // Add rules for reading/updating club data later
+      // For now, only authenticated users can read/write
       allow read, write: if request.auth != null;
     }
   }
