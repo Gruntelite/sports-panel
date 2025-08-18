@@ -108,9 +108,8 @@ export default function SignUpPage() {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       
-      const hslColor = hexToHsl(clubColor);
       const luminance = getLuminance(clubColor);
-      const foregroundColor = luminance > 0.5 ? '0 0% 0%' : '0 0% 100%'; // Black or White
+      const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
 
       // Create club with a new auto-generated ID
       const newClubRef = doc(collection(db, "clubs"));
@@ -132,17 +131,20 @@ export default function SignUpPage() {
       const settingsRef = doc(db, "clubs", clubId, "settings", "config");
       await setDoc(settingsRef, {
         sport: sport,
-        themeColor: hslColor ? `${hslColor.h} ${hslColor.s}% ${hslColor.l}%` : '217 91% 60%',
+        themeColor: clubColor,
         themeColorForeground: foregroundColor,
         billingPlan: null,
       });
 
+      localStorage.setItem('clubThemeColor', clubColor);
+      localStorage.setItem('clubThemeColorForeground', foregroundColor);
+      
+      const hslColor = hexToHsl(clubColor);
+      const hslForegroundColor = hexToHsl(foregroundColor);
 
-      if (hslColor) {
-        localStorage.setItem('clubThemeColor', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
-        localStorage.setItem('clubThemeColorForeground', foregroundColor);
+      if (hslColor && hslForegroundColor) {
         document.documentElement.style.setProperty('--primary', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
-        document.documentElement.style.setProperty('--primary-foreground', foregroundColor);
+        document.documentElement.style.setProperty('--primary-foreground', `${hslForegroundColor.h} ${hslForegroundColor.s}% ${hslForegroundColor.l}%`);
       }
 
       toast({

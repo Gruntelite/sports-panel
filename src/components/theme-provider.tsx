@@ -4,16 +4,54 @@ import { useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 
+function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return null;
+
+    let r = parseInt(result[1], 16) / 255;
+    let g = parseInt(result[2], 16) / 255;
+    let b = parseInt(result[3], 16) / 255;
+
+    let max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h = 0, s = 0, l = (max + min) / 2;
+
+    if (max !== min) {
+        let d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+            case g: h = (b - r) / d + 2; break;
+            case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+    }
+
+    return {
+        h: Math.round(h * 360),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100),
+    };
+}
+
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const applyTheme = (primary: string | null, foreground: string | null) => {
-      if (primary) {
-        document.documentElement.style.setProperty('--primary', primary);
-        localStorage.setItem('clubThemeColor', primary);
+    const applyTheme = (primaryHex: string | null, foregroundHex: string | null) => {
+      if (primaryHex) {
+        const primaryHsl = hexToHsl(primaryHex);
+        if (primaryHsl) {
+          const primaryHslString = `${primaryHsl.h} ${primaryHsl.s}% ${primaryHsl.l}%`;
+          document.documentElement.style.setProperty('--primary', primaryHslString);
+          localStorage.setItem('clubThemeColor', primaryHex);
+        }
       }
-      if (foreground) {
-        document.documentElement.style.setProperty('--primary-foreground', foreground);
-        localStorage.setItem('clubThemeColorForeground', foreground);
+      if (foregroundHex) {
+        const foregroundHsl = hexToHsl(foregroundHex);
+        if (foregroundHsl) {
+          const foregroundHslString = `${foregroundHsl.h} ${foregroundHsl.s}% ${foregroundHsl.l}%`;
+          document.documentElement.style.setProperty('--primary-foreground', foregroundHslString);
+          localStorage.setItem('clubThemeColorForeground', foregroundHex);
+        }
       }
     };
     
