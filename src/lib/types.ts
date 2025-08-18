@@ -44,7 +44,7 @@ export type Coach = {
 export type TeamMember = {
     id: string;
     name: string;
-    position: string;
+    role: 'Jugador' | 'Entrenador';
     jerseyNumber: number | string;
     avatar: string;
 }

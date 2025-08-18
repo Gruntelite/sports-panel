@@ -88,20 +88,35 @@ export default function EditTeamPage() {
           router.push("/teams");
         }
         
-        // Fetch team members
+        // Fetch players
         const playersQuery = query(collection(db, "clubs", clubId, "players"), where("teamId", "==", teamId));
         const playersSnapshot = await getDocs(playersQuery);
-        const membersList = playersSnapshot.docs.map(doc => {
+        const playerMembers = playersSnapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
                 name: `${data.name} ${data.lastName}`,
                 avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-                position: data.position || 'N/A',
+                role: 'Jugador',
                 jerseyNumber: data.jerseyNumber || 'N/A',
             } as TeamMember;
         });
-        setTeamMembers(membersList);
+        
+        // Fetch coaches
+        const coachesQuery = query(collection(db, "clubs", clubId, "coaches"), where("teamId", "==", teamId));
+        const coachesSnapshot = await getDocs(coachesQuery);
+        const coachMembers = coachesSnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                id: doc.id,
+                name: `${data.name} ${data.lastName}`,
+                avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+                role: 'Entrenador',
+                jerseyNumber: 'N/A',
+            } as TeamMember;
+        });
+
+        setTeamMembers([...playerMembers, ...coachMembers]);
 
       } catch (error) {
         console.error("Error fetching team data: ", error);
@@ -240,14 +255,14 @@ export default function EditTeamPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle>Plantilla del Equipo</CardTitle>
-                        <CardDescription>Jugadores actualmente en {team.name}.</CardDescription>
+                        <CardDescription>Miembros actualmente en {team.name}.</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <Table>
                             <TableHeader>
                                 <TableRow>
                                     <TableHead>Nombre</TableHead>
-                                    <TableHead>Posición</TableHead>
+                                    <TableHead>Rol</TableHead>
                                     <TableHead>Dorsal</TableHead>
                                 </TableRow>
                             </TableHeader>
@@ -263,14 +278,14 @@ export default function EditTeamPage() {
                                                 <span className="font-medium">{member.name}</span>
                                             </div>
                                         </TableCell>
-                                        <TableCell>{member.position}</TableCell>
-                                        <TableCell>{member.jerseyNumber}</TableCell>
+                                        <TableCell>{member.role}</TableCell>
+                                        <TableCell>{member.role === 'Jugador' ? member.jerseyNumber : 'N/A'}</TableCell>
                                     </TableRow>
                                 ))}
                                 {teamMembers.length === 0 && (
                                      <TableRow>
                                         <TableCell colSpan={3} className="text-center text-muted-foreground py-8">
-                                            No hay jugadores en este equipo.
+                                            No hay miembros en este equipo.
                                         </TableCell>
                                     </TableRow>
                                 )}
