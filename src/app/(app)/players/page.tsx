@@ -11,9 +11,7 @@ import {
   Loader2,
   Upload,
   User,
-  Banknote,
   Contact,
-  HeartPulse,
   Shield,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -386,6 +384,7 @@ export default function PlayersPage() {
                         <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
+                      <div className="min-h-[280px]">
                        <div className="space-y-6">
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                <div className="space-y-2">
@@ -401,17 +400,17 @@ export default function PlayersPage() {
                                    <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
                                </div>
                            </div>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="dni">DNI</Label>
                                    <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                                </div>
-                               <div className="space-y-2 md:col-span-2">
+                               <div className="space-y-2">
                                    <Label htmlFor="address">Dirección</Label>
                                    <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
                                </div>
                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
                                    <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
@@ -422,8 +421,10 @@ export default function PlayersPage() {
                                </div>
                            </div>
                        </div>
+                       </div>
                     </TabsContent>
                     <TabsContent value="contact" className="pt-6">
+                      <div className="min-h-[280px]">
                         <div className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
@@ -440,8 +441,10 @@ export default function PlayersPage() {
                                 <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                             </div>
                         </div>
+                      </div>
                     </TabsContent>
                     <TabsContent value="sports" className="pt-6">
+                      <div className="min-h-[280px]">
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                            <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
@@ -465,6 +468,7 @@ export default function PlayersPage() {
                                 <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
                             </div>
                        </div>
+                      </div>
                     </TabsContent>
                 </Tabs>
             </div>
