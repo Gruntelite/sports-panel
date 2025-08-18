@@ -196,87 +196,87 @@ export default function PlayersPage() {
                         </span>
                     </Button>
                 </DialogTrigger>
-                <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>Añadir Nuevo Jugador</DialogTitle>
                         <DialogDescription>
                             Rellena la información para añadir un nuevo jugador al club.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-6 py-4">
-                        <h4 className="font-semibold text-base border-b pb-2">Datos Personales</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nombre</Label>
-                                <Input id="name" value={newPlayerData.name || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="lastName">Apellidos</Label>
-                                <Input id="lastName" value={newPlayerData.lastName || ''} onChange={handleInputChange} />
+                    <div className="space-y-6 py-4">
+                        <div>
+                            <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Personales</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Nombre</Label>
+                                    <Input id="name" value={newPlayerData.name || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Input id="lastName" value={newPlayerData.lastName || ''} onChange={handleInputChange} />
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="age">Edad</Label>
+                                    <Input id="age" type="number" value={newPlayerData.age || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dni">DNI</Label>
+                                    <Input id="dni" value={newPlayerData.dni || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2 col-span-2">
+                                    <Label htmlFor="address">Dirección</Label>
+                                    <Input id="address" value={newPlayerData.address || ''} onChange={handleInputChange} />
+                                </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Input id="city" value={newPlayerData.city || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Input id="postalCode" value={newPlayerData.postalCode || ''} onChange={handleInputChange} />
+                                </div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-2 gap-4">
-                             <div className="space-y-2">
-                                <Label htmlFor="age">Edad</Label>
-                                <Input id="age" type="number" value={newPlayerData.age || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="dni">DNI</Label>
-                                <Input id="dni" value={newPlayerData.dni || ''} onChange={handleInputChange} />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="address">Dirección</Label>
-                            <Input id="address" value={newPlayerData.address || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="city">Ciudad</Label>
-                                <Input id="city" value={newPlayerData.city || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="postalCode">Código Postal</Label>
-                                <Input id="postalCode" value={newPlayerData.postalCode || ''} onChange={handleInputChange} />
-                            </div>
+
+                        <div>
+                           <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos de Contacto (Tutor/a)</h4>
+                           <div className="grid grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
+                                    <Input id="tutorEmail" type="email" value={newPlayerData.tutorEmail || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
+                                    <Input id="tutorPhone" type="tel" value={newPlayerData.tutorPhone || ''} onChange={handleInputChange} />
+                                </div>
+                           </div>
                         </div>
                         
-                        <h4 className="font-semibold text-base border-b pb-2 pt-4">Datos de Contacto (Tutor/a)</h4>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="tutorEmail">Email del Tutor/a</Label>
-                                <Input id="tutorEmail" type="email" value={newPlayerData.tutorEmail || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="tutorPhone">Teléfono del Tutor/a</Label>
-                                <Input id="tutorPhone" type="tel" value={newPlayerData.tutorPhone || ''} onChange={handleInputChange} />
-                            </div>
-                        </div>
-
-                        <h4 className="font-semibold text-base border-b pb-2 pt-4">Datos Bancarios</h4>
-                        <div className="space-y-2">
-                             <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                             <Input id="iban" value={newPlayerData.iban || ''} onChange={handleInputChange} />
-                        </div>
-
-                        <h4 className="font-semibold text-base border-b pb-2 pt-4">Datos Deportivos</h4>
-                         <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="teamId">Equipo</Label>
-                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={newPlayerData.teamId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un equipo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {teams.map(team => (
-                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                <Input id="jerseyNumber" type="number" value={newPlayerData.jerseyNumber || ''} onChange={handleInputChange} />
-                            </div>
+                        <div>
+                            <h4 className="font-semibold text-base border-b pb-2 mb-4">Datos Deportivos y Bancarios</h4>
+                            <div className="grid grid-cols-3 gap-4">
+                               <div className="space-y-2">
+                                    <Label htmlFor="teamId">Equipo</Label>
+                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={newPlayerData.teamId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un equipo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {teams.map(team => (
+                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                    <Input id="jerseyNumber" type="number" value={newPlayerData.jerseyNumber || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                    <Input id="iban" value={newPlayerData.iban || ''} onChange={handleInputChange} />
+                                </div>
+                           </div>
                         </div>
                     </div>
                     <DialogFooter>
