@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
@@ -20,12 +20,21 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
        const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 try {
-                    const clubDocRef = doc(db, 'clubs', user.uid);
-                    const clubDocSnap = await getDoc(clubDocRef);
-                    if (clubDocSnap.exists()) {
-                        const themeColor = clubDocSnap.data()?.themeColor;
-                        if (themeColor) {
-                           applyTheme(themeColor)
+                    // Find the club where the user is an admin
+                    const q = query(collection(db, "clubs"), where("adminId", "==", user.uid));
+                    const querySnapshot = await getDocs(q);
+
+                    if (!querySnapshot.empty) {
+                        // Assuming one admin belongs to one club
+                        const clubDoc = querySnapshot.docs[0];
+                        const settingsRef = doc(db, "clubs", clubDoc.id, "settings", "config");
+                        const settingsSnap = await getDoc(settingsRef);
+
+                        if (settingsSnap.exists()) {
+                            const themeColor = settingsSnap.data()?.themeColor;
+                            if (themeColor) {
+                               applyTheme(themeColor)
+                            }
                         }
                     }
                 } catch (error) {
@@ -39,3 +48,5 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   return <>{children}</>;
 }
+
+    

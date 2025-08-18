@@ -15,7 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore";
+import { doc, setDoc, getDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -90,6 +90,20 @@ export default function SignUpPage() {
     setLoading(true);
 
     try {
+      // Check if club name already exists
+      const clubRef = doc(db, "clubs", clubName);
+      const clubSnap = await getDoc(clubRef);
+
+      if (clubSnap.exists()) {
+        toast({
+          variant: "destructive",
+          title: "Fallo en el Registro",
+          description: "El nombre del club ya está en uso. Por favor, elige otro.",
+        });
+        setLoading(false);
+        return;
+      }
+
       // Create user in Firebase Auth
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -101,17 +115,18 @@ export default function SignUpPage() {
         name,
         email,
         clubName,
-        sport,
         role: 'Admin',
       });
 
-       // Save club info to a 'clubs' collection
-      await setDoc(doc(db, "clubs", user.uid), { // Using user UID as doc ID for simplicity
-        name: clubName,
-        sport,
+      // Create club settings subcollection
+      const settingsRef = doc(db, "clubs", clubName, "settings", "config");
+      await setDoc(settingsRef, {
+        sport: sport,
+        themeColor: hslColor ? `${hslColor.h} ${hslColor.s}% ${hslColor.l}%` : '217 91% 60%',
+        billingPlan: null, // Placeholder for future billing plan
         adminId: user.uid,
-        themeColor: hslColor ? `${hslColor.h} ${hslColor.s}% ${hslColor.l}%` : '217 91% 60%'
       });
+
 
       if (hslColor) {
         localStorage.setItem('clubThemeColor', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
@@ -250,3 +265,5 @@ export default function SignUpPage() {
     </div>
   );
 }
+
+    
