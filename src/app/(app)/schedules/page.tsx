@@ -81,7 +81,7 @@ export default function SchedulesPage() {
   const getScheduleRef = useCallback(() => {
     if (!clubId) return null;
     return doc(db, "clubs", clubId, "schedules", scheduleTemplateId);
-  }, [clubId]);
+  }, [clubId, scheduleTemplateId]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -211,6 +211,30 @@ export default function SchedulesPage() {
     }
   };
 
+  const handleCreateTemplate = async () => {
+    if (!clubId) return;
+
+    const templateName = prompt("Introduce el nombre para la nueva plantilla:");
+    if (templateName && templateName.trim() !== '') {
+        const newTemplateId = templateName.toLowerCase().replace(/\s+/g, '-');
+        const newTemplateRef = doc(db, "clubs", clubId, "schedules", newTemplateId);
+        
+        try {
+            await setDoc(newTemplateRef, {
+                name: templateName,
+                venues: [],
+                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+            });
+            toast({ title: "Plantilla creada", description: `La plantilla "${templateName}" ha sido creada.` });
+            // Optionally, you can switch to the new template here
+            // setScheduleTemplateId(newTemplateId);
+        } catch (error) {
+            console.error("Error creating template: ", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo crear la plantilla." });
+        }
+    }
+  };
+
 
   const navigateDay = (direction: 'prev' | 'next') => {
     if (assignments.length > 0) {
@@ -266,7 +290,7 @@ export default function SchedulesPage() {
                 <DropdownMenuItem disabled>Eliminar Plantilla</DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button className="gap-1">
+            <Button className="gap-1" onClick={handleCreateTemplate}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 Crear Plantilla
             </Button>
@@ -410,3 +434,5 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+    
