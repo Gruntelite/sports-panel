@@ -29,3 +29,14 @@ export type Player = {
     position?: string;
     avatar?: string;
 }
+
+export type Coach = {
+    id: string;
+    name: string;
+    lastName: string;
+    email?: string;
+    phone?: string;
+    teamId?: string;
+    teamName?: string;
+    avatar?: string;
+}

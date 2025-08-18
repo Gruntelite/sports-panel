@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Search, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock } from "lucide-react";
+import { Menu, Search, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 const menuItems = [
     { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
     { href: "/players", label: "Jugadores", icon: Users },
+    { href: "/coaches", label: "Entrenadores", icon: UserSquare },
     { href: "/teams", label: "Equipos", icon: Shield },
     { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/calendar", label: "Calendario", icon: Calendar },
