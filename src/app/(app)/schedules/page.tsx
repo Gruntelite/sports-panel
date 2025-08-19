@@ -132,7 +132,7 @@ export default function SchedulesPage() {
     } finally {
         setLoading(false);
     }
-  }, [currentTemplateId]);
+  }, [currentTemplateId, toast]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -154,7 +154,7 @@ export default function SchedulesPage() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [fetchAllData]);
 
   const loadTemplateData = (template: ScheduleTemplate) => {
     setVenues(template.venues || []);
@@ -358,35 +358,52 @@ export default function SchedulesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline">
-                    {currentTemplate?.name || "Seleccionar Plantilla"}
-                    <MoreVertical className="ml-2 h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent>
-                <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
-                    {scheduleTemplates.map(template => (
-                         <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
-                    ))}
-                </DropdownMenuRadioGroup>
-                <DropdownMenuSeparator />
-                <DialogTrigger asChild onSelect={(e) => e.preventDefault()}>
-                  <DropdownMenuItem onSelect={() => {
-                    setEditedTemplateName(currentTemplate?.name || "");
-                    setIsEditTemplateModalOpen(true);
-                  }}>
-                    <Edit className="mr-2 h-4 w-4"/>
-                    Renombrar
+            <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline">
+                      {currentTemplate?.name || "Seleccionar Plantilla"}
+                      <MoreVertical className="ml-2 h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                      {scheduleTemplates.map(template => (
+                           <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                      ))}
+                  </DropdownMenuRadioGroup>
+                  <DropdownMenuSeparator />
+                  <DialogTrigger asChild>
+                    <DropdownMenuItem onSelect={(e) => {
+                      e.preventDefault();
+                      setEditedTemplateName(currentTemplate?.name || "");
+                      setIsEditTemplateModalOpen(true);
+                    }}>
+                      <Edit className="mr-2 h-4 w-4"/>
+                      Renombrar
+                    </DropdownMenuItem>
+                  </DialogTrigger>
+                  <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)}>
+                      <Trash2 className="mr-2 h-4 w-4"/>
+                      Eliminar
                   </DropdownMenuItem>
-                </DialogTrigger>
-                <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)}>
-                    <Trash2 className="mr-2 h-4 w-4"/>
-                    Eliminar
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Renombrar Plantilla</DialogTitle>
+                    <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                    <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                    <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
               <DialogTrigger asChild>
@@ -549,23 +566,6 @@ export default function SchedulesPage() {
         </Card>
       </div>
 
-       <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
-        <DialogContent>
-          <DialogHeader>
-              <DialogTitle>Renombrar Plantilla</DialogTitle>
-              <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-              <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-              <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
-          </div>
-          <DialogFooter>
-              <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-              <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      
        <AlertDialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -586,5 +586,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-    
