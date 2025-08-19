@@ -120,6 +120,9 @@ export default function SignUpPage() {
 
       const newClubRef = doc(collection(db, "clubs"));
       const clubId = newClubRef.id;
+      
+      const [firstName, ...lastNameParts] = name.split(" ");
+      const lastName = lastNameParts.join(" ");
 
       // 1. Create the main club document
       batch.set(newClubRef, {
@@ -148,6 +151,15 @@ export default function SignUpPage() {
         themeColor: clubColor,
         themeColorForeground: foregroundColor,
         billingPlan: null,
+      });
+
+      // 5. Create the super-admin's entry in the staff subcollection
+      const staffRef = doc(db, "clubs", clubId, "staff", user.uid);
+      batch.set(staffRef, {
+          name: firstName,
+          lastName: lastName,
+          email: email,
+          role: "Super-Admin",
       });
 
       // Commit all writes to the database
