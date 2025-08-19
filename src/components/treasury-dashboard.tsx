@@ -199,7 +199,7 @@ export function TreasuryDashboard() {
                         <TableRow key={player.id}>
                             <TableCell className="font-medium">{player.name} {player.lastName}</TableCell>
                             <TableCell>{player.teamName}</TableCell>
-                            <TableCell>{player.monthlyFee ? `${player.monthlyFee} €` : 'No definida'}</TableCell>
+                            <TableCell>{player.monthlyFee ? `${player.monthlyFee.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}` : 'No definida'}</TableCell>
                             <TableCell>
                                 <Badge variant={status.variant}>
                                     <StatusIcon className="mr-1 h-3 w-3" />
