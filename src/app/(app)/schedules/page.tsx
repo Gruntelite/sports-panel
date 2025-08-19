@@ -674,7 +674,7 @@ export default function SchedulesPage() {
             </CardContent>
         </Card>
         
-        <Card className="relative flex flex-col h-full">
+        <Card className="sticky top-6 self-start flex flex-col">
             <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
                 <div className="flex items-center gap-1">
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
@@ -751,6 +751,7 @@ export default function SchedulesPage() {
     
 
     
+
 
 
 
