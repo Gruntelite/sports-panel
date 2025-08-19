@@ -1,11 +1,16 @@
 "use client";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { useEffect, useState } from "react";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
+import { signOut } from "firebase/auth";
+import { Skeleton } from "../ui/skeleton";
 
 
 const menuItems = [
@@ -16,11 +21,59 @@ const menuItems = [
     { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
+    { href: "/staff", label: "Staff y Directiva", icon: UserCog},
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
   ];
 
+type UserProfile = {
+    name: string;
+    email: string;
+    initials: string;
+}
+
 export function Sidebar() {
     const pathname = usePathname();
+    const router = useRouter();
+    const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                try {
+                    const rootUserDocRef = doc(db, "users", user.uid);
+                    const rootUserDocSnap = await getDoc(rootUserDocRef);
+
+                    if (rootUserDocSnap.exists()) {
+                        const clubId = rootUserDocSnap.data().clubId;
+                        const userDocRef = doc(db, "clubs", clubId, "users", user.uid);
+                        const userDocSnap = await getDoc(userDocRef);
+
+                        if (userDocSnap.exists()) {
+                            const userData = userDocSnap.data();
+                            setUserProfile({
+                                name: userData.name || "Sin Nombre",
+                                email: userData.email || "Sin Email",
+                                initials: (userData.name || "U").split(' ').map((n:string) => n[0]).join('')
+                            });
+                        }
+                    }
+                } catch (error) {
+                    console.error("Error fetching user profile:", error);
+                }
+            }
+            setLoading(false);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const handleLogout = async () => {
+        await signOut(auth);
+        localStorage.removeItem('clubThemeColor');
+        localStorage.removeItem('clubThemeColorForeground');
+        router.push("/login");
+    }
 
     return (
         <div className="hidden border-r bg-card md:block">
@@ -58,13 +111,20 @@ export function Sidebar() {
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary h-auto">
                                 <Avatar className="h-9 w-9">
-                                <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
-                                <AvatarFallback>AU</AvatarFallback>
+                                <AvatarImage src={`https://placehold.co/40x40.png?text=${userProfile?.initials || 'S'}`} alt="@admin" />
+                                <AvatarFallback>{userProfile?.initials || 'S'}</AvatarFallback>
                                 </Avatar>
-                                <div className="flex flex-col items-start">
-                                    <span className="font-semibold text-sm text-foreground">Usuario Admin</span>
-                                    <span className="text-xs text-muted-foreground">admin@sportspanel.com</span>
-                                </div>
+                                {loading ? (
+                                    <div className="space-y-1">
+                                        <Skeleton className="h-4 w-24" />
+                                        <Skeleton className="h-3 w-32" />
+                                    </div>
+                                ) : (
+                                    <div className="flex flex-col items-start">
+                                        <span className="font-semibold text-sm text-foreground">{userProfile?.name}</span>
+                                        <span className="text-xs text-muted-foreground">{userProfile?.email}</span>
+                                    </div>
+                                )}
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-56 mb-2">
@@ -74,11 +134,9 @@ export function Sidebar() {
                                 <Settings className="mr-2 h-4 w-4"/>
                                 Ajustes
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link href="/" className="w-full">
-                                <LogOut className="mr-2 h-4 w-4"/>
-                                Cerrar Sesión
-                              </Link>
+                            <DropdownMenuItem onClick={handleLogout}>
+                              <LogOut className="mr-2 h-4 w-4"/>
+                              Cerrar Sesión
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
