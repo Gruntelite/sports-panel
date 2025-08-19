@@ -906,7 +906,7 @@ export default function SchedulesPage() {
                                       >
                                           <span className="font-bold text-sm truncate">{event.teamName}</span>
                                           <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
-                                          <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
+                                          <span className="text-xs opacity-90 truncate flex items-center gap-1 mt-auto"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
                                       </div>
                                   )
                                 })}
@@ -961,3 +961,4 @@ export default function SchedulesPage() {
 }
 
     
+
