@@ -19,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown, Trash2, Copy } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown, Trash2, Copy, KeyRound } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -57,7 +57,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
 import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
 import type { Player, Coach, Staff, Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -150,7 +150,7 @@ export default function UsersPage() {
 
         playersSnapshot.forEach(doc => {
             const data = doc.data() as Player;
-            const contactEmail = data.tutorEmail;
+            const contactEmail = data.isOwnTutor ? data.tutorEmail : data.tutorEmail;
             const contactName = data.isOwnTutor ? `${data.name} ${data.lastName}` : (data.tutorName ? `${data.tutorName} ${data.tutorLastName} (Tutor de ${data.name})` : `${data.name} ${data.lastName} (Familia)`);
             if (contactEmail) {
                 allContacts.push({ name: contactName, email: contactEmail });
@@ -305,14 +305,32 @@ export default function UsersPage() {
     }
   };
 
+  const handleSendPasswordReset = async (email: string) => {
+    setSaving(true);
+    try {
+        await sendPasswordResetEmail(auth, email);
+        toast({
+            title: "Correo enviado",
+            description: `Se ha enviado un enlace para restablecer la contraseña a ${email}.`
+        });
+    } catch (error) {
+        console.error("Error sending password reset email:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudo enviar el correo de restablecimiento."
+        });
+    } finally {
+        setSaving(false);
+    }
+  };
+
   const handleDeleteUser = async () => {
       if (!userToDelete) return;
       setSaving(true);
       try {
-          // This requires a backend function to delete the user from Auth
-          // For now, we only delete from Firestore.
           await deleteDoc(doc(db, "users", userToDelete.id));
-          toast({ title: "Usuario eliminado", description: `El usuario ${userToDelete.name} ha sido eliminado.` });
+          toast({ title: "Usuario eliminado", description: `El usuario ${userToDelete.name} ha sido eliminado de la base de datos. Para eliminarlo completamente, debes hacerlo desde la consola de Firebase Authentication.` });
           setUserToDelete(null);
           if (clubId) fetchData(clubId);
       } catch (error) {
@@ -501,8 +519,12 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onSelect={() => handleOpenEditModal(user)}>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleOpenEditModal(user)}>Editar Usuario</DropdownMenuItem>
                         <DropdownMenuItem onSelect={() => handleOpenRoleModal(user)}>Cambiar Rol</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleSendPasswordReset(user.email)} disabled={saving}>
+                           <KeyRound className="mr-2 h-4 w-4" />
+                           Restablecer Contraseña
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onSelect={() => setUserToDelete(user)}>
                           <Trash2 className="mr-2 h-4 w-4" />
@@ -583,7 +605,7 @@ export default function UsersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al usuario {userToDelete?.name}.
+              Esta acción no se puede deshacer. Se eliminará permanentemente la entrada del usuario {userToDelete?.name} de la base de datos de la aplicación. Para eliminar la cuenta de autenticación, deberás hacerlo desde la consola de Firebase.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -597,3 +619,4 @@ export default function UsersPage() {
     </>
   );
 }
+
