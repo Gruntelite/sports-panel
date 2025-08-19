@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,11 +11,12 @@ import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 type Venue = {
     id: string;
@@ -91,7 +93,8 @@ export default function SchedulesPage() {
 
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
-
+  
+  const [pendingSchedule, setPendingSchedule] = useState<DailyScheduleEntry[]>([]);
   const [draggedTeamId, setDraggedTeamId] = useState<string | null>(null);
   
   const getScheduleRef = useCallback((templateId: string) => {
@@ -214,58 +217,28 @@ export default function SchedulesPage() {
   };
   
   const timeSlots = generateTimeSlots(startTime, endTime);
-
-  const handleSaveDailySchedules = () => {
-    const newDailySchedule: DailyScheduleEntry[] = [];
-    const timeSlotsSet = new Set(timeSlots);
-
-    assignments.forEach(assignment => {
-      const team = teams.find(t => t.id === assignment.id);
-      const venue = venues.find(v => v.id === assignment.venueId);
-
-      if(team && venue && assignment.startTime && assignment.endTime) {
-        try {
-          const start = new Date(`1970-01-01T${assignment.startTime}`);
-          const end = new Date(`1970-01-01T${assignment.endTime}`);
-          let current = start;
-
-          while(current < end) {
-            const next = new Date(current.getTime() + 60 * 60 * 1000);
-            const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
-            if (timeSlotsSet.has(timeSlot)) {
-              newDailySchedule.push({
-                id: crypto.randomUUID(),
-                teamId: team.id,
-                teamName: team.name,
-                time: timeSlot,
-                venueName: venue.name
-              });
-            }
-            current = next;
-          }
-        } catch (e) {
-            console.error("Invalid time format for assignment:", assignment)
-        }
-      }
-    });
-
-    const updatedWeeklySchedule = {
-        ...weeklySchedule,
-        [currentDay]: newDailySchedule,
-    };
-    
-    setWeeklySchedule(updatedWeeklySchedule);
-    setAssignments(teams.map(t => ({ id: t.id, teamName: t.name, startTime: '', endTime: '', venueId: '' })));
-    toast({ title: "Horarios para el " + currentDay + " preparados", description: `Los horarios se guardarán al pulsar "Guardar Plantilla".` });
-  };
   
   const handleSaveTemplate = async () => {
     if (!clubId || !currentTemplateId) return;
+
+    // Merge pending schedule into the main weekly schedule
+    const updatedDailySchedule = [
+        ...weeklySchedule[currentDay].filter(entry => !pendingSchedule.some(p => p.time === entry.time && p.venueName === entry.venueName)), // Keep saved entries that are not being replaced
+        ...pendingSchedule, // Add all pending entries
+    ];
+
+    const updatedWeeklySchedule = {
+        ...weeklySchedule,
+        [currentDay]: updatedDailySchedule,
+    };
+
     const scheduleRef = getScheduleRef(currentTemplateId);
     if (scheduleRef) {
-        await updateDoc(scheduleRef, { weeklySchedule: weeklySchedule });
+        await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
+        setWeeklySchedule(updatedWeeklySchedule);
+        setPendingSchedule([]); // Clear pending schedule after saving
         toast({ title: "Plantilla Guardada", description: `Los horarios de la plantilla se han guardado.` });
-        if(clubId) fetchAllData(clubId);
+        if(clubId) fetchAllData(clubId); // Optional: refetch to ensure sync, or just update local state
     }
   };
 
@@ -325,6 +298,7 @@ export default function SchedulesPage() {
 
   const navigateDay = (direction: 'prev' | 'next') => {
     setAssignments(teams.map(t => ({ id: t.id, teamName: t.name, startTime: '', endTime: '', venueId: '' })));
+    setPendingSchedule([]);
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
     } else {
@@ -332,8 +306,46 @@ export default function SchedulesPage() {
     }
   };
   
+    const updatePendingSchedule = (updatedAssignments: Assignment[]) => {
+        const newDailySchedule: DailyScheduleEntry[] = [];
+        const timeSlotsSet = new Set(timeSlots);
+
+        updatedAssignments.forEach(assignment => {
+            const team = teams.find(t => t.id === assignment.id);
+            const venue = venues.find(v => v.id === assignment.venueId);
+
+            if(team && venue && assignment.startTime && assignment.endTime) {
+                try {
+                    const start = new Date(`1970-01-01T${assignment.startTime}`);
+                    const end = new Date(`1970-01-01T${assignment.endTime}`);
+                    let current = start;
+
+                    while(current < end) {
+                        const next = new Date(current.getTime() + 60 * 60 * 1000);
+                        const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
+                        if (timeSlotsSet.has(timeSlot)) {
+                            newDailySchedule.push({
+                                id: crypto.randomUUID(),
+                                teamId: team.id,
+                                teamName: team.name,
+                                time: timeSlot,
+                                venueName: venue.name
+                            });
+                        }
+                        current = next;
+                    }
+                } catch (e) {
+                    console.error("Invalid time format for assignment:", assignment)
+                }
+            }
+        });
+        setPendingSchedule(newDailySchedule);
+    };
+
   const handleAssignmentChange = (id: string, field: 'startTime' | 'endTime' | 'venueId', value: string) => {
-    setAssignments(prev => prev.map(a => a.id === id ? {...a, [field]: value} : a));
+    const updatedAssignments = assignments.map(a => a.id === id ? {...a, [field]: value} : a);
+    setAssignments(updatedAssignments);
+    updatePendingSchedule(updatedAssignments);
   };
 
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, teamId: string) => {
@@ -365,6 +377,22 @@ export default function SchedulesPage() {
   
   const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
 
+  const displayedScheduleEntries = useMemo(() => {
+    const combined = [...(weeklySchedule[currentDay] || [])];
+
+    pendingSchedule.forEach(pendingEntry => {
+        const existingIndex = combined.findIndex(
+            entry => entry.time === pendingEntry.time && entry.venueName === pendingEntry.venueName
+        );
+        if (existingIndex === -1) {
+            combined.push({ ...pendingEntry, isPending: true } as any);
+        }
+    });
+
+    return combined;
+  }, [weeklySchedule, pendingSchedule, currentDay]);
+
+
   if (loading) {
     return (
         <div className="flex items-center justify-center h-full">
@@ -383,7 +411,7 @@ export default function SchedulesPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-            <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+            <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">
@@ -398,6 +426,13 @@ export default function SchedulesPage() {
                       ))}
                   </DropdownMenuRadioGroup>
                   <DropdownMenuSeparator />
+                   <DropdownMenuItem onSelect={(e) => {
+                      e.preventDefault();
+                      setIsNewTemplateModalOpen(true);
+                    }}>
+                      <PlusCircle className="mr-2 h-4 w-4"/>
+                      Crear Plantilla
+                  </DropdownMenuItem>
                   <DropdownMenuItem onSelect={(e) => {
                       e.preventDefault();
                       setEditedTemplateName(currentTemplate?.name || "");
@@ -414,29 +449,6 @@ export default function SchedulesPage() {
               </DropdownMenu>
               <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Renombrar Plantilla</DialogTitle>
-                    <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                    <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-                    <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                    <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-
-            <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
-              <DialogTrigger asChild>
-                <Button className="gap-1">
-                    <PlusCircle className="h-3.5 w-3.5" />
-                    Crear Plantilla
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
                     <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
                     <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
                 </DialogHeader>
@@ -449,6 +461,23 @@ export default function SchedulesPage() {
                     <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
                 </DialogFooter>
               </DialogContent>
+            </Dialog>
+
+            <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Renombrar Plantilla</DialogTitle>
+                        <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
+                    </DialogHeader>
+                    <div className="py-4">
+                        <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                        <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                        <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                    </DialogFooter>
+                </DialogContent>
             </Dialog>
 
         </div>
@@ -478,20 +507,24 @@ export default function SchedulesPage() {
                     </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="start-time">Hora de Inicio</Label>
-                        <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="end-time">Hora de Fin</Label>
-                        <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                <div className="space-y-4 p-4 border rounded-lg">
+                    <h3 className="font-semibold text-base">Rango Horario del Día</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="start-time">Hora de Inicio</Label>
+                            <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="end-time">Hora de Fin</Label>
+                            <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                        </div>
                     </div>
                 </div>
 
-                <div className="space-y-4 p-4 border rounded-lg">
+
+                <div className="space-y-4">
                     <h3 className="font-semibold text-base">Asignar Tiempos y Recintos</h3>
-                     <div className="space-y-2 max-h-80 overflow-y-auto pr-2">
+                     <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
                         {assignments.map(assignment => (
                           <div 
                             key={assignment.id} 
@@ -523,10 +556,6 @@ export default function SchedulesPage() {
                         ))}
                      </div>
                 </div>
-                 <Button onClick={handleSaveDailySchedules} className="w-full">
-                    <Clock className="mr-2 h-4 w-4" />
-                    Preparar Horarios para {currentDay}
-                </Button>
             </CardContent>
         </Card>
         
@@ -549,10 +578,10 @@ export default function SchedulesPage() {
                         <div key={slot} className="grid grid-cols-[120px_1fr] items-start border-b last:border-b-0 min-h-16">
                             <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot}</div>
                             <div className="p-2 flex flex-wrap gap-2 self-start">
-                               {weeklySchedule[currentDay]
+                               {displayedScheduleEntries
                                  .filter(entry => entry.time === slot)
-                                 .map(entry => (
-                                     <div key={entry.id} className="flex flex-col items-center p-1 bg-muted rounded-md">
+                                 .map((entry: any) => (
+                                     <div key={entry.id} className={cn("flex flex-col items-center p-1 bg-muted rounded-md", entry.isPending && "opacity-50")}>
                                         <Badge>{entry.teamName}</Badge>
                                         <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                             <MapPin className="h-3 w-3" />
@@ -596,4 +625,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
