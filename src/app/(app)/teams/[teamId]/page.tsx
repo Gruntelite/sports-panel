@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   UserSquare,
   CircleDollarSign,
+  UserPlus,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSub,
   DropdownMenuSubTrigger,
-  DropdownMenuSubContent
+  DropdownMenuSubContent,
+  DropdownMenuPortal
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -102,8 +104,12 @@ export default function EditTeamPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [modalType, setModalType] = useState<'player' | 'coach'>('player');
+
   const [playerData, setPlayerData] = useState<Partial<Player>>({});
-  const [playerToDelete, setPlayerToDelete] = useState<TeamMember | null>(null);
+  const [coachData, setCoachData] = useState<Partial<Coach>>({});
+
+  const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -144,7 +150,7 @@ export default function EditTeamPage() {
     return () => unsubscribe();
   }, [router]);
 
-  const hasMissingData = (player: any): boolean => {
+  const hasMissingPlayerData = (player: any): boolean => {
     const requiredFields = [
       'birthDate', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
       'tutorPhone', 'iban', 'teamId', 'jerseyNumber', 'monthlyFee'
@@ -154,6 +160,18 @@ export default function EditTeamPage() {
         requiredFields.push('tutorName', 'tutorLastName', 'tutorDni');
     }
     return requiredFields.some(field => player[field] === undefined || player[field] === null || player[field] === '');
+  };
+  
+  const hasMissingCoachData = (coach: any): boolean => {
+    const requiredFields = [
+      'birthDate', 'dni', 'address', 'city', 'postalCode', 'email',
+      'phone', 'iban'
+    ];
+     if (coach.isOwnTutor) {
+    } else {
+        requiredFields.push('tutorName', 'tutorLastName', 'tutorDni');
+    }
+    return requiredFields.some(field => coach[field] === undefined || coach[field] === null || coach[field] === '');
   };
 
   const fetchTeamData = async (currentClubId: string) => {
@@ -186,7 +204,8 @@ export default function EditTeamPage() {
               role: 'Jugador',
               jerseyNumber: data.jerseyNumber || 'N/A',
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-              hasMissingData: hasMissingData(data)
+              hasMissingData: hasMissingPlayerData(data),
+              data: data,
           } as TeamMember;
       });
 
@@ -200,6 +219,8 @@ export default function EditTeamPage() {
               role: 'Entrenador',
               jerseyNumber: '',
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+              hasMissingData: hasMissingCoachData(data),
+              data: data,
           };
       });
 
@@ -220,15 +241,19 @@ export default function EditTeamPage() {
   }, [clubId, teamId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
+    const { id, value, type } = e.target;
+    const val = type === 'number' ? Number(value) : value;
+
     if (['name', 'minAge', 'maxAge', 'defaultMonthlyFee'].includes(id)) {
         setTeam(prev => ({ ...prev, [id]: value }));
     } else {
-        const type = e.target.type;
-        setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
+       if (modalType === 'player') {
+            setPlayerData(prev => ({ ...prev, [id]: val }));
+       } else {
+            setCoachData(prev => ({ ...prev, [id]: val }));
+       }
     }
   };
-
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -279,9 +304,8 @@ export default function EditTeamPage() {
       const teamDocRef = doc(db, "clubs", clubId, "teams", teamId);
       batch.update(teamDocRef, teamDataToUpdate);
       
-      // Update all players in the team with the new default fee
       const newFee = teamDataToUpdate.defaultMonthlyFee;
-      if (newFee !== null) {
+      if (newFee !== null && newFee !== undefined) {
           const playersQuery = query(collection(db, "clubs", clubId, "players"), where("teamId", "==", teamId));
           const playersSnapshot = await getDocs(playersQuery);
           playersSnapshot.forEach(playerDoc => {
@@ -296,7 +320,7 @@ export default function EditTeamPage() {
       setNewImage(null);
       setImagePreview(null);
       if(imageUrl) setTeam(prev => ({...prev, image: imageUrl}));
-      fetchTeamData(clubId); // Refresh data
+      fetchTeamData(clubId);
     } catch (error) {
       console.error("Error saving changes: ", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
@@ -305,38 +329,64 @@ export default function EditTeamPage() {
     }
   };
   
-  // --- Player Management Functions ---
+  // --- Member Management Functions ---
 
-  const handleCheckboxChange = (id: keyof Player, checked: boolean) => {
-    setPlayerData(prev => ({ ...prev, [id]: checked }));
+  const handleCheckboxChange = (id: keyof Player | keyof Coach, checked: boolean) => {
+    if (modalType === 'player') {
+        setPlayerData(prev => ({ ...prev, [id as keyof Player]: checked }));
+    } else {
+        setCoachData(prev => ({ ...prev, [id as keyof Coach]: checked }));
+    }
   };
 
-  const handleSelectChange = (id: keyof Player, value: string) => {
-    setPlayerData(prev => ({ ...prev, [id]: value }));
+  const handleSelectChange = (id: keyof Player | keyof Coach, value: string) => {
+     if (modalType === 'player') {
+        setPlayerData(prev => ({ ...prev, [id as keyof Player]: value }));
+    } else {
+        setCoachData(prev => ({ ...prev, [id as keyof Coach]: value }));
+    }
   };
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-        setPlayerData(prev => ({ ...prev, birthDate: format(date, "yyyy-MM-dd") }));
+        const formattedDate = format(date, "yyyy-MM-dd");
+        if (modalType === 'player') {
+            setPlayerData(prev => ({ ...prev, birthDate: formattedDate }));
+        } else {
+            setCoachData(prev => ({ ...prev, birthDate: formattedDate }));
+        }
     }
   };
   
-  const handleOpenModal = async (mode: 'add' | 'edit', member?: TeamMember) => {
+  const handleOpenModal = (mode: 'add' | 'edit', memberType: 'player' | 'coach', member?: TeamMember) => {
     setModalMode(mode);
+    setModalType(memberType);
+    
     if (mode === 'add') {
-      setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee });
-    } else if (member && member.role === 'Jugador') {
-      const playerDocRef = doc(db, "clubs", clubId!, "players", member.id);
-      const playerDocSnap = await getDoc(playerDocRef);
-      if(playerDocSnap.exists()) {
-        setPlayerData(playerDocSnap.data());
+      if (memberType === 'player') {
+        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee });
+      } else {
+        setCoachData({ teamId: teamId });
       }
-    } else {
-      // Logic to edit coaches if needed
+    } else if (member) {
+      if (memberType === 'player') {
+        setPlayerData(member.data as Player);
+      } else {
+        setCoachData(member.data as Coach);
+      }
     }
+    
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
+  }
+
+  const handleSaveMember = async () => {
+    if (modalType === 'player') {
+      await handleSavePlayer();
+    } else {
+      await handleSaveCoach();
+    }
   }
 
   const handleSavePlayer = async () => {
@@ -389,27 +439,77 @@ export default function EditTeamPage() {
     }
   };
 
+  const handleSaveCoach = async () => {
+    if (!coachData.name || !coachData.lastName || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
+        return;
+    }
+
+    setSaving(true);
+    try {
+      let imageUrl = coachData.avatar;
+
+      if (newImage) {
+        if (coachData.avatar && !coachData.avatar.includes('placehold.co')) {
+            try {
+                const oldImageRef = ref(storage, coachData.avatar);
+                await deleteObject(oldImageRef);
+            } catch (storageError) {
+                console.warn("Could not delete old image:", storageError);
+            }
+        }
+        const imageRef = ref(storage, `coach-avatars/${clubId}/${uuidv4()}`);
+        await uploadBytes(imageRef, newImage);
+        imageUrl = await getDownloadURL(imageRef);
+      }
+      
+      const dataToSave = {
+        ...coachData,
+        avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
+      };
+
+      if (modalMode === 'edit' && coachData.id) {
+        const coachRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+        await updateDoc(coachRef, dataToSave);
+        toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
+      } else {
+        await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
+        toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al equipo.` });
+      }
+      
+      setIsModalOpen(false);
+      setCoachData({});
+      fetchTeamData(clubId);
+    } catch (error) {
+        console.error("Error saving coach: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+
   const handleDeleteMember = async () => {
-    if (!playerToDelete || !clubId) return;
+    if (!memberToDelete || !clubId) return;
 
     setIsDeleting(true);
     try {
-        if (playerToDelete.avatar && !playerToDelete.avatar.includes('placehold.co')) {
-            const imageRef = ref(storage, playerToDelete.avatar);
+        if (memberToDelete.avatar && !memberToDelete.avatar.includes('placehold.co')) {
+            const imageRef = ref(storage, memberToDelete.avatar);
             await deleteObject(imageRef);
         }
         
-        const collectionName = playerToDelete.role === 'Jugador' ? 'players' : 'coaches';
-        await deleteDoc(doc(db, "clubs", clubId, collectionName, playerToDelete.id));
+        const collectionName = memberToDelete.role === 'Jugador' ? 'players' : 'coaches';
+        await deleteDoc(doc(db, "clubs", clubId, collectionName, memberToDelete.id));
 
-        toast({ title: "Miembro eliminado", description: `${playerToDelete.name} ha sido eliminado.`});
+        toast({ title: "Miembro eliminado", description: `${memberToDelete.name} ha sido eliminado.`});
         fetchTeamData(clubId);
     } catch (error) {
         console.error("Error deleting member: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el miembro." });
     } finally {
         setIsDeleting(false);
-        setPlayerToDelete(null);
+        setMemberToDelete(null);
     }
   };
 
@@ -464,6 +564,10 @@ export default function EditTeamPage() {
       </div>
     );
   }
+  
+  const currentData = modalType === 'player' ? playerData : coachData;
+  const currentDataSetter = modalType === 'player' ? setPlayerData : setCoachData;
+
 
   return (
     <TooltipProvider>
@@ -563,12 +667,26 @@ export default function EditTeamPage() {
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                               ) : (
-                                  <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
-                                      <PlusCircle className="h-3.5 w-3.5" />
-                                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                          Añadir Jugador
-                                      </span>
-                                  </Button>
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                       <Button size="sm" className="h-8 gap-1">
+                                          <UserPlus className="h-3.5 w-3.5" />
+                                          <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                              Añadir Miembro
+                                          </span>
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem onSelect={() => handleOpenModal('add', 'player')}>
+                                        <User className="mr-2 h-4 w-4"/>
+                                        Añadir Jugador
+                                      </DropdownMenuItem>
+                                       <DropdownMenuItem onSelect={() => handleOpenModal('add', 'coach')}>
+                                        <UserSquare className="mr-2 h-4 w-4"/>
+                                        Añadir Entrenador
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
                               )}
                             </div>
                           </div>
@@ -641,9 +759,9 @@ export default function EditTeamPage() {
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleOpenModal('edit', member)} disabled={member.role !== 'Jugador'}>Editar</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenModal('edit', member.role === 'Jugador' ? 'player' : 'coach', member)}>Editar</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(member)}>
+                                                <DropdownMenuItem className="text-destructive" onClick={() => setMemberToDelete(member)}>
                                                   Eliminar
                                                 </DropdownMenuItem>
                                               </DropdownMenuContent>
@@ -670,39 +788,39 @@ export default function EditTeamPage() {
           </div>
       </div>
 
-      {/* --- Player Modal --- */}
+      {/* --- Member Modal --- */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Jugador' : 'Editar Jugador'}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? `Añadir Nuevo ${modalType === 'player' ? 'Jugador' : 'Entrenador'}` : `Editar ${modalType === 'player' ? 'Jugador' : 'Entrenador'}`}</DialogTitle>
                 <DialogDescription>
-                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo jugador al club.' : 'Modifica la información del jugador.'}
+                    Rellena la información para {modalMode === 'add' ? 'añadir un nuevo' : 'modificar el'} {modalType === 'player' ? 'jugador' : 'entrenador'} al club.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
                 <div className="flex flex-col items-center gap-4 pt-5">
-                    <Label>Foto del Jugador</Label>
+                    <Label>Foto del {modalType === 'player' ? 'Jugador' : 'Entrenador'}</Label>
                     <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || playerData.avatar} />
+                        <AvatarImage src={imagePreview || currentData.avatar} />
                         <AvatarFallback>
-                            {(playerData.name || 'N').charAt(0)}
-                            {(playerData.lastName || 'J').charAt(0)}
+                            {(currentData.name || 'N').charAt(0)}
+                            {(currentData.lastName || 'J').charAt(0)}
                         </AvatarFallback>
                     </Avatar>
                      <Button asChild variant="outline" size="sm">
-                        <label htmlFor="player-image-upload" className="cursor-pointer">
+                        <label htmlFor="member-image-upload" className="cursor-pointer">
                             <Upload className="mr-2 h-3 w-3"/>
                             Subir
                         </label>
                     </Button>
-                    <Input id="player-image-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                    <Input id="member-image-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                 </div>
                 
                 <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className={`grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-2'}`}>
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
-                        <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                        {modalType === 'player' && <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>}
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -710,39 +828,39 @@ export default function EditTeamPage() {
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
+                                   <Input id="name" value={currentData.name || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
+                                   <Input id="lastName" value={currentData.lastName || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
-                                    date={playerData.birthDate ? new Date(playerData.birthDate) : undefined} 
+                                    date={currentData.birthDate ? new Date(currentData.birthDate) : undefined} 
                                     onDateChange={handleDateChange} 
                                   />
-                                   {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
+                                   {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
                                </div>
                            </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="dni">DNI</Label>
-                                   <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
+                                   <Input id="dni" value={currentData.dni || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="address">Dirección</Label>
-                                   <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
+                                   <Input id="address" value={currentData.address || ''} onChange={handleInputChange} />
                                </div>
                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
+                                   <Input id="city" value={currentData.city || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                                   <Input id="postalCode" value={currentData.postalCode || ''} onChange={handleInputChange} />
                                </div>
                            </div>
                        </div>
@@ -754,94 +872,96 @@ export default function EditTeamPage() {
                           <div className="flex items-center space-x-2">
                               <Checkbox 
                                 id="isOwnTutor" 
-                                checked={playerData.isOwnTutor || false}
+                                checked={currentData.isOwnTutor || false}
                                 onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
                               />
-                              <Label htmlFor="isOwnTutor" className="font-normal">El jugador es su propio tutor (mayor de 18 años)</Label>
+                              <Label htmlFor="isOwnTutor" className="font-normal">{modalType === 'player' ? 'El jugador' : 'El entrenador'} es su propio tutor (mayor de 18 años)</Label>
                           </div>
                             
-                            {!(playerData.isOwnTutor) && (
+                            {!(currentData.isOwnTutor) && (
                                 <div className="space-y-6 p-4 border rounded-md bg-muted/50">
                                     <h4 className="font-medium">Datos del Tutor/a</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" value={playerData.tutorName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorName" value={(currentData as any).tutorName || ''} onChange={handleInputChange} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorLastName" value={(currentData as any).tutorLastName || ''} onChange={handleInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="tutorDni">DNI del Tutor/a</Label>
-                                        <Input id="tutorDni" value={playerData.tutorDni || ''} onChange={handleInputChange} />
+                                        <Input id="tutorDni" value={(currentData as any).tutorDni || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
+                                     <Label htmlFor="tutorEmail">{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleInputChange} />
                                  </div>
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
-                                     <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
+                                     <Label htmlFor="tutorPhone">{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                     <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
+                                <Input id="iban" value={currentData.iban || ''} onChange={handleInputChange} />
                             </div>
                         </div>
                       </div>
                     </TabsContent>
-                    <TabsContent value="sports" className="pt-6">
-                      <div className="min-h-[280px]">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                           <div className="space-y-2">
-                                <Label htmlFor="teamId">Equipo</Label>
-                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un equipo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {allTeams.map(t => (
-                                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
+                    {modalType === 'player' && (
+                        <TabsContent value="sports" className="pt-6">
+                        <div className="min-h-[280px]">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                             <div className="space-y-2">
-                                <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
-                            </div>
-                       </div>
-                      </div>
-                    </TabsContent>
+                                    <Label htmlFor="teamId">Equipo</Label>
+                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un equipo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {allTeams.map(t => (
+                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                    <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                </div>
+                        </div>
+                        </div>
+                        </TabsContent>
+                    )}
                 </Tabs>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="button" onClick={handleSavePlayer} disabled={saving}>
+                <Button type="button" onClick={handleSaveMember} disabled={saving}>
                     {saving ? <Loader2 className="animate-spin" /> : 'Guardar'}
                 </Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
-      <AlertDialog open={!!playerToDelete} onOpenChange={(open) => !open && setPlayerToDelete(null)}>
+      <AlertDialog open={!!memberToDelete} onOpenChange={(open) => !open && setMemberToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {playerToDelete?.name}.
+              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {memberToDelete?.name}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -856,6 +976,3 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
-
-
-    

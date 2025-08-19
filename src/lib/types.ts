@@ -46,6 +46,17 @@ export type Coach = {
     teamId?: string;
     teamName?: string;
     avatar?: string;
+    birthDate?: string;
+    dni?: string;
+    address?: string;
+    city?: string;
+    postalCode?: string;
+    iban?: string;
+    isOwnTutor?: boolean;
+    tutorName?: string;
+    tutorLastName?: string;
+    tutorDni?: string;
+    hasMissingData?: boolean;
 }
 
 export type TeamMember = {
@@ -55,4 +66,5 @@ export type TeamMember = {
     jerseyNumber?: number | string;
     avatar?: string;
     hasMissingData?: boolean;
+    data: Player | Coach;
 }
