@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown, Trash2, Copy, KeyRound } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Loader2, KeyRound, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -49,18 +49,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase/auth";
-import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
-import type { User, Staff } from "@/lib/types";
-import { cn } from "@/lib/utils";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { sendPasswordResetEmail } from "firebase/auth";
+import { collection, getDocs, doc, getDoc, addDoc, query, updateDoc, deleteDoc, setDoc } from "firebase/firestore";
+import type { User } from "@/lib/types";
 
 
 export default function UsersPage() {
@@ -297,8 +293,8 @@ export default function UsersPage() {
               </CardDescription>
             </div>
             <Dialog open={isAddUserOpen} onOpenChange={(isOpen) => {
-              setIsAddUserOpen(isOpen);
               if (!isOpen) resetAddUserForm();
+              setIsAddUserOpen(isOpen);
             }}>
                 <DialogTrigger asChild>
                     <Button size="sm" className="h-8 gap-1">

@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, getDocs, collection, query, where } from "firebase/firestore";
+import { doc, setDoc, getDocs, collection, query, where, writeBatch } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -114,30 +114,41 @@ export default function SignUpPage() {
       const luminance = getLuminance(clubColor);
       const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
 
-      // Create club with a new auto-generated ID
+      // Create club, user records, and settings in a batch
+      const batch = writeBatch(db);
+
       const newClubRef = doc(collection(db, "clubs"));
-      await setDoc(newClubRef, {
+      const clubId = newClubRef.id;
+
+      batch.set(newClubRef, {
         name: clubName,
         adminId: user.uid,
       });
-      const clubId = newClubRef.id;
 
-      // Save user info to Firestore, linking to the club ID
-      await setDoc(doc(db, "users", user.uid), {
-        name,
-        email,
+      // Save user's clubId link in the root users collection
+      const rootUserRef = doc(db, "users", user.uid);
+      batch.set(rootUserRef, {
         clubId: clubId,
-        role: 'Admin',
       });
 
+      // Save user details in the club's specific users subcollection
+      const clubUserRef = doc(db, "clubs", clubId, "users", user.uid);
+      batch.set(clubUserRef, {
+        name: name,
+        email: email,
+        role: 'Admin',
+      });
+      
       // Create club settings subcollection
       const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-      await setDoc(settingsRef, {
+      batch.set(settingsRef, {
         sport: sport,
         themeColor: clubColor,
         themeColorForeground: foregroundColor,
         billingPlan: null,
       });
+
+      await batch.commit();
 
       const primaryHsl = hexToHsl(clubColor);
       const foregroundHsl = hexToHsl(foregroundColor);
