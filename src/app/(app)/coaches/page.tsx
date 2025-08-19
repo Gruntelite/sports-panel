@@ -463,7 +463,7 @@ export default function CoachesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead padding="checkbox">
+                <TableHead className="w-[80px]">
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
@@ -482,7 +482,7 @@ export default function CoachesPage() {
             <TableBody>
               {coaches.map(coach => (
                 <TableRow key={coach.id} data-state={selectedCoaches.includes(coach.id) && "selected"}>
-                   <TableCell padding="checkbox">
+                   <TableCell>
                     <Checkbox
                       checked={selectedCoaches.includes(coach.id)}
                       onCheckedChange={(checked) => handleSelectCoach(coach.id, checked as boolean)}

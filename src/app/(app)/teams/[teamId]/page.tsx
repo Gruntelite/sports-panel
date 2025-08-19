@@ -115,6 +115,7 @@ export default function EditTeamPage() {
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
+  const [isFeeUpdateAlertOpen, setIsFeeUpdateAlertOpen] = useState(false);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -278,7 +279,7 @@ export default function EditTeamPage() {
     }
   };
 
-  const handleSaveChanges = async () => {
+  const handleSaveChanges = async (updateFees: boolean = false) => {
     if (!clubId || !teamId) return;
 
     setSaving(true);
@@ -312,7 +313,7 @@ export default function EditTeamPage() {
       batch.update(teamDocRef, teamDataToUpdate);
       
       const newFee = teamDataToUpdate.defaultMonthlyFee;
-      if (newFee !== null && newFee !== undefined) {
+      if (updateFees && newFee !== null && newFee !== undefined) {
           const playersQuery = query(collection(db, "clubs", clubId, "players"), where("teamId", "==", teamId));
           const playersSnapshot = await getDocs(playersQuery);
           playersSnapshot.forEach(playerDoc => {
@@ -323,7 +324,7 @@ export default function EditTeamPage() {
       
       await batch.commit();
 
-      toast({ title: "Éxito", description: "Los cambios en el equipo y las cuotas de los jugadores se han guardado." });
+      toast({ title: "Éxito", description: `Los cambios en el equipo se han guardado. ${updateFees ? 'Las cuotas de los jugadores han sido actualizadas.' : ''}` });
       setNewImage(null);
       setImagePreview(null);
       if(imageUrl) setTeam(prev => ({...prev, image: imageUrl}));
@@ -333,6 +334,7 @@ export default function EditTeamPage() {
       toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
     } finally {
       setSaving(false);
+      setIsFeeUpdateAlertOpen(false);
     }
   };
   
@@ -646,7 +648,7 @@ export default function EditTeamPage() {
                               <Label htmlFor="defaultMonthlyFee">Cuota Mensual por Defecto (€)</Label>
                               <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee ?? ''} onChange={handleTeamInputChange} />
                           </div>
-                           <Button onClick={handleSaveChanges} disabled={saving} className="w-full">
+                           <Button onClick={() => setIsFeeUpdateAlertOpen(true)} disabled={saving} className="w-full">
                               {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
                           </Button>
                       </CardContent>
@@ -715,7 +717,7 @@ export default function EditTeamPage() {
                           <Table>
                               <TableHeader>
                                   <TableRow>
-                                       <TableHead padding="checkbox">
+                                       <TableHead className="w-[80px]">
                                           <Checkbox
                                             checked={isAllSelected}
                                             onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
@@ -733,7 +735,7 @@ export default function EditTeamPage() {
                               <TableBody>
                                   {teamMembers.length > 0 ? teamMembers.map(member => (
                                       <TableRow key={member.id} data-state={selectedMembers.includes(member.id) && "selected"}>
-                                          <TableCell padding="checkbox">
+                                          <TableCell>
                                             <Checkbox
                                               checked={selectedMembers.includes(member.id)}
                                               onCheckedChange={(checked) => handleSelectMember(member.id, checked as boolean)}
@@ -1036,7 +1038,20 @@ export default function EditTeamPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
+      <AlertDialog open={isFeeUpdateAlertOpen} onOpenChange={setIsFeeUpdateAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Actualizar Cuotas de Jugadores</AlertDialogTitle>
+            <AlertDialogDescription>
+              Has modificado la cuota por defecto del equipo. ¿Quieres aplicar esta nueva cuota a todos los jugadores actuales de este equipo?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => handleSaveChanges(false)}>No, solo guardar los detalles del equipo</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleSaveChanges(true)}>Sí, actualizar cuotas</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </TooltipProvider>
   );
 }

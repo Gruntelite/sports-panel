@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, Eye } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -15,6 +15,7 @@ import { Skeleton } from "../ui/skeleton";
 
 const menuItems = [
     { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+    { href: "/treasury", label: "Tesorería", icon: CircleDollarSign },
     { href: "/players", label: "Jugadores", icon: Users },
     { href: "/coaches", label: "Entrenadores", icon: UserSquare },
     { href: "/teams", label: "Equipos", icon: Shield },

@@ -28,6 +28,7 @@ export type Player = {
     position?: string;
     avatar?: string;
     monthlyFee?: number;
+    paymentStatus?: 'paid' | 'pending' | 'overdue';
     isOwnTutor?: boolean;
     tutorName?: string;
     tutorLastName?: string;
