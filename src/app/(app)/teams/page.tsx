@@ -110,8 +110,8 @@ export default function TeamsPage() {
   };
   
   const handleAddTeam = async () => {
-    if (!newTeamName || !newTeamMinAge || !newTeamMaxAge || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre y rango de edad son obligatorios." });
+    if (!newTeamName || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "El nombre del equipo es obligatorio." });
         return;
     }
     
@@ -128,8 +128,8 @@ export default function TeamsPage() {
 
         await addDoc(collection(db, "clubs", clubId, "teams"), {
             name: newTeamName,
-            minAge: Number(newTeamMinAge),
-            maxAge: Number(newTeamMaxAge),
+            minAge: Number(newTeamMinAge) || null,
+            maxAge: Number(newTeamMaxAge) || null,
             image: imageUrl,
         });
 
@@ -253,7 +253,7 @@ export default function TeamsPage() {
               <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                       <div>
-                          <Badge variant="secondary" className="mb-2">Edades: {team.minAge} - {team.maxAge}</Badge>
+                          <Badge variant="secondary" className="mb-2">Edades: {team.minAge || "N/A"} - {team.maxAge || "N/A"}</Badge>
                           <Link href={`/teams/${team.id}`}>
                             <CardTitle className="text-xl font-bold hover:underline">{team.name}</CardTitle>
                           </Link>
