@@ -177,57 +177,61 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
     };
 
     return (
-        <div ref={innerRef} className="space-y-8 bg-background p-4">
+        <div ref={innerRef} className="bg-background p-4">
+          <div className="space-y-8">
             {venues.map(venue => (
-                <Card key={venue.id}>
-                    <CardHeader>
-                        <CardTitle>{venue.name}</CardTitle>
-                    </CardHeader>
-                    <CardContent className="overflow-x-auto">
-                        <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 220}px` }}>
-                            <div className="w-[60px] flex-shrink-0">
-                                <div className="h-[41px] border-b bg-muted/50">&nbsp;</div> {/* Spacer for day headers */}
-                                {timeSlots.map(time => (
-                                    <div key={time} className="h-[80px] relative text-right pr-2 border-r">
-                                        <span className="text-xs font-semibold text-muted-foreground absolute -top-2.5 right-2">{time}</span>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="flex flex-grow">
-                                {daysOfWeek.map(day => {
-                                    const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
-                                    return (
-                                        <div key={day} className="w-[220px] flex-shrink-0 border-r relative">
-                                            <div className="text-center font-medium p-2 h-[41px] border-b bg-muted/50">{day}</div>
-                                            <div className="relative h-full">
-                                                {timeSlots.map((_, index) => (
-                                                    <div key={index} className="h-[80px] border-b"></div>
-                                                ))}
-                                                {dayEvents.map(event => {
-                                                    const { top, height, left, width } = calculateEventPosition(event);
-                                                    return (
-                                                        <div
-                                                            key={event.id}
-                                                            className="absolute p-2 py-1 flex flex-col rounded-lg border text-primary-foreground"
-                                                            style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
-                                                        >
-                                                            <span className="font-bold text-sm break-words">{event.teamName}</span>
-                                                            <span className="text-xs opacity-90 flex items-center gap-1 mt-auto">
-                                                                <Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}
-                                                            </span>
-                                                        </div>
-                                                    )
-                                                })}
-                                            </div>
+                <div key={venue.id}>
+                    <Card className="overflow-hidden">
+                        <CardHeader className="bg-muted/50 border-b">
+                            <CardTitle>{venue.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="overflow-x-auto p-0">
+                            <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 220}px` }}>
+                                <div className="w-[60px] flex-shrink-0">
+                                    <div className="h-[41px] border-b">&nbsp;</div> {/* Spacer for day headers */}
+                                    {timeSlots.map(time => (
+                                        <div key={time} className="h-[80px] relative text-right pr-2 border-r">
+                                            <span className="text-xs font-semibold text-muted-foreground absolute -top-2.5 right-2">{time}</span>
                                         </div>
-                                    );
-                                })}
+                                    ))}
+                                </div>
+                                <div className="flex flex-grow">
+                                    {daysOfWeek.map(day => {
+                                        const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
+                                        return (
+                                            <div key={day} className="w-[220px] flex-shrink-0 border-r relative">
+                                                <div className="text-center font-medium p-2 h-[41px] border-b">{day}</div>
+                                                <div className="relative h-full">
+                                                    {timeSlots.map((_, index) => (
+                                                        <div key={index} className="h-[80px] border-b"></div>
+                                                    ))}
+                                                    {dayEvents.map(event => {
+                                                        const { top, height, left, width } = calculateEventPosition(event);
+                                                        return (
+                                                            <div
+                                                                key={event.id}
+                                                                className="absolute p-2 py-1 flex flex-col rounded-lg border text-primary-foreground"
+                                                                style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary))', borderColor: 'hsl(var(--primary))', opacity: 0.8 }}
+                                                            >
+                                                                <span className="font-bold text-sm break-words">{event.teamName}</span>
+                                                                <span className="text-xs opacity-90 flex items-center gap-1 mt-auto">
+                                                                    <Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}
+                                                                </span>
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
                             </div>
-                        </div>
-                    </CardContent>
-                </Card>
+                        </CardContent>
+                    </Card>
+                </div>
             ))}
         </div>
+      </div>
     );
 };
 
@@ -239,7 +243,7 @@ export default function SchedulesPage() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   
-  const scheduleViewRef = useRef<HTMLDivElement>(null);
+  const scheduleViewsRef = useRef<(HTMLDivElement | null)[]>([]);
   
   const [scheduleTemplates, setScheduleTemplates] = useState<ScheduleTemplate[]>([]);
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
@@ -315,8 +319,10 @@ export default function SchedulesPage() {
             const templates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
             setScheduleTemplates(templates);
             const templateToLoad = templates.find(t => t.id === currentTemplateId) || templates[0];
-            setCurrentTemplateId(templateToLoad.id);
-            loadTemplateData(templateToLoad);
+            if (templateToLoad) {
+                setCurrentTemplateId(templateToLoad.id);
+                loadTemplateData(templateToLoad);
+            }
         }
     } catch (error) {
         console.error("Error fetching data:", error);
@@ -350,7 +356,7 @@ export default function SchedulesPage() {
       }
     });
     return () => unsubscribe();
-  }, [fetchAllData]); // Dependency on fetchAllData was causing issues. Now removed.
+  }, [fetchAllData]);
 
   const handleTemplateChange = (templateId: string) => {
     const newTemplate = scheduleTemplates.find(t => t.id === templateId);
@@ -428,7 +434,6 @@ export default function SchedulesPage() {
         toast({ title: "Plantilla creada", description: `La plantilla "${newTemplateName}" ha sido creada.` });
         setIsNewTemplateModalOpen(false);
         setNewTemplateName("");
-        setCurrentTemplateId(newTemplateId);
         if(clubId) fetchAllData(clubId);
     } catch (error) {
         console.error("Error creating template: ", error);
@@ -620,25 +625,46 @@ export default function SchedulesPage() {
     };
   };
   
-  const handleDownloadPdf = async () => {
-    const scheduleElement = scheduleViewRef.current;
-    if (!scheduleElement) return;
+    const handleDownloadPdf = async () => {
+    const template = displayTemplate;
+    if (!template) return;
 
     setIsDownloading(true);
     try {
-        const canvas = await html2canvas(scheduleElement, { 
-            scale: 2, 
-            useCORS: true,
-            backgroundColor: 'hsl(var(--background))' 
-        });
-        const imgData = canvas.toDataURL('image/png');
         const pdf = new jsPDF({
             orientation: 'landscape',
             unit: 'px',
-            format: [canvas.width, canvas.height]
         });
-        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        
+        let isFirstPage = true;
+
+        for (let i = 0; i < template.venues.length; i++) {
+            const venueElement = scheduleViewsRef.current[i];
+            if (venueElement) {
+                const canvas = await html2canvas(venueElement, { 
+                    scale: 2, 
+                    useCORS: true,
+                    backgroundColor: 'hsl(var(--background))' 
+                });
+
+                const imgData = canvas.toDataURL('image/png');
+                const pdfWidth = pdf.internal.pageSize.getWidth();
+                const pdfHeight = pdf.internal.pageSize.getHeight();
+                const imgWidth = canvas.width;
+                const imgHeight = canvas.height;
+                const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+
+                if (!isFirstPage) {
+                    pdf.addPage();
+                }
+
+                pdf.addImage(imgData, 'PNG', 0, 0, imgWidth * ratio, imgHeight * ratio);
+                isFirstPage = false;
+            }
+        }
+        
         pdf.save('horario-semanal.pdf');
+
     } catch (error) {
         console.error("Error generating PDF:", error);
         toast({
@@ -920,7 +946,7 @@ export default function SchedulesPage() {
                                       <div
                                         key={event.id}
                                         className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
-                                        style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
+                                        style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary))', opacity: 0.8 }}
                                       >
                                           <span className="font-bold text-sm truncate">{event.teamName}</span>
                                           <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
@@ -941,8 +967,15 @@ export default function SchedulesPage() {
               </Card>
           </div>
         </TabsContent>
-        <TabsContent value="preview" className="pt-0">
-            <WeeklyScheduleView template={displayTemplate} innerRef={scheduleViewRef} />
+        <TabsContent value="preview" className="pt-0 overflow-auto">
+             <WeeklyScheduleView 
+                template={displayTemplate} 
+                innerRef={el => {
+                    if (el && displayTemplate?.venues) {
+                      // This ref is now for the container of all venue schedules
+                    }
+                }}
+            />
         </TabsContent>
       </Tabs>
 
@@ -967,13 +1000,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-    
-
-
-
-
-
-
-
-

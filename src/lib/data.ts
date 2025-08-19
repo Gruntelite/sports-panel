@@ -41,5 +41,3 @@ export const events: any[] = [
     //   location: 'Campo Norte'
     // }
 ];
-
-    
