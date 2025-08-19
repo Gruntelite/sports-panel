@@ -14,6 +14,7 @@ import {
   Contact,
   Shield,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -70,7 +74,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -93,6 +97,7 @@ export default function PlayersPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -275,6 +280,48 @@ export default function PlayersPage() {
     }
   };
 
+  const handleSelectPlayer = (playerId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedPlayers(prev => [...prev, playerId]);
+    } else {
+      setSelectedPlayers(prev => prev.filter(id => id !== playerId));
+    }
+  };
+  
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedPlayers(players.map(p => p.id));
+    } else {
+      setSelectedPlayers([]);
+    }
+  };
+
+  const handleBulkAssignTeam = async (teamId: string) => {
+    if (!clubId || selectedPlayers.length === 0) return;
+
+    setLoading(true);
+    try {
+        const batch = writeBatch(db);
+        selectedPlayers.forEach(playerId => {
+            const playerRef = doc(db, "clubs", clubId, "players", playerId);
+            batch.update(playerRef, { teamId });
+        });
+        await batch.commit();
+
+        toast({
+            title: "Jugadores actualizados",
+            description: `${selectedPlayers.length} jugadores han sido asignados al nuevo equipo.`
+        });
+        fetchData(clubId);
+        setSelectedPlayers([]);
+    } catch (error) {
+        console.error("Error assigning players in bulk:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo asignar los jugadores al equipo." });
+    } finally {
+        setLoading(false);
+    }
+  };
+
 
   if (loading && !players.length) {
     return (
@@ -283,6 +330,8 @@ export default function PlayersPage() {
         </div>
     )
   }
+  
+  const isAllSelected = players.length > 0 && selectedPlayers.length === players.length;
 
   return (
     <TooltipProvider>
@@ -296,36 +345,65 @@ export default function PlayersPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-8 gap-1">
-                    <Filter className="h-3.5 w-3.5" />
+              {selectedPlayers.length > 0 ? (
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="h-8 gap-1">
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                           Acciones ({selectedPlayers.length})
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuSub>
+                         <DropdownMenuSubTrigger>Asignar a Equipo</DropdownMenuSubTrigger>
+                         <DropdownMenuSubContent>
+                           {teams.map(team => (
+                             <DropdownMenuItem key={team.id} onSelect={() => handleBulkAssignTeam(team.id)}>
+                               {team.name}
+                             </DropdownMenuItem>
+                           ))}
+                         </DropdownMenuSubContent>
+                       </DropdownMenuSub>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive">Eliminar Seleccionados</DropdownMenuItem>
+                    </DropdownMenuContent>
+                 </DropdownMenu>
+              ) : (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                        <Filter className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          Filtrar
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuCheckboxItem checked>
+                        Activo
+                      </DropdownMenuCheckboxItem>
+                      <DropdownMenuCheckboxItem>Archivado</DropdownMenuCheckboxItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button size="sm" variant="outline" className="h-8 gap-1">
+                    <File className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      Filtrar
+                      Exportar
                     </span>
                   </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuCheckboxItem checked>
-                    Activo
-                  </DropdownMenuCheckboxItem>
-                  <DropdownMenuCheckboxItem>Archivado</DropdownMenuCheckboxItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button size="sm" variant="outline" className="h-8 gap-1">
-                <File className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                  Exportar
-                </span>
-              </Button>
-              <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      Añadir Jugador
-                  </span>
-              </Button>
+                  <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
+                      <PlusCircle className="h-3.5 w-3.5" />
+                      <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          Añadir Jugador
+                      </span>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -333,6 +411,13 @@ export default function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Equipo</TableHead>
                 <TableHead>Dorsal</TableHead>
@@ -345,7 +430,14 @@ export default function PlayersPage() {
             </TableHeader>
             <TableBody>
               {players.map(player => (
-                <TableRow key={player.id}>
+                <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedPlayers.includes(player.id)}
+                      onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
+                      aria-label={`Seleccionar a ${player.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
