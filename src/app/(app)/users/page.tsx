@@ -94,6 +94,8 @@ export default function UsersPage() {
 
   const [editedUserName, setEditedUserName] = useState("");
   const [selectedNewRole, setSelectedNewRole] = useState("");
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
 
   useEffect(() => {
