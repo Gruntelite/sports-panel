@@ -178,21 +178,24 @@ export default function UsersPage() {
                 setSaving(false);
                 return;
             }
-            const contact = availableContacts.find(c => (c as Player).tutorEmail === selectedContactEmail || (c as Coach).email === selectedContactEmail);
+            const contact = availableContacts.find(c => c.id === selectedContact);
             if (!contact) {
                 setSaving(false);
                 return;
             }
 
-            const name = 'lastName' in contact ? `${contact.name} ${contact.lastName}` : contact.name;
+            const isPlayer = 'tutorEmail' in contact;
+            const name = contact.isOwnTutor ? `${contact.name} ${contact.lastName}` : isPlayer ? `${(contact as Player).tutorName} ${(contact as Player).tutorLastName}` || `${contact.name} ${contact.lastName} (Familia)` : `${contact.name} ${contact.lastName}`;
+            const role = isPlayer ? 'Family' : 'Coach';
+            const email = isPlayer ? (contact as Player).tutorEmail : (contact as Coach).email;
             
             const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
             batch.set(newUserDocRef, {
-                email: selectedContactEmail,
+                email: email,
                 name: name,
-                role: selectedRole,
-                playerId: (contact as Player).dni ? contact.id : null,
-                coachId: (contact as Coach).monthlyPayment !== undefined ? contact.id : null,
+                role: role,
+                playerId: isPlayer ? contact.id : null,
+                coachId: !isPlayer ? contact.id : null,
             });
             toast({ title: "Usuario Creado", description: `Se ha creado un registro para ${name}.` });
         } else { // staff
@@ -408,8 +411,9 @@ export default function UsersPage() {
                                         const contact = availableContacts.find(c => c.id === value);
                                         if (contact) {
                                           setSelectedContact(value);
-                                          setSelectedContactEmail((contact as Player).tutorEmail || (contact as Coach).email);
-                                          setSelectedRole((contact as Coach).email ? 'Coach' : 'Family');
+                                          const isPlayer = 'tutorEmail' in contact;
+                                          setSelectedContactEmail(isPlayer ? (contact as Player).tutorEmail : (contact as Coach).email);
+                                          setSelectedRole(isPlayer ? 'Family' : 'Coach');
                                         }
                                       }}
                                     >
@@ -417,7 +421,7 @@ export default function UsersPage() {
                                         <SelectContent>
                                             {availableContacts.map(c => (
                                                 <SelectItem key={c.id} value={c.id}>
-                                                    {'lastName' in c ? `${c.name} ${c.lastName}` : c.name} ({'monthlyFee' in c ? 'Jugador' : 'Entrenador'})
+                                                    {'lastName' in c ? `${c.name} ${c.lastName}` : c.name} ({'tutorEmail' in c ? 'Jugador' : 'Entrenador'})
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
