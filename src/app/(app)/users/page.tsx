@@ -170,16 +170,24 @@ export default function UsersPage() {
 
     setSaving(true);
     try {
+        const batch = writeBatch(db);
+
         if (type === 'contact') {
             if (!selectedContactEmail) {
                 toast({ variant: "destructive", title: "Error", description: "Selecciona un contacto." });
+                setSaving(false);
                 return;
             }
             const contact = availableContacts.find(c => (c as Player).tutorEmail === selectedContactEmail || (c as Coach).email === selectedContactEmail);
-            if (!contact) return;
+            if (!contact) {
+                setSaving(false);
+                return;
+            }
 
             const name = 'lastName' in contact ? `${contact.name} ${contact.lastName}` : contact.name;
-            await setDoc(doc(collection(db, "clubs", clubId, "users")), {
+            
+            const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
+            batch.set(newUserDocRef, {
                 email: selectedContactEmail,
                 name: name,
                 role: selectedRole,
@@ -190,15 +198,19 @@ export default function UsersPage() {
         } else { // staff
             if (!staffEmail || !staffName || !staffRoleTitle || !staffRole) {
                 toast({ variant: "destructive", title: "Error", description: "Todos los campos para el nuevo miembro son obligatorios." });
+                setSaving(false);
                 return;
             }
-            const staffDocRef = await addDoc(collection(db, "clubs", clubId, "staff"), {
+            const staffDocRef = doc(collection(db, "clubs", clubId, "staff"));
+            batch.set(staffDocRef, {
                 name: staffName,
                 lastName: staffLastName,
                 email: staffEmail,
                 role: staffRoleTitle,
             });
-            await setDoc(doc(collection(db, "clubs", clubId, "users")), {
+            
+            const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
+            batch.set(newUserDocRef, {
                 email: staffEmail,
                 name: `${staffName} ${staffLastName}`,
                 role: staffRole,
@@ -207,6 +219,7 @@ export default function UsersPage() {
             toast({ title: "Usuario Creado", description: `Se ha creado un registro para ${staffName} ${staffLastName}.` });
         }
         
+        await batch.commit();
         resetAddUserForm();
         if(clubId) fetchData(clubId);
 

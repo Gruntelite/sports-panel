@@ -1,35 +1,39 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Function to check if the requesting user belongs to the specified club
+
+    // Helper function to check if a user belongs to a club
     function isUserOfClub(clubId) {
+      // Check if a user document exists for the requesting user's UID
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             // Check if the clubId in that user document matches the one being accessed
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
     }
 
-    // The `users` collection links a user's auth ID to their club ID
+    // Rules for the root `users` collection which links auth UIDs to club IDs
     match /users/{userId} {
-      // Allow a user to create their own user document, and only their own.
+      // A user can create their OWN user document, but only if it doesn't exist yet.
       allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow a user to read their own document to find out their clubId.
+      // A user can read their OWN user document.
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Disallow updates and deletes to prevent users from changing their club affiliation.
+      // No one can update or delete these critical link documents.
       allow update, delete: if false;
     }
 
-    // The `clubs` collection contains all data for each club
-    match /clubs/{clubId}/{documents=**} {
-        // Allow reads and writes to any document inside a club's collection
-        // ONLY if the user is a member of that club.
-        allow read, write: if isUserOfClub(clubId);
-    }
-
-    // Allow a newly authenticated user to create their club's main document.
-    // This is separate from the rule above because `isUserOfClub` would be false
-    // during this initial creation step.
+    // Rules for the `clubs` collection
     match /clubs/{clubId} {
-      allow create: if request.auth != null;
+      // Allow a user to create a club document if they are authenticated
+      // and they are setting themselves as the adminId. This is key for sign-up.
+      allow create: if request.auth != null && request.resource.data.adminId == request.auth.uid;
+
+      // Allow read and write operations on a club and all its subcollections
+      // ONLY if the requesting user belongs to that club.
+      allow read, write: if isUserOfClub(clubId);
+
+      match /{allPaths=**} {
+        allow read, write: if isUserOfClub(clubId);
+      }
     }
   }
 }
