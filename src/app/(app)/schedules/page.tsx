@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
@@ -43,7 +43,9 @@ type DailyScheduleEntry = {
     id: string; 
     teamId: string;
     teamName: string;
-    time: string; 
+    startTime: string;
+    endTime: string;
+    venueId: string;
     venueName: string;
 };
 
@@ -117,9 +119,9 @@ export default function SchedulesPage() {
         if (schedulesSnapshot.empty) {
             const newTemplateId = "general";
             const newTemplateRef = doc(db, "clubs", currentClubId, "schedules", newTemplateId);
-            const initialTemplateData = { 
+            const initialTemplateData: Omit<ScheduleTemplate, 'id'> = { 
                 name: "Plantilla General",
-                venues: [],
+                venues: [{id: 'main-field', name: 'Campo Principal'}],
                 weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
             };
             await setDoc(newTemplateRef, initialTemplateData);
@@ -202,49 +204,13 @@ export default function SchedulesPage() {
         toast({ title: "Recinto eliminado", description: "El recinto se ha eliminado." });
     }
   }
-  
-  const generateTimeSlots = (start: string, end: string) => {
-    const slots = [];
-    let current = new Date(`1970-01-01T${start}:00`);
-    const endDate = new Date(`1970-01-01T${end}:00`);
 
-    while (current < endDate) {
-      const next = new Date(current.getTime() + 60 * 60 * 1000);
-      slots.push(`${current.toTimeString().substring(0, 5)} - ${next.toTimeString().substring(0, 5)}`);
-      current = next;
-    }
-    return slots;
-  };
-  
-  const timeSlots = generateTimeSlots(startTime, endTime);
-  
   const handleSaveTemplate = async () => {
     if (!clubId || !currentTemplateId) return;
 
-    const updatedDaySchedule = pendingAssignments.flatMap(assignment => {
-        const start = new Date(`1970-01-01T${assignment.startTime}`);
-        const end = new Date(`1970-01-01T${assignment.endTime}`);
-        const slots: DailyScheduleEntry[] = [];
-        let current = start;
-
-        while(current < end) {
-            const next = new Date(current.getTime() + 60 * 60 * 1000); // 1-hour slots
-            const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
-            slots.push({
-                id: crypto.randomUUID(),
-                teamId: assignment.teamId,
-                teamName: assignment.teamName,
-                time: timeSlot,
-                venueName: assignment.venueName
-            });
-            current = next;
-        }
-        return slots;
-    });
-
     const updatedWeeklySchedule = {
         ...weeklySchedule,
-        [currentDay]: updatedDaySchedule,
+        [currentDay]: pendingAssignments,
     };
 
     const scheduleRef = getScheduleRef(currentTemplateId);
@@ -315,26 +281,6 @@ export default function SchedulesPage() {
   };
 
   const navigateDay = (direction: 'prev' | 'next') => {
-    const savedAssignments = (weeklySchedule[currentDay] || []).reduce((acc, entry) => {
-        const key = `${entry.teamId}-${entry.venueName}`;
-        if (!acc[key]) {
-            acc[key] = {
-                id: crypto.randomUUID(),
-                teamId: entry.teamId,
-                teamName: entry.teamName,
-                venueId: venues.find(v => v.name === entry.venueName)?.id || '',
-                venueName: entry.venueName,
-                startTime: entry.time.split(' - ')[0],
-                endTime: entry.time.split(' - ')[1]
-            };
-        } else {
-            acc[key].endTime = entry.time.split(' - ')[1];
-        }
-        return acc;
-    }, {} as Record<string, Assignment>);
-
-    setPendingAssignments(Object.values(savedAssignments));
-    
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
     } else {
@@ -354,7 +300,6 @@ export default function SchedulesPage() {
     setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value, [nameField]: name } : a));
   };
 
-
   const handleAddAssignmentRow = () => {
     setPendingAssignments(prev => [...prev, {
       id: crypto.randomUUID(),
@@ -372,100 +317,43 @@ export default function SchedulesPage() {
   };
   
   useEffect(() => {
-    const savedAssignments = (weeklySchedule[currentDay] || []).reduce((acc, entry) => {
-        const key = `${entry.teamId}-${entry.venueName}`;
-        const startTime = entry.time.split(' - ')[0];
-        const endTime = entry.time.split(' - ')[1];
+    setPendingAssignments(weeklySchedule[currentDay] || []);
+  }, [currentDay, weeklySchedule]);
 
-        if (!acc[key]) {
-             acc[key] = {
-                id: crypto.randomUUID(),
-                teamId: entry.teamId,
-                teamName: entry.teamName,
-                venueId: venues.find(v => v.name === entry.venueName)?.id || '',
-                venueName: entry.venueName,
-                startTime: startTime,
-                endTime: endTime
-            };
-        } else {
-            if(startTime < acc[key].startTime) acc[key].startTime = startTime;
-            if(endTime > acc[key].endTime) acc[key].endTime = endTime;
-        }
-        return acc;
-    }, {} as Record<string, Assignment>);
-    setPendingAssignments(Object.values(savedAssignments));
-  }, [currentDay, weeklySchedule, venues]);
-
-
-  const displayedScheduleEntries = useMemo(() => {
-     return pendingAssignments.flatMap(assignment => {
-        if (!assignment.startTime || !assignment.endTime) return [];
-        
-        const start = new Date(`1970-01-01T${assignment.startTime}`);
-        const end = new Date(`1970-01-01T${assignment.endTime}`);
-        const slots: DailyScheduleEntry[] = [];
-        let current = start;
-
-        while(current < end) {
-            const next = new Date(current.getTime() + 60 * 60 * 1000);
-            const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
-            slots.push({
-                id: crypto.randomUUID(),
-                teamId: assignment.teamId,
-                teamName: assignment.teamName,
-                time: timeSlot,
-                venueName: assignment.venueName,
-            });
-            current = next;
-        }
-        return slots;
-    });
-  }, [pendingAssignments]);
+  const timeSlots = useMemo(() => {
+    const slots = [];
+    let current = new Date(`1970-01-01T${startTime}:00`);
+    const endDate = new Date(`1970-01-01T${endTime}:00`);
+    while (current < endDate) {
+      slots.push(current.toTimeString().substring(0, 5));
+      current = new Date(current.getTime() + 60 * 60 * 1000);
+    }
+    return slots;
+  }, [startTime, endTime]);
   
-  const processedSlotsForRender = useMemo(() => {
-    const slotMap = new Map<string, any[]>();
-    displayedScheduleEntries.forEach(entry => {
-        if (!slotMap.has(entry.time)) {
-            slotMap.set(entry.time, []);
-        }
-        slotMap.get(entry.time)?.push(entry);
-    });
+  const venueIdToColumnMap = useMemo(() => {
+    return new Map(venues.map((venue, index) => [venue.id, index]));
+  }, [venues]);
 
-    const renderedSlots = new Set<string>();
-    const results: { time: string, entries: any[], duration: number }[] = [];
+  const calculateEventPosition = (event: DailyScheduleEntry) => {
+    const startHour = parseInt(startTime.split(':')[0]);
+    const eventStart = new Date(`1970-01-01T${event.startTime}`);
+    const eventEnd = new Date(`1970-01-01T${event.endTime}`);
     
-    timeSlots.forEach(slot => {
-        if (renderedSlots.has(slot)) return;
+    const startMinutes = (eventStart.getHours() - startHour) * 60 + eventStart.getMinutes();
+    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
-        const entries = slotMap.get(slot) || [];
-        if (entries.length > 0) {
-            let duration = 1;
-            let currentSlotIndex = timeSlots.indexOf(slot);
-            while (currentSlotIndex + 1 < timeSlots.length) {
-                const nextSlot = timeSlots[currentSlotIndex + 1];
-                const nextEntries = slotMap.get(nextSlot) || [];
-                if (
-                    nextEntries.length === entries.length &&
-                    entries.every((e, i) => e.teamId === nextEntries[i].teamId && e.venueName === nextEntries[i].venueName)
-                ) {
-                    duration++;
-                    renderedSlots.add(nextSlot);
-                    currentSlotIndex++;
-                } else {
-                    break;
-                }
-            }
-            results.push({ time: slot.split(' - ')[0], entries, duration });
-            renderedSlots.add(slot);
-        } else {
-            results.push({ time: slot.split(' - ')[0], entries: [], duration: 1 });
-        }
-    });
-    
-    return results;
+    const hourHeight = 64; // Corresponds to h-16
+    const top = (startMinutes / 60) * hourHeight;
+    const height = (durationMinutes / 60) * hourHeight;
 
-  }, [displayedScheduleEntries, timeSlots]);
+    const columnIndex = venueIdToColumnMap.get(event.venueId) || 0;
+    const totalColumns = venues.length || 1;
+    const width = `calc(${100 / totalColumns}% - 4px)`; // 4px is for gap
+    const left = `calc(${columnIndex * (100 / totalColumns)}% + 2px)`;
 
+    return { top, height, left, width };
+  };
 
   const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
 
@@ -636,11 +524,11 @@ export default function SchedulesPage() {
                                 <div className="flex gap-2">
                                   <div className="space-y-1 w-full">
                                     <Label className="text-xs">Inicio</Label>
-                                    <Input className="h-8" type="time" step="3600" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} />
+                                    <Input className="h-8" type="time" step="900" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} />
                                   </div>
                                   <div className="space-y-1 w-full">
                                     <Label className="text-xs">Fin</Label>
-                                    <Input className="h-8" type="time" step="3600" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} />
+                                    <Input className="h-8" type="time" step="900" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} />
                                   </div>
                                 </div>
                               </div>
@@ -670,31 +558,44 @@ export default function SchedulesPage() {
                 </div>
             </CardHeader>
             <CardContent>
-                <div className="border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-[60px_1fr]">
-                        <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r">Horas</div>
-                        <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b">Equipos y Recintos</div>
-                    </div>
-                    <div className="grid grid-cols-1 max-h-[600px] overflow-y-auto">
-                    {processedSlotsForRender.map(({ time, entries, duration }) => (
-                        <div key={time} className="grid grid-cols-[60px_1fr] items-start border-b last:border-b-0" style={{ minHeight: `${duration * 4}rem` }}>
-                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{time}</div>
-                            <div className="p-2 grid grid-cols-3 gap-2 self-start w-full">
-                               {entries.map((entry: any) => (
-                                     <div key={entry.id} className="flex flex-col items-center p-1 bg-primary/10 rounded-md border border-primary/20" style={{ gridRow: `span ${duration}` }}>
-                                        <Badge>{entry.teamName}</Badge>
-                                        <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
-                                            <MapPin className="h-3 w-3" />
-                                            {entry.venueName}
-                                        </span>
-                                     </div>
-                                 ))
-                               }
-                            </div>
-                        </div>
+              <div className="grid grid-cols-[60px_1fr] border-t border-l rounded-lg overflow-hidden">
+                  <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r">Horas</div>
+                  <div className="grid" style={{ gridTemplateColumns: `repeat(${venues.length || 1}, 1fr)`}}>
+                     {venues.map(venue => (
+                       <div key={venue.id} className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r text-center truncate">{venue.name}</div>
                      ))}
-                    </div>
-                </div>
+                  </div>
+              </div>
+              <div className="grid grid-cols-[60px_1fr] max-h-[600px] overflow-y-auto border-l rounded-lg">
+                  <div className="col-start-1 col-end-2">
+                      {timeSlots.map(time => (
+                          <div key={time} className="h-16 flex items-start justify-center p-1 border-b border-r">
+                            <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+                          </div>
+                      ))}
+                  </div>
+                  <div className="col-start-2 col-end-3 relative">
+                      {timeSlots.map((time, index) => (
+                          <div key={time} className="h-16 border-b grid" style={{ gridTemplateColumns: `repeat(${venues.length || 1}, 1fr)`}}>
+                            {venues.map(v => <div key={v.id} className="border-r last:border-r-0"></div>)}
+                          </div>
+                      ))}
+                      {pendingAssignments.filter(a => a.teamId && a.venueId && a.startTime && a.endTime).map(event => {
+                         const { top, height, left, width } = calculateEventPosition(event);
+                         return (
+                            <div
+                              key={event.id}
+                              className="absolute p-2 flex flex-col rounded-lg bg-primary/20 border border-primary/50 text-primary-foreground"
+                              style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', color: 'hsl(var(--primary-foreground))' }}
+                            >
+                                <span className="font-bold text-sm truncate">{event.teamName}</span>
+                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
+                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
+                            </div>
+                         )
+                      })}
+                  </div>
+              </div>
             </CardContent>
              <div className="absolute bottom-6 right-6">
                 <Button size="lg" className="gap-2" onClick={handleSaveTemplate}>
@@ -725,7 +626,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-    
-
-    
