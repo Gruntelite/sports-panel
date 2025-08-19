@@ -210,7 +210,7 @@ export default function EditTeamPage() {
               jerseyNumber: data.jerseyNumber || 'N/A',
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
               hasMissingData: hasMissingPlayerData(data),
-              data: data,
+              data: { id: doc.id, ...data } as Player,
           } as TeamMember;
       });
 
@@ -225,7 +225,7 @@ export default function EditTeamPage() {
               jerseyNumber: '',
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
               hasMissingData: hasMissingCoachData(data),
-              data: data,
+              data: { id: doc.id, ...data } as Coach,
           };
       });
 
@@ -372,14 +372,18 @@ export default function EditTeamPage() {
     if (mode === 'add') {
       if (memberType === 'player') {
         setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee });
+        setCoachData({});
       } else {
         setCoachData({ teamId: teamId });
+        setPlayerData({});
       }
     } else if (member) {
       if (memberType === 'player') {
         setPlayerData(member.data as Player);
+        setCoachData({});
       } else {
         setCoachData(member.data as Coach);
+        setPlayerData({});
       }
     }
     
@@ -1021,4 +1025,5 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
 
