@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -86,6 +85,7 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   const [editedUserName, setEditedUserName] = useState("");
+  const [editedUserEmail, setEditedUserEmail] = useState("");
   const [selectedNewRole, setSelectedNewRole] = useState("");
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
@@ -189,17 +189,21 @@ export default function UsersPage() {
   const handleOpenEditModal = (user: User) => {
     setUserToEdit(user);
     setEditedUserName(user.name);
+    setEditedUserEmail(user.email);
     setIsEditModalOpen(true);
   };
 
   const handleUpdateUser = async () => {
-    if (!userToEdit || !editedUserName.trim() || !clubId) return;
+    if (!userToEdit || !editedUserName.trim() || !editedUserEmail.trim() || !clubId) return;
     
     setSaving(true);
     try {
         const userRef = doc(db, "clubs", clubId, "users", userToEdit.id);
-        await updateDoc(userRef, { name: editedUserName });
-        toast({ title: "Usuario actualizado", description: "El nombre del usuario se ha actualizado correctamente." });
+        await updateDoc(userRef, { 
+            name: editedUserName,
+            email: editedUserEmail 
+        });
+        toast({ title: "Usuario actualizado", description: "Los datos del usuario se han actualizado correctamente." });
         setIsEditModalOpen(false);
         setUserToEdit(null);
         if(clubId) fetchData(clubId);
@@ -415,7 +419,7 @@ export default function UsersPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Editar Usuario</DialogTitle>
-            <DialogDescription>Actualiza el nombre del usuario.</DialogDescription>
+            <DialogDescription>Actualiza los datos del usuario.</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
@@ -423,8 +427,8 @@ export default function UsersPage() {
               <Input id="edit-user-name" value={editedUserName} onChange={(e) => setEditedUserName(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={userToEdit?.email || ''} disabled />
+              <Label htmlFor="edit-user-email">Email</Label>
+              <Input id="edit-user-email" value={editedUserEmail} onChange={(e) => setEditedUserEmail(e.target.value)} />
             </div>
           </div>
           <DialogFooter>
@@ -490,3 +494,5 @@ export default function UsersPage() {
     </>
   );
 }
+
+    
