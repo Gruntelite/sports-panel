@@ -155,15 +155,15 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
     };
 
     const calculateEventPosition = (event: any) => {
-        const startHour = parseInt(startTime.split(':')[0]);
-        const eventStart = new Date(`1970-01-01T${event.startTime}`);
-        const eventEnd = new Date(`1970-01-01T${event.endTime}`);
-        
-        const startMinutes = (eventStart.getHours() - startHour) * 60 + eventStart.getMinutes();
-        const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+        const gridStartMinutes = timeToMinutes(startTime);
+        const eventStartMinutes = timeToMinutes(event.startTime);
+        const eventEndMinutes = timeToMinutes(event.endTime);
 
-        const hourHeight = 80; 
-        const top = (startMinutes / 60) * hourHeight;
+        const startOffsetMinutes = eventStartMinutes - gridStartMinutes;
+        const durationMinutes = eventEndMinutes - eventStartMinutes;
+
+        const hourHeight = 80;
+        const top = (startOffsetMinutes / 60) * hourHeight;
         const height = (durationMinutes / 60) * hourHeight;
         
         const width = 100 / event.numCols;
@@ -588,15 +588,16 @@ export default function SchedulesPage() {
   
   const calculateEventPosition = (event: any) => {
     if (!startTime) return { top: 0, height: 0, left: '0%', width: '100%' };
-    const startHour = parseInt(startTime.split(':')[0]);
-    const eventStart = new Date(`1970-01-01T${event.startTime}`);
-    const eventEnd = new Date(`1970-01-01T${event.endTime}`);
     
-    const startMinutes = (eventStart.getHours() - startHour) * 60 + eventStart.getMinutes();
-    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+    const gridStartMinutes = timeToMinutes(startTime);
+    const eventStartMinutes = timeToMinutes(event.startTime);
+    const eventEndMinutes = timeToMinutes(event.endTime);
 
-    const hourHeight = 80;
-    const top = (startMinutes / 60) * hourHeight;
+    const startOffsetMinutes = eventStartMinutes - gridStartMinutes;
+    const durationMinutes = eventEndMinutes - eventStartMinutes;
+    
+    const hourHeight = 80; 
+    const top = (startOffsetMinutes / 60) * hourHeight;
     const height = (durationMinutes / 60) * hourHeight;
     
     const width = 100 / event.numCols;
@@ -886,14 +887,14 @@ export default function SchedulesPage() {
                         <div className="grid grid-cols-[60px_1fr]">
                             <div className="col-start-1 col-end-2 border-r">
                                 {timeSlots.map(time => (
-                                    <div key={time} className="h-16 flex items-start justify-center p-1 border-b">
+                                    <div key={time} className="h-[80px] flex items-start justify-center p-1 border-b">
                                       <span className="text-xs font-semibold text-muted-foreground">{time}</span>
                                     </div>
                                 ))}
                             </div>
                             <div className="col-start-2 col-end-3 relative">
                                 {timeSlots.map((time, index) => (
-                                    <div key={index} className="h-16 border-b"></div>
+                                    <div key={index} className="h-[80px] border-b"></div>
                                 ))}
                                 {displayedEvents.map(event => {
                                   const { top, height, left, width } = calculateEventPosition(event);
