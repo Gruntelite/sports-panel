@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -7,25 +8,44 @@ service cloud.firestore {
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
     }
 
-    // Allow new club creation by anyone
     match /clubs/{clubId} {
-      allow create: if request.auth != null;
+      // ANYONE can create a club, but they must also create their user doc at the same time
+      // This is the key for registration to work.
+      allow create: if request.auth != null && 
+                       getAfter(/databases/$(database)/documents/clubs/$(clubId)/users/$(request.resource.data.adminId)) != null;
+                       
+      // Once created, only users of that club can access its data and subcollections
+      allow read, update, delete: if isUserOfClub(clubId);
       
-      // Once created, only users of that club can read or write data
-      allow read, write: if isUserOfClub(clubId);
-      
-      // Apply the same logic to all subcollections
-      match /{allPaths=**} {
-        allow read, write: if isUserOf_Club(clubId);
+      match /players/{playerId} {
+        allow read, write: if isUserOfClub(clubId);
+      }
+      match /coaches/{coachId} {
+        allow read, write: if isUserOfClub(clubId);
+      }
+      match /staff/{staffId} {
+        allow read, write: if isUserOfClub(clubId);
+      }
+      match /teams/{teamId} {
+        allow read, write: if isUserOfClub(clubId);
+      }
+      match /schedules/{scheduleId} {
+         allow read, write: if isUserOfClub(clubId);
+      }
+       match /settings/{settingId} {
+         allow read, write: if isUserOfClub(clubId);
+      }
+      match /users/{userId} {
+        allow read, write: if isUserOfClub(clubId);
       }
     }
     
-    // Allow authenticated users to create their own user document linking to a club
     match /users/{userId} {
+      // Allow a user to create their own user document during sign up
       allow create: if request.auth != null && request.auth.uid == userId;
-      // Allow authenticated users to read their own clubId
+      // Allow a user to read their own clubId
       allow read: if request.auth != null && request.auth.uid == userId;
-      // Prevent users from updating their clubId or other fields after creation
+      // Nobody can update or delete the root user document to prevent changing clubId
       allow update, delete: if false;
     }
   }
