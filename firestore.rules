@@ -3,30 +3,25 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Helper function to check if a user belongs to a specific club
-    function isUserOfClub(clubId) {
-      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
-    }
-    
-    // Allow anyone to create a club, their user records, and settings.
-    // This is needed for the sign-up process.
+    // Allow new club creation during signup
     match /clubs/{clubId} {
-      allow create: if request.auth != null;
+      allow create: if true;
+      
+      // Once created, only allow users of that club to access it.
+      // This is checked by looking at the root `users` collection doc.
+      allow read, update, delete: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
 
-      // Only authenticated users belonging to the club can read/write its data.
-      allow read, write: if isUserOfClub(clubId);
-
-      match /{document=**} {
-        allow read, write: if isUserOfClub(clubId);
+      // Rules for subcollections
+      match /{subcollection}/{docId} {
+         allow read, write: if request.auth != null && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
       }
     }
-    
-    // Allow users to create their own user document mapping their auth UID to their clubId
+
+    // Allow users to be created during signup.
+    // The root user doc links a user's auth UID to their club ID.
     match /users/{userId} {
-       allow create: if request.auth.uid == userId;
-       // Only the authenticated user can read or update their own user document
-       allow read, update: if request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow read, update, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }
