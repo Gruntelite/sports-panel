@@ -11,21 +11,26 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Wand2, Clipboard, ExternalLink, ClipboardList } from "lucide-react";
+import { Loader2, Wand2, Clipboard, ExternalLink, ClipboardList, PlusCircle, Trash2 } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
 
-const formFields = [
-    { id: "name", label: "Nombre y Apellidos", required: true },
-    { id: "email", label: "Correo Electrónico", required: true },
-    { id: "phone", label: "Teléfono", required: false },
-    { id: "teamName", label: "Nombre del Equipo (si aplica)", required: false },
-    { id: "age", label: "Edad", required: false },
-    { id: "notes", label: "Notas / Comentarios", required: false },
-] as const;
+const initialFormFields = [
+    { id: "name", label: "Nombre y Apellidos", required: true, custom: false },
+    { id: "email", label: "Correo Electrónico", required: true, custom: false },
+    { id: "phone", label: "Teléfono", required: false, custom: false },
+    { id: "teamName", label: "Nombre del Equipo (si aplica)", required: false, custom: false },
+    { id: "age", label: "Edad", required: false, custom: false },
+    { id: "notes", label: "Notas / Comentarios", required: false, custom: false },
+];
 
-type FormFieldId = typeof formFields[number]['id'];
+type FormFieldType = {
+  id: string;
+  label: string;
+  required: boolean;
+  custom: boolean;
+};
 
 const formSchema = z.object({
   title: z.string().min(3, "El título del evento es obligatorio."),
@@ -41,15 +46,42 @@ export function RegistrationFormCreator() {
   const [loading, setLoading] = useState(false);
   const [generatedForm, setGeneratedForm] = useState<{ id: string, url: string } | null>(null);
   const { toast } = useToast();
+  
+  const [formFields, setFormFields] = useState<FormFieldType[]>(initialFormFields);
+  const [newFieldName, setNewFieldName] = useState("");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: "",
       description: "",
-      fields: ["name", "email"], // Pre-select required fields
+      fields: ["name", "email"],
     },
   });
+  
+  const handleAddCustomField = () => {
+    if (newFieldName.trim() === "") {
+        toast({ variant: "destructive", title: "El nombre del campo no puede estar vacío."});
+        return;
+    }
+    const fieldId = newFieldName.toLowerCase().replace(/\s+/g, '_') + `_${Date.now()}`;
+    const newField: FormFieldType = {
+        id: fieldId,
+        label: newFieldName.trim(),
+        required: false,
+        custom: true,
+    };
+    setFormFields(prev => [...prev, newField]);
+    setNewFieldName("");
+  };
+  
+  const handleRemoveCustomField = (idToRemove: string) => {
+    setFormFields(prev => prev.filter(field => field.id !== idToRemove));
+    // Also remove from form state if it was selected
+    const currentSelected = form.getValues("fields");
+    form.setValue("fields", currentSelected.filter(id => id !== idToRemove));
+  };
+
 
   async function onSubmit(values: FormData) {
     setLoading(true);
@@ -59,13 +91,7 @@ export function RegistrationFormCreator() {
     await new Promise(resolve => setTimeout(resolve, 2000));
     
     const formId = values.title.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 6);
-    const formUrl = `/form/${formId}`; // This would be a public URL
-
-    // In a real app, you would have a server action here to:
-    // 1. Create a new collection in Firestore: `clubs/{clubId}/forms/{formId}`
-    // 2. Store the form configuration (title, description, fields) in a document there.
-    // 3. The public page at `formUrl` would then fetch this config to render the form.
-    // 4. Submissions from the public form would write to a `submissions` subcollection.
+    const formUrl = `/form/${formId}`;
 
     setGeneratedForm({ id: formId, url: formUrl });
     setLoading(false);
@@ -88,7 +114,7 @@ export function RegistrationFormCreator() {
       <Card>
         <CardHeader>
           <CardTitle>Creador de Formularios de Inscripción</CardTitle>
-          <CardDescription>Diseña un formulario público para tu próximo evento, torneo o captación. La IA lo creará por ti.</CardDescription>
+          <CardDescription>Diseña un formulario público para tu próximo evento, torneo o captación.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -143,15 +169,22 @@ export function RegistrationFormCreator() {
                         name="fields"
                         render={({ field }) => {
                           return (
-                            <FormItem key={item.id} className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                              <div className="space-y-0.5">
-                                <FormLabel>{item.label}</FormLabel>
-                              </div>
+                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                               <div className="flex items-center gap-4">
+                                  {item.custom && (
+                                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveCustomField(item.id)}>
+                                       <Trash2 className="h-4 w-4" />
+                                     </Button>
+                                  )}
+                                  <div className="space-y-0.5">
+                                    <FormLabel className={!item.custom ? 'pl-10' : ''}>{item.label}</FormLabel>
+                                  </div>
+                               </div>
                               <FormControl>
                                 <Switch
                                   checked={field.value?.includes(item.id)}
                                   onCheckedChange={(checked) => {
-                                    if(item.required) return; // Don't allow unchecking required fields
+                                    if(item.required) return;
                                     return checked
                                       ? field.onChange([...field.value, item.id])
                                       : field.onChange(
@@ -169,6 +202,21 @@ export function RegistrationFormCreator() {
                       />
                     ))}
                     </div>
+                     <Separator className="my-6"/>
+                     <div className="space-y-3">
+                        <h4 className="font-medium">Añadir Campo Personalizado</h4>
+                         <div className="flex items-center space-x-2">
+                             <Input 
+                                placeholder="p.ej., Talla de camiseta, Alergias" 
+                                value={newFieldName} 
+                                onChange={(e) => setNewFieldName(e.target.value)} 
+                             />
+                             <Button type="button" size="sm" onClick={handleAddCustomField}>
+                                <PlusCircle className="mr-2 h-4 w-4" />
+                                Añadir
+                             </Button>
+                         </div>
+                     </div>
                     <FormMessage />
                   </FormItem>
                 )}
