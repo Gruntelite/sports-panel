@@ -255,7 +255,12 @@ export default function CoachesPage() {
                 });
                 toast({
                     title: "Usuario Creado Automáticamente",
-                    description: `Cuenta para ${dataToSave.email} creada. Contraseña temporal: ${password}`,
+                    description: (
+                      <div>
+                        <p>Cuenta para {dataToSave.email} creada.</p>
+                        <p className="font-mono text-sm bg-muted p-1 rounded mt-2">Contraseña: {password}</p>
+                      </div>
+                    ),
                     duration: 9000
                 });
             } catch(userError: any) {
@@ -582,3 +587,5 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
+    
