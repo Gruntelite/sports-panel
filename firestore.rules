@@ -1,41 +1,20 @@
 rules_version = '2';
-
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // Helper function to check if a user is authenticated
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    // Helper function to get the user's document data
-    function getUserData() {
-        return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+
+    // Helper function to check if a user is an Admin
+    function isClubAdmin(clubId) {
+      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+      return request.auth != null && userDoc.role == 'Admin' && userDoc.clubId == clubId;
     }
 
-    // Helper function to check if the user belongs to a specific club
-    function isMemberOfClub(clubId) {
-      return isAuthenticated() && getUserData().clubId == clubId;
+    match /clubs/{clubId}/{document=**} {
+        allow read, write: if isClubAdmin(clubId);
     }
-
-    // Users can only read and write their own document.
+    
     match /users/{userId} {
-      allow read, write: if isAuthenticated() && request.auth.uid == userId;
-    }
-
-    // Rules for clubs and their subcollections
-    match /clubs/{clubId} {
-      // Allow read access to club data if the user is a member of that club
-      allow read: if isMemberOfClub(clubId);
-      
-      // Anyone can create a club (sign-up process)
-      allow create: if isAuthenticated();
-
-      // Grant read and write access to all subcollections if the user is a member of the club.
-      // This single rule covers teams, schedules, players, settings, etc.
-      match /{collection}/{docId} {
-        allow read, write: if isMemberOfClub(clubId);
-      }
+      allow read, create, update, delete: if isClubAdmin(resource.data.clubId);
+      allow read: if request.auth.uid == userId;
     }
   }
 }
