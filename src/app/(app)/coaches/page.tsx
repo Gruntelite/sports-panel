@@ -13,6 +13,7 @@ import {
   Contact,
   AlertCircle,
   Shield,
+  CircleDollarSign,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -396,15 +397,16 @@ export default function CoachesPage() {
                     <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                 </div>
                 
-                <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
+                 <Tabs defaultValue="personal" className="w-full">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Equipo</TabsTrigger>
+                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
+                        <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
                        <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
                                    <Input id="name" value={coachData.name || ''} onChange={handleInputChange} />
@@ -413,7 +415,9 @@ export default function CoachesPage() {
                                    <Label htmlFor="lastName">Apellidos</Label>
                                    <Input id="lastName" value={coachData.lastName || ''} onChange={handleInputChange} />
                                </div>
-                               <div className="space-y-2">
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
                                     date={coachData.birthDate ? new Date(coachData.birthDate) : undefined} 
@@ -421,25 +425,9 @@ export default function CoachesPage() {
                                   />
                                    {coachData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(coachData.birthDate)} años</p>}
                                </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="dni">DNI</Label>
                                    <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="address">Dirección</Label>
-                                   <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                   <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
                                </div>
                            </div>
                        </div>
@@ -448,7 +436,23 @@ export default function CoachesPage() {
                     <TabsContent value="contact" className="pt-6">
                       <div className="min-h-[280px]">
                         <div className="space-y-6">
-                          <div className="flex items-center space-x-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="address">Dirección</Label>
+                                   <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
+                               </div>
+                                <div className="space-y-2">
+                                   <Label htmlFor="city">Ciudad</Label>
+                                   <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="postalCode">Código Postal</Label>
+                                   <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                           <div className="flex items-center space-x-2 pt-4">
                               <Checkbox 
                                 id="isOwnTutor" 
                                 checked={coachData.isOwnTutor || false}
@@ -458,7 +462,7 @@ export default function CoachesPage() {
                           </div>
                             
                             {!(coachData.isOwnTutor) && (
-                                <div className="space-y-6 p-4 border rounded-md bg-muted/50">
+                                <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
                                     <h4 className="font-medium">Datos del Tutor/a</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
@@ -477,7 +481,7 @@ export default function CoachesPage() {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
                                      <Label htmlFor="email">{coachData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
                                      <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} />
@@ -487,32 +491,38 @@ export default function CoachesPage() {
                                      <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                    <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                    <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
-                                </div>
-                            </div>
-                             <div className="space-y-2">
-                                <Label htmlFor="teamId">Equipo Asignado</Label>
-                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId || 'unassigned'}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un equipo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
-                                        {teams.map(team => (
-                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
                         </div>
                       </div>
+                    </TabsContent>
+                    <TabsContent value="payment" className="pt-6">
+                        <div className="min-h-[280px]">
+                            <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                        <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                        <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="teamId">Equipo Asignado</Label>
+                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId || 'unassigned'}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un equipo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                            {teams.map(team => (
+                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>

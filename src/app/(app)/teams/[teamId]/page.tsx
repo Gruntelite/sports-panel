@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -822,15 +823,19 @@ export default function EditTeamPage() {
                 </div>
                 
                 <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className={`grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                     <TabsList className={`grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-3'}`}>
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
-                        {modalType === 'player' && <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>}
+                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
+                        {modalType === 'player' ? (
+                             <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                        ) : (
+                             <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
+                        )}
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
                        <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
                                    <Input id="name" value={currentData.name || ''} onChange={handleInputChange} />
@@ -839,6 +844,8 @@ export default function EditTeamPage() {
                                    <Label htmlFor="lastName">Apellidos</Label>
                                    <Input id="lastName" value={currentData.lastName || ''} onChange={handleInputChange} />
                                </div>
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
@@ -847,25 +854,9 @@ export default function EditTeamPage() {
                                   />
                                    {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
                                </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="dni">DNI</Label>
                                    <Input id="dni" value={currentData.dni || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="address">Dirección</Label>
-                                   <Input id="address" value={currentData.address || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                   <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={currentData.city || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={currentData.postalCode || ''} onChange={handleInputChange} />
                                </div>
                            </div>
                        </div>
@@ -874,7 +865,23 @@ export default function EditTeamPage() {
                     <TabsContent value="contact" className="pt-6">
                       <div className="min-h-[280px]">
                         <div className="space-y-6">
-                          <div className="flex items-center space-x-2">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="address">Dirección</Label>
+                                   <Input id="address" value={currentData.address || ''} onChange={handleInputChange} />
+                               </div>
+                               <div className="space-y-2">
+                                   <Label htmlFor="city">Ciudad</Label>
+                                   <Input id="city" value={currentData.city || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                   <Label htmlFor="postalCode">Código Postal</Label>
+                                   <Input id="postalCode" value={currentData.postalCode || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
+                           <div className="flex items-center space-x-2 pt-4">
                               <Checkbox 
                                 id="isOwnTutor" 
                                 checked={currentData.isOwnTutor || false}
@@ -884,7 +891,7 @@ export default function EditTeamPage() {
                           </div>
                             
                             {!(currentData.isOwnTutor) && (
-                                <div className="space-y-6 p-4 border rounded-md bg-muted/50">
+                                <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
                                     <h4 className="font-medium">Datos del Tutor/a</h4>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
@@ -903,7 +910,7 @@ export default function EditTeamPage() {
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
                                      <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
                                      <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleInputChange} />
@@ -913,70 +920,74 @@ export default function EditTeamPage() {
                                      <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>
-                            {modalType === 'player' ? (
-                                <div className="space-y-2">
-                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                    <Input id="iban" value={currentData.iban || ''} onChange={handleInputChange} />
-                                </div>
-                             ) : (
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                        <Input id="iban" value={currentData.iban || ''} onChange={handleInputChange} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                        <Input id="monthlyPayment" type="number" value={(currentData as Coach).monthlyPayment ?? ''} onChange={handleInputChange} />
-                                    </div>
-                                </div>
-                            )}
                         </div>
                       </div>
                     </TabsContent>
                     {modalType === 'player' && (
                         <TabsContent value="sports" className="pt-6">
-                        <div className="min-h-[280px]">
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                            <div className="space-y-2">
-                                    <Label htmlFor="teamId">Equipo</Label>
-                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona un equipo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {allTeams.map(t => (
-                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                            <div className="min-h-[280px]">
+                                <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                        <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                        <div className="space-y-2">
+                                                <Label htmlFor="teamId">Equipo</Label>
+                                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Selecciona un equipo" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {allTeams.map(t => (
+                                                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                            </div>
+                                    </div>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                    <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
-                                </div>
-                        </div>
-                        </div>
+                            </div>
                         </TabsContent>
                     )}
-                    {modalType === 'coach' && (
-                        <TabsContent value="contact">
-                          <div className="space-y-2 pt-6">
-                              <Label htmlFor="teamId">Equipo Asignado</Label>
-                              <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId}>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Selecciona un equipo" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                      {allTeams.map(t => (
-                                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                      ))}
-                                  </SelectContent>
-                              </Select>
-                          </div>
+                     {modalType === 'coach' && (
+                        <TabsContent value="payment" className="pt-6">
+                            <div className="min-h-[280px]">
+                                <div className="space-y-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                            <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                            <Input id="monthlyPayment" type="number" value={(coachData as Coach).monthlyPayment ?? ''} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="teamId">Equipo Asignado</Label>
+                                        <Select onValueChange={(value) => handleSelectChange('teamId', value as any)} value={(coachData as Coach).teamId || 'unassigned'}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un equipo" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                                {allTeams.map(t => (
+                                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                </div>
+                            </div>
                         </TabsContent>
                     )}
                 </Tabs>
