@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -649,33 +648,35 @@ export default function SchedulesPage() {
                 </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-[60px_1fr] max-h-[600px] overflow-y-auto border-t border-l rounded-lg">
-                  <div className="col-start-1 col-end-2">
-                      {timeSlots.map(time => (
-                          <div key={time} className="h-16 flex items-start justify-center p-1 border-b border-r">
-                            <span className="text-xs font-semibold text-muted-foreground">{time}</span>
-                          </div>
-                      ))}
-                  </div>
-                  <div className="col-start-2 col-end-3 relative">
-                      {timeSlots.map((time) => (
-                          <div key={time} className="h-16 border-b border-r last:border-r-0"></div>
-                      ))}
-                      {displayedEvents.map(event => {
-                         const { top, height, left, width } = calculateEventPosition(event);
-                         return (
-                            <div
-                              key={event.id}
-                              className="absolute p-2 flex flex-col rounded-lg bg-primary/20 border border-primary/50 text-primary-foreground"
-                              style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', color: 'hsl(var(--primary-foreground))' }}
-                            >
-                                <span className="font-bold text-sm truncate">{event.teamName}</span>
-                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
-                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
+              <div className="overflow-x-auto">
+                <div className="grid grid-cols-[60px_1fr] max-h-[600px] overflow-y-auto border-t border-l rounded-lg">
+                    <div className="col-start-1 col-end-2">
+                        {timeSlots.map(time => (
+                            <div key={time} className="h-16 flex items-start justify-center p-1 border-b border-r">
+                              <span className="text-xs font-semibold text-muted-foreground">{time}</span>
                             </div>
-                         )
-                      })}
-                  </div>
+                        ))}
+                    </div>
+                    <div className="col-start-2 col-end-3 relative">
+                        {timeSlots.map((time) => (
+                            <div key={time} className="h-16 border-b border-r last:border-r-0"></div>
+                        ))}
+                        {displayedEvents.map(event => {
+                           const { top, height, left, width } = calculateEventPosition(event);
+                           return (
+                              <div
+                                key={event.id}
+                                className="absolute p-2 flex flex-col rounded-lg bg-primary/20 border border-primary/50 text-primary-foreground"
+                                style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', color: 'hsl(var(--primary-foreground))' }}
+                              >
+                                  <span className="font-bold text-sm truncate">{event.teamName}</span>
+                                  <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
+                                  <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
+                              </div>
+                           )
+                        })}
+                    </div>
+                </div>
               </div>
             </CardContent>
              <div className="absolute bottom-6 right-6">
@@ -708,3 +709,5 @@ export default function SchedulesPage() {
   );
 }
 
+
+    
