@@ -402,7 +402,10 @@ export default function UsersPage() {
                 Gestiona todos los usuarios y sus roles en el sistema.
               </CardDescription>
             </div>
-            <Dialog open={isAddUserOpen} onOpenChange={setIsAddUserOpen}>
+            <Dialog open={isAddUserOpen} onOpenChange={(isOpen) => {
+              setIsAddUserOpen(isOpen);
+              if (!isOpen) resetAddUserForm();
+            }}>
                 <DialogTrigger asChild>
                     <Button size="sm" className="h-8 gap-1">
                         <PlusCircle className="h-3.5 w-3.5" />
@@ -535,7 +538,7 @@ export default function UsersPage() {
 
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button type="button" variant="secondary" onClick={resetAddUserForm}>Cancelar</Button>
+                            <Button type="button" variant="secondary">Cancelar</Button>
                         </DialogClose>
                         <Button type="button" onClick={handleAddUser} disabled={saving || (!selectedContactEmail && !staffEmail)}>
                             {saving ? <Loader2 className="animate-spin" /> : 'Crear Usuario'}
@@ -685,7 +688,3 @@ export default function UsersPage() {
     </>
   );
 }
-
-
-
-    
