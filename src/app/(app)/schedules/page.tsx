@@ -315,14 +315,14 @@ export default function SchedulesPage() {
     setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
   
-  const handleAssignmentSelectChange = (id: string, field: 'teamId' | 'venueId' | 'startTime' | 'endTime', value: string) => {
-    const nameField = field === 'teamId' ? 'teamName' : field === 'venueId' ? 'venueName' : null;
-    const selectedItem = field === 'teamId' ? teams.find(t => t.id === value) : field === 'venueId' ? venues.find(v => v.id === value) : null;
+  const handleAssignmentSelectChange = (id: string, field: 'teamId' | 'venueId', value: string) => {
+    const nameField = field === 'teamId' ? 'teamName' : 'venueName';
+    const selectedItem = field === 'teamId' ? teams.find(t => t.id === value) : venues.find(v => v.id === value);
     const name = selectedItem?.name || '';
     
     setPendingAssignments(prev => prev.map(a => {
         if (a.id === id) {
-            const updatedAssignment = { ...a, [field]: value };
+            const updatedAssignment: any = { ...a, [field]: value };
             if (nameField) {
                 updatedAssignment[nameField] = name;
             }
@@ -363,18 +363,6 @@ export default function SchedulesPage() {
     }
     return slots;
   }, [startTime, endTime]);
-
-  const availableHours = useMemo(() => {
-        const hours = [];
-        if (!startTime || !endTime) return [];
-        let current = new Date(`1970-01-01T${startTime}:00`);
-        const endDate = new Date(`1970-01-01T${endTime}:00`);
-        while (current <= endDate) {
-            hours.push(current.toTimeString().substring(0, 5));
-            current = new Date(current.getTime() + 30 * 60 * 1000); // 30 min intervals
-        }
-        return hours;
-    }, [startTime, endTime]);
 
   const timeToMinutes = (time: string) => {
     if (!time) return 0;
@@ -639,21 +627,11 @@ export default function SchedulesPage() {
                                 <div className="flex gap-2">
                                   <div className="space-y-1 w-full">
                                     <Label className="text-xs">Inicio</Label>
-                                     <Select value={assignment.startTime} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'startTime', value)}>
-                                        <SelectTrigger className="h-8"><SelectValue placeholder="Hora" /></SelectTrigger>
-                                        <SelectContent>
-                                          {availableHours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                                        </SelectContent>
-                                      </Select>
+                                     <Input type="time" value={assignment.startTime || ''} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} className="h-8" />
                                   </div>
                                   <div className="space-y-1 w-full">
                                     <Label className="text-xs">Fin</Label>
-                                     <Select value={assignment.endTime} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'endTime', value)}>
-                                        <SelectTrigger className="h-8"><SelectValue placeholder="Hora" /></SelectTrigger>
-                                        <SelectContent>
-                                          {availableHours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
-                                        </SelectContent>
-                                      </Select>
+                                     <Input type="time" value={assignment.endTime || ''} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} className="h-8" />
                                   </div>
                                 </div>
                               </div>
@@ -715,13 +693,13 @@ export default function SchedulesPage() {
                          )
                       })}
                   </div>
-                  <div className="col-span-2 p-6 border-t">
+              </div>
+               <div className="col-span-2 p-6 border-t">
                       <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
                           <Clock className="h-5 w-5"/>
                           Guardar Plantilla
                       </Button>
                   </div>
-              </div>
             </CardContent>
         </Card>
       </div>
@@ -751,6 +729,7 @@ export default function SchedulesPage() {
     
 
     
+
 
 
 
