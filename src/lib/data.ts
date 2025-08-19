@@ -23,6 +23,23 @@ export const getTeams = async (clubId: string): Promise<Team[]> => {
 };
 
 export const events: any[] = [
+    // Example Event:
+    // { 
+    //   id: '1', 
+    //   date: new Date(new Date().setDate(new Date().getDate() + 2)), 
+    //   time: '18:00', 
+    //   team: 'Torneo Benéfico', 
+    //   type: 'Evento', 
+    //   location: 'Polideportivo Central' 
+    // },
+    // {
+    //   id: '2',
+    //   date: new Date(new Date().setDate(new Date().getDate() + 5)),
+    //   time: '11:00',
+    //   team: 'Águilas Sub-12 vs Halcones',
+    //   type: 'Partido',
+    //   location: 'Campo Norte'
+    // }
 ];
 
     
