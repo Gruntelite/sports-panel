@@ -64,7 +64,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Staff } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -110,45 +110,67 @@ export default function StaffPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
-      // Fetch all users with administrative roles
-      const adminRoles = ['Staff', 'Admin', 'super-admin'];
-      const usersQuery = query(collection(db, "clubs", clubId, "users"), where("role", "in", adminRoles));
-      const usersSnapshot = await getDocs(usersQuery);
-      
-      const staffList = usersSnapshot.docs.map(doc => {
-        const data = doc.data();
-        // Here, we assume the staff details are within the user record for simplicity,
-        // or you could perform a second query to the 'staff' collection if needed.
-        return { 
-            id: doc.id,
-            name: data.name.split(' ')[0] || '',
-            lastName: data.name.split(' ').slice(1).join(' ') || '',
-            email: data.email,
-            role: data.role, // This now reflects Admin, Staff, etc.
-            avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-            hasMissingData: false // Simplified for this example
-        } as Staff;
-      });
+        const adminRoles = ['Staff', 'Admin', 'super-admin'];
+        const usersQuery = query(collection(db, "clubs", clubId, "users"), where("role", "in", adminRoles));
+        const usersSnapshot = await getDocs(usersQuery);
 
-      // To get the specific "cargo" (role title) like "Coordinador", we would need to fetch from the `staff` collection.
-      // Let's merge the data.
-      const staffDetailsQuery = query(collection(db, "clubs", clubId, "staff"));
-      const staffDetailsSnapshot = await getDocs(staffDetailsQuery);
-      const staffDetailsMap = new Map(staffDetailsSnapshot.docs.map(d => [d.data().email, d.data()]));
+        const staffDetailsQuery = query(collection(db, "clubs", clubId, "staff"));
+        const staffDetailsSnapshot = await getDocs(staffDetailsQuery);
+        const staffDetailsMap = new Map(staffDetailsSnapshot.docs.map(d => [d.data().email, { id: d.id, ...d.data() }]));
 
-      const enrichedStaffList = staffList.map(staffMember => {
-        const details = staffDetailsMap.get(staffMember.email!);
-        return {
-          ...staffMember,
-          role: details?.role || staffMember.role, // Show specific role title if available, otherwise show access role
-        };
-      });
+        const batch = writeBatch(db);
+        let syncNeeded = false;
 
-      setStaff(enrichedStaffList);
+        const staffListPromises = usersSnapshot.docs.map(async userDoc => {
+            const userData = userDoc.data();
+            let details = staffDetailsMap.get(userData.email);
+
+            // If a user with an admin role exists but doesn't have a staff profile, create one.
+            if (!details) {
+                syncNeeded = true;
+                const [name, ...lastNameParts] = (userData.name || "").split(" ");
+                const lastName = lastNameParts.join(" ");
+                
+                const newStaffData = {
+                    name: name || '',
+                    lastName: lastName || '',
+                    email: userData.email,
+                    role: userData.role, // Default role title from access role
+                    phone: userData.phone || '',
+                    avatar: userData.avatar || '',
+                };
+
+                const newStaffRef = doc(collection(db, "clubs", clubId, "staff"));
+                batch.set(newStaffRef, newStaffData);
+                
+                details = { id: newStaffRef.id, ...newStaffData };
+            }
+
+            return {
+                id: details.id,
+                name: details.name,
+                lastName: details.lastName,
+                email: details.email,
+                role: details.role,
+                phone: details.phone,
+                avatar: details.avatar || `https://placehold.co/40x40.png?text=${(details.name || '').charAt(0)}`,
+                hasMissingData: hasMissingData(details),
+            } as Staff;
+        });
+
+        if (syncNeeded) {
+            await batch.commit();
+            // Refetch data after sync
+            fetchData(clubId); 
+            return;
+        }
+
+        const resolvedStaffList = await Promise.all(staffListPromises);
+        setStaff(resolvedStaffList);
 
     } catch (error) {
-      console.error("Error fetching data: ", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
+        console.error("Error fetching data: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
     }
     setLoading(false);
   };
@@ -167,7 +189,6 @@ export default function StaffPage() {
   };
 
   const handleOpenModal = (mode: 'add' | 'edit', member?: Staff) => {
-    // "Add" is now handled from the users page. This modal is only for editing.
     setModalMode(mode);
     setStaffData(mode === 'edit' && member ? member : {});
     setIsModalOpen(true);
@@ -205,26 +226,19 @@ export default function StaffPage() {
       };
 
       if (modalMode === 'edit' && staffData.id) {
-        // Here we need to find the staff document by some unique identifier, e.g., email
-        const staffQuery = query(collection(db, "clubs", clubId, "staff"), where("email", "==", staffData.email));
-        const staffSnapshot = await getDocs(staffQuery);
+        const staffDocRef = doc(db, "clubs", clubId, "staff", staffData.id);
+        await updateDoc(staffDocRef, dataToSave);
         
-        if (!staffSnapshot.empty) {
-          const staffDocRef = staffSnapshot.docs[0].ref;
-          await updateDoc(staffDocRef, dataToSave);
-          
-          // Also update the user's name if it changed
-          const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffData.email));
-          const userSnapshot = await getDocs(userQuery);
-          if(!userSnapshot.empty){
+        // Also update the user's name if it changed
+        const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffData.email));
+        const userSnapshot = await getDocs(userQuery);
+        if(!userSnapshot.empty){
             const userDocRef = userSnapshot.docs[0].ref;
             await updateDoc(userDocRef, { name: `${staffData.name} ${staffData.lastName}` });
-          }
-
-          toast({ title: "Miembro actualizado", description: `${staffData.name} ha sido actualizado.` });
         }
+
+        toast({ title: "Miembro actualizado", description: `${staffData.name} ha sido actualizado.` });
       } 
-      // "add" is deprecated here.
       
       setIsModalOpen(false);
       setStaffData({});
@@ -244,16 +258,23 @@ export default function StaffPage() {
     try {
         if (staffToDelete.avatar && !staffToDelete.avatar.includes('placehold.co')) {
             const imageRef = ref(storage, staffToDelete.avatar);
-            await deleteObject(imageRef);
+            await deleteObject(imageRef).catch(e => console.warn("Could not delete image:", e));
         }
-        // Delete from both staff and users collections
-        const staffQuery = query(collection(db, "clubs", clubId, "staff"), where("email", "==", staffToDelete.email));
-        const staffSnapshot = await getDocs(staffQuery);
-        if(!staffSnapshot.empty) await deleteDoc(staffSnapshot.docs[0].ref);
 
+        const batch = writeBatch(db);
+
+        // Delete from staff collection
+        const staffDocRef = doc(db, "clubs", clubId, "staff", staffToDelete.id);
+        batch.delete(staffDocRef);
+
+        // Delete from users collection
         const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffToDelete.email));
         const userSnapshot = await getDocs(userQuery);
-        if(!userSnapshot.empty) await deleteDoc(userSnapshot.docs[0].ref);
+        if(!userSnapshot.empty) {
+            batch.delete(userSnapshot.docs[0].ref);
+        }
+
+        await batch.commit();
 
         toast({ title: "Miembro eliminado", description: `${staffToDelete.name} ${staffToDelete.lastName} ha sido eliminado.`});
         fetchData(clubId);
@@ -284,9 +305,6 @@ export default function StaffPage() {
               <CardDescription>
                 Gestiona el personal administrativo y directivo de tu club.
               </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-               {/* Add button is now on the Users page */}
             </div>
           </div>
         </CardHeader>
@@ -443,3 +461,4 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+
