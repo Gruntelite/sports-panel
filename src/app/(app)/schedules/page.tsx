@@ -576,11 +576,11 @@ export default function SchedulesPage() {
                       <div className="grid grid-cols-2 gap-4 pt-4">
                           <div className="space-y-2">
                               <Label htmlFor="start-time">Hora de Inicio</Label>
-                              <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                              <Input id="start-time" type="time" value={startTime || ''} onChange={(e) => setStartTime(e.target.value)} />
                           </div>
                           <div className="space-y-2">
                               <Label htmlFor="end-time">Hora de Fin</Label>
-                              <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                              <Input id="end-time" type="time" value={endTime || ''} onChange={(e) => setEndTime(e.target.value)} />
                           </div>
                       </div>
                     </AccordionContent>
@@ -643,20 +643,20 @@ export default function SchedulesPage() {
             </CardContent>
         </Card>
         
-        <Card className="relative flex flex-col">
+        <Card className="relative flex flex-col h-full">
             <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
                 <div className="flex items-center gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
                     <div className="text-base font-semibold capitalize w-24 text-center">{currentDay}</div>
-                    <Button variant="outline" size="sm" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
                  <div className="flex items-center gap-1">
-                    <Button variant="outline" size="sm" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
                     <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos"}</div>
-                    <Button variant="outline" size="sm" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
+                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </CardHeader>
-            <CardContent className="flex-grow overflow-y-auto">
+            <CardContent className="flex-1 overflow-y-auto p-0">
               <div className="grid grid-cols-[60px_1fr] h-full">
                   <div className="col-start-1 col-end-2 border-r">
                       {timeSlots.map(time => (
@@ -666,16 +666,16 @@ export default function SchedulesPage() {
                       ))}
                   </div>
                   <div className="col-start-2 col-end-3 relative">
-                      {timeSlots.map((time) => (
-                          <div key={time} className="h-16 border-b"></div>
+                      {timeSlots.map((time, index) => (
+                          <div key={index} className="h-16 border-b"></div>
                       ))}
                       {displayedEvents.map(event => {
                          const { top, height, left, width } = calculateEventPosition(event);
                          return (
                             <div
                               key={event.id}
-                              className="absolute p-2 flex flex-col rounded-lg bg-primary/20 border border-primary/50 text-primary-foreground"
-                              style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', color: 'hsl(var(--primary-foreground))' }}
+                              className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
+                              style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
                             >
                                 <span className="font-bold text-sm truncate">{event.teamName}</span>
                                 <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
@@ -685,13 +685,13 @@ export default function SchedulesPage() {
                       })}
                   </div>
               </div>
+              <div className="p-6 border-t">
+                  <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
+                      <Clock className="h-5 w-5"/>
+                      Guardar Plantilla
+                  </Button>
+              </div>
             </CardContent>
-             <div className="p-6 border-t">
-                <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
-                    <Clock className="h-5 w-5"/>
-                    Guardar Plantilla
-                </Button>
-            </div>
         </Card>
       </div>
 
@@ -720,4 +720,5 @@ export default function SchedulesPage() {
     
 
     
+
 
