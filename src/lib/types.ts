@@ -33,6 +33,7 @@ export type Player = {
     tutorLastName?: string;
     tutorDni?: string;
     hasMissingData?: boolean;
+    kitSize?: string;
 }
 
 export type Coach = {
@@ -56,6 +57,7 @@ export type Coach = {
     tutorDni?: string;
     hasMissingData?: boolean;
     monthlyPayment?: number;
+    kitSize?: string;
 }
 
 export type Staff = {

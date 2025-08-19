@@ -873,10 +873,16 @@ export default function EditTeamPage() {
                                    <Input id="dni" value={currentData.dni || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
-                           <div className="space-y-2">
-                                <Label htmlFor="address">Dirección</Label>
-                                <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
-                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="address">Dirección</Label>
+                                   <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
+                               </div>
+                               <div className="space-y-2">
+                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={(currentData as any).kitSize || ''} onChange={handleMemberInputChange} />
+                                </div>
+                           </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>

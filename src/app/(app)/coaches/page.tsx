@@ -589,7 +589,7 @@ export default function CoachesPage() {
                                    <Input id="lastName" autoComplete="off" value={coachData.lastName || ''} onChange={handleInputChange} />
                                </div>
                            </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
@@ -602,6 +602,10 @@ export default function CoachesPage() {
                                    <Label htmlFor="dni">DNI</Label>
                                    <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
+                                </div>
                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="address">Dirección</Label>

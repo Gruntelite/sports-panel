@@ -703,8 +703,8 @@ export default function PlayersPage() {
                     </TabsContent>
                     <TabsContent value="sports" className="pt-6">
                       <div className="min-h-[280px]">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                           <div className="space-y-2">
+                        <div className="space-y-6">
+                            <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
                                     <SelectTrigger>
@@ -718,15 +718,21 @@ export default function PlayersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                    <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
+                                </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
-                            </div>
-                       </div>
+                        </div>
                       </div>
                     </TabsContent>
                 </Tabs>
@@ -776,4 +782,5 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
 
