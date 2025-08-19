@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -132,11 +133,11 @@ export default function SignUpPage() {
       });
 
       // Save user details in the club's specific users subcollection
-      const clubUserRef = doc(db, "clubs", clubId, "users", user.uid);
+      const clubUserRef = doc(collection(db, "clubs", clubId, "users"));
       batch.set(clubUserRef, {
         name: name,
         email: email,
-        role: 'Admin',
+        role: 'super-admin',
       });
       
       // Create club settings subcollection
@@ -309,3 +310,4 @@ export default function SignUpPage() {
     </div>
   );
 }
+
