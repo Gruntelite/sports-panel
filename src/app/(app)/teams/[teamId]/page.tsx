@@ -220,12 +220,15 @@ export default function EditTeamPage() {
   }, [clubId, teamId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value, type } = e.target;
+    const { id, value } = e.target;
     if (['name', 'minAge', 'maxAge', 'defaultMonthlyFee'].includes(id)) {
         setTeam(prev => ({ ...prev, [id]: value }));
+    } else {
+        const type = e.target.type;
+        setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
     }
-    setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
   };
+
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -247,17 +250,19 @@ export default function EditTeamPage() {
     if (!clubId || !teamId) return;
 
     setSaving(true);
+    const batch = writeBatch(db);
+
     try {
       let imageUrl = team.image;
 
       if (newImage) {
         if (team.image && !team.image.includes('placehold.co')) {
-            try {
-                const oldImageRef = ref(storage, team.image);
-                await deleteObject(oldImageRef);
-            } catch (storageError) {
-                console.warn("Could not delete old image:", storageError);
-            }
+          try {
+            const oldImageRef = ref(storage, team.image);
+            await deleteObject(oldImageRef);
+          } catch (storageError) {
+            console.warn("Could not delete old image:", storageError);
+          }
         }
         const imageRef = ref(storage, `team-images/${clubId}/${uuidv4()}`);
         await uploadBytes(imageRef, newImage);
@@ -265,15 +270,29 @@ export default function EditTeamPage() {
       }
 
       const teamDocRef = doc(db, "clubs", clubId, "teams", teamId);
-      await updateDoc(teamDocRef, {
+      const teamDataToUpdate = {
         name: team.name,
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
         defaultMonthlyFee: team.defaultMonthlyFee ? Number(team.defaultMonthlyFee) : null,
         image: imageUrl,
-      });
+      };
+      batch.update(teamDocRef, teamDataToUpdate);
+      
+      // Update all players in the team with the new default fee
+      const newFee = team.defaultMonthlyFee ? Number(team.defaultMonthlyFee) : null;
+      if (newFee !== null) {
+          const playersQuery = query(collection(db, "clubs", clubId, "players"), where("teamId", "==", teamId));
+          const playersSnapshot = await getDocs(playersQuery);
+          playersSnapshot.forEach(playerDoc => {
+              const playerRef = doc(db, "clubs", clubId, "players", playerDoc.id);
+              batch.update(playerRef, { monthlyFee: newFee });
+          });
+      }
+      
+      await batch.commit();
 
-      toast({ title: "Éxito", description: "Los cambios en el equipo se han guardado." });
+      toast({ title: "Éxito", description: "Los cambios en el equipo y las cuotas de los jugadores se han guardado." });
       setNewImage(null);
       setImagePreview(null);
       if(imageUrl) setTeam(prev => ({...prev, image: imageUrl}));
@@ -835,3 +854,6 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
+
+    
