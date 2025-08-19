@@ -1034,7 +1034,3 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
-
-
-
-

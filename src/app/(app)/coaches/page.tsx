@@ -254,7 +254,7 @@ export default function CoachesPage() {
             await setDoc(userRef, {
                 email: dataToSave.email,
                 name: `${dataToSave.name} ${dataToSave.lastName}`,
-                role: 'Coach',
+                role: 'Entrenador',
                 coachId: coachDocRef.id,
             });
             toast({
