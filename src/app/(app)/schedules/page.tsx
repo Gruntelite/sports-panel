@@ -197,7 +197,7 @@ export default function SchedulesPage() {
             await updateDoc(scheduleRef, { venues: updatedVenues });
             setVenues(updatedVenues);
             setNewVenueName('');
-            toast({ title: "Recinto añadido", description: "El nuevo recinto se ha guardado." });
+            toast({ title: "Recinto añadido", description: "El nuevo recinto/pista se ha guardado." });
         }
     }
   }
@@ -209,7 +209,7 @@ export default function SchedulesPage() {
     if (scheduleRef) {
         await updateDoc(scheduleRef, { venues: updatedVenues });
         setVenues(updatedVenues);
-        toast({ title: "Recinto eliminado", description: "El recinto se ha eliminado." });
+        toast({ title: "Recinto eliminado", description: "El recinto/pista se ha eliminado." });
     }
   }
 
@@ -544,7 +544,7 @@ export default function SchedulesPage() {
         <Card>
             <CardHeader>
                 <CardTitle>Configuración de Horarios</CardTitle>
-                <CardDescription>Define recintos, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
+                <CardDescription>Define recintos/pistas, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
                  <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
@@ -557,9 +557,9 @@ export default function SchedulesPage() {
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
                       <div className="space-y-2">
-                        <Label>Recintos de Entrenamiento</Label>
+                        <Label>Recintos/Pistas de Entrenamiento</Label>
                          <div className="flex items-center gap-2">
-                            <Input placeholder="Nombre del nuevo recinto" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
+                            <Input placeholder="Nombre del nuevo recinto/pista" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
                             <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
                         </div>
                         <div className="space-y-2">
@@ -607,9 +607,9 @@ export default function SchedulesPage() {
                                   </Select>
                                 </div>
                                  <div className="space-y-1">
-                                  <Label className="text-xs">Recinto</Label>
+                                  <Label className="text-xs">Recinto / Pista</Label>
                                   <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
-                                    <SelectTrigger className="h-8"><SelectValue placeholder="Recinto" /></SelectTrigger>
+                                    <SelectTrigger className="h-8"><SelectValue placeholder="Recinto / Pista" /></SelectTrigger>
                                     <SelectContent>
                                       {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                                     </SelectContent>
@@ -652,7 +652,7 @@ export default function SchedulesPage() {
                 </div>
                  <div className="flex items-center gap-1">
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
-                    <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos"}</div>
+                    <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos/Pistas"}</div>
                     <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </CardHeader>
@@ -720,5 +720,6 @@ export default function SchedulesPage() {
     
 
     
+
 
 
