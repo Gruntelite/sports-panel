@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -63,7 +64,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Staff } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -109,18 +110,41 @@ export default function StaffPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
-      const staffQuery = query(collection(db, "clubs", clubId, "staff"));
-      const staffSnapshot = await getDocs(staffQuery);
-      const staffList = staffSnapshot.docs.map(doc => {
-          const data = doc.data();
-          return { 
-              id: doc.id, 
-              ...data,
-              avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-              hasMissingData: hasMissingData(data)
-          } as Staff
+      // Fetch all users with administrative roles
+      const adminRoles = ['Staff', 'Admin', 'super-admin'];
+      const usersQuery = query(collection(db, "clubs", clubId, "users"), where("role", "in", adminRoles));
+      const usersSnapshot = await getDocs(usersQuery);
+      
+      const staffList = usersSnapshot.docs.map(doc => {
+        const data = doc.data();
+        // Here, we assume the staff details are within the user record for simplicity,
+        // or you could perform a second query to the 'staff' collection if needed.
+        return { 
+            id: doc.id,
+            name: data.name.split(' ')[0] || '',
+            lastName: data.name.split(' ').slice(1).join(' ') || '',
+            email: data.email,
+            role: data.role, // This now reflects Admin, Staff, etc.
+            avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+            hasMissingData: false // Simplified for this example
+        } as Staff;
       });
-      setStaff(staffList);
+
+      // To get the specific "cargo" (role title) like "Coordinador", we would need to fetch from the `staff` collection.
+      // Let's merge the data.
+      const staffDetailsQuery = query(collection(db, "clubs", clubId, "staff"));
+      const staffDetailsSnapshot = await getDocs(staffDetailsQuery);
+      const staffDetailsMap = new Map(staffDetailsSnapshot.docs.map(d => [d.data().email, d.data()]));
+
+      const enrichedStaffList = staffList.map(staffMember => {
+        const details = staffDetailsMap.get(staffMember.email!);
+        return {
+          ...staffMember,
+          role: details?.role || staffMember.role, // Show specific role title if available, otherwise show access role
+        };
+      });
+
+      setStaff(enrichedStaffList);
 
     } catch (error) {
       console.error("Error fetching data: ", error);
@@ -143,6 +167,7 @@ export default function StaffPage() {
   };
 
   const handleOpenModal = (mode: 'add' | 'edit', member?: Staff) => {
+    // "Add" is now handled from the users page. This modal is only for editing.
     setModalMode(mode);
     setStaffData(mode === 'edit' && member ? member : {});
     setIsModalOpen(true);
@@ -180,13 +205,26 @@ export default function StaffPage() {
       };
 
       if (modalMode === 'edit' && staffData.id) {
-        const staffRef = doc(db, "clubs", clubId, "staff", staffData.id);
-        await updateDoc(staffRef, dataToSave);
-        toast({ title: "Miembro actualizado", description: `${staffData.name} ha sido actualizado.` });
-      } else {
-        await addDoc(collection(db, "clubs", clubId, "staff"), dataToSave);
-        toast({ title: "Miembro añadido", description: `${staffData.name} ha sido añadido al staff.` });
-      }
+        // Here we need to find the staff document by some unique identifier, e.g., email
+        const staffQuery = query(collection(db, "clubs", clubId, "staff"), where("email", "==", staffData.email));
+        const staffSnapshot = await getDocs(staffQuery);
+        
+        if (!staffSnapshot.empty) {
+          const staffDocRef = staffSnapshot.docs[0].ref;
+          await updateDoc(staffDocRef, dataToSave);
+          
+          // Also update the user's name if it changed
+          const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffData.email));
+          const userSnapshot = await getDocs(userQuery);
+          if(!userSnapshot.empty){
+            const userDocRef = userSnapshot.docs[0].ref;
+            await updateDoc(userDocRef, { name: `${staffData.name} ${staffData.lastName}` });
+          }
+
+          toast({ title: "Miembro actualizado", description: `${staffData.name} ha sido actualizado.` });
+        }
+      } 
+      // "add" is deprecated here.
       
       setIsModalOpen(false);
       setStaffData({});
@@ -208,7 +246,15 @@ export default function StaffPage() {
             const imageRef = ref(storage, staffToDelete.avatar);
             await deleteObject(imageRef);
         }
-        await deleteDoc(doc(db, "clubs", clubId, "staff", staffToDelete.id));
+        // Delete from both staff and users collections
+        const staffQuery = query(collection(db, "clubs", clubId, "staff"), where("email", "==", staffToDelete.email));
+        const staffSnapshot = await getDocs(staffQuery);
+        if(!staffSnapshot.empty) await deleteDoc(staffSnapshot.docs[0].ref);
+
+        const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffToDelete.email));
+        const userSnapshot = await getDocs(userQuery);
+        if(!userSnapshot.empty) await deleteDoc(userSnapshot.docs[0].ref);
+
         toast({ title: "Miembro eliminado", description: `${staffToDelete.name} ${staffToDelete.lastName} ha sido eliminado.`});
         fetchData(clubId);
     } catch (error) {
@@ -234,18 +280,13 @@ export default function StaffPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Staff</CardTitle>
+              <CardTitle>Staff y Directiva</CardTitle>
               <CardDescription>
-                Gestiona el personal administrativo de tu club.
+                Gestiona el personal administrativo y directivo de tu club.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-               <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      Añadir Miembro
-                  </span>
-              </Button>
+               {/* Add button is now on the Users page */}
             </div>
           </div>
         </CardHeader>
@@ -322,9 +363,9 @@ export default function StaffPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Miembro' : 'Editar Miembro'}</DialogTitle>
+                <DialogTitle>Editar Miembro</DialogTitle>
                 <DialogDescription>
-                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo miembro al staff.' : 'Modifica la información del miembro.'}
+                    Modifica la información del miembro del staff.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
@@ -364,7 +405,7 @@ export default function StaffPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                          <div className="space-y-2">
                              <Label htmlFor="email">Email</Label>
-                             <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} />
+                             <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} readOnly/>
                          </div>
                          <div className="space-y-2">
                              <Label htmlFor="phone">Teléfono</Label>
@@ -388,7 +429,7 @@ export default function StaffPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {staffToDelete?.name} {staffToDelete?.lastName}.
+              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {staffToDelete?.name} {staffToDelete?.lastName} (de la lista de staff y de la lista de usuarios).
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

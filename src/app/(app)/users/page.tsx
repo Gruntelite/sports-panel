@@ -57,7 +57,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { collection, getDocs, doc, getDoc, addDoc, query, updateDoc, deleteDoc, setDoc, where, writeBatch } from "firebase/firestore";
-import type { User, Player, Coach } from "@/lib/types";
+import type { User } from "@/lib/types";
 
 
 export default function UsersPage() {
@@ -69,12 +69,6 @@ export default function UsersPage() {
   const [users, setUsers] = useState<User[]>([]);
   
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  
-  const [addMode, setAddMode] = useState<'contact' | 'staff'>('contact');
-  const [availableContacts, setAvailableContacts] = useState<(Player | Coach)[]>([]);
-  const [selectedContact, setSelectedContact] = useState<string>('');
-  const [selectedContactEmail, setSelectedContactEmail] = useState('');
-  const [selectedRole, setSelectedRole] = useState('Family');
 
   const [staffName, setStaffName] = useState('');
   const [staffLastName, setStaffLastName] = useState('');
@@ -129,22 +123,6 @@ export default function UsersPage() {
         });
         setUsers(usersList);
 
-        const existingUserEmails = new Set(usersList.map(u => u.email));
-
-        const playersQuery = query(collection(db, "clubs", clubId, "players"));
-        const playersSnap = await getDocs(playersQuery);
-        const availablePlayers = playersSnap.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Player))
-            .filter(p => p.tutorEmail && !existingUserEmails.has(p.tutorEmail));
-        
-        const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
-        const coachesSnap = await getDocs(coachesQuery);
-        const availableCoaches = coachesSnap.docs
-            .map(doc => ({ id: doc.id, ...doc.data() } as Coach))
-            .filter(c => c.email && !existingUserEmails.has(c.email));
-
-        setAvailableContacts([...availablePlayers, ...availableCoaches]);
-
     } catch (error) {
         console.error("Error fetching data:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos de usuarios." });
@@ -154,10 +132,6 @@ export default function UsersPage() {
   
   const resetAddUserForm = () => {
     setIsAddUserOpen(false);
-    setAddMode('contact');
-    setSelectedContact('');
-    setSelectedContactEmail('');
-    setSelectedRole('Family');
     setStaffName('');
     setStaffLastName('');
     setStaffRoleTitle('');
@@ -165,64 +139,40 @@ export default function UsersPage() {
     setStaffRole('Staff');
   };
   
-  const handleAddUser = async (type: 'contact' | 'staff') => {
+  const handleAddStaffUser = async () => {
     if (!clubId) return;
+    
+    if (!staffEmail || !staffName || !staffRoleTitle || !staffRole) {
+        toast({ variant: "destructive", title: "Error", description: "Todos los campos para el nuevo miembro son obligatorios." });
+        return;
+    }
 
     setSaving(true);
     try {
         const batch = writeBatch(db);
 
-        if (type === 'contact') {
-            if (!selectedContactEmail) {
-                toast({ variant: "destructive", title: "Error", description: "Selecciona un contacto." });
-                setSaving(false);
-                return;
-            }
-            const contact = availableContacts.find(c => c.id === selectedContact);
-            if (!contact) {
-                setSaving(false);
-                return;
-            }
-
-            const isPlayer = 'tutorEmail' in contact;
-            const name = contact.isOwnTutor ? `${contact.name} ${contact.lastName}` : isPlayer ? `${(contact as Player).tutorName} ${(contact as Player).tutorLastName}` || `${contact.name} ${contact.lastName} (Familia)` : `${contact.name} ${contact.lastName}`;
-            const role = isPlayer ? 'Family' : 'Entrenador';
-            const email = isPlayer ? (contact as Player).tutorEmail : (contact as Coach).email;
-            
-            const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
-            batch.set(newUserDocRef, {
-                email: email,
-                name: name,
-                role: role,
-                playerId: isPlayer ? contact.id : null,
-                coachId: !isPlayer ? contact.id : null,
-            });
-            toast({ title: "Usuario Creado", description: `Se ha creado un registro para ${name}.` });
-        } else { // staff
-            if (!staffEmail || !staffName || !staffRoleTitle || !staffRole) {
-                toast({ variant: "destructive", title: "Error", description: "Todos los campos para el nuevo miembro son obligatorios." });
-                setSaving(false);
-                return;
-            }
-            const staffDocRef = doc(collection(db, "clubs", clubId, "staff"));
-            batch.set(staffDocRef, {
-                name: staffName,
-                lastName: staffLastName,
-                email: staffEmail,
-                role: staffRoleTitle,
-            });
-            
-            const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
-            batch.set(newUserDocRef, {
-                email: staffEmail,
-                name: `${staffName} ${staffLastName}`,
-                role: staffRole,
-                staffId: staffDocRef.id,
-            });
-            toast({ title: "Usuario Creado", description: `Se ha creado un registro para ${staffName} ${staffLastName}.` });
-        }
+        // Create the entry in the 'staff' collection first
+        const staffDocRef = doc(collection(db, "clubs", clubId, "staff"));
+        batch.set(staffDocRef, {
+            name: staffName,
+            lastName: staffLastName,
+            email: staffEmail,
+            role: staffRoleTitle,
+        });
         
+        // Then create the user record in the 'users' collection, linking to the staff entry
+        const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
+        batch.set(newUserDocRef, {
+            email: staffEmail,
+            name: `${staffName} ${staffLastName}`,
+            role: staffRole,
+            staffId: staffDocRef.id,
+        });
+
         await batch.commit();
+        
+        toast({ title: "Usuario Creado", description: `Se ha creado un registro para ${staffName} ${staffLastName}.` });
+        
         resetAddUserForm();
         if(clubId) fetchData(clubId);
 
@@ -381,110 +331,51 @@ export default function UsersPage() {
                     <Button size="sm" className="h-8 gap-1">
                         <PlusCircle className="h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Añadir Usuario
+                        Añadir Staff
                         </span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
-                        <DialogTitle>Añadir Nuevo Usuario</DialogTitle>
+                        <DialogTitle>Añadir Nuevo Miembro de Staff</DialogTitle>
                         <DialogDescription>
-                          Crea un registro de usuario para un miembro del club o staff.
+                          Crea un registro de usuario y un perfil de staff para un nuevo miembro.
                         </DialogDescription>
                     </DialogHeader>
-                     <div className="py-4 space-y-4">
-                        <Select value={addMode} onValueChange={(value) => setAddMode(value as any)}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="contact">Desde un Contacto Existente</SelectItem>
-                                <SelectItem value="staff">Nuevo Miembro (Staff)</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        
-                        {addMode === 'contact' ? (
-                            <div className="space-y-4 pt-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="contact-select">Miembro del Club</Label>
-                                    <Select 
-                                      value={selectedContact} 
-                                      onValueChange={value => {
-                                        const contact = availableContacts.find(c => c.id === value);
-                                        if (contact) {
-                                          setSelectedContact(value);
-                                          const isPlayer = 'tutorEmail' in contact;
-                                          setSelectedContactEmail(isPlayer ? (contact as Player).tutorEmail : (contact as Coach).email);
-                                          setSelectedRole(isPlayer ? 'Family' : 'Entrenador');
-                                        }
-                                      }}
-                                    >
-                                        <SelectTrigger><SelectValue placeholder="Selecciona un miembro..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {availableContacts.map(c => (
-                                                <SelectItem key={c.id} value={c.id}>
-                                                    {'lastName' in c ? `${c.name} ${c.lastName}` : c.name} ({'tutorEmail' in c ? 'Jugador' : 'Entrenador'})
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="contact-email">Email de Contacto</Label>
-                                    <Input id="contact-email" readOnly value={selectedContactEmail} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="contact-role">Asignar Rol de Acceso</Label>
-                                    <Select value={selectedRole} onValueChange={setSelectedRole}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Family">Familia</SelectItem>
-                                            <SelectItem value="Entrenador">Entrenador</SelectItem>
-                                            <SelectItem value="Admin">Admin</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                 <DialogFooter className="border-t pt-4 mt-4">
-                                   <Button type="button" className="w-full" onClick={() => handleAddUser('contact')} disabled={saving || !selectedContactEmail}>
-                                      {saving ? <Loader2 className="animate-spin" /> : 'Crear Usuario'}
-                                  </Button>
-                                </DialogFooter>
+                    <div className="space-y-4 pt-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="staff-name">Nombre</Label>
+                                <Input id="staff-name" value={staffName} onChange={e => setStaffName(e.target.value)} />
                             </div>
-                        ) : (
-                            <div className="space-y-4 pt-4">
-                                <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="staff-name">Nombre</Label>
-                                        <Input id="staff-name" value={staffName} onChange={e => setStaffName(e.target.value)} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="staff-lastName">Apellidos</Label>
-                                        <Input id="staff-lastName" value={staffLastName} onChange={e => setStaffLastName(e.target.value)} />
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="staff-role-title">Cargo</Label>
-                                    <Input id="staff-role-title" placeholder="p.ej., Coordinador" value={staffRoleTitle} onChange={e => setStaffRoleTitle(e.target.value)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="staff-email">Email</Label>
-                                    <Input id="staff-email" type="email" value={staffEmail} onChange={e => { setStaffEmail(e.target.value); }} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="staff-role">Asignar Rol de Acceso</Label>
-                                    <Select value={staffRole} onValueChange={setStaffRole}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="Staff">Staff</SelectItem>
-                                            <SelectItem value="Admin">Admin</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                 <DialogFooter className="border-t pt-4 mt-4">
-                                   <Button type="button" className="w-full" onClick={() => handleAddUser('staff')} disabled={saving || !staffEmail}>
-                                      {saving ? <Loader2 className="animate-spin" /> : 'Crear Usuario de Staff'}
-                                  </Button>
-                                </DialogFooter>
+                            <div className="space-y-2">
+                                <Label htmlFor="staff-lastName">Apellidos</Label>
+                                <Input id="staff-lastName" value={staffLastName} onChange={e => setStaffLastName(e.target.value)} />
                             </div>
-                        )}
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="staff-role-title">Cargo</Label>
+                            <Input id="staff-role-title" placeholder="p.ej., Coordinador, Directivo" value={staffRoleTitle} onChange={e => setStaffRoleTitle(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="staff-email">Email</Label>
+                            <Input id="staff-email" type="email" value={staffEmail} onChange={e => { setStaffEmail(e.target.value); }} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="staff-role">Asignar Rol de Acceso</Label>
+                            <Select value={staffRole} onValueChange={setStaffRole}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Staff">Staff</SelectItem>
+                                    <SelectItem value="Admin">Admin</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                          <DialogFooter className="border-t pt-4 mt-4">
+                            <Button type="button" className="w-full" onClick={handleAddStaffUser} disabled={saving || !staffEmail}>
+                              {saving ? <Loader2 className="animate-spin" /> : 'Crear Usuario de Staff'}
+                          </Button>
+                        </DialogFooter>
                     </div>
                 </DialogContent>
             </Dialog>
