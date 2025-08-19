@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -33,8 +33,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Users, Shield, MoreVertical, Loader2, Trash2 } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { PlusCircle, Users, Shield, MoreVertical, Loader2, Trash2, Filter } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,6 +59,7 @@ export default function TeamsPage() {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
+  const [sortOrder, setSortOrder] = useState("alphabetical");
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -128,8 +129,8 @@ export default function TeamsPage() {
 
         await addDoc(collection(db, "clubs", clubId, "teams"), {
             name: newTeamName,
-            minAge: Number(newTeamMinAge) || null,
-            maxAge: Number(newTeamMaxAge) || null,
+            minAge: newTeamMinAge ? Number(newTeamMinAge) : null,
+            maxAge: newTeamMaxAge ? Number(newTeamMaxAge) : null,
             image: imageUrl,
         });
 
@@ -172,6 +173,21 @@ export default function TeamsPage() {
         setTeamToDelete(null);
     }
   };
+  
+  const sortedTeams = useMemo(() => {
+    return [...teams].sort((a, b) => {
+      if (sortOrder === "alphabetical") {
+        return a.name.localeCompare(b.name);
+      }
+      if (sortOrder === "age") {
+        const aAge = a.minAge ?? a.maxAge ?? 99;
+        const bAge = b.minAge ?? b.maxAge ?? 99;
+        return aAge - bAge;
+      }
+      return 0;
+    });
+  }, [teams, sortOrder]);
+
 
   if (loading && !teams.length) {
     return (
@@ -191,52 +207,72 @@ export default function TeamsPage() {
               Crea y gestiona los equipos de tu club.
             </p>
           </div>
-          <Dialog open={isAddTeamOpen} onOpenChange={setIsAddTeamOpen}>
-            <DialogTrigger asChild>
-              <Button className="gap-1">
-                <PlusCircle className="h-3.5 w-3.5" />
-                Crear Equipo
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Crear Nuevo Equipo</DialogTitle>
-                    <DialogDescription>
-                        Rellena los detalles para crear un nuevo equipo en tu club.
-                    </DialogDescription>
-                </DialogHeader>
-                 <div className="grid gap-4 py-4">
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="team-name" className="text-right">Nombre</Label>
-                        <Input id="team-name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="team-min-age" className="text-right">Edad Mínima</Label>
-                        <Input id="team-min-age" type="number" value={newTeamMinAge} onChange={(e) => setNewTeamMinAge(e.target.value)} className="col-span-3" />
-                    </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="team-max-age" className="text-right">Edad Máxima</Label>
-                        <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} className="col-span-3" />
-                    </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="team-image" className="text-right">Imagen</Label>
-                        <Input id="team-image" type="file" accept="image/*" onChange={(e) => setNewTeamImage(e.target.files ? e.target.files[0] : null)} className="col-span-3" />
-                    </div>
-                </div>
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancelar</Button>
-                    </DialogClose>
-                    <Button type="button" onClick={handleAddTeam} disabled={loading}>
-                        {loading ? <Loader2 className="animate-spin" /> : 'Crear Equipo'}
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-1">
+                  <Filter className="h-3.5 w-3.5" />
+                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                    Ordenar por
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ordenar equipos por</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuRadioGroup value={sortOrder} onValueChange={setSortOrder}>
+                    <DropdownMenuRadioItem value="alphabetical">Alfabéticamente (A-Z)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="age">Edad (Menor a Mayor)</DropdownMenuRadioItem>
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Dialog open={isAddTeamOpen} onOpenChange={setIsAddTeamOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-1">
+                  <PlusCircle className="h-3.5 w-3.5" />
+                  Crear Equipo
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                  <DialogHeader>
+                      <DialogTitle>Crear Nuevo Equipo</DialogTitle>
+                      <DialogDescription>
+                          Rellena los detalles para crear un nuevo equipo en tu club.
+                      </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid gap-4 py-4">
+                      <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="team-name" className="text-right">Nombre</Label>
+                          <Input id="team-name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="team-min-age" className="text-right">Edad Mínima</Label>
+                          <Input id="team-min-age" type="number" value={newTeamMinAge} onChange={(e) => setNewTeamMinAge(e.target.value)} className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="team-max-age" className="text-right">Edad Máxima</Label>
+                          <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} className="col-span-3" />
+                      </div>
+                      <div className="grid grid-cols-4 items-center gap-4">
+                          <Label htmlFor="team-image" className="text-right">Imagen</Label>
+                          <Input id="team-image" type="file" accept="image/*" onChange={(e) => setNewTeamImage(e.target.files ? e.target.files[0] : null)} className="col-span-3" />
+                      </div>
+                  </div>
+                  <DialogFooter>
+                      <DialogClose asChild>
+                          <Button type="button" variant="secondary">Cancelar</Button>
+                      </DialogClose>
+                      <Button type="button" onClick={handleAddTeam} disabled={loading}>
+                          {loading ? <Loader2 className="animate-spin" /> : 'Crear Equipo'}
+                      </Button>
+                  </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {teams.map(team => (
+          {sortedTeams.map(team => (
             <Card key={team.id} className="overflow-hidden">
               <CardHeader className="p-0">
                 <Link href={`/teams/${team.id}`}>
@@ -313,3 +349,5 @@ export default function TeamsPage() {
     </>
   )
 }
+
+    
