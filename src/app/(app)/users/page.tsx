@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,7 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown, Trash2, Copy } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -56,7 +57,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
 import type { Player, Coach, Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -84,6 +86,7 @@ export default function UsersPage() {
 
   const [selectedContactEmail, setSelectedContactEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState("Family");
+  const [generatedPassword, setGeneratedPassword] = useState("");
 
   const [userToEdit, setUserToEdit] = useState<User | null>(null);
   const [userToChangeRole, setUserToChangeRole] = useState<User | null>(null);
@@ -138,25 +141,36 @@ export default function UsersPage() {
         
         const [playersSnapshot, coachesSnapshot] = await Promise.all([getDocs(playersQuery), getDocs(coachesQuery)]);
         
-        const allContacts: Contact[] = [];
+        const allContacts: Omit<Contact, 'hasAccount'>[] = [];
 
         playersSnapshot.forEach(doc => {
             const data = doc.data() as Player;
-            const contactEmail = data.tutorEmail;
-            if (contactEmail && !existingUserEmails.has(contactEmail)) {
-                allContacts.push({ name: `${data.name} ${data.lastName} (Familia)`, email: contactEmail });
+            const contactEmail = data.isOwnTutor ? data.tutorEmail : data.tutorEmail;
+            const contactName = data.isOwnTutor ? `${data.name} ${data.lastName}` : data.tutorName ? `${data.tutorName} ${data.tutorLastName} (Tutor de ${data.name})` : `${data.name} ${data.lastName} (Familia)`;
+            if (contactEmail) {
+                allContacts.push({ name: contactName, email: contactEmail });
             }
         });
 
         coachesSnapshot.forEach(doc => {
             const data = doc.data() as Coach;
-            if (data.email && !existingUserEmails.has(data.email)) {
-                allContacts.push({ name: `${data.name} ${data.lastName} (Entrenador)`, email: data.email });
+             const contactEmail = data.email;
+             const contactName = `${data.name} ${data.lastName} (Entrenador)`;
+            if (contactEmail) {
+                allContacts.push({ name: contactName, email: contactEmail });
             }
         });
         
-        const uniqueContacts = Array.from(new Map(allContacts.map(item => [item['email'], item])).values());
-        setAvailableContacts(uniqueContacts);
+        const uniqueContactsMap = new Map<string, Contact>();
+        allContacts.forEach(contact => {
+          if (contact.email && !uniqueContactsMap.has(contact.email)) {
+             uniqueContactsMap.set(contact.email, {
+                ...contact,
+                hasAccount: existingUserEmails.has(contact.email)
+             });
+          }
+        });
+        setAvailableContacts(Array.from(uniqueContactsMap.values()));
 
     } catch (error) {
         console.error("Error fetching data:", error);
@@ -164,9 +178,26 @@ export default function UsersPage() {
     }
     setLoading(false);
   };
+
+  const handleSelectContact = (email: string) => {
+    const contact = availableContacts.find(c => c.email === email);
+    if (contact?.hasAccount) {
+        toast({ variant: "destructive", title: "Usuario existente", description: "Este contacto ya tiene una cuenta de usuario."});
+        return;
+    }
+    setSelectedContactEmail(email === selectedContactEmail ? "" : email);
+    setIsComboboxOpen(false);
+    
+    if (email) {
+      const newPassword = Math.random().toString(36).slice(-8);
+      setGeneratedPassword(newPassword);
+    } else {
+      setGeneratedPassword("");
+    }
+  }
   
   const handleAddUser = async () => {
-    if (!selectedContactEmail || !newUserRole || !clubId) {
+    if (!selectedContactEmail || !newUserRole || !clubId || !generatedPassword) {
         toast({ variant: "destructive", title: "Error", description: "Debes seleccionar un contacto y un rol." });
         return;
     }
@@ -179,25 +210,36 @@ export default function UsersPage() {
     
     setSaving(true);
     try {
-        await addDoc(collection(db, "users"), {
+        const userCredential = await createUserWithEmailAndPassword(auth, selectedContact.email, generatedPassword);
+        const user = userCredential.user;
+
+        await setDoc(doc(db, "users", user.uid), {
             email: selectedContact.email,
             name: selectedContact.name.split('(')[0].trim(),
             role: newUserRole,
             clubId: clubId,
         });
 
-        toast({ title: "Usuario invitado", description: `Se ha invitado a ${selectedContact.email} como ${newUserRole}.` });
+        toast({ title: "Usuario creado", description: `Se ha creado una cuenta para ${selectedContact.email}.` });
+        
         setIsAddUserOpen(false);
         setSelectedContactEmail("");
         setNewUserRole("Family");
+        setGeneratedPassword("");
         if(clubId) fetchData(clubId);
-    } catch (error) {
+
+    } catch (error: any) {
         console.error("Error adding user: ", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo invitar al usuario." });
+        let description = "No se pudo crear la cuenta de usuario.";
+        if (error.code === 'auth/email-already-in-use') {
+            description = "Este email ya está registrado. Si el usuario no aparece en la lista, puede que esté registrado en otro club.";
+        }
+        toast({ variant: "destructive", title: "Error", description });
     } finally {
       setSaving(false);
     }
   };
+
 
   const handleOpenEditModal = (user: User) => {
     setUserToEdit(user);
@@ -253,6 +295,8 @@ export default function UsersPage() {
       if (!userToDelete) return;
       setSaving(true);
       try {
+          // This requires a backend function to delete the user from Auth
+          // For now, we only delete from Firestore.
           await deleteDoc(doc(db, "users", userToDelete.id));
           toast({ title: "Usuario eliminado", description: `El usuario ${userToDelete.name} ha sido eliminado.` });
           setUserToDelete(null);
@@ -263,6 +307,11 @@ export default function UsersPage() {
       } finally {
           setSaving(false);
       }
+  };
+  
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copiado", description: "Contraseña copiada al portapapeles." });
   };
 
 
@@ -298,12 +347,12 @@ export default function UsersPage() {
                     <DialogHeader>
                         <DialogTitle>Añadir Nuevo Usuario</DialogTitle>
                         <DialogDescription>
-                            Selecciona un contacto y asigna un rol para crear un nuevo usuario.
+                            Selecciona un miembro del club para crearle una cuenta de acceso.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
                         <div className="space-y-2">
-                            <Label>Contacto</Label>
+                            <Label>Miembro del Club</Label>
                             <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
                                 <PopoverTrigger asChild>
                                     <Button
@@ -314,25 +363,25 @@ export default function UsersPage() {
                                     >
                                     {selectedContactEmail
                                         ? availableContacts.find((c) => c.email === selectedContactEmail)?.name
-                                        : "Selecciona un contacto..."}
+                                        : "Selecciona un miembro..."}
                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                                     <Command>
-                                        <CommandInput placeholder="Buscar contacto..." />
+                                        <CommandInput placeholder="Buscar miembro..." />
                                         <CommandList>
-                                            <CommandEmpty>No se encontraron contactos disponibles.</CommandEmpty>
+                                            <CommandEmpty>No se encontraron miembros.</CommandEmpty>
                                             <CommandGroup>
                                                 {availableContacts.map((contact) => (
                                                 <CommandItem
                                                     key={contact.email}
                                                     value={contact.email}
-                                                    onSelect={(currentValue) => {
-                                                        setSelectedContactEmail(currentValue === selectedContactEmail ? "" : currentValue);
-                                                        setIsComboboxOpen(false);
-                                                    }}
+                                                    onSelect={() => handleSelectContact(contact.email)}
+                                                    disabled={contact.hasAccount}
+                                                    className="flex justify-between items-center"
                                                 >
+                                                   <div className="flex items-center">
                                                     <Check
                                                     className={cn(
                                                         "mr-2 h-4 w-4",
@@ -343,6 +392,8 @@ export default function UsersPage() {
                                                         <p className="font-medium">{contact.name.split('(')[0].trim()}</p>
                                                         <p className="text-xs text-muted-foreground">{contact.email}</p>
                                                     </div>
+                                                   </div>
+                                                   {contact.hasAccount && <Badge variant="secondary">Ya es usuario</Badge>}
                                                 </CommandItem>
                                                 ))}
                                             </CommandGroup>
@@ -351,9 +402,27 @@ export default function UsersPage() {
                                 </PopoverContent>
                             </Popover>
                         </div>
+                        {selectedContactEmail && (
+                             <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Email del Usuario</Label>
+                                    <Input value={selectedContactEmail} readOnly disabled />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label>Contraseña Temporal</Label>
+                                    <div className="flex items-center gap-2">
+                                        <Input value={generatedPassword} readOnly />
+                                        <Button type="button" variant="outline" size="icon" onClick={() => copyToClipboard(generatedPassword)}>
+                                            <Copy className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">Copia esta contraseña y compártela de forma segura con el usuario.</p>
+                                </div>
+                             </div>
+                        )}
                         <div className="space-y-2">
                             <Label htmlFor="user-role">Rol</Label>
-                            <Select onValueChange={setNewUserRole} value={newUserRole}>
+                            <Select onValueChange={setNewUserRole} defaultValue={newUserRole}>
                                 <SelectTrigger>
                                     <SelectValue placeholder="Selecciona un rol" />
                                 </SelectTrigger>
@@ -369,8 +438,8 @@ export default function UsersPage() {
                         <DialogClose asChild>
                             <Button type="button" variant="secondary">Cancelar</Button>
                         </DialogClose>
-                        <Button type="button" onClick={handleAddUser} disabled={saving}>
-                            {saving ? <Loader2 className="animate-spin" /> : 'Añadir Usuario'}
+                        <Button type="button" onClick={handleAddUser} disabled={saving || !selectedContactEmail}>
+                            {saving ? <Loader2 className="animate-spin" /> : 'Crear Usuario'}
                         </Button>
                     </DialogFooter>
                 </DialogContent>
@@ -433,8 +502,7 @@ export default function UsersPage() {
           </Table>
         </CardContent>
       </Card>
-
-      {/* Edit User Modal */}
+      
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -462,7 +530,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Change Role Modal */}
        <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
         <DialogContent>
           <DialogHeader>
@@ -472,7 +539,7 @@ export default function UsersPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
                 <Label htmlFor="new-user-role">Nuevo Rol</Label>
-                <Select onValueChange={setSelectedNewRole} value={selectedNewRole}>
+                <Select onValueChange={setSelectedNewRole} defaultValue={selectedNewRole}>
                     <SelectTrigger>
                         <SelectValue placeholder="Selecciona un rol" />
                     </SelectTrigger>
@@ -495,7 +562,6 @@ export default function UsersPage() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -515,3 +581,5 @@ export default function UsersPage() {
     </>
   );
 }
+
+    

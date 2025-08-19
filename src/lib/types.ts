@@ -73,4 +73,5 @@ export type TeamMember = {
 export type Contact = {
     name: string;
     email: string;
+    hasAccount: boolean;
 }
