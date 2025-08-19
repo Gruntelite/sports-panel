@@ -197,7 +197,7 @@ export default function PlayersPage() {
   };
 
   const handleSelectChange = (id: keyof Player, value: string) => {
-    setPlayerData(prev => ({ ...prev, [id]: value }));
+    setPlayerData(prev => ({ ...prev, [id]: value === 'unassigned' ? '' : value }));
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -215,8 +215,8 @@ export default function PlayersPage() {
   }
 
   const handleSavePlayer = async () => {
-    if (!playerData.name || !playerData.lastName || !playerData.teamId || !playerData.tutorEmail || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos, equipo y email de contacto son obligatorios." });
+    if (!playerData.name || !playerData.lastName || !playerData.tutorEmail || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email de contacto son obligatorios." });
         return;
     }
 
@@ -706,11 +706,12 @@ export default function PlayersPage() {
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                            <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
-                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
+                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecciona un equipo" />
                                     </SelectTrigger>
                                     <SelectContent>
+                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
                                         {teams.map(team => (
                                             <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                                         ))}
@@ -775,3 +776,4 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
