@@ -80,10 +80,27 @@ export default function DashboardPage() {
             return stat;
         }));
         
-        // Fetch Today's Schedule
+        // Fetch Today's Schedule from the default template
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
+        const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : 'general';
+
+        if (!defaultTemplateId) {
+            setLoading(false);
+            return;
+        }
+
         const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
         const currentDayName = daysOfWeek[today.getDay()];
-        const scheduleRef = doc(db, "clubs", clubId, "schedules", "general");
+        
+        // Check for an override for today's date
+        const todayStr = today.toISOString().split('T')[0];
+        const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
+        const overrideSnap = await getDoc(overrideRef);
+        
+        const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
+
+        const scheduleRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
         const scheduleSnap = await getDoc(scheduleRef);
 
         let scheduleEntries: ScheduleEntry[] = [];
@@ -95,7 +112,7 @@ export default function DashboardPage() {
                 id: entry.id,
                 teamName: entry.teamName,
                 type: 'Entrenamiento',
-                time: entry.time,
+                time: entry.startTime,
                 location: entry.venueName,
             }));
         }
@@ -104,8 +121,6 @@ export default function DashboardPage() {
         const startOfDay = new Date(today.setHours(0, 0, 0, 0));
         const endOfDay = new Date(today.setHours(23, 59, 59, 999));
         
-        // This part assumes you have an 'events' collection. 
-        // We will use the static events from data.ts for now.
         const manualTodaysEvents = manualEvents
             .filter(e => {
                 const eventDate = e.date;
@@ -113,13 +128,13 @@ export default function DashboardPage() {
             })
             .map(e => ({
                 id: e.id,
-                title: e.team, // Assuming event.team stores the title
+                title: e.team, 
                 type: e.type,
                 time: e.time,
                 location: e.location,
             }));
 
-        const allTodaysEvents = [...scheduleEntries, ...manualTodaysEvents];
+        const allTodaysEvents = [...scheduleEntries, ...manualTodaysEvents].filter(e => e.time);
         allTodaysEvents.sort((a, b) => a.time.localeCompare(b.time));
 
         setTodaysSchedule(allTodaysEvents);
@@ -180,7 +195,7 @@ export default function DashboardPage() {
                         <div key={item.id} className="grid grid-cols-[100px_1fr_auto] items-center gap-4 p-3 rounded-lg bg-muted/50">
                             <div className="font-semibold text-sm flex items-center gap-2">
                                 <Clock className="h-4 w-4 text-muted-foreground"/>
-                                {item.time.split(' - ')[0]}
+                                {item.time}
                             </div>
                             <div>
                                 <div className="font-medium">{item.teamName || item.title}</div>
