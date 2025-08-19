@@ -5,14 +5,15 @@ import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getTeams } from "@/lib/data";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 
 type Venue = {
@@ -51,6 +52,13 @@ type WeeklySchedule = {
   Domingo: DailyScheduleEntry[];
 };
 
+type ScheduleTemplate = {
+    id: string;
+    name: string;
+    venues: Venue[];
+    weeklySchedule: WeeklySchedule;
+}
+
 const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
 type DayOfWeek = typeof daysOfWeek[number];
 
@@ -59,6 +67,14 @@ export default function SchedulesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [clubId, setClubId] = useState<string | null>(null);
+  
+  const [scheduleTemplates, setScheduleTemplates] = useState<ScheduleTemplate[]>([]);
+  const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
+  const [newTemplateName, setNewTemplateName] = useState("");
+  const [isNewTemplateModalOpen, setIsNewTemplateModalOpen] = useState(false);
+  const [isEditTemplateModalOpen, setIsEditTemplateModalOpen] = useState(false);
+  const [templateToDelete, setTemplateToDelete] = useState<ScheduleTemplate | null>(null);
+  const [editedTemplateName, setEditedTemplateName] = useState("");
   
   const [weeklySchedule, setWeeklySchedule] = useState<WeeklySchedule>({
     Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: [],
@@ -76,12 +92,47 @@ export default function SchedulesPage() {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   
-  const scheduleTemplateId = "general"; // For now, we use one general template
+  const getScheduleRef = useCallback((templateId: string) => {
+    if (!clubId || !templateId) return null;
+    return doc(db, "clubs", clubId, "schedules", templateId);
+  }, [clubId]);
 
-  const getScheduleRef = useCallback(() => {
-    if (!clubId) return null;
-    return doc(db, "clubs", clubId, "schedules", scheduleTemplateId);
-  }, [clubId, scheduleTemplateId]);
+  const fetchAllData = useCallback(async (currentClubId: string) => {
+    setLoading(true);
+    try {
+        const teamsCol = collection(db, "clubs", currentClubId, "teams");
+        const teamsSnapshot = await getDocs(teamsCol);
+        setTeams(teamsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Team)));
+
+        const schedulesCol = collection(db, "clubs", currentClubId, "schedules");
+        const schedulesSnapshot = await getDocs(schedulesCol);
+
+        if (schedulesSnapshot.empty) {
+            const newTemplateId = "general";
+            const newTemplateRef = doc(db, "clubs", currentClubId, "schedules", newTemplateId);
+            const initialTemplateData = { 
+                name: "Plantilla General",
+                venues: [],
+                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+            };
+            await setDoc(newTemplateRef, initialTemplateData);
+            setScheduleTemplates([{ id: newTemplateId, ...initialTemplateData }]);
+            setCurrentTemplateId(newTemplateId);
+            loadTemplateData({ id: newTemplateId, ...initialTemplateData });
+        } else {
+            const templates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
+            setScheduleTemplates(templates);
+            const templateToLoad = templates.find(t => t.id === currentTemplateId) || templates[0];
+            setCurrentTemplateId(templateToLoad.id);
+            loadTemplateData(templateToLoad);
+        }
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
+    } finally {
+        setLoading(false);
+    }
+  }, [currentTemplateId]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -92,43 +143,40 @@ export default function SchedulesPage() {
           const userData = userDocSnap.data();
           const currentClubId = userData.clubId;
           setClubId(currentClubId);
-          
           if (currentClubId) {
-            // Fetch teams
-            const fetchedTeams = await getTeams(currentClubId);
-            setTeams(fetchedTeams);
-
-            // Fetch schedule data
-            const scheduleRef = doc(db, "clubs", currentClubId, "schedules", scheduleTemplateId);
-            const scheduleSnap = await getDoc(scheduleRef);
-
-            if (scheduleSnap.exists()) {
-              const data = scheduleSnap.data();
-              setVenues(data.venues || []);
-              setWeeklySchedule(data.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
-            } else {
-              // If no schedule exists, create one
-              await setDoc(scheduleRef, { 
-                  name: "Plantilla General",
-                  venues: [],
-                  weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
-              }, { merge: true });
-            }
+            fetchAllData(currentClubId);
           }
+        } else {
+            setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribe();
-  }, [scheduleTemplateId]);
+  }, []);
 
+  const loadTemplateData = (template: ScheduleTemplate) => {
+    setVenues(template.venues || []);
+    setWeeklySchedule(template.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
+    setCurrentDayIndex(0); // Reset to Monday on template change
+    setAssignments([]);
+  };
+
+  const handleTemplateChange = (templateId: string) => {
+    const newTemplate = scheduleTemplates.find(t => t.id === templateId);
+    if (newTemplate) {
+        setCurrentTemplateId(templateId);
+        loadTemplateData(newTemplate);
+    }
+  };
 
   const handleAddVenue = async () => {
-    if (newVenueName.trim() !== '' && clubId) {
+    if (newVenueName.trim() !== '' && clubId && currentTemplateId) {
         const newVenue = {id: crypto.randomUUID(), name: newVenueName.trim()};
         const updatedVenues = [...venues, newVenue];
         
-        const scheduleRef = getScheduleRef();
+        const scheduleRef = getScheduleRef(currentTemplateId);
         if (scheduleRef) {
             await updateDoc(scheduleRef, { venues: updatedVenues });
             setVenues(updatedVenues);
@@ -139,8 +187,9 @@ export default function SchedulesPage() {
   }
 
   const handleRemoveVenue = async (id: string) => {
+    if (!clubId || !currentTemplateId) return;
     const updatedVenues = venues.filter(v => v.id !== id);
-    const scheduleRef = getScheduleRef();
+    const scheduleRef = getScheduleRef(currentTemplateId);
     if (scheduleRef) {
         await updateDoc(scheduleRef, { venues: updatedVenues });
         setVenues(updatedVenues);
@@ -204,37 +253,66 @@ export default function SchedulesPage() {
   };
   
   const handleSaveTemplate = async () => {
-    const scheduleRef = getScheduleRef();
+    if (!clubId || !currentTemplateId) return;
+    const scheduleRef = getScheduleRef(currentTemplateId);
     if (scheduleRef) {
         await updateDoc(scheduleRef, { weeklySchedule: weeklySchedule });
         toast({ title: "Plantilla Guardada", description: `Los horarios de la plantilla se han guardado.` });
+        if(clubId) fetchAllData(clubId);
     }
   };
 
   const handleCreateTemplate = async () => {
-    if (!clubId) return;
+    if (!clubId || !newTemplateName.trim()) return;
 
-    const templateName = prompt("Introduce el nombre para la nueva plantilla:");
-    if (templateName && templateName.trim() !== '') {
-        const newTemplateId = templateName.toLowerCase().replace(/\s+/g, '-');
-        const newTemplateRef = doc(db, "clubs", clubId, "schedules", newTemplateId);
-        
-        try {
-            await setDoc(newTemplateRef, {
-                name: templateName,
-                venues: [],
-                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
-            });
-            toast({ title: "Plantilla creada", description: `La plantilla "${templateName}" ha sido creada.` });
-            // Optionally, you can switch to the new template here
-            // setScheduleTemplateId(newTemplateId);
-        } catch (error) {
-            console.error("Error creating template: ", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudo crear la plantilla." });
-        }
+    const newTemplateId = newTemplateName.toLowerCase().replace(/\s+/g, '-') + '-' + crypto.randomUUID().substring(0, 4);
+    const newTemplateRef = doc(db, "clubs", clubId, "schedules", newTemplateId);
+    
+    try {
+        await setDoc(newTemplateRef, {
+            name: newTemplateName.trim(),
+            venues: [],
+            weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+        });
+        toast({ title: "Plantilla creada", description: `La plantilla "${newTemplateName}" ha sido creada.` });
+        setIsNewTemplateModalOpen(false);
+        setNewTemplateName("");
+        setCurrentTemplateId(newTemplateId);
+        if(clubId) fetchAllData(clubId);
+    } catch (error) {
+        console.error("Error creating template: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo crear la plantilla." });
     }
   };
 
+  const handleEditTemplateName = async () => {
+    if (!clubId || !currentTemplateId || !editedTemplateName.trim()) return;
+    const scheduleRef = getScheduleRef(currentTemplateId);
+    try {
+      await updateDoc(scheduleRef, { name: editedTemplateName.trim() });
+      toast({ title: "Plantilla actualizada", description: `El nombre de la plantilla se ha actualizado.` });
+      setIsEditTemplateModalOpen(false);
+      setEditedTemplateName("");
+      if(clubId) fetchAllData(clubId);
+    } catch (error) {
+      console.error("Error updating template name:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el nombre." });
+    }
+  };
+  
+  const handleDeleteTemplate = async () => {
+    if (!clubId || !templateToDelete) return;
+    try {
+        await deleteDoc(doc(db, "clubs", clubId, "schedules", templateToDelete.id));
+        toast({ title: "Plantilla eliminada", description: "La plantilla ha sido eliminada." });
+        setTemplateToDelete(null);
+        setCurrentTemplateId(null); // Reset current template
+        if(clubId) fetchAllData(clubId);
+    } catch (error) {
+        console.error("Error deleting template:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la plantilla." });
+    }
+  };
 
   const navigateDay = (direction: 'prev' | 'next') => {
     if (assignments.length > 0) {
@@ -260,6 +338,8 @@ export default function SchedulesPage() {
     setAssignments(prev => prev.map(a => a.id === id ? {...a, [field]: value} : a));
   };
   
+  const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
+
   if (loading) {
     return (
         <div className="flex items-center justify-center h-full">
@@ -281,19 +361,56 @@ export default function SchedulesPage() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline">
-                    Plantilla General
+                    {currentTemplate?.name || "Seleccionar Plantilla"}
                     <MoreVertical className="ml-2 h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent>
-                <DropdownMenuItem disabled>Editar Nombre</DropdownMenuItem>
-                <DropdownMenuItem disabled>Eliminar Plantilla</DropdownMenuItem>
+                <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                    {scheduleTemplates.map(template => (
+                         <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                    ))}
+                </DropdownMenuRadioGroup>
+                <DropdownMenuSeparator />
+                <DialogTrigger asChild onSelect={(e) => e.preventDefault()}>
+                  <DropdownMenuItem onSelect={() => {
+                    setEditedTemplateName(currentTemplate?.name || "");
+                    setIsEditTemplateModalOpen(true);
+                  }}>
+                    <Edit className="mr-2 h-4 w-4"/>
+                    Renombrar
+                  </DropdownMenuItem>
+                </DialogTrigger>
+                <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)}>
+                    <Trash2 className="mr-2 h-4 w-4"/>
+                    Eliminar
+                </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button className="gap-1" onClick={handleCreateTemplate}>
-                <PlusCircle className="h-3.5 w-3.5" />
-                Crear Plantilla
-            </Button>
+
+            <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
+              <DialogTrigger asChild>
+                <Button className="gap-1">
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    Crear Plantilla
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
+                    <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                    <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
+                    <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                    <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 flex-1">
@@ -431,6 +548,41 @@ export default function SchedulesPage() {
             </div>
         </Card>
       </div>
+
+       <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+              <DialogTitle>Renombrar Plantilla</DialogTitle>
+              <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+              <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+              <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+          </div>
+          <DialogFooter>
+              <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+              <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+       <AlertDialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente la plantilla "{templateToDelete?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteTemplate}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
