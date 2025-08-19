@@ -671,13 +671,13 @@ export default function SchedulesPage() {
             </CardHeader>
             <CardContent>
                 <div className="border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-[100px_1fr]">
+                    <div className="grid grid-cols-[60px_1fr]">
                         <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r">Horas</div>
                         <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b">Equipos y Recintos</div>
                     </div>
                     <div className="grid grid-cols-1 max-h-[600px] overflow-y-auto">
                     {processedSlotsForRender.map(({ time, entries, duration }) => (
-                        <div key={time} className="grid grid-cols-[100px_1fr] items-start border-b last:border-b-0" style={{ minHeight: `${duration * 4}rem` }}>
+                        <div key={time} className="grid grid-cols-[60px_1fr] items-start border-b last:border-b-0" style={{ minHeight: `${duration * 4}rem` }}>
                             <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{time}</div>
                             <div className="p-2 grid grid-cols-3 gap-2 self-start w-full">
                                {entries.map((entry: any) => (
@@ -725,5 +725,7 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+    
 
     
