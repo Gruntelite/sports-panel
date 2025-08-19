@@ -172,12 +172,6 @@ export default function DashboardPage() {
                 Entrenamientos y eventos programados para hoy.
               </CardDescription>
             </div>
-             <Button asChild size="sm" className="ml-auto gap-1">
-              <Link href="/calendar">
-                Ver Calendario
-                <ArrowUpRight className="h-4 w-4" />
-              </Link>
-            </Button>
           </CardHeader>
           <CardContent>
              <div className="space-y-4">
