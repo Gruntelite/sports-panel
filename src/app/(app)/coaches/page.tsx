@@ -14,6 +14,8 @@ import {
   AlertCircle,
   Shield,
   CircleDollarSign,
+  ChevronDown,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,6 +52,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubTrigger,
+  DropdownMenuSubContent,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -68,8 +73,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Coach } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -92,6 +96,8 @@ export default function CoachesPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
+  const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -279,6 +285,14 @@ export default function CoachesPage() {
             await deleteObject(imageRef);
         }
         await deleteDoc(doc(db, "clubs", clubId, "coaches", coachToDelete.id));
+
+        const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('coachId', '==', coachToDelete.id));
+        const usersSnapshot = await getDocs(usersQuery);
+        if (!usersSnapshot.empty) {
+            const userDoc = usersSnapshot.docs[0];
+            await deleteDoc(doc(db, 'clubs', clubId, 'users', userDoc.id));
+        }
+
         toast({ title: "Entrenador eliminado", description: `${coachToDelete.name} ${coachToDelete.lastName} ha sido eliminado.`});
         fetchData(clubId);
     } catch (error) {
@@ -289,6 +303,95 @@ export default function CoachesPage() {
         setCoachToDelete(null);
     }
   };
+  
+  const handleSelectCoach = (coachId: string, isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedCoaches(prev => [...prev, coachId]);
+    } else {
+      setSelectedCoaches(prev => prev.filter(id => id !== coachId));
+    }
+  };
+  
+  const handleSelectAll = (isSelected: boolean) => {
+    if (isSelected) {
+      setSelectedCoaches(coaches.map(c => c.id));
+    } else {
+      setSelectedCoaches([]);
+    }
+  };
+
+  const handleBulkAssignTeam = async (teamId: string) => {
+    if (!clubId || selectedCoaches.length === 0) return;
+
+    setLoading(true);
+    try {
+        const teamName = teams.find(t => t.id === teamId)?.name || "Sin equipo";
+        const batch = writeBatch(db);
+        selectedCoaches.forEach(coachId => {
+            const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
+            batch.update(coachRef, { teamId, teamName });
+        });
+        await batch.commit();
+
+        toast({
+            title: "Entrenadores actualizados",
+            description: `${selectedCoaches.length} entrenadores han sido asignados al nuevo equipo.`
+        });
+        fetchData(clubId);
+        setSelectedCoaches([]);
+    } catch (error) {
+        console.error("Error assigning coaches in bulk:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo asignar los entrenadores al equipo." });
+    } finally {
+        setLoading(false);
+    }
+  };
+  
+  const handleBulkDelete = async () => {
+    if (!clubId || selectedCoaches.length === 0) return;
+
+    setIsDeleting(true);
+    try {
+        const batch = writeBatch(db);
+        for (const coachId of selectedCoaches) {
+            const coach = coaches.find(p => p.id === coachId);
+            if (coach) {
+                // Delete avatar from storage
+                if (coach.avatar && !coach.avatar.includes('placehold.co')) {
+                    const imageRef = ref(storage, coach.avatar);
+                    await deleteObject(imageRef).catch(e => console.warn("Could not delete old image:", e));
+                }
+                
+                // Delete coach document
+                const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
+                batch.delete(coachRef);
+
+                // Find and delete corresponding user document
+                const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('coachId', '==', coachId));
+                const usersSnapshot = await getDocs(usersQuery);
+                if (!usersSnapshot.empty) {
+                    const userDoc = usersSnapshot.docs[0];
+                    batch.delete(doc(db, 'clubs', clubId, 'users', userDoc.id));
+                }
+            }
+        }
+        await batch.commit();
+
+        toast({
+            title: "Entrenadores eliminados",
+            description: `${selectedCoaches.length} entrenadores han sido eliminados.`
+        });
+        fetchData(clubId);
+        setSelectedCoaches([]);
+    } catch (error) {
+        console.error("Error deleting coaches in bulk:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar a los entrenadores." });
+    } finally {
+        setIsDeleting(false);
+        setIsBulkDeleteAlertOpen(false);
+    }
+  };
+
 
   if (loading && !coaches.length) {
     return (
@@ -297,6 +400,8 @@ export default function CoachesPage() {
         </div>
     )
   }
+  
+  const isAllSelected = coaches.length > 0 && selectedCoaches.length === coaches.length;
 
   return (
     <TooltipProvider>
@@ -310,12 +415,47 @@ export default function CoachesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-               <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
-                  <PlusCircle className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      Añadir Entrenador
-                  </span>
-              </Button>
+              {selectedCoaches.length > 0 ? (
+                 <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" className="h-8 gap-1">
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                           Acciones ({selectedCoaches.length})
+                        </span>
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                       <DropdownMenuSub>
+                         <DropdownMenuSubTrigger>Asignar a Equipo</DropdownMenuSubTrigger>
+                         <DropdownMenuSubContent>
+                           {teams.map(team => (
+                             <DropdownMenuItem key={team.id} onSelect={() => handleBulkAssignTeam(team.id)}>
+                               {team.name}
+                             </DropdownMenuItem>
+                           ))}
+                         </DropdownMenuSubContent>
+                       </DropdownMenuSub>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem className="text-destructive" onSelect={() => setIsBulkDeleteAlertOpen(true)}>Eliminar Seleccionados</DropdownMenuItem>
+                    </DropdownMenuContent>
+                 </DropdownMenu>
+              ) : (
+                <>
+                  <Button variant="outline" size="sm" className="h-8 gap-1">
+                    <Filter className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                      Filtrar
+                    </span>
+                  </Button>
+                  <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                        Añadir Entrenador
+                    </span>
+                  </Button>
+                </>
+              )}
             </div>
           </div>
         </CardHeader>
@@ -323,6 +463,13 @@ export default function CoachesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox">
+                  <Checkbox
+                    checked={isAllSelected}
+                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Equipo</TableHead>
                 <TableHead>Email</TableHead>
@@ -334,7 +481,14 @@ export default function CoachesPage() {
             </TableHeader>
             <TableBody>
               {coaches.map(coach => (
-                <TableRow key={coach.id}>
+                <TableRow key={coach.id} data-state={selectedCoaches.includes(coach.id) && "selected"}>
+                   <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedCoaches.includes(coach.id)}
+                      onCheckedChange={(checked) => handleSelectCoach(coach.id, checked as boolean)}
+                      aria-label={`Seleccionar a ${coach.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-3">
                       <Avatar className="h-9 w-9">
@@ -565,6 +719,22 @@ export default function CoachesPage() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteCoach} disabled={isDeleting}>
               {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+       <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedCoaches.length} entrenadores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Entrenadores'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
