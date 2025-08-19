@@ -57,6 +57,7 @@ export type Coach = {
     tutorLastName?: string;
     tutorDni?: string;
     hasMissingData?: boolean;
+    monthlyPayment?: number;
 }
 
 export type TeamMember = {

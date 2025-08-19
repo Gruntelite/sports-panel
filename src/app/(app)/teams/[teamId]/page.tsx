@@ -153,9 +153,13 @@ export default function EditTeamPage() {
   const hasMissingPlayerData = (player: any): boolean => {
     const requiredFields = [
       'birthDate', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
-      'tutorPhone', 'iban', 'teamId', 'jerseyNumber', 'monthlyFee'
+      'tutorPhone', 'iban', 'jerseyNumber'
     ];
+    if (player.monthlyFee === undefined || player.monthlyFee === null) {
+      requiredFields.push('monthlyFee');
+    }
     if (player.isOwnTutor) {
+        // No need for tutor fields if player is their own tutor
     } else {
         requiredFields.push('tutorName', 'tutorLastName', 'tutorDni');
     }
@@ -242,7 +246,7 @@ export default function EditTeamPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
-    const val = type === 'number' ? Number(value) : value;
+    const val = type === 'number' ? (value === '' ? null : Number(value)) : value;
 
     if (['name', 'minAge', 'maxAge', 'defaultMonthlyFee'].includes(id)) {
         setTeam(prev => ({ ...prev, [id]: value }));
@@ -466,6 +470,7 @@ export default function EditTeamPage() {
       const dataToSave = {
         ...coachData,
         avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
+        monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
 
       if (modalMode === 'edit' && coachData.id) {
@@ -900,18 +905,31 @@ export default function EditTeamPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorEmail">{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                     <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
                                      <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleInputChange} />
                                  </div>
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorPhone">{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                     <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
                                      <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                <Input id="iban" value={currentData.iban || ''} onChange={handleInputChange} />
-                            </div>
+                            {modalType === 'player' ? (
+                                <div className="space-y-2">
+                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                    <Input id="iban" value={currentData.iban || ''} onChange={handleInputChange} />
+                                </div>
+                             ) : (
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                        <Input id="iban" value={currentData.iban || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                        <Input id="monthlyPayment" type="number" value={(currentData as Coach).monthlyPayment ?? ''} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+                            )}
                         </div>
                       </div>
                     </TabsContent>
@@ -942,6 +960,23 @@ export default function EditTeamPage() {
                                 </div>
                         </div>
                         </div>
+                        </TabsContent>
+                    )}
+                    {modalType === 'coach' && (
+                        <TabsContent value="contact">
+                          <div className="space-y-2 pt-6">
+                              <Label htmlFor="teamId">Equipo Asignado</Label>
+                              <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId}>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Selecciona un equipo" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                      {allTeams.map(t => (
+                                          <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                              </Select>
+                          </div>
                         </TabsContent>
                     )}
                 </Tabs>

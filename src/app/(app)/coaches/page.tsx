@@ -165,8 +165,8 @@ export default function CoachesPage() {
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setCoachData(prev => ({ ...prev, [id]: value }));
+    const { id, value, type } = e.target;
+    setCoachData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
   };
 
   const handleCheckboxChange = (id: keyof Coach, checked: boolean) => {
@@ -226,6 +226,7 @@ export default function CoachesPage() {
       const dataToSave = {
         ...coachData,
         avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
+        monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
 
       if (modalMode === 'edit' && coachData.id) {
@@ -486,9 +487,15 @@ export default function CoachesPage() {
                                      <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                    <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                    <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
+                                </div>
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo Asignado</Label>
