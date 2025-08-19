@@ -84,101 +84,149 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
         );
     }
     
-    const { venues, weeklySchedule } = template;
+    const { venues, weeklySchedule, startTime = "16:00", endTime = "23:00" } = template;
 
     const timeToMinutes = (time: string) => {
+        if (!time) return 0;
         const [hours, minutes] = time.split(':').map(Number);
         return hours * 60 + minutes;
     };
 
-    const getGroupedSchedule = (venueId: string) => {
-        const scheduleByDay: { [key in DayOfWeek]: { [timeSlot: string]: { teams: string[] } } } = { 
-            Lunes: {}, Martes: {}, Miércoles: {}, Jueves: {}, Viernes: {}, Sábado: {}, Domingo: {} 
-        };
-        const allTimeSlots = new Set<string>();
+    const timeSlots = useMemo(() => {
+        const slots = [];
+        let current = new Date(`1970-01-01T${startTime}:00`);
+        const endDate = new Date(`1970-01-01T${endTime}:00`);
+        while (current < endDate) {
+            slots.push(current.toTimeString().substring(0, 5));
+            current = new Date(current.getTime() + 60 * 60 * 1000); // 1 hour intervals
+        }
+        return slots;
+    }, [startTime, endTime]);
 
-        // First, gather all unique time slots for the venue across the whole week
-        daysOfWeek.forEach(day => {
-            const dayEvents = weeklySchedule[day]?.filter(event => event.venueId === venueId && event.startTime && event.endTime) || [];
-            dayEvents.forEach(event => {
-                const timeSlotKey = `${event.startTime}-${event.endTime}`;
-                allTimeSlots.add(timeSlotKey);
-            });
-        });
+    const processDayEvents = (events: DailyScheduleEntry[]) => {
+        if (!events || events.length === 0) return [];
+
+        const sortedEvents = events
+            .filter(e => e.startTime && e.endTime)
+            .map(e => ({
+                ...e,
+                start: timeToMinutes(e.startTime),
+                end: timeToMinutes(e.endTime),
+            }))
+            .sort((a, b) => a.start - b.start || a.end - b.end);
+
+        let layout: (DailyScheduleEntry & { start: number; end: number; col: number; numCols: number })[] = [];
+
+        for (const event of sortedEvents) {
+            let col = 0;
+            let overlaps = layout.filter(e => Math.max(event.start, e.start) < Math.min(event.end, e.end));
+
+            let colNumbers = overlaps.map(e => e.col);
+            while (colNumbers.includes(col)) {
+                col++;
+            }
+            
+            layout.push({ ...event, col, numCols: 1 });
+        }
         
-        const sortedTimeSlots = Array.from(allTimeSlots).sort((a, b) => {
-            const startA = timeToMinutes(a.split('-')[0]);
-            const startB = timeToMinutes(b.split('-')[0]);
-            return startA - startB;
-        });
-
-        // Then, populate the schedule for each day based on the sorted time slots
-        daysOfWeek.forEach(day => {
-            const dayEvents = weeklySchedule[day]?.filter(event => event.venueId === venueId && event.startTime && event.endTime) || [];
-            const timeSlotsForDay: { [key: string]: { teams: string[] } } = {};
-
-            dayEvents.forEach(event => {
-                const timeSlotKey = `${event.startTime}-${event.endTime}`;
-                if (!timeSlotsForDay[timeSlotKey]) {
-                    timeSlotsForDay[timeSlotKey] = { teams: [] };
+        for (let i = 0; i < layout.length; i++) {
+            let overlappingGroup = [layout[i]];
+            for (let j = 0; j < layout.length; j++) {
+                if (i === j) continue;
+                if (Math.max(layout[i].start, layout[j].start) < Math.min(layout[i].end, layout[j].end)) {
+                    let isAlreadyInGroup = overlappingGroup.some(groupedEvent => groupedEvent.id === layout[j].id);
+                    if (!isAlreadyInGroup) {
+                        overlappingGroup.push(layout[j]);
+                    }
                 }
-                timeSlotsForDay[timeSlotKey].teams.push(event.teamName);
-            });
-            scheduleByDay[day] = timeSlotsForDay;
-        });
+            }
+            if (overlappingGroup.length > 1) {
+                const maxCols = overlappingGroup.length;
+                overlappingGroup.forEach(eventInGroup => {
+                    const layoutEvent = layout.find(e => e.id === eventInGroup.id);
+                    if (layoutEvent) {
+                        layoutEvent.numCols = maxCols;
+                    }
+                });
+            }
+        }
+        
+        return layout;
+    };
 
-        return { scheduleByDay, sortedTimeSlots };
+    const calculateEventPosition = (event: any) => {
+        const startHour = parseInt(startTime.split(':')[0]);
+        const eventStart = new Date(`1970-01-01T${event.startTime}`);
+        const eventEnd = new Date(`1970-01-01T${event.endTime}`);
+        
+        const startMinutes = (eventStart.getHours() - startHour) * 60 + eventStart.getMinutes();
+        const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
+
+        const hourHeight = 80; 
+        const top = (startMinutes / 60) * hourHeight;
+        const height = (durationMinutes / 60) * hourHeight;
+        
+        const width = 100 / event.numCols;
+        const left = event.col * width;
+        
+        return { 
+            top, 
+            height, 
+            left: `${left}%`, 
+            width: `calc(${width}% - 4px)`
+        };
     };
 
     return (
         <div ref={innerRef} className="space-y-8 bg-background p-4">
-            {venues.map(venue => {
-                const { scheduleByDay, sortedTimeSlots } = getGroupedSchedule(venue.id);
-                return (
-                    <Card key={venue.id}>
-                        <CardHeader>
-                            <CardTitle>{venue.name}</CardTitle>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="border rounded-lg overflow-hidden">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-muted/50">
-                                        <tr>
-                                            <th className="w-[120px] px-4 py-3 font-medium">Hora</th>
-                                            {daysOfWeek.map(day => (
-                                                <th key={day} className="px-4 py-3 font-medium">{day}</th>
-                                            ))}
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {sortedTimeSlots.map(timeSlot => {
-                                            const [start, end] = timeSlot.split('-');
-                                            return (
-                                                <tr key={timeSlot} className="border-t">
-                                                    <td className="px-4 py-3 font-medium align-top">
-                                                        {start} - {end}
-                                                    </td>
-                                                    {daysOfWeek.map(day => (
-                                                        <td key={`${venue.id}-${day}-${timeSlot}`} className="px-4 py-3 align-top">
-                                                            {scheduleByDay[day][timeSlot] ? (
-                                                                scheduleByDay[day][timeSlot].teams.map((team: string, index: number) => (
-                                                                    <div key={index} className="p-1.5 mb-1 rounded-md bg-primary/10 text-primary-foreground border border-primary/20">
-                                                                        <p className="font-semibold text-primary">{team}</p>
-                                                                    </div>
-                                                                ))
-                                                            ) : '—'}
-                                                        </td>
-                                                    ))}
-                                                </tr>
-                                            );
-                                        })}
-                                    </tbody>
-                                </table>
+            {venues.map(venue => (
+                <Card key={venue.id}>
+                    <CardHeader>
+                        <CardTitle>{venue.name}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="overflow-x-auto">
+                        <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 200}px` }}>
+                            <div className="w-[60px] flex-shrink-0 border-r">
+                                {timeSlots.map(time => (
+                                    <div key={time} className="h-[80px] flex items-start justify-center p-1 border-b">
+                                        <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+                                    </div>
+                                ))}
                             </div>
-                        </CardContent>
-                    </Card>
-                );
-            })}
+                            <div className="flex flex-grow">
+                                {daysOfWeek.map(day => {
+                                    const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
+                                    return (
+                                        <div key={day} className="w-[200px] flex-shrink-0 border-r relative">
+                                            <div className="text-center font-medium p-2 border-b bg-muted/50">{day}</div>
+                                            <div className="relative h-full">
+                                                {timeSlots.map((_, index) => (
+                                                    <div key={index} className="h-[80px] border-b"></div>
+                                                ))}
+                                                {dayEvents.map(event => {
+                                                    const { top, height, left, width } = calculateEventPosition(event);
+                                                    return (
+                                                        <div
+                                                            key={event.id}
+                                                            className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
+                                                            style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
+                                                        >
+                                                            <span className="font-bold text-sm truncate">{event.teamName}</span>
+                                                            <span className="text-xs opacity-90 truncate flex items-center gap-1 mt-auto">
+                                                                <Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}
+                                                            </span>
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            ))}
         </div>
     );
 };
@@ -547,7 +595,7 @@ export default function SchedulesPage() {
     const startMinutes = (eventStart.getHours() - startHour) * 60 + eventStart.getMinutes();
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
-    const hourHeight = 64; // Corresponds to h-16
+    const hourHeight = 80;
     const top = (startMinutes / 60) * hourHeight;
     const height = (durationMinutes / 60) * hourHeight;
     
@@ -910,3 +958,5 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+    
