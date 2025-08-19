@@ -140,14 +140,13 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                     }
                 }
             }
-            if (overlappingGroup.length > 1) {
-                const maxCols = overlappingGroup.length;
-                overlappingGroup.forEach(eventInGroup => {
-                    const layoutEvent = layout.find(e => e.id === eventInGroup.id);
-                    if (layoutEvent) {
-                        layoutEvent.numCols = maxCols;
-                    }
-                });
+            const maxCols = overlappingGroup.reduce((max, e) => Math.max(max, e.col), 0) + 1;
+            
+            for (const eventInGroup of overlappingGroup) {
+                const eventToUpdate = layout.find(e => e.id === eventInGroup.id);
+                if (eventToUpdate) {
+                    eventToUpdate.numCols = maxCols;
+                }
             }
         }
         
@@ -186,10 +185,11 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
                         <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 200}px` }}>
-                            <div className="w-[60px] flex-shrink-0 border-r">
+                            <div className="w-[60px] flex-shrink-0">
+                                <div className="h-[40px] border-b bg-muted/50">&nbsp;</div> {/* Spacer for day headers */}
                                 {timeSlots.map(time => (
-                                    <div key={time} className="h-[80px] relative">
-                                        <span className="text-xs font-semibold text-muted-foreground absolute -top-2.5 left-1/2 -translate-x-1/2">{time}</span>
+                                    <div key={time} className="h-[80px] relative text-right pr-2 border-r">
+                                        <span className="text-xs font-semibold text-muted-foreground absolute -top-2.5 right-2">{time}</span>
                                     </div>
                                 ))}
                             </div>
@@ -198,7 +198,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                                     const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
                                     return (
                                         <div key={day} className="w-[200px] flex-shrink-0 border-r relative">
-                                            <div className="text-center font-medium p-2 border-b bg-muted/50">{day}</div>
+                                            <div className="text-center font-medium p-2 h-[41px] border-b bg-muted/50">{day}</div>
                                             <div className="relative h-full">
                                                 {timeSlots.map((_, index) => (
                                                     <div key={index} className="h-[80px] border-b"></div>
@@ -887,8 +887,8 @@ export default function SchedulesPage() {
                         <div className="grid grid-cols-[60px_1fr]">
                             <div className="col-start-1 col-end-2 border-r">
                                 {timeSlots.map(time => (
-                                    <div key={time} className="h-[80px] flex items-start justify-center p-1 border-b">
-                                      <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+                                    <div key={time} className="h-[80px] relative">
+                                       <span className="text-xs font-semibold text-muted-foreground absolute -top-2.5 right-2">{time}</span>
                                     </div>
                                 ))}
                             </div>
@@ -961,5 +961,6 @@ export default function SchedulesPage() {
 }
 
     
+
 
 
