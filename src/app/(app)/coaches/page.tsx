@@ -430,29 +430,27 @@ export default function CoachesPage() {
                                    <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
                                </div>
                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                               <div className="space-y-2">
+                                   <Label htmlFor="city">Ciudad</Label>
+                                   <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
+                               </div>
+                               <div className="space-y-2">
+                                   <Label htmlFor="postalCode">Código Postal</Label>
+                                   <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
+                               </div>
+                           </div>
                        </div>
                        </div>
                     </TabsContent>
                     <TabsContent value="contact" className="pt-6">
                       <div className="min-h-[280px]">
                         <div className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="address">Dirección</Label>
-                                   <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
-                               </div>
-                                <div className="space-y-2">
-                                   <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                           <div className="flex items-center space-x-2 pt-4">
+                           <div className="flex items-center space-x-2">
                               <Checkbox 
                                 id="isOwnTutor" 
                                 checked={coachData.isOwnTutor || false}
