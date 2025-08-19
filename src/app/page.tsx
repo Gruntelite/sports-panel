@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { sports } from "@/lib/sports";
+import Link from "next/link";
 
 function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -137,19 +139,14 @@ export default function SignUpPage() {
         billingPlan: null,
       });
 
-      useEffect(() => {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('clubThemeColor', clubColor);
-          localStorage.setItem('clubThemeColorForeground', foregroundColor);
-        }
-      }, [clubColor, foregroundColor]);
-      
-      const hslColor = hexToHsl(clubColor);
-      const hslForegroundColor = hexToHsl(foregroundColor);
+      const primaryHsl = hexToHsl(clubColor);
+      const foregroundHsl = hexToHsl(foregroundColor);
 
-      if (hslColor && hslForegroundColor) {
-        document.documentElement.style.setProperty('--primary', `${hslColor.h} ${hslColor.s}% ${hslColor.l}%`);
-        document.documentElement.style.setProperty('--primary-foreground', `${hslForegroundColor.h} ${hslForegroundColor.s}% ${hslForegroundColor.l}%`);
+      if (primaryHsl) {
+        localStorage.setItem('clubThemeColor', clubColor);
+      }
+      if (foregroundHsl) {
+        localStorage.setItem('clubThemeColorForeground', foregroundColor);
       }
 
       toast({
@@ -175,6 +172,18 @@ export default function SignUpPage() {
     }
   };
 
+   useEffect(() => {
+    const localTheme = localStorage.getItem('clubThemeColor');
+    const localThemeForeground = localStorage.getItem('clubThemeColorForeground');
+    if(localTheme && localThemeForeground) {
+      const primaryHsl = hexToHsl(localTheme);
+      const foregroundHsl = hexToHsl(localThemeForeground);
+       if (primaryHsl && foregroundHsl) {
+          document.documentElement.style.setProperty('--primary', `${primaryHsl.h} ${primaryHsl.s}% ${primaryHsl.l}%`);
+          document.documentElement.style.setProperty('--primary-foreground', `${foregroundHsl.h} ${foregroundHsl.s}% ${foregroundHsl.l}%`);
+       }
+    }
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
@@ -276,10 +285,15 @@ export default function SignUpPage() {
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creando cuenta...' : 'Crear Cuenta e Iniciar Sesión'}
+              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
             </Button>
           </form>
         </CardContent>
+         <CardFooter className="flex justify-center text-sm">
+            <p className="text-muted-foreground">
+                ¿Ya tienes una cuenta? <Link href="/login" className="text-primary hover:underline font-semibold">Inicia sesión</Link>
+            </p>
+        </CardFooter>
       </Card>
     </div>
   );
