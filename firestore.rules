@@ -3,31 +3,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Allow new users to sign up by creating a club and their own user documents.
-    // This rule is intentionally open for the sign-up process.
+    // Helper function to check if a user belongs to a specific club
+    function isUserOfClub(clubId) {
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
+    }
+    
+    // Allow anyone to create a club, their user records, and settings.
+    // This is needed for the sign-up process.
     match /clubs/{clubId} {
-      allow create: if true; // Anyone can create a club.
+      allow create: if request.auth != null;
 
-      // Once a club is created, only authenticated users belonging to that club can interact with it.
-      // This part of the rules assumes you have a way to check if a user belongs to a club.
-      // We'll build on this later. For now, let's focus on sign-up.
+      // Only authenticated users belonging to the club can read/write its data.
+      allow read, write: if isUserOfClub(clubId);
 
-      match /users/{userId} {
-        allow create: if true; // Allow creation of user doc within the club
-      }
-
-      match /settings/{settingId} {
-         allow create: if true; // Allow creation of settings doc within the club
+      match /{document=**} {
+        allow read, write: if isUserOfClub(clubId);
       }
     }
-
+    
+    // Allow users to create their own user document mapping their auth UID to their clubId
     match /users/{userId} {
-       allow create: if request.auth != null && request.auth.uid == userId;
-    }
-
-    // Default deny all other reads/writes
-    match /{document=**} {
-      allow read, write: if false;
+       allow create: if request.auth.uid == userId;
+       // Only the authenticated user can read or update their own user document
+       allow read, update: if request.auth.uid == userId;
     }
   }
 }
