@@ -223,6 +223,7 @@ export default function SchedulesPage() {
   const handleSaveTemplate = async () => {
     if (!clubId || !currentTemplateId) return;
     
+    // 1. Generate new entries from pending assignments.
     const newDailyScheduleEntries = pendingAssignments.flatMap(assignment => {
         const start = new Date(`1970-01-01T${assignment.startTime}`);
         const end = new Date(`1970-01-01T${assignment.endTime}`);
@@ -230,7 +231,7 @@ export default function SchedulesPage() {
         let current = start;
 
         while(current < end) {
-            const next = new Date(current.getTime() + 60 * 60 * 1000);
+            const next = new Date(current.getTime() + 60 * 60 * 1000); // 1-hour slots
             const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
             slots.push({
                 id: crypto.randomUUID(),
@@ -244,18 +245,33 @@ export default function SchedulesPage() {
         return slots;
     });
 
+    // 2. Remove old entries for teams that have new pending assignments.
+    const teamsInPending = new Set(pendingAssignments.map(a => a.teamId));
+    const savedEntriesForDay = weeklySchedule[currentDay] || [];
+    const filteredOldEntries = savedEntriesForDay.filter(entry => !teamsInPending.has(entry.teamId));
+
+    // 3. Combine old entries with new entries.
+    const updatedDaySchedule = [...filteredOldEntries, ...newDailyScheduleEntries];
+
+    // 4. Create the final weekly schedule object.
     const updatedWeeklySchedule = {
         ...weeklySchedule,
-        [currentDay]: [...(weeklySchedule[currentDay] || []).filter(entry => !pendingAssignments.some(a => a.teamId === entry.teamId)), ...newDailyScheduleEntries],
+        [currentDay]: updatedDaySchedule,
     };
 
+    // 5. Save to Firestore.
     const scheduleRef = getScheduleRef(currentTemplateId);
     if (scheduleRef) {
-        await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
-        setWeeklySchedule(updatedWeeklySchedule);
-        setPendingAssignments([]); 
-        toast({ title: "Plantilla Guardada", description: `Los horarios de la plantilla se han guardado.` });
-        if(clubId) fetchAllData(clubId); 
+        try {
+            await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
+            setWeeklySchedule(updatedWeeklySchedule);
+            setPendingAssignments([]); // Clear pending assignments after saving.
+            toast({ title: "Plantilla Guardada", description: `Los horarios para el ${currentDay} se han guardado.` });
+            if (clubId) fetchAllData(clubId); // Optional: refetch all data to be sure.
+        } catch (error) {
+            console.error("Error saving template:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la plantilla." });
+        }
     }
   };
 
@@ -525,7 +541,7 @@ export default function SchedulesPage() {
                       </div>
                     </AccordionContent>
                   </AccordionItem>
-                   <AccordionItem value="assignments" defaultChecked>
+                   <AccordionItem value="assignments">
                     <AccordionTrigger className="text-base font-semibold">
                        <div className="flex items-center gap-2">
                         <Clock className="h-5 w-5" />
@@ -573,11 +589,11 @@ export default function SchedulesPage() {
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <Label>Hora Inicio</Label>
-                                  <Input type="time" value={currentAssignment.startTime} onChange={e => setCurrentAssignment(prev => ({...prev, startTime: e.target.value}))}/>
+                                  <Input type="time" step="3600" value={currentAssignment.startTime} onChange={e => setCurrentAssignment(prev => ({...prev, startTime: e.target.value}))}/>
                                 </div>
                                 <div className="space-y-2">
                                   <Label>Hora Fin</Label>
-                                  <Input type="time" value={currentAssignment.endTime} onChange={e => setCurrentAssignment(prev => ({...prev, endTime: e.target.value}))}/>
+                                  <Input type="time" step="3600" value={currentAssignment.endTime} onChange={e => setCurrentAssignment(prev => ({...prev, endTime: e.target.value}))}/>
                                 </div>
                              </div>
                              <div className="space-y-2">
@@ -671,3 +687,5 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
+    
