@@ -51,8 +51,7 @@ export type TeamMember = {
     id: string;
     name: string;
     role: 'Jugador' | 'Entrenador';
-    jerseyNumber: number | string;
-    avatar: string;
+    jerseyNumber?: number | string;
+    avatar?: string;
+    hasMissingData?: boolean;
 }
-
-    

@@ -17,6 +17,7 @@ import {
   AlertCircle,
   ChevronDown,
   ArrowLeft,
+  UserSquare,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player } from "@/lib/types";
+import type { Team, Player, Coach, TeamMember } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -95,17 +96,17 @@ export default function EditTeamPage() {
   const [clubId, setClubId] = useState<string | null>(null);
 
   const [team, setTeam] = useState<Partial<Team>>({});
-  const [teamPlayers, setTeamPlayers] = useState<Player[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [allTeams, setAllTeams] = useState<Team[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [playerData, setPlayerData] = useState<Partial<Player>>({});
-  const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
+  const [playerToDelete, setPlayerToDelete] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -157,7 +158,6 @@ export default function EditTeamPage() {
   const fetchTeamData = async (currentClubId: string) => {
     setLoading(true);
     try {
-      // Fetch team details
       const teamDocRef = doc(db, "clubs", currentClubId, "teams", teamId);
       const teamDocSnap = await getDoc(teamDocRef);
 
@@ -170,28 +170,39 @@ export default function EditTeamPage() {
         return;
       }
       
-      // Fetch all teams for assignment dropdown
       const teamsQuery = query(collection(db, "clubs", currentClubId, "teams"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setAllTeams(teamsList);
       
-      // Fetch players for this team
       const playersQuery = query(collection(db, "clubs", currentClubId, "players"), where("teamId", "==", teamId));
       const playersSnapshot = await getDocs(playersQuery);
-      const playerMembers = playersSnapshot.docs.map(doc => {
-          const data = doc.data();
-          const teamName = teamsList.find(t => t.id === data.teamId)?.name || "Sin Equipo";
+      const playerMembers: TeamMember[] = playersSnapshot.docs.map(doc => {
+          const data = doc.data() as Player;
           return {
               id: doc.id,
-              ...data,
+              name: `${data.name} ${data.lastName}`,
+              role: 'Jugador',
+              jerseyNumber: data.jerseyNumber || 'N/A',
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-              teamName: teamName,
               hasMissingData: hasMissingData(data)
-          } as Player;
+          } as TeamMember;
       });
 
-      setTeamPlayers(playerMembers);
+      const coachesQuery = query(collection(db, "clubs", currentClubId, "coaches"), where("teamId", "==", teamId));
+      const coachesSnapshot = await getDocs(coachesQuery);
+      const coachMembers: TeamMember[] = coachesSnapshot.docs.map(doc => {
+          const data = doc.data() as Coach;
+          return {
+              id: doc.id,
+              name: `${data.name} ${data.lastName}`,
+              role: 'Entrenador',
+              jerseyNumber: '',
+              avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+          };
+      });
+
+      setTeamMembers([...playerMembers, ...coachMembers]);
 
     } catch (error) {
       console.error("Error fetching team data: ", error);
@@ -205,11 +216,13 @@ export default function EditTeamPage() {
     if (clubId && teamId) {
       fetchTeamData(clubId);
     }
-  }, [clubId, teamId, router, toast]);
+  }, [clubId, teamId]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
-    setTeam(prev => ({ ...prev, [id]: value }));
+    if (['name', 'minAge', 'maxAge'].includes(id)) {
+        setTeam(prev => ({ ...prev, [id]: value }));
+    }
     setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
   };
 
@@ -286,12 +299,18 @@ export default function EditTeamPage() {
     }
   };
   
-  const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
+  const handleOpenModal = async (mode: 'add' | 'edit', member?: TeamMember) => {
     setModalMode(mode);
     if (mode === 'add') {
       setPlayerData({ teamId: teamId });
+    } else if (member && member.role === 'Jugador') {
+      const playerDocRef = doc(db, "clubs", clubId!, "players", member.id);
+      const playerDocSnap = await getDoc(playerDocRef);
+      if(playerDocSnap.exists()) {
+        setPlayerData(playerDocSnap.data());
+      }
     } else {
-      setPlayerData(player || {});
+      // Logic to edit coaches if needed
     }
     setIsModalOpen(true);
     setNewImage(null);
@@ -347,7 +366,7 @@ export default function EditTeamPage() {
     }
   };
 
-  const handleDeletePlayer = async () => {
+  const handleDeleteMember = async () => {
     if (!playerToDelete || !clubId) return;
 
     setIsDeleting(true);
@@ -356,41 +375,44 @@ export default function EditTeamPage() {
             const imageRef = ref(storage, playerToDelete.avatar);
             await deleteObject(imageRef);
         }
-        await deleteDoc(doc(db, "clubs", clubId, "players", playerToDelete.id));
-        toast({ title: "Jugador eliminado", description: `${playerToDelete.name} ${playerToDelete.lastName} ha sido eliminado.`});
+        
+        const collectionName = playerToDelete.role === 'Jugador' ? 'players' : 'coaches';
+        await deleteDoc(doc(db, "clubs", clubId, collectionName, playerToDelete.id));
+
+        toast({ title: "Miembro eliminado", description: `${playerToDelete.name} ha sido eliminado.`});
         fetchTeamData(clubId);
     } catch (error) {
-        console.error("Error deleting player: ", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el jugador." });
+        console.error("Error deleting member: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el miembro." });
     } finally {
         setIsDeleting(false);
         setPlayerToDelete(null);
     }
   };
 
-  const handleSelectPlayer = (playerId: string, isSelected: boolean) => {
+  const handleSelectMember = (memberId: string, isSelected: boolean) => {
     if (isSelected) {
-      setSelectedPlayers(prev => [...prev, playerId]);
+      setSelectedMembers(prev => [...prev, memberId]);
     } else {
-      setSelectedPlayers(prev => prev.filter(id => id !== playerId));
+      setSelectedMembers(prev => prev.filter(id => id !== memberId));
     }
   };
   
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      setSelectedPlayers(teamPlayers.map(p => p.id));
+      setSelectedMembers(teamMembers.filter(m => m.role === 'Jugador').map(p => p.id));
     } else {
-      setSelectedPlayers([]);
+      setSelectedMembers([]);
     }
   };
 
   const handleBulkAssignTeam = async (newTeamId: string) => {
-    if (!clubId || selectedPlayers.length === 0) return;
+    if (!clubId || selectedMembers.length === 0) return;
 
     setSaving(true);
     try {
         const batch = writeBatch(db);
-        selectedPlayers.forEach(playerId => {
+        selectedMembers.forEach(playerId => {
             const playerRef = doc(db, "clubs", clubId, "players", playerId);
             batch.update(playerRef, { teamId: newTeamId });
         });
@@ -398,10 +420,10 @@ export default function EditTeamPage() {
 
         toast({
             title: "Jugadores movidos",
-            description: `${selectedPlayers.length} jugadores han sido movidos al nuevo equipo.`
+            description: `${selectedMembers.length} jugadores han sido movidos al nuevo equipo.`
         });
         fetchTeamData(clubId);
-        setSelectedPlayers([]);
+        setSelectedMembers([]);
     } catch (error) {
         console.error("Error assigning players in bulk:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo mover a los jugadores." });
@@ -410,7 +432,7 @@ export default function EditTeamPage() {
     }
   };
 
-  const isAllSelected = teamPlayers.length > 0 && selectedPlayers.length === teamPlayers.length;
+  const isAllSelected = teamMembers.filter(m => m.role === 'Jugador').length > 0 && selectedMembers.length === teamMembers.filter(m => m.role === 'Jugador').length;
 
   if (loading) {
     return (
@@ -488,12 +510,12 @@ export default function EditTeamPage() {
                               <CardDescription>Miembros actualmente en {team.name}.</CardDescription>
                             </div>
                              <div className="flex items-center gap-2">
-                              {selectedPlayers.length > 0 ? (
+                              {selectedMembers.length > 0 ? (
                                 <DropdownMenu>
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" className="h-8 gap-1">
                                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                          Acciones ({selectedPlayers.length})
+                                          Acciones ({selectedMembers.length})
                                         </span>
                                         <ChevronDown className="h-3.5 w-3.5" />
                                       </Button>
@@ -536,32 +558,33 @@ export default function EditTeamPage() {
                                           />
                                         </TableHead>
                                       <TableHead>Nombre</TableHead>
+                                      <TableHead>Rol</TableHead>
                                       <TableHead>Dorsal</TableHead>
-                                      <TableHead>Contacto</TableHead>
                                       <TableHead>
                                         <span className="sr-only">Acciones</span>
                                       </TableHead>
                                   </TableRow>
                               </TableHeader>
                               <TableBody>
-                                  {teamPlayers.length > 0 ? teamPlayers.map(player => (
-                                      <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
+                                  {teamMembers.length > 0 ? teamMembers.map(member => (
+                                      <TableRow key={member.id} data-state={selectedMembers.includes(member.id) && "selected"}>
                                           <TableCell padding="checkbox">
                                             <Checkbox
-                                              checked={selectedPlayers.includes(player.id)}
-                                              onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
-                                              aria-label={`Seleccionar a ${player.name}`}
+                                              checked={selectedMembers.includes(member.id)}
+                                              onCheckedChange={(checked) => handleSelectMember(member.id, checked as boolean)}
+                                              aria-label={`Seleccionar a ${member.name}`}
+                                              disabled={member.role !== 'Jugador'}
                                             />
                                           </TableCell>
                                           <TableCell className="font-medium">
                                             <div className="flex items-center gap-3">
                                               <Avatar className="h-9 w-9">
-                                                <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
-                                                <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
+                                                <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
+                                                <AvatarFallback>{member.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                                               </Avatar>
                                               <div className="flex items-center gap-2">
-                                                <span>{player.name} {player.lastName}</span>
-                                                {player.hasMissingData && (
+                                                <span>{member.name}</span>
+                                                {member.hasMissingData && (
                                                   <Tooltip>
                                                       <TooltipTrigger>
                                                         <AlertCircle className="h-4 w-4 text-destructive" />
@@ -574,8 +597,13 @@ export default function EditTeamPage() {
                                               </div>
                                             </div>
                                           </TableCell>
-                                          <TableCell>{player.jerseyNumber || 'N/A'}</TableCell>
-                                          <TableCell>{player.tutorEmail || 'N/A'}</TableCell>
+                                          <TableCell>
+                                            <Badge variant={member.role === 'Jugador' ? 'outline' : 'secondary'}>
+                                                {member.role === 'Jugador' ? <User className="mr-1 h-3 w-3" /> : <UserSquare className="mr-1 h-3 w-3" />}
+                                                {member.role}
+                                            </Badge>
+                                          </TableCell>
+                                          <TableCell>{member.jerseyNumber || 'N/A'}</TableCell>
                                           <TableCell>
                                             <DropdownMenu>
                                               <DropdownMenuTrigger asChild>
@@ -586,9 +614,9 @@ export default function EditTeamPage() {
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenModal('edit', member)} disabled={member.role !== 'Jugador'}>Editar</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
+                                                <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(member)}>
                                                   Eliminar
                                                 </DropdownMenuItem>
                                               </DropdownMenuContent>
@@ -598,7 +626,7 @@ export default function EditTeamPage() {
                                   )) : (
                                        <TableRow>
                                           <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                                              No hay jugadores en este equipo.
+                                              No hay miembros en este equipo.
                                           </TableCell>
                                       </TableRow>
                                   )}
@@ -607,7 +635,7 @@ export default function EditTeamPage() {
                       </CardContent>
                       <CardFooter>
                         <div className="text-xs text-muted-foreground">
-                          Mostrando <strong>{teamPlayers.length}</strong> de <strong>{teamPlayers.length}</strong> jugadores
+                          Mostrando <strong>{teamMembers.length}</strong> de <strong>{teamMembers.length}</strong> miembros
                         </div>
                       </CardFooter>
                   </Card>
@@ -786,12 +814,12 @@ export default function EditTeamPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al jugador {playerToDelete?.name} {playerToDelete?.lastName}.
+              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {playerToDelete?.name}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePlayer} disabled={isDeleting}>
+            <AlertDialogAction onClick={handleDeleteMember} disabled={isDeleting}>
               {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -801,5 +829,3 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
-
-    
