@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Check, ChevronsUpDown, Palette, Shield } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -136,8 +137,12 @@ export default function SignUpPage() {
         billingPlan: null,
       });
 
-      localStorage.setItem('clubThemeColor', clubColor);
-      localStorage.setItem('clubThemeColorForeground', foregroundColor);
+      useEffect(() => {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('clubThemeColor', clubColor);
+          localStorage.setItem('clubThemeColorForeground', foregroundColor);
+        }
+      }, [clubColor, foregroundColor]);
       
       const hslColor = hexToHsl(clubColor);
       const hslForegroundColor = hexToHsl(foregroundColor);
