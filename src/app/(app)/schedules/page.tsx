@@ -246,7 +246,7 @@ export default function SchedulesPage() {
 
     const updatedWeeklySchedule = {
         ...weeklySchedule,
-        [currentDay]: newDailyScheduleEntries,
+        [currentDay]: [...(weeklySchedule[currentDay] || []).filter(entry => !pendingAssignments.some(a => a.teamId === entry.teamId)), ...newDailyScheduleEntries],
     };
 
     const scheduleRef = getScheduleRef(currentTemplateId);
@@ -487,7 +487,7 @@ export default function SchedulesPage() {
                 <CardDescription>Define recintos, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                 <Accordion type="single" collapsible className="w-full" defaultValue="assignments">
+                 <Accordion type="multiple" className="w-full">
                   <AccordionItem value="settings">
                     <AccordionTrigger className="text-base font-semibold">
                       <div className="flex items-center gap-2">
@@ -525,7 +525,7 @@ export default function SchedulesPage() {
                       </div>
                     </AccordionContent>
                   </AccordionItem>
-                   <AccordionItem value="assignments">
+                   <AccordionItem value="assignments" defaultChecked>
                     <AccordionTrigger className="text-base font-semibold">
                        <div className="flex items-center gap-2">
                         <Clock className="h-5 w-5" />
@@ -564,7 +564,7 @@ export default function SchedulesPage() {
                                <Select value={currentAssignment.teamId} onValueChange={(value) => setCurrentAssignment(prev => ({...prev, teamId: value}))}>
                                   <SelectTrigger><SelectValue placeholder="Selecciona un equipo" /></SelectTrigger>
                                   <SelectContent>
-                                    {teams.filter(t => !pendingAssignments.some(a => a.teamId === t.id)).map(team => (
+                                    {teams.filter(t => !pendingAssignments.some(a => a.teamId === t.id) && !weeklySchedule[currentDay].some(entry => entry.teamId === t.id)).map(team => (
                                       <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                                     ))}
                                   </SelectContent>
@@ -622,7 +622,7 @@ export default function SchedulesPage() {
                     <div className="grid grid-cols-1 max-h-[600px] overflow-y-auto">
                     {timeSlots.map(slot => (
                         <div key={slot} className="grid grid-cols-[120px_1fr] items-start border-b last:border-b-0 min-h-16">
-                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot}</div>
+                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot.split(' - ')[0]}</div>
                             <div className="p-2 flex flex-wrap gap-2 self-start">
                                {displayedScheduleEntries
                                  .filter(entry => entry.time === slot)
@@ -671,6 +671,7 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
 
 
 
