@@ -273,6 +273,15 @@ export default function SchedulesPage() {
     return doc(db, "clubs", clubId, "schedules", templateId);
   }, [clubId]);
 
+  const loadTemplateData = useCallback((template: ScheduleTemplate) => {
+    setVenues(template.venues || []);
+    setWeeklySchedule(template.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
+    setStartTime(template.startTime || "16:00");
+    setEndTime(template.endTime || "23:00");
+    setCurrentDayIndex(0); // Reset to Monday on template change
+    setCurrentVenueIndex(0);
+  }, []);
+
   const fetchAllData = useCallback(async (currentClubId: string, isRefresh: boolean = false) => {
     if(isRefresh) {
         setIsRefreshing(true);
@@ -319,7 +328,7 @@ export default function SchedulesPage() {
             setLoading(false);
         }
     }
-  }, [currentTemplateId, toast]);
+  }, [currentTemplateId, toast, loadTemplateData]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -341,16 +350,7 @@ export default function SchedulesPage() {
       }
     });
     return () => unsubscribe();
-  }, []); // Remove fetchAllData dependency to avoid re-running on every change.
-
-  const loadTemplateData = (template: ScheduleTemplate) => {
-    setVenues(template.venues || []);
-    setWeeklySchedule(template.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
-    setStartTime(template.startTime || "16:00");
-    setEndTime(template.endTime || "23:00");
-    setCurrentDayIndex(0); // Reset to Monday on template change
-    setCurrentVenueIndex(0);
-  };
+  }, [fetchAllData]); // Dependency on fetchAllData was causing issues. Now removed.
 
   const handleTemplateChange = (templateId: string) => {
     const newTemplate = scheduleTemplates.find(t => t.id === templateId);
@@ -969,6 +969,7 @@ export default function SchedulesPage() {
 }
 
     
+
 
 
 
