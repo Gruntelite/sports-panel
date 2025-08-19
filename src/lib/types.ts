@@ -60,14 +60,25 @@ export type Coach = {
     monthlyPayment?: number;
 }
 
+export type Staff = {
+    id: string;
+    name: string;
+    lastName: string;
+    role: string;
+    email?: string;
+    phone?: string;
+    avatar?: string;
+    hasMissingData?: boolean;
+}
+
 export type TeamMember = {
     id: string;
     name: string;
-    role: 'Jugador' | 'Entrenador';
+    role: 'Jugador' | 'Entrenador' | 'Staff';
     jerseyNumber?: number | string;
     avatar?: string;
     hasMissingData?: boolean;
-    data: Player | Coach;
+    data: Player | Coach | Staff;
 }
 
 export type Contact = {

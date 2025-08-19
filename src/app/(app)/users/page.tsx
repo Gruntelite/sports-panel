@@ -59,7 +59,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
-import type { Player, Coach, Contact } from "@/lib/types";
+import type { Player, Coach, Staff, Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
 type User = {
@@ -135,11 +135,16 @@ export default function UsersPage() {
         setUsers(usersList);
         const existingUserEmails = new Set(usersList.map(u => u.email));
 
-        // Fetch Players and Coaches to get available contacts
+        // Fetch Players, Coaches, and Staff to get available contacts
         const playersQuery = query(collection(db, "clubs", clubId, "players"));
         const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
+        const staffQuery = query(collection(db, "clubs", clubId, "staff"));
         
-        const [playersSnapshot, coachesSnapshot] = await Promise.all([getDocs(playersQuery), getDocs(coachesQuery)]);
+        const [playersSnapshot, coachesSnapshot, staffSnapshot] = await Promise.all([
+            getDocs(playersQuery), 
+            getDocs(coachesQuery),
+            getDocs(staffQuery)
+        ]);
         
         const allContacts: Omit<Contact, 'hasAccount'>[] = [];
 
@@ -156,6 +161,15 @@ export default function UsersPage() {
             const data = doc.data() as Coach;
              const contactEmail = data.email;
              const contactName = `${data.name} ${data.lastName} (Entrenador)`;
+            if (contactEmail) {
+                allContacts.push({ name: contactName, email: contactEmail });
+            }
+        });
+
+        staffSnapshot.forEach(doc => {
+            const data = doc.data() as Staff;
+            const contactEmail = data.email;
+            const contactName = `${data.name} ${data.lastName} (${data.role || 'Staff'})`;
             if (contactEmail) {
                 allContacts.push({ name: contactName, email: contactEmail });
             }
@@ -430,6 +444,7 @@ export default function UsersPage() {
                                     <SelectItem value="Admin">Admin</SelectItem>
                                     <SelectItem value="Coach">Entrenador</SelectItem>
                                     <SelectItem value="Family">Familia</SelectItem>
+                                    <SelectItem value="Staff">Staff</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -472,7 +487,7 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                      <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Coach' ? 'secondary' : 'outline'}>
+                      <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Coach' ? 'secondary' : user.role === 'Staff' ? 'destructive' : 'outline'}>
                           {user.role}
                       </Badge>
                   </TableCell>
@@ -547,6 +562,7 @@ export default function UsersPage() {
                         <SelectItem value="Admin">Admin</SelectItem>
                         <SelectItem value="Coach">Entrenador</SelectItem>
                         <SelectItem value="Family">Familia</SelectItem>
+                        <SelectItem value="Staff">Staff</SelectItem>
                     </SelectContent>
                 </Select>
             </div>
@@ -581,5 +597,3 @@ export default function UsersPage() {
     </>
   );
 }
-
-    
