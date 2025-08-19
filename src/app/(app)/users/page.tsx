@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -31,6 +31,16 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +56,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, query, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc } from "firebase/firestore";
 import type { Player, Coach, Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -61,6 +71,7 @@ type User = {
 export default function UsersPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
 
   const [users, setUsers] = useState<User[]>([]);
@@ -68,9 +79,19 @@ export default function UsersPage() {
   
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
   const [isComboboxOpen, setIsComboboxOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
   const [selectedContactEmail, setSelectedContactEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState("Family");
+
+  const [userToEdit, setUserToEdit] = useState<User | null>(null);
+  const [userToChangeRole, setUserToChangeRole] = useState<User | null>(null);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+
+  const [editedUserName, setEditedUserName] = useState("");
+  const [selectedNewRole, setSelectedNewRole] = useState("");
+
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -99,12 +120,13 @@ export default function UsersPage() {
         const usersSnapshot = await getDocs(usersQuery);
         const usersList = usersSnapshot.docs.map(doc => {
           const data = doc.data();
+          const name = data.name || "Usuario sin nombre";
           return {
             id: doc.id,
-            name: data.name || "Usuario sin nombre",
+            name: name,
             email: data.email,
             role: data.role,
-            avatar: `https://placehold.co/40x40.png?text=${(data.name || "U").charAt(0)}`,
+            avatar: `https://placehold.co/40x40.png?text=${(name).charAt(0)}`,
           };
         });
         setUsers(usersList);
@@ -120,7 +142,7 @@ export default function UsersPage() {
 
         playersSnapshot.forEach(doc => {
             const data = doc.data() as Player;
-            const contactEmail = data.isOwnTutor ? data.tutorEmail : data.tutorEmail;
+            const contactEmail = data.tutorEmail;
             if (contactEmail && !existingUserEmails.has(contactEmail)) {
                 allContacts.push({ name: `${data.name} ${data.lastName} (Familia)`, email: contactEmail });
             }
@@ -133,7 +155,6 @@ export default function UsersPage() {
             }
         });
         
-        // Remove duplicate emails, just in case
         const uniqueContacts = Array.from(new Map(allContacts.map(item => [item['email'], item])).values());
         setAvailableContacts(uniqueContacts);
 
@@ -156,10 +177,11 @@ export default function UsersPage() {
         return;
     }
     
+    setSaving(true);
     try {
         await addDoc(collection(db, "users"), {
             email: selectedContact.email,
-            name: selectedContact.name.split('(')[0].trim(), // Get name without the role hint
+            name: selectedContact.name.split('(')[0].trim(),
             role: newUserRole,
             clubId: clubId,
         });
@@ -168,12 +190,81 @@ export default function UsersPage() {
         setIsAddUserOpen(false);
         setSelectedContactEmail("");
         setNewUserRole("Family");
-        if(clubId) fetchData(clubId); // Refresh data
+        if(clubId) fetchData(clubId);
     } catch (error) {
         console.error("Error adding user: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo invitar al usuario." });
+    } finally {
+      setSaving(false);
     }
   };
+
+  const handleOpenEditModal = (user: User) => {
+    setUserToEdit(user);
+    setEditedUserName(user.name);
+    setIsEditModalOpen(true);
+  };
+
+  const handleUpdateUser = async () => {
+    if (!userToEdit || !editedUserName.trim()) return;
+    
+    setSaving(true);
+    try {
+        const userRef = doc(db, "users", userToEdit.id);
+        await updateDoc(userRef, { name: editedUserName });
+        toast({ title: "Usuario actualizado", description: "El nombre del usuario se ha actualizado correctamente." });
+        setIsEditModalOpen(false);
+        setUserToEdit(null);
+        if(clubId) fetchData(clubId);
+    } catch (error) {
+        console.error("Error updating user:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el usuario." });
+    } finally {
+        setSaving(false);
+    }
+  };
+  
+  const handleOpenRoleModal = (user: User) => {
+    setUserToChangeRole(user);
+    setSelectedNewRole(user.role);
+    setIsRoleModalOpen(true);
+  };
+
+  const handleUpdateRole = async () => {
+    if (!userToChangeRole || !selectedNewRole) return;
+    
+    setSaving(true);
+    try {
+        const userRef = doc(db, "users", userToChangeRole.id);
+        await updateDoc(userRef, { role: selectedNewRole });
+        toast({ title: "Rol actualizado", description: "El rol del usuario se ha actualizado correctamente." });
+        setIsRoleModalOpen(false);
+        setUserToChangeRole(null);
+        if(clubId) fetchData(clubId);
+    } catch (error) {
+        console.error("Error updating role:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el rol." });
+    } finally {
+        setSaving(false);
+    }
+  };
+
+  const handleDeleteUser = async () => {
+      if (!userToDelete) return;
+      setSaving(true);
+      try {
+          await deleteDoc(doc(db, "users", userToDelete.id));
+          toast({ title: "Usuario eliminado", description: `El usuario ${userToDelete.name} ha sido eliminado.` });
+          setUserToDelete(null);
+          if (clubId) fetchData(clubId);
+      } catch (error) {
+          console.error("Error deleting user: ", error);
+          toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el usuario." });
+      } finally {
+          setSaving(false);
+      }
+  };
+
 
   if (loading) {
     return (
@@ -278,7 +369,9 @@ export default function UsersPage() {
                         <DialogClose asChild>
                             <Button type="button" variant="secondary">Cancelar</Button>
                         </DialogClose>
-                        <Button type="button" onClick={handleAddUser}>Añadir Usuario</Button>
+                        <Button type="button" onClick={handleAddUser} disabled={saving}>
+                            {saving ? <Loader2 className="animate-spin" /> : 'Añadir Usuario'}
+                        </Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
@@ -303,7 +396,7 @@ export default function UsersPage() {
                     <div className="flex items-center gap-3">
                       <Avatar>
                         <AvatarImage src={user.avatar} alt={user.name} data-ai-hint="retrato persona" />
-                        <AvatarFallback>{user.name.substring(0, 2)}</AvatarFallback>
+                        <AvatarFallback>{user.name.substring(0, 2).toUpperCase()}</AvatarFallback>
                       </Avatar>
                       <div className="font-medium">{user.name}</div>
                     </div>
@@ -324,10 +417,11 @@ export default function UsersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>Editar</DropdownMenuItem>
-                        <DropdownMenuItem>Cambiar Rol</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleOpenEditModal(user)}>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => handleOpenRoleModal(user)}>Cambiar Rol</DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">
+                        <DropdownMenuItem className="text-destructive" onSelect={() => setUserToDelete(user)}>
+                          <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -339,6 +433,85 @@ export default function UsersPage() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Edit User Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Usuario</DialogTitle>
+            <DialogDescription>Actualiza el nombre del usuario.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-user-name">Nombre</Label>
+              <Input id="edit-user-name" value={editedUserName} onChange={(e) => setEditedUserName(e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label>Email</Label>
+              <Input value={userToEdit?.email || ''} disabled />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">Cancelar</Button>
+            </DialogClose>
+            <Button type="button" onClick={handleUpdateUser} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Change Role Modal */}
+       <Dialog open={isRoleModalOpen} onOpenChange={setIsRoleModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cambiar Rol de Usuario</DialogTitle>
+            <DialogDescription>Selecciona el nuevo rol para {userToChangeRole?.name}.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+                <Label htmlFor="new-user-role">Nuevo Rol</Label>
+                <Select onValueChange={setSelectedNewRole} value={selectedNewRole}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un rol" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="Admin">Admin</SelectItem>
+                        <SelectItem value="Coach">Entrenador</SelectItem>
+                        <SelectItem value="Family">Familia</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">Cancelar</Button>
+            </DialogClose>
+            <Button type="button" onClick={handleUpdateRole} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : 'Actualizar Rol'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente al usuario {userToDelete?.name}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteUser} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
