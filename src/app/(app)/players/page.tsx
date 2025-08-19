@@ -13,6 +13,7 @@ import {
   User,
   Contact,
   Shield,
+  AlertCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -108,6 +110,19 @@ export default function PlayersPage() {
     return () => unsubscribe();
   }, []);
 
+  const hasMissingData = (player: any): boolean => {
+    const requiredFields = [
+      'age', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
+      'tutorPhone', 'iban', 'teamId', 'jerseyNumber', 'monthlyFee'
+    ];
+    if (player.isOwnTutor) {
+        // No need for tutor fields if player is their own tutor
+    } else {
+        requiredFields.push('tutorName', 'tutorLastName', 'tutorDni');
+    }
+    return requiredFields.some(field => !player[field]);
+  };
+
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
@@ -128,6 +143,7 @@ export default function PlayersPage() {
               ...data,
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
               teamName: team ? team.name : "Sin equipo",
+              hasMissingData: hasMissingData(data)
           } as Player
       });
       setPlayers(playersList);
@@ -169,8 +185,8 @@ export default function PlayersPage() {
   }
 
   const handleSavePlayer = async () => {
-    if (!playerData.name || !playerData.lastName || !playerData.teamId || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y equipo son obligatorios." });
+    if (!playerData.name || !playerData.lastName || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
         return;
     }
 
@@ -249,7 +265,7 @@ export default function PlayersPage() {
   }
 
   return (
-    <>
+    <TooltipProvider>
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -316,7 +332,19 @@ export default function PlayersPage() {
                         <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
                         <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
                       </Avatar>
-                      <span>{player.name} {player.lastName}</span>
+                      <div className="flex items-center gap-2">
+                        <span>{player.name} {player.lastName}</span>
+                        {player.hasMissingData && (
+                           <Tooltip>
+                              <TooltipTrigger>
+                                <AlertCircle className="h-4 w-4 text-destructive" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Faltan datos por rellenar</p>
+                              </TooltipContent>
+                           </Tooltip>
+                        )}
+                      </div>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -532,6 +560,7 @@ export default function PlayersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </>
+    </TooltipProvider>
   );
 }
+

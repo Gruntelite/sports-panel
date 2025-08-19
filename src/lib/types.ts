@@ -23,7 +23,7 @@ export type Player = {
     tutorEmail?: string;
     tutorPhone?: string;
     iban?: string;
-    teamId: string;
+    teamId?: string;
     teamName?: string; 
     jerseyNumber?: number;
     position?: string;
@@ -33,6 +33,7 @@ export type Player = {
     tutorName?: string;
     tutorLastName?: string;
     tutorDni?: string;
+    hasMissingData?: boolean;
 }
 
 export type Coach = {
