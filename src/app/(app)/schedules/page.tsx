@@ -97,8 +97,6 @@ export default function SchedulesPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   
   const [pendingAssignments, setPendingAssignments] = useState<Assignment[]>([]);
-  const [isAssignmentModalOpen, setIsAssignmentModalOpen] = useState(false);
-  const [currentAssignment, setCurrentAssignment] = useState<Partial<Assignment>>({});
   
   const getScheduleRef = useCallback((templateId: string) => {
     if (!clubId || !templateId) return null;
@@ -222,12 +220,11 @@ export default function SchedulesPage() {
   
   const handleSaveTemplate = async () => {
     if (!clubId || !currentTemplateId) return;
-    
-    // 1. Generate new entries from pending assignments.
-    const newDailyScheduleEntries = pendingAssignments.flatMap(assignment => {
+
+    const updatedDaySchedule = pendingAssignments.flatMap(assignment => {
         const start = new Date(`1970-01-01T${assignment.startTime}`);
         const end = new Date(`1970-01-01T${assignment.endTime}`);
-        const slots = [];
+        const slots: DailyScheduleEntry[] = [];
         let current = start;
 
         while(current < end) {
@@ -245,29 +242,17 @@ export default function SchedulesPage() {
         return slots;
     });
 
-    // 2. Remove old entries for teams that have new pending assignments.
-    const teamsInPending = new Set(pendingAssignments.map(a => a.teamId));
-    const savedEntriesForDay = weeklySchedule[currentDay] || [];
-    const filteredOldEntries = savedEntriesForDay.filter(entry => !teamsInPending.has(entry.teamId));
-
-    // 3. Combine old entries with new entries.
-    const updatedDaySchedule = [...filteredOldEntries, ...newDailyScheduleEntries];
-
-    // 4. Create the final weekly schedule object.
     const updatedWeeklySchedule = {
         ...weeklySchedule,
         [currentDay]: updatedDaySchedule,
     };
 
-    // 5. Save to Firestore.
     const scheduleRef = getScheduleRef(currentTemplateId);
     if (scheduleRef) {
         try {
             await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
             setWeeklySchedule(updatedWeeklySchedule);
-            setPendingAssignments([]); // Clear pending assignments after saving.
             toast({ title: "Plantilla Guardada", description: `Los horarios para el ${currentDay} se han guardado.` });
-            if (clubId) fetchAllData(clubId); // Optional: refetch all data to be sure.
         } catch (error) {
             console.error("Error saving template:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la plantilla." });
@@ -330,82 +315,159 @@ export default function SchedulesPage() {
   };
 
   const navigateDay = (direction: 'prev' | 'next') => {
-    setPendingAssignments([]);
+    const savedAssignments = (weeklySchedule[currentDay] || []).reduce((acc, entry) => {
+        const key = `${entry.teamId}-${entry.venueName}`;
+        if (!acc[key]) {
+            acc[key] = {
+                id: crypto.randomUUID(),
+                teamId: entry.teamId,
+                teamName: entry.teamName,
+                venueId: venues.find(v => v.name === entry.venueName)?.id || '',
+                venueName: entry.venueName,
+                startTime: entry.time.split(' - ')[0],
+                endTime: entry.time.split(' - ')[1]
+            };
+        } else {
+            acc[key].endTime = entry.time.split(' - ')[1];
+        }
+        return acc;
+    }, {} as Record<string, Assignment>);
+
+    setPendingAssignments(Object.values(savedAssignments));
+    
     if (direction === 'next') {
         setCurrentDayIndex((prev) => (prev + 1) % daysOfWeek.length);
     } else {
         setCurrentDayIndex((prev) => (prev - 1 + daysOfWeek.length) % daysOfWeek.length);
     }
   };
-  
-  const handleSaveAssignment = () => {
-    if (!currentAssignment.teamId || !currentAssignment.venueId || !currentAssignment.startTime || !currentAssignment.endTime) {
-      toast({ variant: "destructive", title: "Error", description: "Todos los campos son obligatorios." });
-      return;
-    }
-    const team = teams.find(t => t.id === currentAssignment.teamId);
-    const venue = venues.find(v => v.id === currentAssignment.venueId);
 
-    if (team && venue) {
-        const newAssignment = {
-            id: crypto.randomUUID(),
-            teamId: team.id,
-            teamName: team.name,
-            venueId: venue.id,
-            venueName: venue.name,
-            startTime: currentAssignment.startTime!,
-            endTime: currentAssignment.endTime!,
-        };
-        setPendingAssignments(prev => [...prev, newAssignment]);
-        setCurrentAssignment({});
-        setIsAssignmentModalOpen(false);
-    }
+  const handleUpdateAssignment = (id: string, field: keyof Assignment, value: string) => {
+    setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
+  };
+  
+  const handleAssignmentSelectChange = (id: string, field: 'teamId' | 'venueId', value: string) => {
+    const selectedItem = field === 'teamId' ? teams.find(t => t.id === value) : venues.find(v => v.id === value);
+    const name = selectedItem?.name || '';
+    const nameField = field === 'teamId' ? 'teamName' : 'venueName';
+
+    setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value, [nameField]: name } : a));
+  };
+
+
+  const handleAddAssignmentRow = () => {
+    setPendingAssignments(prev => [...prev, {
+      id: crypto.randomUUID(),
+      teamId: '',
+      teamName: '',
+      startTime: '',
+      endTime: '',
+      venueId: '',
+      venueName: '',
+    }]);
   };
 
   const handleRemoveAssignment = (id: string) => {
     setPendingAssignments(prev => prev.filter(a => a.id !== id));
   };
   
-  const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
+  useEffect(() => {
+    const savedAssignments = (weeklySchedule[currentDay] || []).reduce((acc, entry) => {
+        const key = `${entry.teamId}-${entry.venueName}`;
+        const startTime = entry.time.split(' - ')[0];
+        const endTime = entry.time.split(' - ')[1];
 
-  const pendingScheduleEntries = useMemo(() => {
-    return pendingAssignments.flatMap(assignment => {
+        if (!acc[key]) {
+             acc[key] = {
+                id: crypto.randomUUID(),
+                teamId: entry.teamId,
+                teamName: entry.teamName,
+                venueId: venues.find(v => v.name === entry.venueName)?.id || '',
+                venueName: entry.venueName,
+                startTime: startTime,
+                endTime: endTime
+            };
+        } else {
+            if(startTime < acc[key].startTime) acc[key].startTime = startTime;
+            if(endTime > acc[key].endTime) acc[key].endTime = endTime;
+        }
+        return acc;
+    }, {} as Record<string, Assignment>);
+    setPendingAssignments(Object.values(savedAssignments));
+  }, [currentDay, weeklySchedule, venues]);
+
+
+  const displayedScheduleEntries = useMemo(() => {
+     return pendingAssignments.flatMap(assignment => {
+        if (!assignment.startTime || !assignment.endTime) return [];
+        
         const start = new Date(`1970-01-01T${assignment.startTime}`);
         const end = new Date(`1970-01-01T${assignment.endTime}`);
-        const slots = [];
+        const slots: DailyScheduleEntry[] = [];
         let current = start;
 
         while(current < end) {
             const next = new Date(current.getTime() + 60 * 60 * 1000);
             const timeSlot = `${current.toTimeString().substring(0,5)} - ${next.toTimeString().substring(0,5)}`;
-            if (timeSlots.includes(timeSlot)) {
-                slots.push({
-                    id: crypto.randomUUID(),
-                    teamId: assignment.teamId,
-                    teamName: assignment.teamName,
-                    time: timeSlot,
-                    venueName: assignment.venueName,
-                    isPending: true,
-                });
-            }
+            slots.push({
+                id: crypto.randomUUID(),
+                teamId: assignment.teamId,
+                teamName: assignment.teamName,
+                time: timeSlot,
+                venueName: assignment.venueName,
+            });
             current = next;
         }
         return slots;
     });
-  }, [pendingAssignments, timeSlots]);
+  }, [pendingAssignments]);
+  
+  const processedSlotsForRender = useMemo(() => {
+    const slotMap = new Map<string, any[]>();
+    displayedScheduleEntries.forEach(entry => {
+        if (!slotMap.has(entry.time)) {
+            slotMap.set(entry.time, []);
+        }
+        slotMap.get(entry.time)?.push(entry);
+    });
 
-
-  const displayedScheduleEntries = useMemo(() => {
-    const savedEntries = (weeklySchedule[currentDay] || []).map(e => ({...e, isPending: false}));
+    const renderedSlots = new Set<string>();
+    const results: { time: string, entries: any[], duration: number }[] = [];
     
-    // Filter out saved entries that would be overwritten by a pending one for the same team
-    const teamsInPending = new Set(pendingAssignments.map(a => a.teamId));
-    const filteredSaved = savedEntries.filter(entry => !teamsInPending.has(entry.teamId));
+    timeSlots.forEach(slot => {
+        if (renderedSlots.has(slot)) return;
 
-    return [...filteredSaved, ...pendingScheduleEntries];
+        const entries = slotMap.get(slot) || [];
+        if (entries.length > 0) {
+            let duration = 1;
+            let currentSlotIndex = timeSlots.indexOf(slot);
+            while (currentSlotIndex + 1 < timeSlots.length) {
+                const nextSlot = timeSlots[currentSlotIndex + 1];
+                const nextEntries = slotMap.get(nextSlot) || [];
+                if (
+                    nextEntries.length === entries.length &&
+                    entries.every((e, i) => e.teamId === nextEntries[i].teamId && e.venueName === nextEntries[i].venueName)
+                ) {
+                    duration++;
+                    renderedSlots.add(nextSlot);
+                    currentSlotIndex++;
+                } else {
+                    break;
+                }
+            }
+            results.push({ time: slot.split(' - ')[0], entries, duration });
+            renderedSlots.add(slot);
+        } else {
+            results.push({ time: slot.split(' - ')[0], entries: [], duration: 1 });
+        }
+    });
+    
+    return results;
 
-  }, [weeklySchedule, pendingScheduleEntries, currentDay, pendingAssignments]);
+  }, [displayedScheduleEntries, timeSlots]);
 
+
+  const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
 
   if (loading) {
     return (
@@ -503,7 +565,7 @@ export default function SchedulesPage() {
                 <CardDescription>Define recintos, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                 <Accordion type="multiple" className="w-full">
+                 <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
                   <AccordionItem value="settings">
                     <AccordionTrigger className="text-base font-semibold">
                       <div className="flex items-center gap-2">
@@ -549,72 +611,50 @@ export default function SchedulesPage() {
                       </div>
                     </AccordionTrigger>
                     <AccordionContent className="pt-4 space-y-4">
-                      <div className="space-y-2">
+                      <div className="space-y-4">
                         {pendingAssignments.map(assignment => (
-                           <div key={assignment.id} className="flex items-center gap-2 bg-muted/50 p-2 rounded-lg">
-                              <div className="flex-1">
-                                <p className="font-semibold">{assignment.teamName}</p>
-                                <p className="text-sm text-muted-foreground">{assignment.startTime} - {assignment.endTime} @ {assignment.venueName}</p>
+                          <div key={assignment.id} className="flex items-end gap-2 p-2 rounded-lg border bg-muted/30">
+                              <div className="grid grid-cols-1 gap-2 flex-1">
+                                <div className="space-y-1">
+                                  <Label className="text-xs">Equipo</Label>
+                                  <Select value={assignment.teamId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'teamId', value)}>
+                                    <SelectTrigger className="h-8"><SelectValue placeholder="Equipo" /></SelectTrigger>
+                                    <SelectContent>
+                                      {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                 <div className="space-y-1">
+                                  <Label className="text-xs">Recinto</Label>
+                                  <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
+                                    <SelectTrigger className="h-8"><SelectValue placeholder="Recinto" /></SelectTrigger>
+                                    <SelectContent>
+                                      {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+                                <div className="flex gap-2">
+                                  <div className="space-y-1 w-full">
+                                    <Label className="text-xs">Inicio</Label>
+                                    <Input className="h-8" type="time" step="3600" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} />
+                                  </div>
+                                  <div className="space-y-1 w-full">
+                                    <Label className="text-xs">Fin</Label>
+                                    <Input className="h-8" type="time" step="3600" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} />
+                                  </div>
+                                </div>
                               </div>
-                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleRemoveAssignment(assignment.id)}>
-                                <Trash className="h-4 w-4 text-destructive"/>
-                               </Button>
-                           </div>
+                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveAssignment(assignment.id)}>
+                              <Trash className="h-4 w-4 text-destructive"/>
+                             </Button>
+                          </div>
                         ))}
                       </div>
 
-                       <Dialog open={isAssignmentModalOpen} onOpenChange={setIsAssignmentModalOpen}>
-                        <DialogTrigger asChild>
-                           <Button variant="outline" className="w-full">
-                            <PlusCircle className="mr-2 h-4 w-4"/>
-                            Asignar Equipo
-                          </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                          <DialogHeader>
-                            <DialogTitle>Asignar Horario a Equipo</DialogTitle>
-                          </DialogHeader>
-                          <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                              <Label>Equipo</Label>
-                               <Select value={currentAssignment.teamId} onValueChange={(value) => setCurrentAssignment(prev => ({...prev, teamId: value}))}>
-                                  <SelectTrigger><SelectValue placeholder="Selecciona un equipo" /></SelectTrigger>
-                                  <SelectContent>
-                                    {teams.filter(t => !pendingAssignments.some(a => a.teamId === t.id) && !weeklySchedule[currentDay].some(entry => entry.teamId === t.id)).map(team => (
-                                      <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                            </div>
-                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label>Hora Inicio</Label>
-                                  <Input type="time" step="3600" value={currentAssignment.startTime || ''} onChange={e => setCurrentAssignment(prev => ({...prev, startTime: e.target.value}))}/>
-                                </div>
-                                <div className="space-y-2">
-                                  <Label>Hora Fin</Label>
-                                  <Input type="time" step="3600" value={currentAssignment.endTime || ''} onChange={e => setCurrentAssignment(prev => ({...prev, endTime: e.target.value}))}/>
-                                </div>
-                             </div>
-                             <div className="space-y-2">
-                               <Label>Recinto</Label>
-                               <Select value={currentAssignment.venueId} onValueChange={(value) => setCurrentAssignment(prev => ({...prev, venueId: value}))}>
-                                  <SelectTrigger><SelectValue placeholder="Selecciona un recinto" /></SelectTrigger>
-                                  <SelectContent>
-                                      {venues.map(venue => (
-                                          <SelectItem key={venue.id} value={venue.id}>{venue.name}</SelectItem>
-                                      ))}
-                                  </SelectContent>
-                               </Select>
-                             </div>
-                          </div>
-                          <DialogFooter>
-                            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                            <Button onClick={handleSaveAssignment}>Añadir Asignación</Button>
-                          </DialogFooter>
-                        </DialogContent>
-                      </Dialog>
-
+                      <Button variant="outline" className="w-full" onClick={handleAddAssignmentRow}>
+                        <PlusCircle className="mr-2 h-4 w-4"/>
+                        Añadir Asignación
+                      </Button>
                     </AccordionContent>
                   </AccordionItem>
                 </Accordion>
@@ -636,14 +676,12 @@ export default function SchedulesPage() {
                         <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b">Equipos y Recintos</div>
                     </div>
                     <div className="grid grid-cols-1 max-h-[600px] overflow-y-auto">
-                    {timeSlots.map(slot => (
-                        <div key={slot} className="grid grid-cols-[100px_1fr] items-start border-b last:border-b-0 min-h-16">
-                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot.split(' - ')[0]}</div>
-                            <div className="p-2 flex flex-wrap gap-2 self-start">
-                               {displayedScheduleEntries
-                                 .filter(entry => entry.time === slot)
-                                 .map((entry: any) => (
-                                     <div key={entry.id} className={cn("flex flex-col items-center p-1 bg-muted rounded-md", entry.isPending && "opacity-50")}>
+                    {processedSlotsForRender.map(({ time, entries, duration }) => (
+                        <div key={time} className="grid grid-cols-[100px_1fr] items-start border-b last:border-b-0" style={{ minHeight: `${duration * 4}rem` }}>
+                            <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{time}</div>
+                            <div className="p-2 grid grid-cols-3 gap-2 self-start w-full">
+                               {entries.map((entry: any) => (
+                                     <div key={entry.id} className="flex flex-col items-center p-1 bg-primary/10 rounded-md border border-primary/20" style={{ gridRow: `span ${duration}` }}>
                                         <Badge>{entry.teamName}</Badge>
                                         <span className="text-xs text-muted-foreground flex items-center gap-1 mt-1">
                                             <MapPin className="h-3 w-3" />
