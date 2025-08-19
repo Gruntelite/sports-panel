@@ -532,11 +532,11 @@ export default function SchedulesPage() {
                       <div className="grid grid-cols-2 gap-4 pt-4">
                           <div className="space-y-2">
                               <Label htmlFor="start-time">Hora de Inicio</Label>
-                              <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                              <Input id="start-time" type="time" value={startTime || ''} onChange={(e) => setStartTime(e.target.value)} />
                           </div>
                           <div className="space-y-2">
                               <Label htmlFor="end-time">Hora de Fin</Label>
-                              <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                              <Input id="end-time" type="time" value={endTime || ''} onChange={(e) => setEndTime(e.target.value)} />
                           </div>
                       </div>
                     </AccordionContent>
@@ -589,11 +589,11 @@ export default function SchedulesPage() {
                              <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                   <Label>Hora Inicio</Label>
-                                  <Input type="time" step="3600" value={currentAssignment.startTime} onChange={e => setCurrentAssignment(prev => ({...prev, startTime: e.target.value}))}/>
+                                  <Input type="time" step="3600" value={currentAssignment.startTime || ''} onChange={e => setCurrentAssignment(prev => ({...prev, startTime: e.target.value}))}/>
                                 </div>
                                 <div className="space-y-2">
                                   <Label>Hora Fin</Label>
-                                  <Input type="time" step="3600" value={currentAssignment.endTime} onChange={e => setCurrentAssignment(prev => ({...prev, endTime: e.target.value}))}/>
+                                  <Input type="time" step="3600" value={currentAssignment.endTime || ''} onChange={e => setCurrentAssignment(prev => ({...prev, endTime: e.target.value}))}/>
                                 </div>
                              </div>
                              <div className="space-y-2">
