@@ -12,7 +12,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Loader2, Wand2, Clipboard, ExternalLink } from "lucide-react";
+import { Loader2, Wand2, Clipboard, ExternalLink, ClipboardList } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 
@@ -244,4 +244,3 @@ export function RegistrationFormCreator() {
     </div>
   );
 }
-
