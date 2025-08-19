@@ -615,13 +615,13 @@ export default function SchedulesPage() {
             </CardHeader>
             <CardContent>
                 <div className="border rounded-lg overflow-hidden">
-                    <div className="grid grid-cols-[120px_1fr]">
+                    <div className="grid grid-cols-[100px_1fr]">
                         <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r">Horas</div>
                         <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b">Equipos y Recintos</div>
                     </div>
                     <div className="grid grid-cols-1 max-h-[600px] overflow-y-auto">
                     {timeSlots.map(slot => (
-                        <div key={slot} className="grid grid-cols-[120px_1fr] items-start border-b last:border-b-0 min-h-16">
+                        <div key={slot} className="grid grid-cols-[100px_1fr] items-start border-b last:border-b-0 min-h-16">
                             <div className="p-3 text-sm font-semibold text-muted-foreground whitespace-nowrap self-stretch border-r h-full flex items-center">{slot.split(' - ')[0]}</div>
                             <div className="p-2 flex flex-wrap gap-2 self-start">
                                {displayedScheduleEntries
@@ -671,7 +671,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-
-
-
