@@ -158,7 +158,7 @@ function CalendarView() {
                   date: eventDate,
                   type: 'Entrenamiento',
                   location: training.venueName,
-                  color: 'bg-primary/80 text-primary-foreground',
+                  color: 'bg-primary/20 text-primary border border-primary/50',
               });
           });
       }
@@ -399,9 +399,9 @@ function CalendarView() {
                          )}
                         <div className="flex-grow space-y-1 overflow-y-auto">
                             {dayEvents.map(event => (
-                            <div key={event.id} className={cn('text-xs p-1.5 rounded-md', event.color || 'bg-blue-100 dark:bg-blue-900/50')}>
+                            <div key={event.id} className={cn('text-xs p-1.5 rounded-md', event.color)}>
                                 <p className="font-semibold truncate">{event.title}</p>
-                                {event.location && <p className="truncate text-muted-foreground">{event.location}</p>}
+                                {event.location && <p className="truncate text-muted-foreground opacity-80">{event.location}</p>}
                             </div>
                             ))}
                         </div>
@@ -428,5 +428,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-
-    

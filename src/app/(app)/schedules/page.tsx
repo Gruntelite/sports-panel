@@ -210,8 +210,8 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                                                         return (
                                                             <div
                                                                 key={event.id}
-                                                                className="absolute p-2 py-1 flex flex-col rounded-lg border text-primary-foreground"
-                                                                style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary))', borderColor: 'hsl(var(--primary))', opacity: 0.8 }}
+                                                                className="absolute p-2 py-1 flex flex-col rounded-lg border text-primary bg-primary/20 border-primary/50"
+                                                                style={{ top, height, left, width }}
                                                             >
                                                                 <span className="font-bold text-sm break-words">{event.teamName}</span>
                                                                 <span className="text-xs opacity-90 flex items-center gap-1 mt-auto">
@@ -945,8 +945,8 @@ export default function SchedulesPage() {
                                   return (
                                       <div
                                         key={event.id}
-                                        className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
-                                        style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary))', opacity: 0.8 }}
+                                        className="absolute p-2 flex flex-col rounded-lg border text-primary bg-primary/20 border-primary/50"
+                                        style={{ top, height, left, width }}
                                       >
                                           <span className="font-bold text-sm truncate">{event.teamName}</span>
                                           <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
