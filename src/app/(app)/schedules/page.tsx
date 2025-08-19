@@ -342,65 +342,70 @@ export default function SchedulesPage() {
   }, [startTime, endTime]);
 
   const timeToMinutes = (time: string) => {
+    if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
   };
   
   const processOverlaps = (events: DailyScheduleEntry[]) => {
-      if (events.length === 0) return [];
+      if (!events || events.length === 0) return [];
   
       const sortedEvents = events
+        .filter(e => e.startTime && e.endTime)
         .map(e => ({
           ...e,
           start: timeToMinutes(e.startTime),
           end: timeToMinutes(e.endTime),
         }))
-        .sort((a, b) => a.start - b.start);
+        .sort((a, b) => a.start - b.start || a.end - b.end);
   
-      const groups: any[][] = [];
-      
-      sortedEvents.forEach(event => {
-        let placed = false;
-        for (const group of groups) {
-          const lastEventInGroup = group[group.length - 1];
-          if (event.start < lastEventInGroup.end) {
-            group.push(event);
-            placed = true;
-            break;
-          }
-        }
-        if (!placed) {
-          groups.push([event]);
-        }
-      });
-  
-      const eventLayouts: any[] = [];
-      groups.forEach(group => {
-        const columns: any[][] = [];
-        group.forEach(event => {
+      const columns: any[][] = [];
+      for (const event of sortedEvents) {
           let placed = false;
           for (const col of columns) {
-            const lastInCol = col[col.length - 1];
-            if (event.start >= lastInCol.end) {
-              col.push(event);
-              placed = true;
-              break;
-            }
+              if (col[col.length - 1].end <= event.start) {
+                  col.push(event);
+                  placed = true;
+                  break;
+              }
           }
           if (!placed) {
-            columns.push([event]);
+              columns.push([event]);
           }
-        });
-  
-        columns.forEach((col, colIndex) => {
-          col.forEach(event => {
-            eventLayouts.push({
+      }
+
+      const eventLayouts: any[] = [];
+      sortedEvents.forEach(event => {
+          let maxOverlaps = 0;
+          let overlaps: any[] = [];
+          for (const otherEvent of sortedEvents) {
+              if (event.start < otherEvent.end && event.end > otherEvent.start) {
+                  overlaps.push(otherEvent);
+              }
+          }
+          
+          overlaps.sort((a, b) => a.start - b.start);
+          
+          let assignedCol = -1;
+          const occupiedCols = new Set();
+
+          for(const o of overlaps) {
+            if(o.col !== undefined) {
+              occupiedCols.add(o.col);
+            }
+          }
+
+          let currentCol = 0;
+          while(occupiedCols.has(currentCol)) {
+            currentCol++;
+          }
+          assignedCol = currentCol;
+          
+          eventLayouts.push({
               ...event,
-              col: colIndex,
-              numCols: columns.length,
-            });
+              col: assignedCol,
+              numCols: Math.max(columns.length, overlaps.length),
           });
-        });
       });
       
       return eventLayouts;
@@ -636,15 +641,15 @@ export default function SchedulesPage() {
         
         <Card className="relative">
             <CardHeader className="flex flex-row items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
-                    <CardTitle className="text-xl capitalize w-32 text-center">{currentDay}</CardTitle>
-                    <Button variant="outline" size="icon" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
+                <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
+                    <div className="text-base font-semibold capitalize w-24 text-center">{currentDay}</div>
+                    <Button variant="outline" size="sm" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
-                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
-                    <CardTitle className="text-xl capitalize w-48 text-center truncate">{currentVenue?.name || "Sin Recintos"}</CardTitle>
-                    <Button variant="outline" size="icon" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
+                 <div className="flex items-center gap-1">
+                    <Button variant="outline" size="sm" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
+                    <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos"}</div>
+                    <Button variant="outline" size="sm" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </CardHeader>
             <CardContent>
@@ -709,5 +714,7 @@ export default function SchedulesPage() {
   );
 }
 
+
+    
 
     
