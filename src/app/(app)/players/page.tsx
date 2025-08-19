@@ -237,8 +237,11 @@ export default function PlayersPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
       
+      const teamName = teams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
+
       const dataToSave = {
         ...playerData,
+        teamName,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
@@ -306,10 +309,11 @@ export default function PlayersPage() {
 
     setLoading(true);
     try {
+        const teamName = teams.find(t => t.id === teamId)?.name || "Sin equipo";
         const batch = writeBatch(db);
         selectedPlayers.forEach(playerId => {
             const playerRef = doc(db, "clubs", clubId, "players", playerId);
-            batch.update(playerRef, { teamId });
+            batch.update(playerRef, { teamId, teamName });
         });
         await batch.commit();
 
@@ -684,3 +688,4 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+

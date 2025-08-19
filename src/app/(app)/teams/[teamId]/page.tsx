@@ -424,8 +424,11 @@ export default function EditTeamPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
       
+      const teamName = allTeams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
+
       const dataToSave = {
         ...playerData,
+        teamName,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
@@ -474,8 +477,11 @@ export default function EditTeamPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
       
+      const teamName = allTeams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
+      
       const dataToSave = {
         ...coachData,
+        teamName,
         avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
         monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
@@ -546,10 +552,11 @@ export default function EditTeamPage() {
 
     setSaving(true);
     try {
+        const teamName = allTeams.find(t => t.id === newTeamId)?.name || "Sin equipo";
         const batch = writeBatch(db);
         selectedMembers.forEach(playerId => {
             const playerRef = doc(db, "clubs", clubId, "players", playerId);
-            batch.update(playerRef, { teamId: newTeamId });
+            batch.update(playerRef, { teamId: newTeamId, teamName });
         });
         await batch.commit();
 
@@ -1027,6 +1034,7 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
 
 
 

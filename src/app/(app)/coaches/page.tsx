@@ -224,8 +224,11 @@ export default function CoachesPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
       
+      const teamName = teams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
+
       const dataToSave = {
         ...coachData,
+        teamName,
         avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
         monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
