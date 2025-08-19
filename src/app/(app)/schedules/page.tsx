@@ -7,12 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -412,41 +413,63 @@ export default function SchedulesPage() {
         </div>
         <div className="flex items-center gap-2">
             <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">
-                      {currentTemplate?.name || "Seleccionar Plantilla"}
-                      <MoreVertical className="ml-2 h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent>
-                  <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
-                      {scheduleTemplates.map(template => (
-                           <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
-                      ))}
-                  </DropdownMenuRadioGroup>
-                  <DropdownMenuSeparator />
-                   <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      setIsNewTemplateModalOpen(true);
-                    }}>
-                      <PlusCircle className="mr-2 h-4 w-4"/>
-                      Crear Plantilla
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={(e) => {
-                      e.preventDefault();
-                      setEditedTemplateName(currentTemplate?.name || "");
-                      setIsEditTemplateModalOpen(true);
-                    }}>
-                      <Edit className="mr-2 h-4 w-4"/>
-                      Renombrar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)}>
-                      <Trash2 className="mr-2 h-4 w-4"/>
-                      Eliminar
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline">
+                          {currentTemplate?.name || "Seleccionar Plantilla"}
+                          <MoreVertical className="ml-2 h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                          {scheduleTemplates.map(template => (
+                              <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                          ))}
+                      </DropdownMenuRadioGroup>
+                      <DropdownMenuSeparator />
+                      <DialogTrigger asChild>
+                         <DropdownMenuItem onSelect={(e) => {
+                              e.preventDefault();
+                              setIsNewTemplateModalOpen(true);
+                          }}>
+                              <PlusCircle className="mr-2 h-4 w-4"/>
+                              Crear Plantilla
+                          </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DialogTrigger asChild>
+                          <DropdownMenuItem onSelect={(e) => {
+                              e.preventDefault();
+                              setEditedTemplateName(currentTemplate?.name || "");
+                              setIsEditTemplateModalOpen(true);
+                            }}>
+                              <Edit className="mr-2 h-4 w-4"/>
+                              Renombrar
+                          </DropdownMenuItem>
+                      </DialogTrigger>
+                      <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)}>
+                          <Trash2 className="mr-2 h-4 w-4"/>
+                          Eliminar
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+
+                  <DialogContent>
+                      <DialogHeader>
+                          <DialogTitle>Renombrar Plantilla</DialogTitle>
+                          <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
+                      </DialogHeader>
+                      <div className="py-4">
+                          <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                          <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+                      </div>
+                      <DialogFooter>
+                          <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                          <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                      </DialogFooter>
+                  </DialogContent>
+              </Dialog>
+              
               <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
@@ -462,24 +485,6 @@ export default function SchedulesPage() {
                 </DialogFooter>
               </DialogContent>
             </Dialog>
-
-            <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Renombrar Plantilla</DialogTitle>
-                        <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
-                    </DialogHeader>
-                    <div className="py-4">
-                        <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-                        <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                        <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
-
         </div>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 flex-1">
@@ -489,37 +494,52 @@ export default function SchedulesPage() {
                 <CardDescription>Define recintos, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                 <div className="space-y-4 p-4 border rounded-lg">
-                    <h3 className="font-semibold text-base">Gestionar Recintos</h3>
-                     <div className="flex items-center gap-2">
-                        <Input placeholder="Nombre del nuevo recinto" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
-                        <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
-                    </div>
-                    <div className="space-y-2">
-                        {venues.map(venue => (
-                            <div key={venue.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded-md">
-                                <span>{venue.name}</span>
-                                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveVenue(venue.id)}>
-                                    <Trash2 className="h-4 w-4 text-destructive"/>
-                                </Button>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="space-y-4 p-4 border rounded-lg">
-                    <h3 className="font-semibold text-base">Rango Horario del Día</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="start-time">Hora de Inicio</Label>
-                            <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="end-time">Hora de Fin</Label>
-                            <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-                        </div>
-                    </div>
-                </div>
+                 <Accordion type="single" collapsible className="w-full">
+                  <AccordionItem value="venues">
+                    <AccordionTrigger className="text-base font-semibold">
+                      <div className="flex items-center gap-2">
+                        <Settings className="h-5 w-5" />
+                        Gestionar Recintos
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-4">
+                      <div className="flex items-center gap-2">
+                          <Input placeholder="Nombre del nuevo recinto" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
+                          <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
+                      </div>
+                      <div className="space-y-2">
+                          {venues.map(venue => (
+                              <div key={venue.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded-md">
+                                  <span>{venue.name}</span>
+                                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveVenue(venue.id)}>
+                                      <Trash2 className="h-4 w-4 text-destructive"/>
+                                  </Button>
+                              </div>
+                          ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                  <AccordionItem value="time-range">
+                    <AccordionTrigger className="text-base font-semibold">
+                      <div className="flex items-center gap-2">
+                        <CalendarRange className="h-5 w-5" />
+                        Rango Horario del Día
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-4">
+                      <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="start-time">Hora de Inicio</Label>
+                              <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="end-time">Hora de Fin</Label>
+                              <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                          </div>
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
 
 
                 <div className="space-y-4">
@@ -625,3 +645,4 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
