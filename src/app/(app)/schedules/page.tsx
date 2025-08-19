@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
@@ -235,6 +235,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
 export default function SchedulesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   
@@ -271,8 +272,12 @@ export default function SchedulesPage() {
     return doc(db, "clubs", clubId, "schedules", templateId);
   }, [clubId]);
 
-  const fetchAllData = useCallback(async (currentClubId: string) => {
-    setLoading(true);
+  const fetchAllData = useCallback(async (currentClubId: string, isRefresh: boolean = false) => {
+    if(isRefresh) {
+        setIsRefreshing(true);
+    } else {
+        setLoading(true);
+    }
     try {
         const teamsCol = collection(db, "clubs", currentClubId, "teams");
         const teamsSnapshot = await getDocs(teamsCol);
@@ -307,7 +312,11 @@ export default function SchedulesPage() {
         console.error("Error fetching data:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
     } finally {
-        setLoading(false);
+        if(isRefresh) {
+            setIsRefreshing(false);
+        } else {
+            setLoading(false);
+        }
     }
   }, [currentTemplateId, toast]);
 
@@ -331,7 +340,7 @@ export default function SchedulesPage() {
       }
     });
     return () => unsubscribe();
-  }, [fetchAllData]);
+  }, []); // Remove fetchAllData dependency to avoid re-running on every change.
 
   const loadTemplateData = (template: ScheduleTemplate) => {
     setVenues(template.venues || []);
@@ -924,7 +933,15 @@ export default function SchedulesPage() {
           </div>
         </TabsContent>
         <TabsContent value="preview" className="pt-4">
-             <div className="flex justify-end mb-4">
+             <div className="flex justify-end mb-4 gap-2">
+                <Button onClick={() => clubId && fetchAllData(clubId, true)} disabled={isRefreshing}>
+                    {isRefreshing ? (
+                        <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                    )}
+                    Actualizar Vista
+                </Button>
                 <Button onClick={handleDownloadPdf} disabled={isDownloading}>
                     {isDownloading ? (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -961,6 +978,7 @@ export default function SchedulesPage() {
 }
 
     
+
 
 
 
