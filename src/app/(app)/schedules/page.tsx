@@ -92,28 +92,39 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
     };
 
     const getGroupedSchedule = (venueId: string) => {
-        const scheduleByDay: { [key in DayOfWeek]: any } = { Lunes: {}, Martes: {}, Miércoles: {}, Jueves: {}, Viernes: {}, Sábado: {}, Domingo: {} };
+        const scheduleByDay: { [key in DayOfWeek]: { [timeSlot: string]: { teams: string[] } } } = { 
+            Lunes: {}, Martes: {}, Miércoles: {}, Jueves: {}, Viernes: {}, Sábado: {}, Domingo: {} 
+        };
         const allTimeSlots = new Set<string>();
 
+        // First, gather all unique time slots for the venue across the whole week
         daysOfWeek.forEach(day => {
             const dayEvents = weeklySchedule[day]?.filter(event => event.venueId === venueId && event.startTime && event.endTime) || [];
-            const timeSlotsForDay: { [key: string]: { teams: string[], endTime: string } } = {};
-
             dayEvents.forEach(event => {
                 const timeSlotKey = `${event.startTime}-${event.endTime}`;
-                if (!timeSlotsForDay[timeSlotKey]) {
-                    timeSlotsForDay[timeSlotKey] = { teams: [], endTime: event.endTime };
-                    allTimeSlots.add(timeSlotKey);
-                }
-                timeSlotsForDay[timeSlotKey].teams.push(event.teamName);
+                allTimeSlots.add(timeSlotKey);
             });
-            scheduleByDay[day] = timeSlotsForDay;
         });
         
         const sortedTimeSlots = Array.from(allTimeSlots).sort((a, b) => {
             const startA = timeToMinutes(a.split('-')[0]);
             const startB = timeToMinutes(b.split('-')[0]);
             return startA - startB;
+        });
+
+        // Then, populate the schedule for each day based on the sorted time slots
+        daysOfWeek.forEach(day => {
+            const dayEvents = weeklySchedule[day]?.filter(event => event.venueId === venueId && event.startTime && event.endTime) || [];
+            const timeSlotsForDay: { [key: string]: { teams: string[] } } = {};
+
+            dayEvents.forEach(event => {
+                const timeSlotKey = `${event.startTime}-${event.endTime}`;
+                if (!timeSlotsForDay[timeSlotKey]) {
+                    timeSlotsForDay[timeSlotKey] = { teams: [] };
+                }
+                timeSlotsForDay[timeSlotKey].teams.push(event.teamName);
+            });
+            scheduleByDay[day] = timeSlotsForDay;
         });
 
         return { scheduleByDay, sortedTimeSlots };
@@ -581,17 +592,33 @@ export default function SchedulesPage() {
     }
   };
 
+  const displayTemplate = useMemo(() => {
+    if (!currentTemplateId) return undefined;
+    
+    const baseTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
+    if (!baseTemplate) return undefined;
 
-  const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
-  const currentVenue = venues && venues.length > 0 ? venues[currentVenueIndex] : null;
+    // Create a deep copy to avoid direct state mutation
+    const newTemplate = JSON.parse(JSON.stringify(baseTemplate));
+
+    // Overwrite the current day's schedule with pending changes
+    newTemplate.weeklySchedule[currentDay] = pendingAssignments;
+    
+    return newTemplate;
+  }, [currentTemplateId, scheduleTemplates, currentDay, pendingAssignments]);
+
+
+  const currentVenue = displayTemplate?.venues && displayTemplate.venues.length > 0 ? displayTemplate.venues[currentVenueIndex] : null;
 
   const displayedEvents = useMemo(() => {
-    const dailyEvents = pendingAssignments.filter(a => a.venueId && a.startTime && a.endTime);
-    if (!currentVenue) return [];
+    if (!displayTemplate || !currentVenue) return [];
+    
+    const dailyEvents = displayTemplate.weeklySchedule[currentDay];
+    if (!dailyEvents) return [];
     
     const venueEvents = dailyEvents.filter(event => event.venueId === currentVenue.id);
     return processOverlaps(venueEvents);
-  }, [pendingAssignments, currentVenue]);
+  }, [displayTemplate, currentDay, currentVenue]);
 
 
   if (loading) {
@@ -617,7 +644,7 @@ export default function SchedulesPage() {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline">
-                          {currentTemplate?.name || "Seleccionar Plantilla"}
+                          {displayTemplate?.name || "Seleccionar Plantilla"}
                           <MoreVertical className="ml-2 h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
@@ -637,13 +664,13 @@ export default function SchedulesPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem onSelect={(e) => {
                               e.preventDefault();
-                              setEditedTemplateName(currentTemplate?.name || "");
+                              setEditedTemplateName(displayTemplate?.name || "");
                               setIsEditTemplateModalOpen(true);
                             }} disabled={!currentTemplateId}>
                               <Edit className="mr-2 h-4 w-4"/>
                               Renombrar
                           </DropdownMenuItem>
-                      <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)} disabled={!currentTemplateId}>
+                      <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
                           <Trash2 className="mr-2 h-4 w-4"/>
                           Eliminar
                       </DropdownMenuItem>
@@ -653,7 +680,7 @@ export default function SchedulesPage() {
                   <DialogContent>
                       <DialogHeader>
                           <DialogTitle>Renombrar Plantilla</DialogTitle>
-                          <DialogDescription>Introduce un nuevo nombre para la plantilla "{currentTemplate?.name}".</DialogDescription>
+                          <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
                       </DialogHeader>
                       <div className="py-4">
                           <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
@@ -806,7 +833,7 @@ export default function SchedulesPage() {
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
                       </div>
                   </CardHeader>
-                  <CardContent className="flex-1 p-0">
+                  <CardContent className="flex-grow p-0">
                     <div className="relative overflow-x-auto">
                         <div className="grid grid-cols-[60px_1fr]">
                             <div className="col-start-1 col-end-2 border-r">
@@ -837,13 +864,13 @@ export default function SchedulesPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="p-6 border-t">
-                          <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
-                              <Clock className="h-5 w-5"/>
-                              Guardar Plantilla
-                          </Button>
-                      </div>
                   </CardContent>
+                  <div className="p-6 border-t">
+                      <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
+                          <Clock className="h-5 w-5"/>
+                          Guardar Plantilla
+                      </Button>
+                  </div>
               </Card>
           </div>
         </TabsContent>
@@ -858,7 +885,7 @@ export default function SchedulesPage() {
                     Descargar Horario en PDF
                 </Button>
             </div>
-            <WeeklyScheduleView template={currentTemplate} innerRef={scheduleViewRef} />
+            <WeeklyScheduleView template={displayTemplate} innerRef={scheduleViewRef} />
         </TabsContent>
       </Tabs>
 
