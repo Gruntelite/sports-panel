@@ -244,21 +244,23 @@ export default function EditTeamPage() {
       fetchTeamData(clubId);
     }
   }, [clubId, teamId]);
+  
+  const handleTeamInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { id, value } = e.target;
+    setTeam(prev => ({ ...prev, [id]: value }));
+  };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMemberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
     const val = type === 'number' ? (value === '' ? null : Number(value)) : value;
 
-    if (['name', 'minAge', 'maxAge', 'defaultMonthlyFee'].includes(id)) {
-        setTeam(prev => ({ ...prev, [id]: value }));
+    if (modalType === 'player') {
+      setPlayerData(prev => ({ ...prev, [id]: val }));
     } else {
-       if (modalType === 'player') {
-            setPlayerData(prev => ({ ...prev, [id]: val }));
-       } else {
-            setCoachData(prev => ({ ...prev, [id]: val }));
-       }
+      setCoachData(prev => ({ ...prev, [id]: val }));
     }
   };
+
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -572,7 +574,6 @@ export default function EditTeamPage() {
   }
   
   const currentData = modalType === 'player' ? playerData : coachData;
-  const currentDataSetter = modalType === 'player' ? setPlayerData : setCoachData;
 
 
   return (
@@ -616,21 +617,21 @@ export default function EditTeamPage() {
                       <CardContent className="space-y-4">
                            <div className="space-y-2">
                               <Label htmlFor="name">Nombre del Equipo</Label>
-                              <Input id="name" autoComplete="off" value={team.name || ''} onChange={handleInputChange} />
+                              <Input id="name" autoComplete="off" value={team.name || ''} onChange={handleTeamInputChange} />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label htmlFor="minAge">Edad Mínima</Label>
-                                  <Input id="minAge" type="number" value={team.minAge || ''} onChange={handleInputChange} />
+                                  <Input id="minAge" type="number" value={team.minAge || ''} onChange={handleTeamInputChange} />
                               </div>
                               <div className="space-y-2">
                                   <Label htmlFor="maxAge">Edad Máxima</Label>
-                                  <Input id="maxAge" type="number" value={team.maxAge || ''} onChange={handleInputChange} />
+                                  <Input id="maxAge" type="number" value={team.maxAge || ''} onChange={handleTeamInputChange} />
                               </div>
                           </div>
                            <div className="space-y-2">
                               <Label htmlFor="defaultMonthlyFee">Cuota Mensual por Defecto (€)</Label>
-                              <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee ?? ''} onChange={handleInputChange} />
+                              <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee ?? ''} onChange={handleTeamInputChange} />
                           </div>
                            <Button onClick={handleSaveChanges} disabled={saving} className="w-full">
                               {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
@@ -838,11 +839,11 @@ export default function EditTeamPage() {
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" autoComplete="off" value={currentData.name || ''} onChange={handleInputChange} />
+                                   <Input id="name" autoComplete="off" value={currentData.name || ''} onChange={handleMemberInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleInputChange} />
+                                   <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -856,21 +857,21 @@ export default function EditTeamPage() {
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="dni">DNI</Label>
-                                   <Input id="dni" value={currentData.dni || ''} onChange={handleInputChange} />
+                                   <Input id="dni" value={currentData.dni || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
                            <div className="space-y-2">
                                 <Label htmlFor="address">Dirección</Label>
-                                <Input id="address" value={(currentData as any).address || ''} onChange={handleInputChange} />
+                                <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
                             </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={(currentData as any).city || ''} onChange={handleInputChange} />
+                                   <Input id="city" value={(currentData as any).city || ''} onChange={handleMemberInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleInputChange} />
+                                   <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
                        </div>
@@ -894,16 +895,16 @@ export default function EditTeamPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" autoComplete="off" value={(currentData as any).tutorName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorName" autoComplete="off" value={(currentData as any).tutorName || ''} onChange={handleMemberInputChange} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" autoComplete="off" value={(currentData as any).tutorLastName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorLastName" autoComplete="off" value={(currentData as any).tutorLastName || ''} onChange={handleMemberInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="tutorDni">DNI del Tutor/a</Label>
-                                        <Input id="tutorDni" value={(currentData as any).tutorDni || ''} onChange={handleInputChange} />
+                                        <Input id="tutorDni" value={(currentData as any).tutorDni || ''} onChange={handleMemberInputChange} />
                                     </div>
                                 </div>
                             )}
@@ -911,11 +912,11 @@ export default function EditTeamPage() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
                                      <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleInputChange} />
+                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
-                                     <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleInputChange} />
+                                     <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleMemberInputChange} />
                                  </div>
                             </div>
                         </div>
@@ -927,7 +928,7 @@ export default function EditTeamPage() {
                                 <div className="space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                        <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
+                                        <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                         <div className="space-y-2">
@@ -945,11 +946,11 @@ export default function EditTeamPage() {
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
+                                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleMemberInputChange} />
                                             </div>
                                             <div className="space-y-2">
                                                 <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
                                             </div>
                                     </div>
                                 </div>
@@ -963,11 +964,11 @@ export default function EditTeamPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                            <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                            <Input id="iban" value={coachData.iban || ''} onChange={handleMemberInputChange} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                            <Input id="monthlyPayment" type="number" value={(coachData as Coach).monthlyPayment ?? ''} onChange={handleInputChange} />
+                                            <Input id="monthlyPayment" type="number" value={(coachData as Coach).monthlyPayment ?? ''} onChange={handleMemberInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
@@ -1020,3 +1021,4 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
