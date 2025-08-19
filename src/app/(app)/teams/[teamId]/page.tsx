@@ -325,7 +325,7 @@ export default function EditTeamPage() {
       setNewImage(null);
       setImagePreview(null);
       if(imageUrl) setTeam(prev => ({...prev, image: imageUrl}));
-      fetchTeamData(clubId);
+      if (clubId) fetchTeamData(clubId);
     } catch (error) {
       console.error("Error saving changes: ", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
@@ -435,7 +435,7 @@ export default function EditTeamPage() {
       
       setIsModalOpen(false);
       setPlayerData({});
-      fetchTeamData(clubId);
+      if (clubId) fetchTeamData(clubId);
     } catch (error) {
         console.error("Error saving player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
@@ -485,7 +485,7 @@ export default function EditTeamPage() {
       
       setIsModalOpen(false);
       setCoachData({});
-      fetchTeamData(clubId);
+      if (clubId) fetchTeamData(clubId);
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
@@ -509,7 +509,7 @@ export default function EditTeamPage() {
         await deleteDoc(doc(db, "clubs", clubId, collectionName, memberToDelete.id));
 
         toast({ title: "Miembro eliminado", description: `${memberToDelete.name} ha sido eliminado.`});
-        fetchTeamData(clubId);
+        if (clubId) fetchTeamData(clubId);
     } catch (error) {
         console.error("Error deleting member: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el miembro." });
@@ -551,7 +551,7 @@ export default function EditTeamPage() {
             title: "Jugadores movidos",
             description: `${selectedMembers.length} jugadores han sido movidos al nuevo equipo.`
         });
-        fetchTeamData(clubId);
+        if (clubId) fetchTeamData(clubId);
         setSelectedMembers([]);
     } catch (error) {
         console.error("Error assigning players in bulk:", error);
@@ -616,7 +616,7 @@ export default function EditTeamPage() {
                       <CardContent className="space-y-4">
                            <div className="space-y-2">
                               <Label htmlFor="name">Nombre del Equipo</Label>
-                              <Input id="name" value={team.name || ''} onChange={handleInputChange} />
+                              <Input id="name" autoComplete="off" value={team.name || ''} onChange={handleInputChange} />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
@@ -838,11 +838,11 @@ export default function EditTeamPage() {
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" value={currentData.name || ''} onChange={handleInputChange} />
+                                   <Input id="name" autoComplete="off" value={currentData.name || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" value={currentData.lastName || ''} onChange={handleInputChange} />
+                                   <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleInputChange} />
                                </div>
                            </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -894,11 +894,11 @@ export default function EditTeamPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" value={(currentData as any).tutorName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorName" autoComplete="off" value={(currentData as any).tutorName || ''} onChange={handleInputChange} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" value={(currentData as any).tutorLastName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorLastName" autoComplete="off" value={(currentData as any).tutorLastName || ''} onChange={handleInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">

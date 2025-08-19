@@ -180,7 +180,7 @@ export default function PlayersPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
-    setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
+    setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
   };
   
   const handleCheckboxChange = (id: keyof Player, checked: boolean) => {
@@ -539,11 +539,11 @@ export default function PlayersPage() {
                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" value={playerData.name || ''} onChange={handleInputChange} />
+                                   <Input id="name" autoComplete="off" value={playerData.name || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                    <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
+                                   <Input id="lastName" autoComplete="off" value={playerData.lastName || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
@@ -595,11 +595,11 @@ export default function PlayersPage() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" value={playerData.tutorName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorName" autoComplete="off" value={playerData.tutorName || ''} onChange={handleInputChange} />
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
+                                            <Input id="tutorLastName" autoComplete="off" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
