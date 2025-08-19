@@ -6,8 +6,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
@@ -18,6 +17,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type Venue = {
     id: string;
@@ -70,6 +70,104 @@ type ScheduleTemplate = {
 
 const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
 type DayOfWeek = typeof daysOfWeek[number];
+
+
+const WeeklyScheduleView = ({ template }: { template: ScheduleTemplate | undefined }) => {
+    if (!template) {
+        return (
+            <div className="flex items-center justify-center h-64 text-muted-foreground">
+                <p>No hay plantilla seleccionada para mostrar.</p>
+            </div>
+        );
+    }
+    
+    const { venues, weeklySchedule } = template;
+
+    const timeToMinutes = (time: string) => {
+        const [hours, minutes] = time.split(':').map(Number);
+        return hours * 60 + minutes;
+    };
+
+    const getGroupedSchedule = (venueId: string) => {
+        const scheduleByDay: { [key in DayOfWeek]: any } = { Lunes: {}, Martes: {}, Miércoles: {}, Jueves: {}, Viernes: {}, Sábado: {}, Domingo: {} };
+        const allTimeSlots = new Set<string>();
+
+        daysOfWeek.forEach(day => {
+            const dayEvents = weeklySchedule[day]?.filter(event => event.venueId === venueId && event.startTime && event.endTime) || [];
+            const timeSlotsForDay: { [key: string]: { teams: string[], endTime: string } } = {};
+
+            dayEvents.forEach(event => {
+                const timeSlotKey = `${event.startTime}-${event.endTime}`;
+                if (!timeSlotsForDay[timeSlotKey]) {
+                    timeSlotsForDay[timeSlotKey] = { teams: [], endTime: event.endTime };
+                    allTimeSlots.add(timeSlotKey);
+                }
+                timeSlotsForDay[timeSlotKey].teams.push(event.teamName);
+            });
+            scheduleByDay[day] = timeSlotsForDay;
+        });
+        
+        const sortedTimeSlots = Array.from(allTimeSlots).sort((a, b) => {
+            const startA = timeToMinutes(a.split('-')[0]);
+            const startB = timeToMinutes(b.split('-')[0]);
+            return startA - startB;
+        });
+
+        return { scheduleByDay, sortedTimeSlots };
+    };
+
+    return (
+        <div className="space-y-8">
+            {venues.map(venue => {
+                const { scheduleByDay, sortedTimeSlots } = getGroupedSchedule(venue.id);
+                return (
+                    <Card key={venue.id}>
+                        <CardHeader>
+                            <CardTitle>{venue.name}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="border rounded-lg overflow-hidden">
+                                <table className="w-full text-sm text-left">
+                                    <thead className="bg-muted/50">
+                                        <tr>
+                                            <th className="w-[120px] px-4 py-3 font-medium">Hora</th>
+                                            {daysOfWeek.map(day => (
+                                                <th key={day} className="px-4 py-3 font-medium">{day}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {sortedTimeSlots.map(timeSlot => {
+                                            const [start, end] = timeSlot.split('-');
+                                            return (
+                                                <tr key={timeSlot} className="border-t">
+                                                    <td className="px-4 py-3 font-medium align-top">
+                                                        {start} - {end}
+                                                    </td>
+                                                    {daysOfWeek.map(day => (
+                                                        <td key={`${venue.id}-${day}-${timeSlot}`} className="px-4 py-3 align-top">
+                                                            {scheduleByDay[day][timeSlot] ? (
+                                                                scheduleByDay[day][timeSlot].teams.map((team: string, index: number) => (
+                                                                    <div key={index} className="p-1.5 mb-1 rounded-md bg-primary/10 text-primary-foreground border border-primary/20">
+                                                                        <p className="font-semibold text-primary">{team}</p>
+                                                                    </div>
+                                                                ))
+                                                            ) : '—'}
+                                                        </td>
+                                                    ))}
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </CardContent>
+                    </Card>
+                );
+            })}
+        </div>
+    );
+};
 
 
 export default function SchedulesPage() {
@@ -382,34 +480,42 @@ export default function SchedulesPage() {
         }))
         .sort((a, b) => a.start - b.start || a.end - b.end);
   
-      const eventLayouts: (DailyScheduleEntry & { start: number; end: number; col: number; numCols: number })[] = [];
+      let eventLayouts: (DailyScheduleEntry & { start: number; end: number; col: number; numCols: number })[] = [];
 
-      for(const event of sortedEvents){
+      for(const event of sortedEvents) {
           let col = 0;
-          let numCols = 1;
-
-          const overlappingEvents = sortedEvents.filter(e => 
-              e.id !== event.id &&
+          let overlaps = eventLayouts.filter(e => 
               Math.max(event.start, e.start) < Math.min(event.end, e.end)
           );
-          
-          if(overlappingEvents.length > 0) {
-              const allInvolvedEvents = [event, ...overlappingEvents].sort((a, b) => a.start - b.start);
-              numCols = allInvolvedEvents.length;
 
-              const occupiedColumns = overlappingEvents.map(e => (eventLayouts.find(l => l.id === e.id))?.col).filter(c => c !== undefined);
-
-              while(occupiedColumns.includes(col)){
-                  col++;
-              }
+          let colNumbers = overlaps.map(e => e.col);
+          while(colNumbers.includes(col)) {
+              col++;
           }
-          eventLayouts.push({ ...event, col, numCols });
+          
+          eventLayouts.push({ ...event, col, numCols: 1 });
       }
 
-    return eventLayouts;
+      for (let i = 0; i < eventLayouts.length; i++) {
+        let overlappingGroup = [eventLayouts[i]];
+        for (let j = i + 1; j < eventLayouts.length; j++) {
+          if (Math.max(eventLayouts[i].start, eventLayouts[j].start) < Math.min(eventLayouts[i].end, eventLayouts[j].end)) {
+            overlappingGroup.push(eventLayouts[j]);
+          }
+        }
+        if (overlappingGroup.length > 1) {
+          overlappingGroup.forEach(eventInGroup => {
+            const layoutEvent = eventLayouts.find(e => e.id === eventInGroup.id);
+            if (layoutEvent) {
+              layoutEvent.numCols = overlappingGroup.length;
+            }
+          });
+        }
+      }
+
+      return eventLayouts;
   };
   
-
   const calculateEventPosition = (event: any) => {
     if (!startTime) return { top: 0, height: 0, left: '0%', width: '100%' };
     const startHour = parseInt(startTime.split(':')[0]);
@@ -423,22 +529,13 @@ export default function SchedulesPage() {
     const top = (startMinutes / 60) * hourHeight;
     const height = (durationMinutes / 60) * hourHeight;
     
-    if (event.numCols > 1) {
-        const width = 100 / event.numCols;
-        const left = event.col * width;
-        return { 
-            top, 
-            height, 
-            left: `${left}%`, 
-            width: `calc(${width}% - 4px)` //-4px for gap
-        };
-    }
-
+    const width = 100 / event.numCols;
+    const left = event.col * width;
     return { 
         top, 
         height, 
-        left: '0%', 
-        width: 'calc(100% - 4px)' 
+        left: `${left}%`, 
+        width: `calc(${width}% - 4px)`
     };
   };
 
@@ -543,160 +640,175 @@ export default function SchedulesPage() {
             </Dialog>
         </div>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 flex-1">
-        <Card>
-            <CardHeader>
-                <CardTitle>Configuración de Horarios</CardTitle>
-                <CardDescription>Define recintos/pistas, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-6">
-                 <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
-                  <AccordionItem value="settings">
-                    <AccordionTrigger className="text-base font-semibold">
-                      <div className="flex items-center gap-2">
-                        <Settings className="h-5 w-5" />
-                        Configuración General
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-4 space-y-4">
-                      <div className="space-y-2">
-                        <Label>Recintos/Pistas de Entrenamiento</Label>
-                         <div className="flex items-center gap-2">
-                            <Input placeholder="Nombre del nuevo recinto/pista" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
-                            <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
-                        </div>
-                        <div className="space-y-2">
-                            {venues.map(venue => (
-                                <div key={venue.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded-md">
-                                    <span>{venue.name}</span>
-                                    <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveVenue(venue.id)}>
-                                        <Trash2 className="h-4 w-4 text-destructive"/>
-                                    </Button>
-                                </div>
-                            ))}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4 pt-4">
-                          <div className="space-y-2">
-                              <Label htmlFor="start-time">Hora de Inicio</Label>
-                              <Input id="start-time" type="time" value={startTime || ''} onChange={(e) => setStartTime(e.target.value)} />
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="end-time">Hora de Fin</Label>
-                              <Input id="end-time" type="time" value={endTime || ''} onChange={(e) => setEndTime(e.target.value)} />
-                          </div>
-                      </div>
-                    </AccordionContent>
-                  </AccordionItem>
-                   <AccordionItem value="assignments">
-                    <AccordionTrigger className="text-base font-semibold">
-                       <div className="flex items-center gap-2">
-                        <Clock className="h-5 w-5" />
-                        Asignaciones para el {currentDay}
-                      </div>
-                    </AccordionTrigger>
-                    <AccordionContent className="pt-4 space-y-4">
-                      <div className="space-y-4">
-                        {pendingAssignments.map(assignment => (
-                          <div key={assignment.id} className="flex items-end gap-2 p-2 rounded-lg border bg-muted/30">
-                              <div className="grid grid-cols-1 gap-2 flex-1">
-                                <div className="space-y-1">
-                                  <Label className="text-xs">Equipo</Label>
-                                  <Select value={assignment.teamId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'teamId', value)}>
-                                    <SelectTrigger className="h-8"><SelectValue placeholder="Equipo" /></SelectTrigger>
-                                    <SelectContent>
-                                      {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                 <div className="space-y-1">
-                                  <Label className="text-xs">Recinto/Pista</Label>
-                                  <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
-                                    <SelectTrigger className="h-8"><SelectValue placeholder="Recinto/Pista" /></SelectTrigger>
-                                    <SelectContent>
-                                      {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-                                    </SelectContent>
-                                  </Select>
-                                </div>
-                                <div className="flex gap-2">
-                                  <div className="space-y-1 w-full">
-                                    <Label className="text-xs">Inicio</Label>
-                                     <Input type="time" value={assignment.startTime || ''} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} className="h-8" />
-                                  </div>
-                                  <div className="space-y-1 w-full">
-                                    <Label className="text-xs">Fin</Label>
-                                     <Input type="time" value={assignment.endTime || ''} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} className="h-8" />
-                                  </div>
-                                </div>
-                              </div>
-                             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveAssignment(assignment.id)}>
-                              <Trash className="h-4 w-4 text-destructive"/>
-                             </Button>
-                          </div>
-                        ))}
-                      </div>
 
-                      <Button variant="outline" className="w-full" onClick={handleAddAssignmentRow}>
-                        <PlusCircle className="mr-2 h-4 w-4"/>
-                        Añadir Asignación
-                      </Button>
-                    </AccordionContent>
-                  </AccordionItem>
-                </Accordion>
-            </CardContent>
-        </Card>
-        
-        <Card className="sticky top-6 self-start flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
-                <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
-                    <div className="text-base font-semibold capitalize w-24 text-center">{currentDay}</div>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
-                </div>
-                 <div className="flex items-center gap-1">
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
-                    <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos/Pistas"}</div>
-                    <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
-                </div>
-            </CardHeader>
-            <CardContent className="flex-1 overflow-y-auto p-0">
-              <div className="grid grid-cols-[60px_1fr]">
-                  <div className="col-start-1 col-end-2 border-r">
-                      {timeSlots.map(time => (
-                          <div key={time} className="h-16 flex items-start justify-center p-1 border-b">
-                            <span className="text-xs font-semibold text-muted-foreground">{time}</span>
-                          </div>
-                      ))}
-                  </div>
-                  <div className="col-start-2 col-end-3 relative">
-                      {timeSlots.map((time, index) => (
-                          <div key={index} className="h-16 border-b"></div>
-                      ))}
-                      {displayedEvents.map(event => {
-                         const { top, height, left, width } = calculateEventPosition(event);
-                         return (
-                            <div
-                              key={event.id}
-                              className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
-                              style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
-                            >
-                                <span className="font-bold text-sm truncate">{event.teamName}</span>
-                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
-                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
+       <Tabs defaultValue="editor">
+        <TabsList>
+            <TabsTrigger value="editor"><Edit className="mr-2 h-4 w-4" /> Editor de Plantilla</TabsTrigger>
+            <TabsTrigger value="preview"><Eye className="mr-2 h-4 w-4" /> Vista Semanal</TabsTrigger>
+        </TabsList>
+        <TabsContent value="editor" className="pt-4">
+          <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[420px_1fr] gap-6">
+              <Card>
+                  <CardHeader>
+                      <CardTitle>Configuración de Horarios</CardTitle>
+                      <CardDescription>Define recintos/pistas, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-6">
+                      <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
+                        <AccordionItem value="settings">
+                          <AccordionTrigger className="text-base font-semibold">
+                            <div className="flex items-center gap-2">
+                              <Settings className="h-5 w-5" />
+                              Configuración General
                             </div>
-                         )
-                      })}
-                  </div>
-              </div>
-               <div className="col-span-2 p-6 border-t">
-                      <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
-                          <Clock className="h-5 w-5"/>
-                          Guardar Plantilla
-                      </Button>
-                  </div>
-            </CardContent>
-        </Card>
-      </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="pt-4 space-y-4">
+                            <div className="space-y-2">
+                              <Label>Recintos/Pistas de Entrenamiento</Label>
+                              <div className="flex items-center gap-2">
+                                  <Input placeholder="Nombre del nuevo recinto/pista" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
+                                  <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
+                              </div>
+                              <div className="space-y-2">
+                                  {venues.map(venue => (
+                                      <div key={venue.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded-md">
+                                          <span>{venue.name}</span>
+                                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveVenue(venue.id)}>
+                                              <Trash2 className="h-4 w-4 text-destructive"/>
+                                          </Button>
+                                      </div>
+                                  ))}
+                              </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 pt-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="start-time">Hora de Inicio</Label>
+                                    <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="end-time">Hora de Fin</Label>
+                                    <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                                </div>
+                            </div>
+                          </AccordionContent>
+                        </AccordionItem>
+                        <AccordionItem value="assignments">
+                          <AccordionTrigger className="text-base font-semibold">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-5 w-5" />
+                              Asignaciones para el {currentDay}
+                            </div>
+                          </AccordionTrigger>
+                          <AccordionContent className="pt-4 space-y-4">
+                            <div className="space-y-4">
+                              {pendingAssignments.map(assignment => (
+                                <div key={assignment.id} className="flex items-end gap-2 p-2 rounded-lg border bg-muted/30">
+                                    <div className="grid grid-cols-1 gap-2 flex-1">
+                                      <div className="space-y-1">
+                                        <Label className="text-xs">Equipo</Label>
+                                        <Select value={assignment.teamId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'teamId', value)}>
+                                          <SelectTrigger className="h-8"><SelectValue placeholder="Equipo" /></SelectTrigger>
+                                          <SelectContent>
+                                            {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div className="space-y-1">
+                                        <Label className="text-xs">Recinto/Pista</Label>
+                                        <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
+                                          <SelectTrigger className="h-8"><SelectValue placeholder="Recinto/Pista" /></SelectTrigger>
+                                          <SelectContent>
+                                            {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                      <div className="flex gap-2">
+                                        <div className="space-y-1 w-full">
+                                          <Label className="text-xs">Inicio</Label>
+                                          <Input type="time" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} className="h-8" />
+                                        </div>
+                                        <div className="space-y-1 w-full">
+                                          <Label className="text-xs">Fin</Label>
+                                          <Input type="time" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} className="h-8" />
+                                        </div>
+                                      </div>
+                                    </div>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveAssignment(assignment.id)}>
+                                    <Trash className="h-4 w-4 text-destructive"/>
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+
+                            <Button variant="outline" className="w-full" onClick={handleAddAssignmentRow}>
+                              <PlusCircle className="mr-2 h-4 w-4"/>
+                              Añadir Asignación
+                            </Button>
+                          </AccordionContent>
+                        </AccordionItem>
+                      </Accordion>
+                  </CardContent>
+              </Card>
+              
+              <Card className="sticky top-6 self-start flex flex-col lg:col-span-2 xl:col-span-1">
+                  <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
+                      <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
+                          <div className="text-base font-semibold capitalize w-24 text-center">{currentDay}</div>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
+                      </div>
+                      <div className="flex items-center gap-1">
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
+                          <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos/Pistas"}</div>
+                          <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
+                      </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 p-0">
+                    <div className="relative">
+                        <div className="grid grid-cols-[60px_1fr]">
+                            <div className="col-start-1 col-end-2 border-r">
+                                {timeSlots.map(time => (
+                                    <div key={time} className="h-16 flex items-start justify-center p-1 border-b">
+                                      <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="col-start-2 col-end-3 relative">
+                                {timeSlots.map((time, index) => (
+                                    <div key={index} className="h-16 border-b"></div>
+                                ))}
+                                {displayedEvents.map(event => {
+                                  const { top, height, left, width } = calculateEventPosition(event);
+                                  return (
+                                      <div
+                                        key={event.id}
+                                        className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
+                                        style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
+                                      >
+                                          <span className="font-bold text-sm truncate">{event.teamName}</span>
+                                          <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
+                                          <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
+                                      </div>
+                                  )
+                                })}
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-span-2 p-6 border-t">
+                          <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
+                              <Clock className="h-5 w-5"/>
+                              Guardar Plantilla
+                          </Button>
+                      </div>
+                  </CardContent>
+              </Card>
+          </div>
+        </TabsContent>
+        <TabsContent value="preview" className="pt-4">
+            <WeeklyScheduleView template={currentTemplate} />
+        </TabsContent>
+      </Tabs>
+
 
        <AlertDialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
         <AlertDialogContent>
@@ -718,15 +830,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-
-    
-
-    
-
-
-
-
-
-
-
