@@ -382,43 +382,29 @@ export default function SchedulesPage() {
         }))
         .sort((a, b) => a.start - b.start || a.end - b.end);
   
-      let eventLayouts: (DailyScheduleEntry & { start: number; end: number; col: number; numCols: number })[] = [];
-      if (sortedEvents.length > 0) {
-        const columns: (DailyScheduleEntry & { start: number; end: number })[][] = [];
-        columns.push([sortedEvents[0]]);
-        eventLayouts.push({ ...sortedEvents[0], col: 0, numCols: 1 });
+      const eventLayouts: (DailyScheduleEntry & { start: number; end: number; col: number; numCols: number })[] = [];
 
-        for (let i = 1; i < sortedEvents.length; i++) {
-            const event = sortedEvents[i];
-            let placed = false;
-            for (let j = 0; j < columns.length; j++) {
-                const lastEventInColumn = columns[j][columns[j].length - 1];
-                if (event.start >= lastEventInColumn.end) {
-                    columns[j].push(event);
-                    eventLayouts.push({ ...event, col: j, numCols: 1 }); // placeholder numCols
-                    placed = true;
-                    break;
-                }
-            }
-            if (!placed) {
-                columns.push([event]);
-                eventLayouts.push({ ...event, col: columns.length - 1, numCols: 1 }); // placeholder numCols
-            }
-        }
+      for(const event of sortedEvents){
+          let col = 0;
+          let numCols = 1;
 
-        // Now determine the correct numCols for each event
-        for (let i = 0; i < eventLayouts.length; i++) {
-            let maxOverlaps = 0;
-            for (let j = 0; j < eventLayouts.length; j++) {
-                const e1 = eventLayouts[i];
-                const e2 = eventLayouts[j];
-                if (Math.max(e1.start, e2.start) < Math.min(e1.end, e2.end)) {
-                    maxOverlaps++;
-                }
-            }
-            eventLayouts[i].numCols = maxOverlaps > 1 ? maxOverlaps : columns.length;
-        }
-    }
+          const overlappingEvents = sortedEvents.filter(e => 
+              e.id !== event.id &&
+              Math.max(event.start, e.start) < Math.min(event.end, e.end)
+          );
+          
+          if(overlappingEvents.length > 0) {
+              const allInvolvedEvents = [event, ...overlappingEvents].sort((a, b) => a.start - b.start);
+              numCols = allInvolvedEvents.length;
+
+              const occupiedColumns = overlappingEvents.map(e => (eventLayouts.find(l => l.id === e.id))?.col).filter(c => c !== undefined);
+
+              while(occupiedColumns.includes(col)){
+                  col++;
+              }
+          }
+          eventLayouts.push({ ...event, col, numCols });
+      }
 
     return eventLayouts;
   };
@@ -436,15 +422,23 @@ export default function SchedulesPage() {
     const hourHeight = 64; // Corresponds to h-16
     const top = (startMinutes / 60) * hourHeight;
     const height = (durationMinutes / 60) * hourHeight;
-
-    const width = 100 / event.numCols;
-    const left = event.col * width;
+    
+    if (event.numCols > 1) {
+        const width = 100 / event.numCols;
+        const left = event.col * width;
+        return { 
+            top, 
+            height, 
+            left: `${left}%`, 
+            width: `calc(${width}% - 4px)` //-4px for gap
+        };
+    }
 
     return { 
         top, 
         height, 
-        left: `${left}%`, 
-        width: `calc(${width}% - 4px)` //-4px for gap
+        left: '0%', 
+        width: 'calc(100% - 4px)' 
     };
   };
 
@@ -729,6 +723,7 @@ export default function SchedulesPage() {
     
 
     
+
 
 
 
