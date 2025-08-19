@@ -188,8 +188,8 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                         <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 200}px` }}>
                             <div className="w-[60px] flex-shrink-0 border-r">
                                 {timeSlots.map(time => (
-                                    <div key={time} className="h-[80px] flex items-start justify-center p-1 border-b">
-                                        <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+                                    <div key={time} className="h-[80px] relative">
+                                        <span className="text-xs font-semibold text-muted-foreground absolute -top-2.5 left-1/2 -translate-x-1/2">{time}</span>
                                     </div>
                                 ))}
                             </div>
@@ -961,4 +961,5 @@ export default function SchedulesPage() {
 }
 
     
+
 
