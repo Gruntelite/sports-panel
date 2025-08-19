@@ -91,6 +91,7 @@ export default function SchedulesPage() {
   const currentDay: DayOfWeek = daysOfWeek[currentDayIndex];
   
   const [venues, setVenues] = useState<Venue[]>([]);
+  const [currentVenueIndex, setCurrentVenueIndex] = useState(0);
   const [newVenueName, setNewVenueName] = useState('');
 
   const [startTime, setStartTime] = useState("16:00");
@@ -169,6 +170,7 @@ export default function SchedulesPage() {
     setVenues(template.venues || []);
     setWeeklySchedule(template.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
     setCurrentDayIndex(0); // Reset to Monday on template change
+    setCurrentVenueIndex(0);
   };
 
   const handleTemplateChange = (templateId: string) => {
@@ -288,6 +290,15 @@ export default function SchedulesPage() {
     }
   };
 
+  const navigateVenue = (direction: 'prev' | 'next') => {
+    if (!venues.length) return;
+    if (direction === 'next') {
+        setCurrentVenueIndex((prev) => (prev + 1) % venues.length);
+    } else {
+        setCurrentVenueIndex((prev) => (prev - 1 + venues.length) % venues.length);
+    }
+  };
+
   const handleUpdateAssignment = (id: string, field: keyof Assignment, value: string) => {
     setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
@@ -330,12 +341,74 @@ export default function SchedulesPage() {
     }
     return slots;
   }, [startTime, endTime]);
-  
-  const venueIdToColumnMap = useMemo(() => {
-    return new Map(venues.map((venue, index) => [venue.id, index]));
-  }, [venues]);
 
-  const calculateEventPosition = (event: DailyScheduleEntry) => {
+  const timeToMinutes = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const processOverlaps = (events: DailyScheduleEntry[]) => {
+      if (events.length === 0) return [];
+  
+      const sortedEvents = events
+        .map(e => ({
+          ...e,
+          start: timeToMinutes(e.startTime),
+          end: timeToMinutes(e.endTime),
+        }))
+        .sort((a, b) => a.start - b.start);
+  
+      const groups: any[][] = [];
+      
+      sortedEvents.forEach(event => {
+        let placed = false;
+        for (const group of groups) {
+          const lastEventInGroup = group[group.length - 1];
+          if (event.start < lastEventInGroup.end) {
+            group.push(event);
+            placed = true;
+            break;
+          }
+        }
+        if (!placed) {
+          groups.push([event]);
+        }
+      });
+  
+      const eventLayouts: any[] = [];
+      groups.forEach(group => {
+        const columns: any[][] = [];
+        group.forEach(event => {
+          let placed = false;
+          for (const col of columns) {
+            const lastInCol = col[col.length - 1];
+            if (event.start >= lastInCol.end) {
+              col.push(event);
+              placed = true;
+              break;
+            }
+          }
+          if (!placed) {
+            columns.push([event]);
+          }
+        });
+  
+        columns.forEach((col, colIndex) => {
+          col.forEach(event => {
+            eventLayouts.push({
+              ...event,
+              col: colIndex,
+              numCols: columns.length,
+            });
+          });
+        });
+      });
+      
+      return eventLayouts;
+  };
+  
+
+  const calculateEventPosition = (event: any) => {
     const startHour = parseInt(startTime.split(':')[0]);
     const eventStart = new Date(`1970-01-01T${event.startTime}`);
     const eventEnd = new Date(`1970-01-01T${event.endTime}`);
@@ -347,15 +420,28 @@ export default function SchedulesPage() {
     const top = (startMinutes / 60) * hourHeight;
     const height = (durationMinutes / 60) * hourHeight;
 
-    const columnIndex = venueIdToColumnMap.get(event.venueId) || 0;
-    const totalColumns = venues.length || 1;
-    const width = `calc(${100 / totalColumns}% - 4px)`; // 4px is for gap
-    const left = `calc(${columnIndex * (100 / totalColumns)}% + 2px)`;
+    const width = 100 / event.numCols;
+    const left = event.col * width;
 
-    return { top, height, left, width };
+    return { 
+        top, 
+        height, 
+        left: `${left}%`, 
+        width: `calc(${width}% - 4px)` //-4px for gap
+    };
   };
 
   const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
+  const currentVenue = venues && venues.length > 0 ? venues[currentVenueIndex] : null;
+
+  const displayedEvents = useMemo(() => {
+    const dailyEvents = pendingAssignments.filter(a => a.venueId && a.startTime && a.endTime);
+    if (!currentVenue) return [];
+    
+    const venueEvents = dailyEvents.filter(event => event.venueId === currentVenue.id);
+    return processOverlaps(venueEvents);
+  }, [pendingAssignments, currentVenue]);
+
 
   if (loading) {
     return (
@@ -482,11 +568,11 @@ export default function SchedulesPage() {
                       <div className="grid grid-cols-2 gap-4 pt-4">
                           <div className="space-y-2">
                               <Label htmlFor="start-time">Hora de Inicio</Label>
-                              <Input id="start-time" type="time" value={startTime || ''} onChange={(e) => setStartTime(e.target.value)} />
+                              <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                           </div>
                           <div className="space-y-2">
                               <Label htmlFor="end-time">Hora de Fin</Label>
-                              <Input id="end-time" type="time" value={endTime || ''} onChange={(e) => setEndTime(e.target.value)} />
+                              <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                           </div>
                       </div>
                     </AccordionContent>
@@ -556,17 +642,14 @@ export default function SchedulesPage() {
                     <CardTitle className="text-xl capitalize w-32 text-center">{currentDay}</CardTitle>
                     <Button variant="outline" size="icon" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
+                 <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
+                    <CardTitle className="text-xl capitalize w-48 text-center truncate">{currentVenue?.name || "Sin Recintos"}</CardTitle>
+                    <Button variant="outline" size="icon" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
+                </div>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-[60px_1fr] border-t border-l rounded-lg overflow-hidden">
-                  <div className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r">Horas</div>
-                  <div className="grid" style={{ gridTemplateColumns: `repeat(${venues.length || 1}, 1fr)`}}>
-                     {venues.map(venue => (
-                       <div key={venue.id} className="p-3 font-semibold text-muted-foreground text-sm bg-muted/40 border-b border-r text-center truncate">{venue.name}</div>
-                     ))}
-                  </div>
-              </div>
-              <div className="grid grid-cols-[60px_1fr] max-h-[600px] overflow-y-auto border-l rounded-lg">
+              <div className="grid grid-cols-[60px_1fr] max-h-[600px] overflow-y-auto border-t border-l rounded-lg">
                   <div className="col-start-1 col-end-2">
                       {timeSlots.map(time => (
                           <div key={time} className="h-16 flex items-start justify-center p-1 border-b border-r">
@@ -575,12 +658,10 @@ export default function SchedulesPage() {
                       ))}
                   </div>
                   <div className="col-start-2 col-end-3 relative">
-                      {timeSlots.map((time, index) => (
-                          <div key={time} className="h-16 border-b grid" style={{ gridTemplateColumns: `repeat(${venues.length || 1}, 1fr)`}}>
-                            {venues.map(v => <div key={v.id} className="border-r last:border-r-0"></div>)}
-                          </div>
+                      {timeSlots.map((time) => (
+                          <div key={time} className="h-16 border-b border-r last:border-r-0"></div>
                       ))}
-                      {pendingAssignments.filter(a => a.teamId && a.venueId && a.startTime && a.endTime).map(event => {
+                      {displayedEvents.map(event => {
                          const { top, height, left, width } = calculateEventPosition(event);
                          return (
                             <div
@@ -626,3 +707,4 @@ export default function SchedulesPage() {
     </div>
   );
 }
+
