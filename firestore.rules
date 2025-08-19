@@ -1,20 +1,25 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if a user is an Admin
-    function isClubAdmin(clubId) {
-      let userDoc = get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
-      return request.auth != null && userDoc.role == 'Admin' && userDoc.clubId == clubId;
+    // Helper function to check for admin role
+    function isAdmin() {
+      // Check if the user document exists and has the 'Admin' role.
+      return exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'Admin';
     }
 
     match /clubs/{clubId}/{document=**} {
-        allow read, write: if isClubAdmin(clubId);
+      // Allow any authenticated user to read/write within their own club's subcollections.
+      // This is a broad rule and should be refined for production.
+      allow read, write: if request.auth != null && 
+                             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+                             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
     }
-    
+
     match /users/{userId} {
-      allow read, create, update, delete: if isClubAdmin(resource.data.clubId);
-      allow read: if request.auth.uid == userId;
+      // Admins can read, write, and list users.
+      allow get, update, delete: if request.auth != null && isAdmin();
+      allow list, create: if request.auth != null && isAdmin();
     }
   }
 }
