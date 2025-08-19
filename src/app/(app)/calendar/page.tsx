@@ -9,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs, query, updateDoc, writeBatch, setDoc, where } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, updateDoc, writeBatch, setDoc, where, deleteDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +76,7 @@ function CalendarView() {
     if (clubId && defaultTemplateId !== null) {
       fetchCalendarData(clubId, currentDate);
     }
-  }, [clubId, currentDate, defaultTemplateId, templates, overrides]);
+  }, [clubId, currentDate, defaultTemplateId]);
 
   const fetchTemplatesAndConfig = async (clubId: string) => {
       try {
@@ -127,6 +127,12 @@ function CalendarView() {
 
       let allEvents: CalendarEvent[] = [];
       const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+      
+      const currentTemplates = templates.length > 0 ? templates : (await getDocs(collection(db, "clubs", clubId, "schedules"))).docs.map(d => ({id: d.id, ...d.data()})) as ScheduleTemplate[];
+      if(templates.length === 0 && currentTemplates.length > 0) {
+        setTemplates(currentTemplates);
+      }
+
 
       for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setDate(d.getDate() + 1)) {
           const dayStr = d.toISOString().split('T')[0];
@@ -134,7 +140,7 @@ function CalendarView() {
 
           if (!templateIdToUse) continue;
           
-          const template = templates.find(t => t.id === templateIdToUse);
+          const template = currentTemplates.find(t => t.id === templateIdToUse);
           if (!template) continue;
 
           const weeklySchedule = template.weeklySchedule;
@@ -152,7 +158,7 @@ function CalendarView() {
                   date: eventDate,
                   type: 'Entrenamiento',
                   location: training.venueName,
-                  color: 'bg-green-100 dark:bg-green-900/50',
+                  color: 'bg-primary/80 text-primary-foreground',
               });
           });
       }
@@ -160,6 +166,7 @@ function CalendarView() {
       setEvents(allEvents);
     } catch (error) {
       console.error("Error fetching calendar data:", error);
+       toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos del calendario."});
     } finally {
       setLoading(false);
     }
@@ -392,7 +399,7 @@ function CalendarView() {
                          )}
                         <div className="flex-grow space-y-1 overflow-y-auto">
                             {dayEvents.map(event => (
-                            <div key={event.id} className={`text-xs p-1.5 rounded-md ${event.color || 'bg-blue-100 dark:bg-blue-900/50'}`}>
+                            <div key={event.id} className={cn('text-xs p-1.5 rounded-md', event.color || 'bg-blue-100 dark:bg-blue-900/50')}>
                                 <p className="font-semibold truncate">{event.title}</p>
                                 {event.location && <p className="truncate text-muted-foreground">{event.location}</p>}
                             </div>
@@ -421,6 +428,5 @@ export default function CalendarPage() {
     </div>
   )
 }
-
 
     
