@@ -75,7 +75,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player } from "@/lib/types";
@@ -100,6 +100,7 @@ export default function PlayersPage() {
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
+  const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -240,13 +241,28 @@ export default function PlayersPage() {
       
       const teamName = teams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
 
-      const dataToSave = {
-        ...playerData,
+      const dataToSave: Omit<Player, 'id' | 'hasMissingData'> = {
+        name: playerData.name,
+        lastName: playerData.lastName,
+        teamId: playerData.teamId,
+        tutorEmail: playerData.tutorEmail,
         teamName,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
+        birthDate: playerData.birthDate,
+        dni: playerData.dni,
+        address: playerData.address,
+        city: playerData.city,
+        postalCode: playerData.postalCode,
+        tutorPhone: playerData.tutorPhone,
+        iban: playerData.iban,
+        jerseyNumber: playerData.jerseyNumber,
+        position: playerData.position,
+        isOwnTutor: playerData.isOwnTutor,
+        tutorName: playerData.tutorName,
+        tutorLastName: playerData.tutorLastName,
+        tutorDni: playerData.tutorDni,
       };
-
 
       if (modalMode === 'edit' && playerData.id) {
         const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
@@ -277,7 +293,7 @@ export default function PlayersPage() {
       
       setIsModalOpen(false);
       setPlayerData({});
-      fetchData(clubId); // Refresh data
+      fetchData(clubId);
     } catch (error) {
         console.error("Error saving player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
@@ -296,6 +312,14 @@ export default function PlayersPage() {
             await deleteObject(imageRef);
         }
         await deleteDoc(doc(db, "clubs", clubId, "players", playerToDelete.id));
+
+        const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('playerId', '==', playerToDelete.id));
+        const usersSnapshot = await getDocs(usersQuery);
+        if (!usersSnapshot.empty) {
+            const userDoc = usersSnapshot.docs[0];
+            await deleteDoc(doc(db, 'clubs', clubId, 'users', userDoc.id));
+        }
+
         toast({ title: "Jugador eliminado", description: `${playerToDelete.name} ${playerToDelete.lastName} ha sido eliminado.`});
         fetchData(clubId);
     } catch (error) {
@@ -349,6 +373,51 @@ export default function PlayersPage() {
         setLoading(false);
     }
   };
+  
+  const handleBulkDelete = async () => {
+    if (!clubId || selectedPlayers.length === 0) return;
+
+    setIsDeleting(true);
+    try {
+        const batch = writeBatch(db);
+        for (const playerId of selectedPlayers) {
+            const player = players.find(p => p.id === playerId);
+            if (player) {
+                // Delete avatar from storage
+                if (player.avatar && !player.avatar.includes('placehold.co')) {
+                    const imageRef = ref(storage, player.avatar);
+                    await deleteObject(imageRef).catch(e => console.warn("Could not delete old image:", e));
+                }
+                
+                // Delete player document
+                const playerRef = doc(db, "clubs", clubId, "players", playerId);
+                batch.delete(playerRef);
+
+                // Find and delete corresponding user document
+                const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('playerId', '==', playerId));
+                const usersSnapshot = await getDocs(usersQuery);
+                if (!usersSnapshot.empty) {
+                    const userDoc = usersSnapshot.docs[0];
+                    batch.delete(doc(db, 'clubs', clubId, 'users', userDoc.id));
+                }
+            }
+        }
+        await batch.commit();
+
+        toast({
+            title: "Jugadores eliminados",
+            description: `${selectedPlayers.length} jugadores han sido eliminados.`
+        });
+        fetchData(clubId);
+        setSelectedPlayers([]);
+    } catch (error) {
+        console.error("Error deleting players in bulk:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar a los jugadores." });
+    } finally {
+        setIsDeleting(false);
+        setIsBulkDeleteAlertOpen(false);
+    }
+  };
 
 
   if (loading && !players.length) {
@@ -395,7 +464,7 @@ export default function PlayersPage() {
                          </DropdownMenuSubContent>
                        </DropdownMenuSub>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive">Eliminar Seleccionados</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onSelect={() => setIsBulkDeleteAlertOpen(true)}>Eliminar Seleccionados</DropdownMenuItem>
                     </DropdownMenuContent>
                  </DropdownMenu>
               ) : (
@@ -700,6 +769,22 @@ export default function PlayersPage() {
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeletePlayer} disabled={isDeleting}>
               {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedPlayers.length} jugadores.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
+              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Jugadores'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
