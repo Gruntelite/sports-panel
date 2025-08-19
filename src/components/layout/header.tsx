@@ -3,8 +3,7 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Search, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -17,6 +16,7 @@ const menuItems = [
     { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
+    { href: "/staff", label: "Staff y Directiva", icon: UserCog},
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
 ];
 
@@ -24,13 +24,13 @@ export function Header() {
     const pathname = usePathname();
 
     return (
-        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
+        <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 md:hidden">
             <Sheet>
                 <SheetTrigger asChild>
                     <Button
                         variant="outline"
                         size="icon"
-                        className="shrink-0 md:hidden"
+                        className="shrink-0"
                     >
                         <Menu className="h-5 w-5" />
                         <span className="sr-only">Alternar menú de navegación</span>
@@ -58,40 +58,38 @@ export function Header() {
                              {item.label}
                          </Link>
                         ))}
-                         <div className="flex-grow"></div>
+                    </nav>
+                     <div className="mt-auto border-t pt-4">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="justify-start gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
-                                    <Avatar className="h-8 w-8">
+                                <Button variant="ghost" className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary h-auto">
+                                    <Avatar className="h-9 w-9">
                                     <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
                                     <AvatarFallback>AU</AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col items-start">
-                                        <span className="font-semibold">Usuario Admin</span>
+                                        <span className="font-semibold text-sm text-foreground">Usuario Admin</span>
                                         <span className="text-xs text-muted-foreground">admin@sportspanel.com</span>
                                     </div>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
+                            <DropdownMenuContent align="end" className="w-56 mb-2">
                                 <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem>Ajustes</DropdownMenuItem>
-                                <DropdownMenuItem>Soporte</DropdownMenuItem>
-                                <DropdownMenuSeparator />
                                 <DropdownMenuItem asChild>
                                 <Link href="/">Cerrar Sesión</Link>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    </nav>
+                    </div>
                 </SheetContent>
             </Sheet>
-            <div className="w-full flex-1">
-                {/* Search bar removed as requested */}
+            <div className="flex-1 text-center">
+                 <h1 className="text-xl font-bold font-headline tracking-tight">
+                    {menuItems.find(item => pathname.startsWith(item.href))?.label || 'SportsPanel'}
+                </h1>
             </div>
-            {/* User avatar dropdown removed as requested */}
         </header>
     )
 }
-
-    
