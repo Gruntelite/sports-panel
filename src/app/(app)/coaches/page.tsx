@@ -68,7 +68,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Coach } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -240,11 +241,36 @@ export default function CoachesPage() {
       } else {
         await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
+        
+        // Automatic user creation
+        if (dataToSave.email) {
+            const password = Math.random().toString(36).slice(-8);
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, dataToSave.email, password);
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    email: dataToSave.email,
+                    name: `${dataToSave.name} ${dataToSave.lastName}`,
+                    role: 'Coach',
+                    clubId: clubId,
+                });
+                toast({
+                    title: "Usuario Creado Automáticamente",
+                    description: `Cuenta para ${dataToSave.email} creada. Contraseña temporal: ${password}`,
+                    duration: 9000
+                });
+            } catch(userError: any) {
+                 let description = "No se pudo crear el usuario automáticamente.";
+                 if (userError.code === 'auth/email-already-in-use') {
+                    description = `El email ${dataToSave.email} ya está registrado.`;
+                 }
+                 toast({ variant: "destructive", title: "Error Creando Usuario", description });
+            }
+        }
       }
       
       setIsModalOpen(false);
       setCoachData({});
-      fetchData(clubId); // Refresh data
+      fetchData(clubId);
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });

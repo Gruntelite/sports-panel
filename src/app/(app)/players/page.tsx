@@ -75,7 +75,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc } from "firebase/firestore";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -254,6 +255,34 @@ export default function PlayersPage() {
       } else {
         await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
+        
+        // Automatic user creation
+        const contactEmail = dataToSave.isOwnTutor ? dataToSave.tutorEmail : dataToSave.tutorEmail;
+        const contactName = dataToSave.isOwnTutor ? `${dataToSave.name} ${dataToSave.lastName}` : (dataToSave.tutorName ? `${dataToSave.tutorName} ${dataToSave.tutorLastName}` : `${dataToSave.name} ${dataToSave.lastName} (Familia)`);
+        
+        if(contactEmail){
+            const password = Math.random().toString(36).slice(-8);
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, contactEmail, password);
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    email: contactEmail,
+                    name: contactName,
+                    role: 'Family',
+                    clubId: clubId,
+                });
+                toast({
+                    title: "Usuario Creado Automáticamente",
+                    description: `Cuenta para ${contactEmail} creada. Contraseña temporal: ${password}`,
+                    duration: 9000
+                });
+            } catch(userError: any) {
+                 let description = "No se pudo crear el usuario automáticamente.";
+                 if (userError.code === 'auth/email-already-in-use') {
+                    description = `El email ${contactEmail} ya está registrado.`;
+                 }
+                 toast({ variant: "destructive", title: "Error Creando Usuario", description });
+            }
+        }
       }
       
       setIsModalOpen(false);
