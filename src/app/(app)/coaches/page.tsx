@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -181,7 +182,7 @@ export default function CoachesPage() {
   };
 
   const handleSelectChange = (id: keyof Coach, value: string) => {
-    setCoachData(prev => ({ ...prev, [id]: value }));
+    setCoachData(prev => ({ ...prev, [id]: value === 'unassigned' ? '' : value }));
   };
 
   const handleDateChange = (date: Date | undefined) => {
@@ -491,12 +492,12 @@ export default function CoachesPage() {
                             </div>
                              <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo Asignado</Label>
-                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId}>
+                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId || 'unassigned'}>
                                     <SelectTrigger>
                                         <SelectValue placeholder="Selecciona un equipo" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="">Sin equipo</SelectItem>
+                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
                                         {teams.map(team => (
                                             <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                                         ))}
