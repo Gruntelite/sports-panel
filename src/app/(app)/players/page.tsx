@@ -205,8 +205,8 @@ export default function PlayersPage() {
   }
 
   const handleSavePlayer = async () => {
-    if (!playerData.name || !playerData.lastName || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
+    if (!playerData.name || !playerData.lastName || !playerData.teamId || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y equipo son obligatorios." });
         return;
     }
 
