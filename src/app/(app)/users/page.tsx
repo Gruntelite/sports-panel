@@ -61,6 +61,7 @@ import { createUserWithEmailAndPassword, sendPasswordResetEmail } from "firebase
 import { collection, getDocs, doc, getDoc, addDoc, query, where, updateDoc, deleteDoc, writeBatch, setDoc } from "firebase/firestore";
 import type { Player, Coach, Staff, Contact } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 type User = {
     id: string;
@@ -84,7 +85,17 @@ export default function UsersPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isRoleModalOpen, setIsRoleModalOpen] = useState(false);
 
+  const [addMode, setAddMode] = useState<'contact' | 'staff'>('contact');
+  
+  // State for adding from contact
   const [selectedContactEmail, setSelectedContactEmail] = useState("");
+  
+  // State for adding new staff
+  const [staffName, setStaffName] = useState('');
+  const [staffLastName, setStaffLastName] = useState('');
+  const [staffRole, setStaffRole] = useState('');
+  const [staffEmail, setStaffEmail] = useState('');
+
   const [newUserRole, setNewUserRole] = useState("Family");
   const [generatedPassword, setGeneratedPassword] = useState("");
 
@@ -118,7 +129,6 @@ export default function UsersPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
-        // Fetch Users
         const usersQuery = query(collection(db, "users"), where("clubId", "==", clubId));
         const usersSnapshot = await getDocs(usersQuery);
         const usersList = usersSnapshot.docs.map(doc => {
@@ -135,15 +145,12 @@ export default function UsersPage() {
         setUsers(usersList);
         const existingUserEmails = new Set(usersList.map(u => u.email));
 
-        // Fetch Players, Coaches, and Staff to get available contacts
         const playersQuery = query(collection(db, "clubs", clubId, "players"));
         const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
-        const staffQuery = query(collection(db, "clubs", clubId, "staff"));
         
-        const [playersSnapshot, coachesSnapshot, staffSnapshot] = await Promise.all([
+        const [playersSnapshot, coachesSnapshot] = await Promise.all([
             getDocs(playersQuery), 
             getDocs(coachesQuery),
-            getDocs(staffQuery)
         ]);
         
         const allContacts: Omit<Contact, 'hasAccount'>[] = [];
@@ -166,15 +173,6 @@ export default function UsersPage() {
             }
         });
 
-        staffSnapshot.forEach(doc => {
-            const data = doc.data() as Staff;
-            const contactEmail = data.email;
-            const contactName = `${data.name} ${data.lastName} (${data.role || 'Staff'})`;
-            if (contactEmail) {
-                allContacts.push({ name: contactName, email: contactEmail });
-            }
-        });
-        
         const uniqueContactsMap = new Map<string, Contact>();
         allContacts.forEach(contact => {
           if (contact.email && !uniqueContactsMap.has(contact.email)) {
@@ -192,6 +190,11 @@ export default function UsersPage() {
     }
     setLoading(false);
   };
+  
+  const generatePassword = () => {
+    const newPassword = Math.random().toString(36).slice(-8);
+    setGeneratedPassword(newPassword);
+  }
 
   const handleSelectContact = (email: string) => {
     const contact = availableContacts.find(c => c.email === email);
@@ -203,43 +206,76 @@ export default function UsersPage() {
     setIsComboboxOpen(false);
     
     if (email) {
-      const newPassword = Math.random().toString(36).slice(-8);
-      setGeneratedPassword(newPassword);
+      generatePassword();
     } else {
       setGeneratedPassword("");
     }
   }
+
+  const resetAddUserForm = () => {
+    setIsAddUserOpen(false);
+    setSelectedContactEmail("");
+    setStaffName('');
+    setStaffLastName('');
+    setStaffRole('');
+    setStaffEmail('');
+    setNewUserRole("Family");
+    setGeneratedPassword("");
+    setAddMode('contact');
+  };
   
   const handleAddUser = async () => {
-    if (!selectedContactEmail || !newUserRole || !clubId || !generatedPassword) {
-        toast({ variant: "destructive", title: "Error", description: "Debes seleccionar un contacto y un rol." });
-        return;
+    if (!clubId || !generatedPassword) return;
+
+    let email: string | undefined;
+    let name: string | undefined;
+
+    if (addMode === 'contact') {
+        const selectedContact = availableContacts.find(c => c.email === selectedContactEmail);
+        if (!selectedContact) {
+            toast({ variant: "destructive", title: "Error", description: "El contacto seleccionado no es válido." });
+            return;
+        }
+        email = selectedContact.email;
+        name = selectedContact.name.split('(')[0].trim();
+    } else { // 'staff' mode
+        if (!staffName || !staffEmail || !staffRole) {
+            toast({ variant: "destructive", title: "Error", description: "Nombre, email y cargo son obligatorios para el nuevo miembro." });
+            return;
+        }
+        email = staffEmail;
+        name = `${staffName} ${staffLastName}`;
     }
-    
-    const selectedContact = availableContacts.find(c => c.email === selectedContactEmail);
-    if (!selectedContact) {
-        toast({ variant: "destructive", title: "Error", description: "El contacto seleccionado no es válido." });
+
+    if (!email || !name) {
+        toast({ variant: "destructive", title: "Error", description: "Falta información para crear el usuario." });
         return;
     }
     
     setSaving(true);
     try {
-        const userCredential = await createUserWithEmailAndPassword(auth, selectedContact.email, generatedPassword);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, generatedPassword);
         const user = userCredential.user;
 
         await setDoc(doc(db, "users", user.uid), {
-            email: selectedContact.email,
-            name: selectedContact.name.split('(')[0].trim(),
+            email: email,
+            name: name,
             role: newUserRole,
             clubId: clubId,
         });
 
-        toast({ title: "Usuario creado", description: `Se ha creado una cuenta para ${selectedContact.email}.` });
+        if (addMode === 'staff') {
+            await addDoc(collection(db, "clubs", clubId, "staff"), {
+                name: staffName,
+                lastName: staffLastName,
+                email: staffEmail,
+                role: staffRole
+            });
+        }
+
+        toast({ title: "Usuario creado", description: `Se ha creado una cuenta para ${email}.` });
         
-        setIsAddUserOpen(false);
-        setSelectedContactEmail("");
-        setNewUserRole("Family");
-        setGeneratedPassword("");
+        resetAddUserForm();
         if(clubId) fetchData(clubId);
 
     } catch (error: any) {
@@ -375,103 +411,133 @@ export default function UsersPage() {
                         </span>
                     </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-[480px]">
                     <DialogHeader>
                         <DialogTitle>Añadir Nuevo Usuario</DialogTitle>
                         <DialogDescription>
-                            Selecciona un miembro del club para crearle una cuenta de acceso.
+                            Crea una cuenta de acceso para un miembro existente o añade nuevo personal.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 py-4">
-                        <div className="space-y-2">
-                            <Label>Miembro del Club</Label>
-                            <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
-                                <PopoverTrigger asChild>
-                                    <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={isComboboxOpen}
-                                    className="w-full justify-between font-normal"
-                                    >
-                                    {selectedContactEmail
-                                        ? availableContacts.find((c) => c.email === selectedContactEmail)?.name
-                                        : "Selecciona un miembro..."}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Buscar miembro..." />
-                                        <CommandList>
-                                            <CommandEmpty>No se encontraron miembros.</CommandEmpty>
-                                            <CommandGroup>
-                                                {availableContacts.map((contact) => (
-                                                <CommandItem
-                                                    key={contact.email}
-                                                    value={contact.email}
-                                                    onSelect={() => handleSelectContact(contact.email)}
-                                                    disabled={contact.hasAccount}
-                                                    className="flex justify-between items-center"
-                                                >
-                                                   <div className="flex items-center">
-                                                    <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        selectedContactEmail === contact.email ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                    />
-                                                    <div>
-                                                        <p className="font-medium">{contact.name.split('(')[0].trim()}</p>
-                                                        <p className="text-xs text-muted-foreground">{contact.email}</p>
+                    <Tabs defaultValue="contact" className="w-full" onValueChange={(value) => setAddMode(value as 'contact' | 'staff')}>
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="contact">Desde un Contacto</TabsTrigger>
+                            <TabsTrigger value="staff">Nuevo Miembro (Staff)</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="contact" className="py-4 space-y-4">
+                            <div className="space-y-2">
+                                <Label>Miembro del Club</Label>
+                                <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                        variant="outline"
+                                        role="combobox"
+                                        aria-expanded={isComboboxOpen}
+                                        className="w-full justify-between font-normal"
+                                        >
+                                        {selectedContactEmail
+                                            ? availableContacts.find((c) => c.email === selectedContactEmail)?.name
+                                            : "Selecciona un miembro..."}
+                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <Command>
+                                            <CommandInput placeholder="Buscar miembro..." />
+                                            <CommandList>
+                                                <CommandEmpty>No se encontraron miembros.</CommandEmpty>
+                                                <CommandGroup>
+                                                    {availableContacts.map((contact) => (
+                                                    <CommandItem
+                                                        key={contact.email}
+                                                        value={contact.email}
+                                                        onSelect={() => handleSelectContact(contact.email)}
+                                                        disabled={contact.hasAccount}
+                                                        className="flex justify-between items-center"
+                                                    >
+                                                    <div className="flex items-center">
+                                                        <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            selectedContactEmail === contact.email ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                        />
+                                                        <div>
+                                                            <p className="font-medium">{contact.name.split('(')[0].trim()}</p>
+                                                            <p className="text-xs text-muted-foreground">{contact.email}</p>
+                                                        </div>
                                                     </div>
-                                                   </div>
-                                                   {contact.hasAccount && <Badge variant="secondary">Ya es usuario</Badge>}
-                                                </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                        {selectedContactEmail && (
-                             <div className="space-y-4">
+                                                    {contact.hasAccount && <Badge variant="secondary">Ya es usuario</Badge>}
+                                                    </CommandItem>
+                                                    ))}
+                                                </CommandGroup>
+                                            </CommandList>
+                                        </Command>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            {selectedContactEmail && (
                                 <div className="space-y-2">
                                     <Label>Email del Usuario</Label>
                                     <Input value={selectedContactEmail} readOnly disabled />
                                 </div>
+                            )}
+                        </TabsContent>
+                        <TabsContent value="staff" className="py-4 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label>Contraseña Temporal</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input value={generatedPassword} readOnly />
-                                        <Button type="button" variant="outline" size="icon" onClick={() => copyToClipboard(generatedPassword)}>
-                                            <Copy className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground">Copia esta contraseña y compártela de forma segura con el usuario.</p>
+                                    <Label htmlFor="staff-name">Nombre</Label>
+                                    <Input id="staff-name" value={staffName} onChange={e => setStaffName(e.target.value)} />
                                 </div>
-                             </div>
-                        )}
-                        <div className="space-y-2">
-                            <Label htmlFor="user-role">Rol</Label>
-                            <Select onValueChange={setNewUserRole} defaultValue={newUserRole}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona un rol" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="Admin">Admin</SelectItem>
-                                    <SelectItem value="Coach">Entrenador</SelectItem>
-                                    <SelectItem value="Family">Familia</SelectItem>
-                                    <SelectItem value="Staff">Staff</SelectItem>
-                                </SelectContent>
-                            </Select>
+                                <div className="space-y-2">
+                                    <Label htmlFor="staff-lastName">Apellidos</Label>
+                                    <Input id="staff-lastName" value={staffLastName} onChange={e => setStaffLastName(e.target.value)} />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="staff-role-title">Cargo</Label>
+                                <Input id="staff-role-title" placeholder="p.ej., Coordinador" value={staffRole} onChange={e => setStaffRole(e.target.value)} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="staff-email">Email</Label>
+                                <Input id="staff-email" type="email" value={staffEmail} onChange={e => { setStaffEmail(e.target.value); if(e.target.value) generatePassword(); else setGeneratedPassword(''); }} />
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                    
+                    {(selectedContactEmail || staffEmail) && (
+                        <div className="space-y-4 pt-4 border-t">
+                            <div className="space-y-2">
+                                <Label>Contraseña Temporal</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input value={generatedPassword} readOnly />
+                                    <Button type="button" variant="outline" size="icon" onClick={() => copyToClipboard(generatedPassword)}>
+                                        <Copy className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-muted-foreground">Copia esta contraseña y compártela de forma segura con el usuario.</p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="user-role">Rol de Acceso</Label>
+                                <Select onValueChange={setNewUserRole} defaultValue={newUserRole}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un rol" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Admin">Admin</SelectItem>
+                                        <SelectItem value="Coach">Entrenador</SelectItem>
+                                        <SelectItem value="Family">Familia</SelectItem>
+                                        <SelectItem value="Staff">Staff</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
                         </div>
-                    </div>
-                     <DialogFooter>
+                    )}
+
+                    <DialogFooter>
                         <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancelar</Button>
+                            <Button type="button" variant="secondary" onClick={resetAddUserForm}>Cancelar</Button>
                         </DialogClose>
-                        <Button type="button" onClick={handleAddUser} disabled={saving || !selectedContactEmail}>
+                        <Button type="button" onClick={handleAddUser} disabled={saving || (!selectedContactEmail && !staffEmail)}>
                             {saving ? <Loader2 className="animate-spin" /> : 'Crear Usuario'}
                         </Button>
                     </DialogFooter>
@@ -620,3 +686,6 @@ export default function UsersPage() {
   );
 }
 
+
+
+    
