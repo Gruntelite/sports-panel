@@ -654,11 +654,11 @@ export default function CoachesPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="email">{coachData.isOwnTutor ? "Email *" : "Email del Tutor/a *"}</Label>
+                                     <Label htmlFor="email">Email *</Label>
                                      <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} required />
                                  </div>
                                  <div className="space-y-2">
-                                     <Label htmlFor="phone">{coachData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                     <Label htmlFor="phone">Teléfono</Label>
                                      <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                  </div>
                             </div>

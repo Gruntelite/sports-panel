@@ -76,7 +76,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -241,27 +240,11 @@ export default function PlayersPage() {
       
       const teamName = teams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
 
-      const dataToSave: Omit<Player, 'id' | 'hasMissingData'> = {
-        name: playerData.name,
-        lastName: playerData.lastName,
-        teamId: playerData.teamId,
-        tutorEmail: playerData.tutorEmail,
+      const dataToSave = {
+        ...playerData,
         teamName,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
-        birthDate: playerData.birthDate,
-        dni: playerData.dni,
-        address: playerData.address,
-        city: playerData.city,
-        postalCode: playerData.postalCode,
-        tutorPhone: playerData.tutorPhone,
-        iban: playerData.iban,
-        jerseyNumber: playerData.jerseyNumber,
-        position: playerData.position,
-        isOwnTutor: playerData.isOwnTutor,
-        tutorName: playerData.tutorName,
-        tutorLastName: playerData.tutorLastName,
-        tutorDni: playerData.tutorDni,
       };
 
       if (modalMode === 'edit' && playerData.id) {

@@ -1,6 +1,7 @@
 
 
 
+
 export type Team = {
     id: string;
     name: string;
@@ -96,4 +97,3 @@ export type User = {
     avatar?: string;
     authUid?: string; // To link to Firebase Auth user if needed
 }
-
