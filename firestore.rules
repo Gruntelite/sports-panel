@@ -1,46 +1,40 @@
+
 rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-
-    // Helper function to check if a user's auth token contains the clubId claim.
+    
+    // Helper function to check if the requesting user is a member of the specified club
     function isUserOfClub(clubId) {
-      // This allows access if the user document in the root /users collection
-      // links them to the correct clubId. This read is secure.
+      // Check if a user document exists for the authenticated user
+      // and if that document's clubId field matches the one being accessed.
       return exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.clubId == clubId;
     }
 
-    // Allow new club and associated data creation by anyone (during sign-up).
-    // This is safe because it only allows creation, not reading or updating existing data.
-    match /clubs/{clubId} {
-      allow create; // Anyone can create a club.
-      
-      // Allow creation of essential subcollections during sign-up.
-      match /users/{userId} {
-        allow create;
-      }
-      match /settings/{settingId} {
-        allow create;
-      }
-    }
-    
-    // Once a club is created, secure its data.
-    match /clubs/{clubId}/{allPaths=**} {
-        // Only a user who belongs to the club can read or write its data.
-        allow read, write: if isUserOfClub(clubId);
-    }
-    
-    // Allow any authenticated user to create their own user document in the root collection.
-    // This happens during sign-up.
+    // Rules for the root `users` collection which links a user's UID to a clubId
     match /users/{userId} {
+      // A user can create their own user document if they are authenticated and the UID matches.
       allow create: if request.auth != null && request.auth.uid == userId;
-
-      // Only the user themselves can read their own document.
+      
+      // A user can only read their own document to find their clubId.
       allow read: if request.auth != null && request.auth.uid == userId;
       
-      // Nobody can update or delete user records from here. This must be managed server-side.
+      // Nobody can update or delete these documents to prevent tampering.
       allow update, delete: if false;
+    }
+
+    // Rules for the `clubs` collection and all its subcollections
+    match /clubs/{clubId} {
+      // Allow any authenticated user to create a new club document.
+      // This is necessary for the initial registration process.
+      allow create: if request.auth != null;
+      
+      // Any document within a club (and its subcollections) can only be read or written to
+      // by users who are members of that club.
+      match /{allPaths=**} {
+        allow read, write: if request.auth != null && isUserOfClub(clubId);
+      }
     }
   }
 }

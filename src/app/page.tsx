@@ -133,7 +133,7 @@ export default function SignUpPage() {
       });
 
       // Save user details in the club's specific users subcollection
-      const clubUserRef = doc(collection(db, "clubs", clubId, "users"));
+      const clubUserRef = doc(db, "clubs", clubId, "users", user.uid);
       batch.set(clubUserRef, {
         name: name,
         email: email,
@@ -173,6 +173,8 @@ export default function SignUpPage() {
         let description = "Ocurrió un error inesperado.";
         if (error.code === 'auth/email-already-in-use') {
             description = "El correo electrónico ya está en uso. Por favor, utiliza otro.";
+        } else if (error.code === 'permission-denied') {
+            description = "Error de permisos. Revisa las reglas de seguridad de Firestore.";
         }
         toast({
             variant: "destructive",
