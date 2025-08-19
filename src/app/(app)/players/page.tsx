@@ -215,8 +215,8 @@ export default function PlayersPage() {
   }
 
   const handleSavePlayer = async () => {
-    if (!playerData.name || !playerData.lastName || !playerData.teamId || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y equipo son obligatorios." });
+    if (!playerData.name || !playerData.lastName || !playerData.teamId || !playerData.tutorEmail || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos, equipo y email de contacto son obligatorios." });
         return;
     }
 
@@ -253,40 +253,25 @@ export default function PlayersPage() {
         await updateDoc(playerRef, dataToSave);
         toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
       } else {
-        await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
+        const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
         
-        // Automatic user creation
+        // Automatic user record creation
         const contactEmail = dataToSave.tutorEmail;
         const contactName = dataToSave.isOwnTutor ? `${dataToSave.name} ${dataToSave.lastName}` : (dataToSave.tutorName ? `${dataToSave.tutorName} ${dataToSave.tutorLastName}` : `${dataToSave.name} ${dataToSave.lastName} (Familia)`);
         
         if(contactEmail){
-            const password = Math.random().toString(36).slice(-8);
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, contactEmail, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
-                    email: contactEmail,
-                    name: contactName,
-                    role: 'Family',
-                    clubId: clubId,
-                });
-                toast({
-                    title: "Usuario Creado Automáticamente",
-                    description: (
-                      <div>
-                        <p>Cuenta para {contactEmail} creada.</p>
-                        <p className="font-mono text-sm bg-muted p-1 rounded mt-2">Contraseña: {password}</p>
-                      </div>
-                    ),
-                    duration: 9000
-                });
-            } catch(userError: any) {
-                 let description = "No se pudo crear el usuario automáticamente.";
-                 if (userError.code === 'auth/email-already-in-use') {
-                    description = `El email ${contactEmail} ya está registrado.`;
-                 }
-                 toast({ variant: "destructive", title: "Error Creando Usuario", description });
-            }
+            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            await setDoc(userRef, {
+                email: contactEmail,
+                name: contactName,
+                role: 'Family',
+                playerId: playerDocRef.id,
+            });
+            toast({
+                title: "Registro de Usuario Creado",
+                description: `Se ha creado un registro de usuario para ${contactName}.`,
+            });
         }
       }
       
@@ -649,8 +634,8 @@ export default function PlayersPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
+                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email *" : "Email del Tutor/a *"}</Label>
+                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} required />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
@@ -722,5 +707,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
-    

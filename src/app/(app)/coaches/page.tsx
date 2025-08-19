@@ -202,8 +202,8 @@ export default function CoachesPage() {
   }
 
   const handleSaveCoach = async () => {
-    if (!coachData.name || !coachData.lastName || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
+    if (!coachData.name || !coachData.lastName || !coachData.email || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email son obligatorios." });
         return;
     }
 
@@ -239,37 +239,22 @@ export default function CoachesPage() {
         await updateDoc(coachRef, dataToSave);
         toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
       } else {
-        await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
+        const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
         
-        // Automatic user creation
+        // Automatic user record creation
         if (dataToSave.email) {
-            const password = Math.random().toString(36).slice(-8);
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, dataToSave.email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
-                    email: dataToSave.email,
-                    name: `${dataToSave.name} ${dataToSave.lastName}`,
-                    role: 'Coach',
-                    clubId: clubId,
-                });
-                toast({
-                    title: "Usuario Creado Automáticamente",
-                    description: (
-                      <div>
-                        <p>Cuenta para {dataToSave.email} creada.</p>
-                        <p className="font-mono text-sm bg-muted p-1 rounded mt-2">Contraseña: {password}</p>
-                      </div>
-                    ),
-                    duration: 9000
-                });
-            } catch(userError: any) {
-                 let description = "No se pudo crear el usuario automáticamente.";
-                 if (userError.code === 'auth/email-already-in-use') {
-                    description = `El email ${dataToSave.email} ya está registrado.`;
-                 }
-                 toast({ variant: "destructive", title: "Error Creando Usuario", description });
-            }
+            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            await setDoc(userRef, {
+                email: dataToSave.email,
+                name: `${dataToSave.name} ${dataToSave.lastName}`,
+                role: 'Coach',
+                coachId: coachDocRef.id,
+            });
+            toast({
+                title: "Registro de Usuario Creado",
+                description: `Se ha creado un registro de usuario para ${dataToSave.name}.`,
+            });
         }
       }
       
@@ -515,8 +500,8 @@ export default function CoachesPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="email">{coachData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} />
+                                     <Label htmlFor="email">{coachData.isOwnTutor ? "Email *" : "Email del Tutor/a *"}</Label>
+                                     <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} required />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="phone">{coachData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
@@ -587,5 +572,3 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
-
-    

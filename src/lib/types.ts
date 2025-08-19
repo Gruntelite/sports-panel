@@ -21,7 +21,7 @@ export type Player = {
     address?: string;
     city?: string;
     postalCode?: string;
-    tutorEmail?: string;
+    tutorEmail: string; // Made mandatory
     tutorPhone?: string;
     iban?: string;
     teamId?: string;
@@ -41,7 +41,7 @@ export type Coach = {
     id: string;
     name:string;
     lastName: string;
-    email?: string;
+    email: string; // Made mandatory
     phone?: string;
     teamId?: string;
     teamName?: string;
@@ -85,4 +85,13 @@ export type Contact = {
     name: string;
     email: string;
     hasAccount: boolean;
+}
+
+export type User = {
+    id: string;
+    name: string;
+    email: string;
+    role: 'Admin' | 'Coach' | 'Family' | 'Staff';
+    avatar?: string;
+    authUid?: string; // To link to Firebase Auth user if needed
 }
