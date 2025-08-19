@@ -2,11 +2,11 @@
 
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
@@ -18,6 +18,9 @@ import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from "
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+
 
 type Venue = {
     id: string;
@@ -72,7 +75,7 @@ const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sába
 type DayOfWeek = typeof daysOfWeek[number];
 
 
-const WeeklyScheduleView = ({ template }: { template: ScheduleTemplate | undefined }) => {
+const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate | undefined, innerRef: React.Ref<HTMLDivElement> }) => {
     if (!template) {
         return (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -117,7 +120,7 @@ const WeeklyScheduleView = ({ template }: { template: ScheduleTemplate | undefin
     };
 
     return (
-        <div className="space-y-8">
+        <div ref={innerRef} className="space-y-8 bg-background p-4">
             {venues.map(venue => {
                 const { scheduleByDay, sortedTimeSlots } = getGroupedSchedule(venue.id);
                 return (
@@ -173,7 +176,10 @@ const WeeklyScheduleView = ({ template }: { template: ScheduleTemplate | undefin
 export default function SchedulesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
+  
+  const scheduleViewRef = useRef<HTMLDivElement>(null);
   
   const [scheduleTemplates, setScheduleTemplates] = useState<ScheduleTemplate[]>([]);
   const [currentTemplateId, setCurrentTemplateId] = useState<string | null>(null);
@@ -498,16 +504,21 @@ export default function SchedulesPage() {
 
       for (let i = 0; i < eventLayouts.length; i++) {
         let overlappingGroup = [eventLayouts[i]];
-        for (let j = i + 1; j < eventLayouts.length; j++) {
-          if (Math.max(eventLayouts[i].start, eventLayouts[j].start) < Math.min(eventLayouts[i].end, eventLayouts[j].end)) {
-            overlappingGroup.push(eventLayouts[j]);
-          }
+        for (let j = 0; j < eventLayouts.length; j++) {
+            if (i === j) continue;
+            if (Math.max(eventLayouts[i].start, eventLayouts[j].start) < Math.min(eventLayouts[i].end, eventLayouts[j].end)) {
+              let isAlreadyInGroup = overlappingGroup.some(groupedEvent => groupedEvent.id === eventLayouts[j].id);
+              if (!isAlreadyInGroup) {
+                 overlappingGroup.push(eventLayouts[j]);
+              }
+            }
         }
         if (overlappingGroup.length > 1) {
+          const maxCols = overlappingGroup.length;
           overlappingGroup.forEach(eventInGroup => {
             const layoutEvent = eventLayouts.find(e => e.id === eventInGroup.id);
             if (layoutEvent) {
-              layoutEvent.numCols = overlappingGroup.length;
+              layoutEvent.numCols = maxCols;
             }
           });
         }
@@ -538,6 +549,38 @@ export default function SchedulesPage() {
         width: `calc(${width}% - 4px)`
     };
   };
+  
+  const handleDownloadPdf = async () => {
+    const scheduleElement = scheduleViewRef.current;
+    if (!scheduleElement) return;
+
+    setIsDownloading(true);
+    try {
+        const canvas = await html2canvas(scheduleElement, { 
+            scale: 2, 
+            useCORS: true,
+            backgroundColor: 'hsl(var(--background))' 
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+            orientation: 'landscape',
+            unit: 'px',
+            format: [canvas.width, canvas.height]
+        });
+        pdf.addImage(imgData, 'PNG', 0, 0, canvas.width, canvas.height);
+        pdf.save('horario-semanal.pdf');
+    } catch (error) {
+        console.error("Error generating PDF:", error);
+        toast({
+            variant: "destructive",
+            title: "Error al generar PDF",
+            description: "No se pudo crear el archivo PDF. Inténtalo de nuevo."
+        });
+    } finally {
+        setIsDownloading(false);
+    }
+  };
+
 
   const currentTemplate = scheduleTemplates.find(t => t.id === currentTemplateId);
   const currentVenue = venues && venues.length > 0 ? venues[currentVenueIndex] : null;
@@ -764,7 +807,7 @@ export default function SchedulesPage() {
                       </div>
                   </CardHeader>
                   <CardContent className="flex-1 p-0">
-                    <div className="relative">
+                    <div className="relative overflow-x-auto">
                         <div className="grid grid-cols-[60px_1fr]">
                             <div className="col-start-1 col-end-2 border-r">
                                 {timeSlots.map(time => (
@@ -794,7 +837,7 @@ export default function SchedulesPage() {
                             </div>
                         </div>
                     </div>
-                    <div className="col-span-2 p-6 border-t">
+                    <div className="p-6 border-t">
                           <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
                               <Clock className="h-5 w-5"/>
                               Guardar Plantilla
@@ -805,7 +848,17 @@ export default function SchedulesPage() {
           </div>
         </TabsContent>
         <TabsContent value="preview" className="pt-4">
-            <WeeklyScheduleView template={currentTemplate} />
+             <div className="flex justify-end mb-4">
+                <Button onClick={handleDownloadPdf} disabled={isDownloading}>
+                    {isDownloading ? (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                        <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Descargar Horario en PDF
+                </Button>
+            </div>
+            <WeeklyScheduleView template={currentTemplate} innerRef={scheduleViewRef} />
         </TabsContent>
       </Tabs>
 
