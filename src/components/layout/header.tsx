@@ -58,43 +58,38 @@ export function Header() {
                              {item.label}
                          </Link>
                         ))}
+                         <div className="flex-grow"></div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="justify-start gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary">
+                                    <Avatar className="h-8 w-8">
+                                    <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
+                                    <AvatarFallback>AU</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col items-start">
+                                        <span className="font-semibold">Usuario Admin</span>
+                                        <span className="text-xs text-muted-foreground">admin@sportspanel.com</span>
+                                    </div>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>Ajustes</DropdownMenuItem>
+                                <DropdownMenuItem>Soporte</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem asChild>
+                                <Link href="/">Cerrar Sesión</Link>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </nav>
                 </SheetContent>
             </Sheet>
-
             <div className="w-full flex-1">
-                <form>
-                    <div className="relative">
-                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            type="search"
-                            placeholder="Buscar jugadores, equipos..."
-                            className="w-full appearance-none bg-muted/40 pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                        />
-                    </div>
-                </form>
+                {/* Search bar removed as requested */}
             </div>
-            <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                    <Button variant="secondary" size="icon" className="rounded-full">
-                        <Avatar>
-                          <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
-                          <AvatarFallback>AU</AvatarFallback>
-                        </Avatar>
-                        <span className="sr-only">Alternar menú de usuario</span>
-                    </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                    <DropdownMenuLabel>Usuario Admin</DropdownMenuLabel>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem>Ajustes</DropdownMenuItem>
-                    <DropdownMenuItem>Soporte</DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild>
-                      <Link href="/">Cerrar Sesión</Link>
-                    </DropdownMenuItem>
-                </DropdownMenuContent>
-            </DropdownMenu>
+            {/* User avatar dropdown removed as requested */}
         </header>
     )
 }

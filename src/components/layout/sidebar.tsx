@@ -1,8 +1,12 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+
 
 const menuItems = [
     { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
@@ -20,15 +24,15 @@ export function Sidebar() {
 
     return (
         <div className="hidden border-r bg-card md:block">
-            <div className="flex h-full max-h-screen flex-col gap-2">
+            <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
                         <Shield className="h-6 w-6 text-primary" />
                         <span className="font-headline text-lg">SportsPanel</span>
                     </Link>
                 </div>
-                <div className="flex-1">
-                    <nav className="grid items-start px-2 text-sm font-medium lg:px-4">
+                <div className="flex-1 overflow-y-auto">
+                    <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
                         {menuItems.map((item) => {
                             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                             return (
@@ -49,9 +53,37 @@ export function Sidebar() {
                         })}
                     </nav>
                 </div>
+                <div className="mt-auto p-4 border-t">
+                     <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary h-auto">
+                                <Avatar className="h-9 w-9">
+                                <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
+                                <AvatarFallback>AU</AvatarFallback>
+                                </Avatar>
+                                <div className="flex flex-col items-start">
+                                    <span className="font-semibold text-sm text-foreground">Usuario Admin</span>
+                                    <span className="text-xs text-muted-foreground">admin@sportspanel.com</span>
+                                </div>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56 mb-2">
+                            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                                <Settings className="mr-2 h-4 w-4"/>
+                                Ajustes
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link href="/" className="w-full">
+                                <LogOut className="mr-2 h-4 w-4"/>
+                                Cerrar Sesión
+                              </Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                </div>
             </div>
         </div>
     )
 }
-
-    
