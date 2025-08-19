@@ -257,7 +257,7 @@ export default function PlayersPage() {
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
         
         // Automatic user creation
-        const contactEmail = dataToSave.isOwnTutor ? dataToSave.tutorEmail : dataToSave.tutorEmail;
+        const contactEmail = dataToSave.tutorEmail;
         const contactName = dataToSave.isOwnTutor ? `${dataToSave.name} ${dataToSave.lastName}` : (dataToSave.tutorName ? `${dataToSave.tutorName} ${dataToSave.tutorLastName}` : `${dataToSave.name} ${dataToSave.lastName} (Familia)`);
         
         if(contactEmail){
