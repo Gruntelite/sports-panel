@@ -184,7 +184,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                         <CardTitle>{venue.name}</CardTitle>
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
-                        <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 200}px` }}>
+                        <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 220}px` }}>
                             <div className="w-[60px] flex-shrink-0">
                                 <div className="h-[40px] border-b bg-muted/50">&nbsp;</div> {/* Spacer for day headers */}
                                 {timeSlots.map(time => (
@@ -197,7 +197,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                                 {daysOfWeek.map(day => {
                                     const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
                                     return (
-                                        <div key={day} className="w-[200px] flex-shrink-0 border-r relative">
+                                        <div key={day} className="w-[220px] flex-shrink-0 border-r relative">
                                             <div className="text-center font-medium p-2 h-[41px] border-b bg-muted/50">{day}</div>
                                             <div className="relative h-full">
                                                 {timeSlots.map((_, index) => (
@@ -208,11 +208,11 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                                                     return (
                                                         <div
                                                             key={event.id}
-                                                            className="absolute p-2 flex flex-col rounded-lg border text-primary-foreground"
+                                                            className="absolute p-2 py-1 flex flex-col rounded-lg border text-primary-foreground"
                                                             style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', borderColor: 'hsl(var(--primary))' }}
                                                         >
-                                                            <span className="font-bold text-sm truncate">{event.teamName}</span>
-                                                            <span className="text-xs opacity-90 truncate flex items-center gap-1 mt-auto">
+                                                            <span className="font-bold text-sm break-words">{event.teamName}</span>
+                                                            <span className="text-xs opacity-90 flex items-center gap-1 mt-auto">
                                                                 <Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}
                                                             </span>
                                                         </div>
@@ -961,6 +961,7 @@ export default function SchedulesPage() {
 }
 
     
+
 
 
 
