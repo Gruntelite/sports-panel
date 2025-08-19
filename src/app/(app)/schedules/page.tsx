@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -63,6 +64,8 @@ type ScheduleTemplate = {
     name: string;
     venues: Venue[];
     weeklySchedule: WeeklySchedule;
+    startTime?: string;
+    endTime?: string;
 }
 
 const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
@@ -122,7 +125,9 @@ export default function SchedulesPage() {
             const initialTemplateData: Omit<ScheduleTemplate, 'id'> = { 
                 name: "Plantilla General",
                 venues: [{id: 'main-field', name: 'Campo Principal'}],
-                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+                weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []},
+                startTime: "16:00",
+                endTime: "23:00",
             };
             await setDoc(newTemplateRef, initialTemplateData);
             setScheduleTemplates([{ id: newTemplateId, ...initialTemplateData }]);
@@ -168,6 +173,8 @@ export default function SchedulesPage() {
   const loadTemplateData = (template: ScheduleTemplate) => {
     setVenues(template.venues || []);
     setWeeklySchedule(template.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
+    setStartTime(template.startTime || "16:00");
+    setEndTime(template.endTime || "23:00");
     setCurrentDayIndex(0); // Reset to Monday on template change
     setCurrentVenueIndex(0);
   };
@@ -217,7 +224,11 @@ export default function SchedulesPage() {
     const scheduleRef = getScheduleRef(currentTemplateId);
     if (scheduleRef) {
         try {
-            await updateDoc(scheduleRef, { weeklySchedule: updatedWeeklySchedule });
+            await updateDoc(scheduleRef, { 
+              weeklySchedule: updatedWeeklySchedule,
+              startTime: startTime,
+              endTime: endTime,
+            });
             setWeeklySchedule(updatedWeeklySchedule);
             toast({ title: "Plantilla Guardada", description: `Los horarios para el ${currentDay} se han guardado.` });
         } catch (error) {
@@ -237,7 +248,9 @@ export default function SchedulesPage() {
         await setDoc(newTemplateRef, {
             name: newTemplateName.trim(),
             venues: [],
-            weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []}
+            weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []},
+            startTime: "16:00",
+            endTime: "23:00",
         });
         toast({ title: "Plantilla creada", description: `La plantilla "${newTemplateName}" ha sido creada.` });
         setIsNewTemplateModalOpen(false);
@@ -332,6 +345,7 @@ export default function SchedulesPage() {
 
   const timeSlots = useMemo(() => {
     const slots = [];
+    if (!startTime || !endTime) return [];
     let current = new Date(`1970-01-01T${startTime}:00`);
     const endDate = new Date(`1970-01-01T${endTime}:00`);
     while (current < endDate) {
@@ -413,6 +427,7 @@ export default function SchedulesPage() {
   
 
   const calculateEventPosition = (event: any) => {
+    if (!startTime) return { top: 0, height: 0, left: '0%', width: '100%' };
     const startHour = parseInt(startTime.split(':')[0]);
     const eventStart = new Date(`1970-01-01T${event.startTime}`);
     const eventEnd = new Date(`1970-01-01T${event.endTime}`);
