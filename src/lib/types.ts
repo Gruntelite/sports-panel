@@ -2,6 +2,7 @@
 
 
 
+
 export type Team = {
     id: string;
     name: string;
@@ -93,7 +94,7 @@ export type User = {
     id: string;
     name: string;
     email: string;
-    role: 'super-admin' | 'Admin' | 'Coach' | 'Family' | 'Staff';
+    role: 'super-admin' | 'Admin' | 'Entrenador' | 'Family' | 'Staff';
     avatar?: string;
     authUid?: string; // To link to Firebase Auth user if needed
 }

@@ -186,7 +186,7 @@ export default function UsersPage() {
 
             const isPlayer = 'tutorEmail' in contact;
             const name = contact.isOwnTutor ? `${contact.name} ${contact.lastName}` : isPlayer ? `${(contact as Player).tutorName} ${(contact as Player).tutorLastName}` || `${contact.name} ${contact.lastName} (Familia)` : `${contact.name} ${contact.lastName}`;
-            const role = isPlayer ? 'Family' : 'Coach';
+            const role = isPlayer ? 'Family' : 'Entrenador';
             const email = isPlayer ? (contact as Player).tutorEmail : (contact as Coach).email;
             
             const newUserDocRef = doc(collection(db, "clubs", clubId, "users"));
@@ -413,7 +413,7 @@ export default function UsersPage() {
                                           setSelectedContact(value);
                                           const isPlayer = 'tutorEmail' in contact;
                                           setSelectedContactEmail(isPlayer ? (contact as Player).tutorEmail : (contact as Coach).email);
-                                          setSelectedRole(isPlayer ? 'Family' : 'Coach');
+                                          setSelectedRole(isPlayer ? 'Family' : 'Entrenador');
                                         }
                                       }}
                                     >
@@ -437,7 +437,7 @@ export default function UsersPage() {
                                         <SelectTrigger><SelectValue /></SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="Family">Familia</SelectItem>
-                                            <SelectItem value="Coach">Entrenador</SelectItem>
+                                            <SelectItem value="Entrenador">Entrenador</SelectItem>
                                             <SelectItem value="Admin">Admin</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -516,7 +516,7 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                      <Badge variant={user.role === 'super-admin' ? 'destructive' : user.role === 'Admin' ? 'default' : user.role === 'Coach' ? 'secondary' : 'outline'}>
+                      <Badge variant={user.role === 'super-admin' ? 'destructive' : user.role === 'Admin' ? 'default' : user.role === 'Entrenador' ? 'secondary' : 'outline'}>
                           {user.role}
                       </Badge>
                   </TableCell>
@@ -594,7 +594,7 @@ export default function UsersPage() {
                     <SelectContent>
                         <SelectItem value="super-admin">Super-Admin</SelectItem>
                         <SelectItem value="Admin">Admin</SelectItem>
-                        <SelectItem value="Coach">Entrenador</SelectItem>
+                        <SelectItem value="Entrenador">Entrenador</SelectItem>
                         <SelectItem value="Family">Familia</SelectItem>
                         <SelectItem value="Staff">Staff</SelectItem>
                     </SelectContent>
