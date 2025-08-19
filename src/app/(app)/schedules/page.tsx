@@ -197,7 +197,7 @@ export default function SchedulesPage() {
             await updateDoc(scheduleRef, { venues: updatedVenues });
             setVenues(updatedVenues);
             setNewVenueName('');
-            toast({ title: "Recinto añadido", description: "El nuevo recinto/pista se ha guardado." });
+            toast({ title: "Recinto/Pista añadido", description: "El nuevo recinto/pista se ha guardado." });
         }
     }
   }
@@ -209,7 +209,7 @@ export default function SchedulesPage() {
     if (scheduleRef) {
         await updateDoc(scheduleRef, { venues: updatedVenues });
         setVenues(updatedVenues);
-        toast({ title: "Recinto eliminado", description: "El recinto/pista se ha eliminado." });
+        toast({ title: "Recinto/Pista eliminado", description: "El recinto/pista se ha eliminado." });
     }
   }
 
@@ -315,12 +315,21 @@ export default function SchedulesPage() {
     setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value } : a));
   };
   
-  const handleAssignmentSelectChange = (id: string, field: 'teamId' | 'venueId', value: string) => {
-    const selectedItem = field === 'teamId' ? teams.find(t => t.id === value) : venues.find(v => v.id === value);
+  const handleAssignmentSelectChange = (id: string, field: 'teamId' | 'venueId' | 'startTime' | 'endTime', value: string) => {
+    const nameField = field === 'teamId' ? 'teamName' : field === 'venueId' ? 'venueName' : null;
+    const selectedItem = field === 'teamId' ? teams.find(t => t.id === value) : field === 'venueId' ? venues.find(v => v.id === value) : null;
     const name = selectedItem?.name || '';
-    const nameField = field === 'teamId' ? 'teamName' : 'venueName';
-
-    setPendingAssignments(prev => prev.map(a => a.id === id ? { ...a, [field]: value, [nameField]: name } : a));
+    
+    setPendingAssignments(prev => prev.map(a => {
+        if (a.id === id) {
+            const updatedAssignment = { ...a, [field]: value };
+            if (nameField) {
+                updatedAssignment[nameField] = name;
+            }
+            return updatedAssignment;
+        }
+        return a;
+    }));
   };
 
   const handleAddAssignmentRow = () => {
@@ -354,6 +363,18 @@ export default function SchedulesPage() {
     }
     return slots;
   }, [startTime, endTime]);
+
+  const availableHours = useMemo(() => {
+        const hours = [];
+        if (!startTime || !endTime) return [];
+        let current = new Date(`1970-01-01T${startTime}:00`);
+        const endDate = new Date(`1970-01-01T${endTime}:00`);
+        while (current <= endDate) {
+            hours.push(current.toTimeString().substring(0, 5));
+            current = new Date(current.getTime() + 30 * 60 * 1000); // 30 min intervals
+        }
+        return hours;
+    }, [startTime, endTime]);
 
   const timeToMinutes = (time: string) => {
     if (!time) return 0;
@@ -607,9 +628,9 @@ export default function SchedulesPage() {
                                   </Select>
                                 </div>
                                  <div className="space-y-1">
-                                  <Label className="text-xs">Recinto / Pista</Label>
+                                  <Label className="text-xs">Recinto/Pista</Label>
                                   <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
-                                    <SelectTrigger className="h-8"><SelectValue placeholder="Recinto / Pista" /></SelectTrigger>
+                                    <SelectTrigger className="h-8"><SelectValue placeholder="Recinto/Pista" /></SelectTrigger>
                                     <SelectContent>
                                       {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                                     </SelectContent>
@@ -618,11 +639,21 @@ export default function SchedulesPage() {
                                 <div className="flex gap-2">
                                   <div className="space-y-1 w-full">
                                     <Label className="text-xs">Inicio</Label>
-                                    <Input className="h-8" type="time" step="900" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} />
+                                     <Select value={assignment.startTime} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'startTime', value)}>
+                                        <SelectTrigger className="h-8"><SelectValue placeholder="Hora" /></SelectTrigger>
+                                        <SelectContent>
+                                          {availableHours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                                        </SelectContent>
+                                      </Select>
                                   </div>
                                   <div className="space-y-1 w-full">
                                     <Label className="text-xs">Fin</Label>
-                                    <Input className="h-8" type="time" step="900" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} />
+                                     <Select value={assignment.endTime} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'endTime', value)}>
+                                        <SelectTrigger className="h-8"><SelectValue placeholder="Hora" /></SelectTrigger>
+                                        <SelectContent>
+                                          {availableHours.map(h => <SelectItem key={h} value={h}>{h}</SelectItem>)}
+                                        </SelectContent>
+                                      </Select>
                                   </div>
                                 </div>
                               </div>
@@ -657,7 +688,7 @@ export default function SchedulesPage() {
                 </div>
             </CardHeader>
             <CardContent className="flex-1 overflow-y-auto p-0">
-              <div className="grid grid-cols-[60px_1fr] h-full">
+              <div className="grid grid-cols-[60px_1fr]">
                   <div className="col-start-1 col-end-2 border-r">
                       {timeSlots.map(time => (
                           <div key={time} className="h-16 flex items-start justify-center p-1 border-b">
@@ -684,12 +715,12 @@ export default function SchedulesPage() {
                          )
                       })}
                   </div>
-              </div>
-              <div className="p-6 border-t">
-                  <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
-                      <Clock className="h-5 w-5"/>
-                      Guardar Plantilla
-                  </Button>
+                  <div className="col-span-2 p-6 border-t">
+                      <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
+                          <Clock className="h-5 w-5"/>
+                          Guardar Plantilla
+                      </Button>
+                  </div>
               </div>
             </CardContent>
         </Card>
@@ -720,6 +751,7 @@ export default function SchedulesPage() {
     
 
     
+
 
 
 
