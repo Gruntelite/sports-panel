@@ -121,18 +121,19 @@ export default function SignUpPage() {
       const newClubRef = doc(collection(db, "clubs"));
       const clubId = newClubRef.id;
 
+      // 1. Create the main club document
       batch.set(newClubRef, {
         name: clubName,
         adminId: user.uid,
       });
 
-      // Save user's clubId link in the root users collection
+      // 2. Create the user's clubId link in the root users collection
       const rootUserRef = doc(db, "users", user.uid);
       batch.set(rootUserRef, {
         clubId: clubId,
       });
 
-      // Save user details in the club's specific users subcollection
+      // 3. Create the user details in the club's specific users subcollection
       const clubUserRef = doc(db, "clubs", clubId, "users", user.uid);
       batch.set(clubUserRef, {
         name: name,
@@ -140,7 +141,7 @@ export default function SignUpPage() {
         role: 'super-admin',
       });
       
-      // Create club settings subcollection
+      // 4. Create the club settings subcollection
       const settingsRef = doc(db, "clubs", clubId, "settings", "config");
       batch.set(settingsRef, {
         sport: sport,
@@ -149,6 +150,7 @@ export default function SignUpPage() {
         billingPlan: null,
       });
 
+      // Commit all writes to the database
       await batch.commit();
 
       const primaryHsl = hexToHsl(clubColor);
