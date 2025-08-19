@@ -9,6 +9,7 @@ export type Team = {
     hint: string;
     players: number;
     coaches: number;
+    defaultMonthlyFee?: number;
 };
 
 export type Player = {

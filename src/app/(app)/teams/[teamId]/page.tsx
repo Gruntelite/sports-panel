@@ -18,6 +18,7 @@ import {
   ChevronDown,
   ArrowLeft,
   UserSquare,
+  CircleDollarSign,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -220,7 +221,7 @@ export default function EditTeamPage() {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
-    if (['name', 'minAge', 'maxAge'].includes(id)) {
+    if (['name', 'minAge', 'maxAge', 'defaultMonthlyFee'].includes(id)) {
         setTeam(prev => ({ ...prev, [id]: value }));
     }
     setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? Number(value) : value }));
@@ -268,6 +269,7 @@ export default function EditTeamPage() {
         name: team.name,
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
+        defaultMonthlyFee: team.defaultMonthlyFee ? Number(team.defaultMonthlyFee) : null,
         image: imageUrl,
       });
 
@@ -302,7 +304,7 @@ export default function EditTeamPage() {
   const handleOpenModal = async (mode: 'add' | 'edit', member?: TeamMember) => {
     setModalMode(mode);
     if (mode === 'add') {
-      setPlayerData({ teamId: teamId });
+      setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee });
     } else if (member && member.role === 'Jugador') {
       const playerDocRef = doc(db, "clubs", clubId!, "players", member.id);
       const playerDocSnap = await getDoc(playerDocRef);
@@ -494,6 +496,10 @@ export default function EditTeamPage() {
                                   <Label htmlFor="maxAge">Edad Máxima</Label>
                                   <Input id="maxAge" type="number" value={team.maxAge || ''} onChange={handleInputChange} />
                               </div>
+                          </div>
+                           <div className="space-y-2">
+                              <Label htmlFor="defaultMonthlyFee">Cuota Mensual por Defecto (€)</Label>
+                              <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee || ''} onChange={handleInputChange} />
                           </div>
                            <Button onClick={handleSaveChanges} disabled={saving} className="w-full">
                               {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
