@@ -428,7 +428,6 @@ export default function SchedulesPage() {
                           ))}
                       </DropdownMenuRadioGroup>
                       <DropdownMenuSeparator />
-                      <DialogTrigger asChild>
                          <DropdownMenuItem onSelect={(e) => {
                               e.preventDefault();
                               setIsNewTemplateModalOpen(true);
@@ -436,8 +435,6 @@ export default function SchedulesPage() {
                               <PlusCircle className="mr-2 h-4 w-4"/>
                               Crear Plantilla
                           </DropdownMenuItem>
-                      </DialogTrigger>
-                      <DialogTrigger asChild>
                           <DropdownMenuItem onSelect={(e) => {
                               e.preventDefault();
                               setEditedTemplateName(currentTemplate?.name || "");
@@ -446,7 +443,6 @@ export default function SchedulesPage() {
                               <Edit className="mr-2 h-4 w-4"/>
                               Renombrar
                           </DropdownMenuItem>
-                      </DialogTrigger>
                       <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(currentTemplate || null)}>
                           <Trash2 className="mr-2 h-4 w-4"/>
                           Eliminar
@@ -494,7 +490,7 @@ export default function SchedulesPage() {
                 <CardDescription>Define recintos, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
-                 <Accordion type="single" collapsible className="w-full">
+                 <Accordion type="single" collapsible className="w-full" defaultValue="assignments">
                   <AccordionItem value="venues">
                     <AccordionTrigger className="text-base font-semibold">
                       <div className="flex items-center gap-2">
@@ -539,43 +535,44 @@ export default function SchedulesPage() {
                       </div>
                     </AccordionContent>
                   </AccordionItem>
-                </Accordion>
-
-
-                <div className="space-y-4">
-                    <h3 className="font-semibold text-base">Asignar Tiempos y Recintos</h3>
-                     <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                        {assignments.map(assignment => (
-                          <div 
-                            key={assignment.id} 
-                            className="p-3 bg-muted/50 rounded-lg space-y-3 cursor-grab"
-                            draggable
-                            onDragStart={(e) => handleDragStart(e, assignment.id)}
-                            onDragOver={handleDragOver}
-                            onDrop={(e) => handleDrop(e, assignment.id)}
-                          >
-                              <div className="flex items-center gap-2">
+                   <AccordionItem value="assignments">
+                    <AccordionTrigger className="text-base font-semibold">
+                       <div className="flex items-center gap-2">
+                        <Clock className="h-5 w-5" />
+                        Asignar Tiempos y Recintos
+                      </div>
+                    </AccordionTrigger>
+                    <AccordionContent className="pt-4 space-y-4">
+                      <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
+                          {assignments.map(assignment => (
+                            <div 
+                              key={assignment.id} 
+                              className="p-2 bg-muted/50 rounded-lg flex items-center gap-2 cursor-grab"
+                              draggable
+                              onDragStart={(e) => handleDragStart(e, assignment.id)}
+                              onDragOver={handleDragOver}
+                              onDrop={(e) => handleDrop(e, assignment.id)}
+                            >
                                 <GripVertical className="h-5 w-5 text-muted-foreground" />
-                                <Label className="font-semibold flex-1">{assignment.teamName}</Label>
-                              </div>
-                              <div className="grid grid-cols-[1fr_1fr_1fr] items-center gap-2 pl-7">
-                                  <Input type="time" value={assignment.startTime} onChange={(e) => handleAssignmentChange(assignment.id, 'startTime', e.target.value)} />
-                                  <Input type="time" value={assignment.endTime} onChange={(e) => handleAssignmentChange(assignment.id, 'endTime', e.target.value)} />
-                                   <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentChange(assignment.id, 'venueId', value)}>
-                                      <SelectTrigger>
-                                          <SelectValue placeholder="Recinto" />
-                                      </SelectTrigger>
-                                      <SelectContent>
-                                          {venues.map(venue => (
-                                              <SelectItem key={venue.id} value={venue.id}>{venue.name}</SelectItem>
-                                          ))}
-                                      </SelectContent>
-                                  </Select>
-                              </div>
-                          </div>
-                        ))}
-                     </div>
-                </div>
+                                <Label className="font-semibold flex-1 truncate" title={assignment.teamName}>{assignment.teamName}</Label>
+                                <Input className="w-24" type="time" value={assignment.startTime} onChange={(e) => handleAssignmentChange(assignment.id, 'startTime', e.target.value)} />
+                                <Input className="w-24" type="time" value={assignment.endTime} onChange={(e) => handleAssignmentChange(assignment.id, 'endTime', e.target.value)} />
+                                <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentChange(assignment.id, 'venueId', value)}>
+                                    <SelectTrigger className="w-32">
+                                        <SelectValue placeholder="Recinto" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {venues.map(venue => (
+                                            <SelectItem key={venue.id} value={venue.id}>{venue.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                          ))}
+                      </div>
+                    </AccordionContent>
+                  </AccordionItem>
+                </Accordion>
             </CardContent>
         </Card>
         
