@@ -39,7 +39,7 @@ export type Player = {
 
 export type Coach = {
     id: string;
-    name: string;
+    name:string;
     lastName: string;
     email?: string;
     phone?: string;
@@ -68,4 +68,9 @@ export type TeamMember = {
     avatar?: string;
     hasMissingData?: boolean;
     data: Player | Coach;
+}
+
+export type Contact = {
+    name: string;
+    email: string;
 }

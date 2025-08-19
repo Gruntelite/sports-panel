@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreHorizontal, PlusCircle, Loader2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Loader2, Check, ChevronsUpDown } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -39,12 +39,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, query, where } from "firebase/firestore";
+import type { Player, Coach, Contact } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type User = {
     id: string;
@@ -60,8 +64,12 @@ export default function UsersPage() {
   const [clubId, setClubId] = useState<string | null>(null);
 
   const [users, setUsers] = useState<User[]>([]);
+  const [availableContacts, setAvailableContacts] = useState<Contact[]>([]);
+  
   const [isAddUserOpen, setIsAddUserOpen] = useState(false);
-  const [newUserEmail, setNewUserEmail] = useState("");
+  const [isComboboxOpen, setIsComboboxOpen] = useState(false);
+
+  const [selectedContactEmail, setSelectedContactEmail] = useState("");
   const [newUserRole, setNewUserRole] = useState("Family");
 
   useEffect(() => {
@@ -73,55 +81,94 @@ export default function UsersPage() {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
           if (currentClubId) {
-            fetchUsers(currentClubId);
+            fetchData(currentClubId);
           }
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
 
-  const fetchUsers = async (clubId: string) => {
+  const fetchData = async (clubId: string) => {
     setLoading(true);
-    const usersQuery = query(collection(db, "users"), where("clubId", "==", clubId));
-    const usersSnapshot = await getDocs(usersQuery);
-    const usersList = usersSnapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        name: data.name || "Usuario sin nombre",
-        email: data.email,
-        role: data.role,
-        avatar: `https://placehold.co/40x40.png?text=${(data.name || "U").charAt(0)}`,
-      };
-    });
-    setUsers(usersList);
+    try {
+        // Fetch Users
+        const usersQuery = query(collection(db, "users"), where("clubId", "==", clubId));
+        const usersSnapshot = await getDocs(usersQuery);
+        const usersList = usersSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            name: data.name || "Usuario sin nombre",
+            email: data.email,
+            role: data.role,
+            avatar: `https://placehold.co/40x40.png?text=${(data.name || "U").charAt(0)}`,
+          };
+        });
+        setUsers(usersList);
+        const existingUserEmails = new Set(usersList.map(u => u.email));
+
+        // Fetch Players and Coaches to get available contacts
+        const playersQuery = query(collection(db, "clubs", clubId, "players"));
+        const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
+        
+        const [playersSnapshot, coachesSnapshot] = await Promise.all([getDocs(playersQuery), getDocs(coachesQuery)]);
+        
+        const allContacts: Contact[] = [];
+
+        playersSnapshot.forEach(doc => {
+            const data = doc.data() as Player;
+            const contactEmail = data.isOwnTutor ? data.tutorEmail : data.tutorEmail;
+            if (contactEmail && !existingUserEmails.has(contactEmail)) {
+                allContacts.push({ name: `${data.name} ${data.lastName} (Familia)`, email: contactEmail });
+            }
+        });
+
+        coachesSnapshot.forEach(doc => {
+            const data = doc.data() as Coach;
+            if (data.email && !existingUserEmails.has(data.email)) {
+                allContacts.push({ name: `${data.name} ${data.lastName} (Entrenador)`, email: data.email });
+            }
+        });
+        
+        // Remove duplicate emails, just in case
+        const uniqueContacts = Array.from(new Map(allContacts.map(item => [item['email'], item])).values());
+        setAvailableContacts(uniqueContacts);
+
+    } catch (error) {
+        console.error("Error fetching data:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
+    }
     setLoading(false);
   };
   
   const handleAddUser = async () => {
-    if (!newUserEmail || !newUserRole || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Todos los campos son obligatorios." });
+    if (!selectedContactEmail || !newUserRole || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Debes seleccionar un contacto y un rol." });
         return;
     }
     
-    // Note: This is a simplified invitation. In a real app, you would
-    // send an email invitation and the new user would complete their registration.
-    // For now, we'll just create a placeholder document.
+    const selectedContact = availableContacts.find(c => c.email === selectedContactEmail);
+    if (!selectedContact) {
+        toast({ variant: "destructive", title: "Error", description: "El contacto seleccionado no es válido." });
+        return;
+    }
+    
     try {
         await addDoc(collection(db, "users"), {
-            email: newUserEmail,
+            email: selectedContact.email,
+            name: selectedContact.name.split('(')[0].trim(), // Get name without the role hint
             role: newUserRole,
             clubId: clubId,
-            name: "Usuario Invitado" // Placeholder name
         });
 
-        toast({ title: "Usuario invitado", description: `Se ha invitado a ${newUserEmail} como ${newUserRole}.` });
+        toast({ title: "Usuario invitado", description: `Se ha invitado a ${selectedContact.email} como ${newUserRole}.` });
         setIsAddUserOpen(false);
-        setNewUserEmail("");
+        setSelectedContactEmail("");
         setNewUserRole("Family");
-        fetchUsers(clubId); // Refresh data
+        if(clubId) fetchData(clubId); // Refresh data
     } catch (error) {
         console.error("Error adding user: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo invitar al usuario." });
@@ -160,18 +207,63 @@ export default function UsersPage() {
                     <DialogHeader>
                         <DialogTitle>Añadir Nuevo Usuario</DialogTitle>
                         <DialogDescription>
-                            Introduce el email y el rol para invitar a un nuevo usuario.
+                            Selecciona un contacto y asigna un rol para crear un nuevo usuario.
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-4">
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="user-email" className="text-right">Email</Label>
-                            <Input id="user-email" type="email" value={newUserEmail} onChange={(e) => setNewUserEmail(e.target.value)} className="col-span-3" />
+                        <div className="space-y-2">
+                            <Label>Contacto</Label>
+                            <Popover open={isComboboxOpen} onOpenChange={setIsComboboxOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={isComboboxOpen}
+                                    className="w-full justify-between font-normal"
+                                    >
+                                    {selectedContactEmail
+                                        ? availableContacts.find((c) => c.email === selectedContactEmail)?.name
+                                        : "Selecciona un contacto..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                    <Command>
+                                        <CommandInput placeholder="Buscar contacto..." />
+                                        <CommandList>
+                                            <CommandEmpty>No se encontraron contactos disponibles.</CommandEmpty>
+                                            <CommandGroup>
+                                                {availableContacts.map((contact) => (
+                                                <CommandItem
+                                                    key={contact.email}
+                                                    value={contact.email}
+                                                    onSelect={(currentValue) => {
+                                                        setSelectedContactEmail(currentValue === selectedContactEmail ? "" : currentValue);
+                                                        setIsComboboxOpen(false);
+                                                    }}
+                                                >
+                                                    <Check
+                                                    className={cn(
+                                                        "mr-2 h-4 w-4",
+                                                        selectedContactEmail === contact.email ? "opacity-100" : "opacity-0"
+                                                    )}
+                                                    />
+                                                    <div>
+                                                        <p className="font-medium">{contact.name.split('(')[0].trim()}</p>
+                                                        <p className="text-xs text-muted-foreground">{contact.email}</p>
+                                                    </div>
+                                                </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
                         </div>
-                        <div className="grid grid-cols-4 items-center gap-4">
-                            <Label htmlFor="user-role" className="text-right">Rol</Label>
+                        <div className="space-y-2">
+                            <Label htmlFor="user-role">Rol</Label>
                             <Select onValueChange={setNewUserRole} value={newUserRole}>
-                                <SelectTrigger className="col-span-3">
+                                <SelectTrigger>
                                     <SelectValue placeholder="Selecciona un rol" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -218,7 +310,7 @@ export default function UsersPage() {
                   </TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
-                      <Badge variant={user.role === 'Admin' ? 'default' : 'secondary'}>
+                      <Badge variant={user.role === 'Admin' ? 'default' : user.role === 'Coach' ? 'secondary' : 'outline'}>
                           {user.role}
                       </Badge>
                   </TableCell>
