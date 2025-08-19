@@ -578,6 +578,8 @@ export default function EditTeamPage() {
   }
   
   const currentData = modalType === 'player' ? playerData : coachData;
+  const playerCount = teamMembers.filter(m => m.role === 'Jugador').length;
+  const coachCount = teamMembers.filter(m => m.role === 'Entrenador').length;
 
 
   return (
@@ -791,7 +793,7 @@ export default function EditTeamPage() {
                       </CardContent>
                       <CardFooter>
                         <div className="text-xs text-muted-foreground">
-                          Mostrando <strong>{teamMembers.length}</strong> de <strong>{teamMembers.length}</strong> miembros
+                          Total: <strong>{playerCount}</strong> {playerCount === 1 ? 'Jugador' : 'Jugadores'} y <strong>{coachCount}</strong> {coachCount === 1 ? 'Entrenador' : 'Entrenadores'}.
                         </div>
                       </CardFooter>
                   </Card>
@@ -812,7 +814,7 @@ export default function EditTeamPage() {
                 <div className="flex flex-col items-center gap-4 pt-5">
                     <Label>Foto del {modalType === 'player' ? 'Jugador' : 'Entrenador'}</Label>
                     <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || currentData.avatar} />
+                        <AvatarImage src={imagePreview || (modalType === 'player' ? playerData.avatar : coachData.avatar)} />
                         <AvatarFallback>
                             {(currentData.name || 'N').charAt(0)}
                             {(currentData.lastName || 'J').charAt(0)}
@@ -972,12 +974,12 @@ export default function EditTeamPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                            <Input id="monthlyPayment" type="number" value={(coachData as Coach).monthlyPayment ?? ''} onChange={handleMemberInputChange} />
+                                            <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleMemberInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="teamId">Equipo Asignado</Label>
-                                        <Select onValueChange={(value) => handleSelectChange('teamId', value as any)} value={(coachData as Coach).teamId || 'unassigned'}>
+                                        <Select onValueChange={(value) => handleSelectChange('teamId' as any, value)} value={coachData.teamId || 'unassigned'}>
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Selecciona un equipo" />
                                             </SelectTrigger>
@@ -1025,5 +1027,6 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
 
 
