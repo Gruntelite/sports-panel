@@ -179,10 +179,15 @@ export default function TeamsPage() {
       if (sortOrder === "alphabetical") {
         return a.name.localeCompare(b.name);
       }
-      if (sortOrder === "age") {
+      if (sortOrder === "age-asc") {
         const aAge = a.minAge ?? a.maxAge ?? 99;
         const bAge = b.minAge ?? b.maxAge ?? 99;
         return aAge - bAge;
+      }
+      if (sortOrder === "age-desc") {
+        const aAge = a.maxAge ?? a.minAge ?? 0;
+        const bAge = b.maxAge ?? b.minAge ?? 0;
+        return bAge - aAge;
       }
       return 0;
     });
@@ -222,7 +227,8 @@ export default function TeamsPage() {
                 <DropdownMenuSeparator />
                 <DropdownMenuRadioGroup value={sortOrder} onValueChange={setSortOrder}>
                     <DropdownMenuRadioItem value="alphabetical">Alfabéticamente (A-Z)</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="age">Edad (Menor a Mayor)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="age-asc">Edad (Menor a Mayor)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="age-desc">Edad (Mayor a Menor)</DropdownMenuRadioItem>
                 </DropdownMenuRadioGroup>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -349,5 +355,4 @@ export default function TeamsPage() {
     </>
   )
 }
-
     
