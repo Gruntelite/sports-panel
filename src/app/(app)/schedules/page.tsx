@@ -373,56 +373,45 @@ export default function SchedulesPage() {
         }))
         .sort((a, b) => a.start - b.start || a.end - b.end);
   
-      const columns: any[][] = [];
-      for (const event of sortedEvents) {
-          let placed = false;
-          for (const col of columns) {
-              if (col[col.length - 1].end <= event.start) {
-                  col.push(event);
-                  placed = true;
-                  break;
-              }
-          }
-          if (!placed) {
-              columns.push([event]);
-          }
-      }
+      let eventLayouts: (DailyScheduleEntry & { start: number; end: number; col: number; numCols: number })[] = [];
+      if (sortedEvents.length > 0) {
+        const columns: (DailyScheduleEntry & { start: number; end: number })[][] = [];
+        columns.push([sortedEvents[0]]);
+        eventLayouts.push({ ...sortedEvents[0], col: 0, numCols: 1 });
 
-      const eventLayouts: any[] = [];
-      sortedEvents.forEach(event => {
-          let maxOverlaps = 0;
-          let overlaps: any[] = [];
-          for (const otherEvent of sortedEvents) {
-              if (event.start < otherEvent.end && event.end > otherEvent.start) {
-                  overlaps.push(otherEvent);
-              }
-          }
-          
-          overlaps.sort((a, b) => a.start - b.start);
-          
-          let assignedCol = -1;
-          const occupiedCols = new Set();
-
-          for(const o of overlaps) {
-            if(o.col !== undefined) {
-              occupiedCols.add(o.col);
+        for (let i = 1; i < sortedEvents.length; i++) {
+            const event = sortedEvents[i];
+            let placed = false;
+            for (let j = 0; j < columns.length; j++) {
+                const lastEventInColumn = columns[j][columns[j].length - 1];
+                if (event.start >= lastEventInColumn.end) {
+                    columns[j].push(event);
+                    eventLayouts.push({ ...event, col: j, numCols: 1 }); // placeholder numCols
+                    placed = true;
+                    break;
+                }
             }
-          }
+            if (!placed) {
+                columns.push([event]);
+                eventLayouts.push({ ...event, col: columns.length - 1, numCols: 1 }); // placeholder numCols
+            }
+        }
 
-          let currentCol = 0;
-          while(occupiedCols.has(currentCol)) {
-            currentCol++;
-          }
-          assignedCol = currentCol;
-          
-          eventLayouts.push({
-              ...event,
-              col: assignedCol,
-              numCols: Math.max(columns.length, overlaps.length),
-          });
-      });
-      
-      return eventLayouts;
+        // Now determine the correct numCols for each event
+        for (let i = 0; i < eventLayouts.length; i++) {
+            let maxOverlaps = 0;
+            for (let j = 0; j < eventLayouts.length; j++) {
+                const e1 = eventLayouts[i];
+                const e2 = eventLayouts[j];
+                if (Math.max(e1.start, e2.start) < Math.min(e1.end, e2.end)) {
+                    maxOverlaps++;
+                }
+            }
+            eventLayouts[i].numCols = maxOverlaps > 1 ? maxOverlaps : columns.length;
+        }
+    }
+
+    return eventLayouts;
   };
   
 
@@ -654,8 +643,8 @@ export default function SchedulesPage() {
             </CardContent>
         </Card>
         
-        <Card className="relative">
-            <CardHeader className="flex flex-row items-center justify-between">
+        <Card className="relative flex flex-col">
+            <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
                 <div className="flex items-center gap-1">
                     <Button variant="outline" size="sm" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
                     <div className="text-base font-semibold capitalize w-24 text-center">{currentDay}</div>
@@ -667,40 +656,38 @@ export default function SchedulesPage() {
                     <Button variant="outline" size="sm" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
                 </div>
             </CardHeader>
-            <CardContent>
-              <div className="overflow-x-auto">
-                <div className="grid grid-cols-[60px_1fr] max-h-[600px] overflow-y-auto border-t border-l rounded-lg">
-                    <div className="col-start-1 col-end-2">
-                        {timeSlots.map(time => (
-                            <div key={time} className="h-16 flex items-start justify-center p-1 border-b border-r">
-                              <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+            <CardContent className="flex-grow overflow-y-auto">
+              <div className="grid grid-cols-[60px_1fr] h-full">
+                  <div className="col-start-1 col-end-2 border-r">
+                      {timeSlots.map(time => (
+                          <div key={time} className="h-16 flex items-start justify-center p-1 border-b">
+                            <span className="text-xs font-semibold text-muted-foreground">{time}</span>
+                          </div>
+                      ))}
+                  </div>
+                  <div className="col-start-2 col-end-3 relative">
+                      {timeSlots.map((time) => (
+                          <div key={time} className="h-16 border-b"></div>
+                      ))}
+                      {displayedEvents.map(event => {
+                         const { top, height, left, width } = calculateEventPosition(event);
+                         return (
+                            <div
+                              key={event.id}
+                              className="absolute p-2 flex flex-col rounded-lg bg-primary/20 border border-primary/50 text-primary-foreground"
+                              style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', color: 'hsl(var(--primary-foreground))' }}
+                            >
+                                <span className="font-bold text-sm truncate">{event.teamName}</span>
+                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
+                                <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
                             </div>
-                        ))}
-                    </div>
-                    <div className="col-start-2 col-end-3 relative">
-                        {timeSlots.map((time) => (
-                            <div key={time} className="h-16 border-b border-r last:border-r-0"></div>
-                        ))}
-                        {displayedEvents.map(event => {
-                           const { top, height, left, width } = calculateEventPosition(event);
-                           return (
-                              <div
-                                key={event.id}
-                                className="absolute p-2 flex flex-col rounded-lg bg-primary/20 border border-primary/50 text-primary-foreground"
-                                style={{ top, height, left, width, backgroundColor: 'hsl(var(--primary) / 0.8)', color: 'hsl(var(--primary-foreground))' }}
-                              >
-                                  <span className="font-bold text-sm truncate">{event.teamName}</span>
-                                  <span className="text-xs opacity-90 truncate flex items-center gap-1"><MapPin className="h-3 w-3"/>{event.venueName}</span>
-                                  <span className="text-xs opacity-90 truncate flex items-center gap-1"><Hourglass className="h-3 w-3"/>{event.startTime} - {event.endTime}</span>
-                              </div>
-                           )
-                        })}
-                    </div>
-                </div>
+                         )
+                      })}
+                  </div>
               </div>
             </CardContent>
-             <div className="absolute bottom-6 right-6">
-                <Button size="lg" className="gap-2" onClick={handleSaveTemplate}>
+             <div className="p-6 border-t">
+                <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
                     <Clock className="h-5 w-5"/>
                     Guardar Plantilla
                 </Button>
@@ -733,3 +720,4 @@ export default function SchedulesPage() {
     
 
     
+
