@@ -15,7 +15,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Wand2 } from "lucide-react";
+import { Loader2, Wand2, Copy } from "lucide-react";
 
 const formSchema = z.object({
   communicationGoal: z.string().min(1, "El objetivo de la comunicación es obligatorio."),
@@ -65,12 +65,20 @@ export function EmailTemplateGenerator() {
     setLoading(false);
   }
 
+  const handleCopy = () => {
+    if(result) {
+      const textToCopy = `Asunto: ${result.subject}\n\n${result.body}`;
+      navigator.clipboard.writeText(textToCopy);
+      toast({ title: "Copiado", description: "La plantilla se ha copiado al portapapeles." });
+    }
+  }
+
   return (
     <div className="grid gap-8 md:grid-cols-2">
       <Card>
         <CardHeader>
-          <CardTitle>Generar Plantilla de Email</CardTitle>
-          <CardDescription>Rellena los detalles para generar una plantilla de comunicación personalizada usando IA.</CardDescription>
+          <CardTitle>Generador de Plantillas de Email</CardTitle>
+          <CardDescription>Describe tu necesidad y la IA creará un borrador de comunicación para que lo uses.</CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
@@ -185,14 +193,17 @@ export function EmailTemplateGenerator() {
           {result && !loading && (
             <div className="space-y-4">
               <div>
-                <Label htmlFor="subject" className="text-lg">Asunto</Label>
+                <Label htmlFor="subject" className="text-lg font-medium">Asunto</Label>
                 <Input id="subject" readOnly value={result.subject} className="mt-1 font-semibold text-base" />
               </div>
               <div>
-                <Label htmlFor="body" className="text-lg">Cuerpo</Label>
+                <Label htmlFor="body" className="text-lg font-medium">Cuerpo</Label>
                 <Textarea id="body" readOnly value={result.body} className="mt-1 h-64 text-base" />
               </div>
-              <Button variant="outline" className="w-full">Copiar Plantilla</Button>
+              <Button variant="outline" className="w-full" onClick={handleCopy}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar Plantilla
+              </Button>
             </div>
           )}
           {!result && !loading && (
