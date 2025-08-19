@@ -15,7 +15,7 @@ export type Player = {
     id: string;
     name: string;
     lastName: string;
-    age?: number;
+    birthDate?: string;
     dni?: string;
     address?: string;
     city?: string;

@@ -92,6 +92,18 @@ export default function PlayersPage() {
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
+  const calculateAge = (birthDate: string | undefined): number | null => {
+    if (!birthDate) return null;
+    const today = new Date();
+    const birthDateObj = new Date(birthDate);
+    let age = today.getFullYear() - birthDateObj.getFullYear();
+    const monthDifference = today.getMonth() - birthDateObj.getMonth();
+    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDateObj.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -112,7 +124,7 @@ export default function PlayersPage() {
 
   const hasMissingData = (player: any): boolean => {
     const requiredFields = [
-      'age', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
+      'birthDate', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
       'tutorPhone', 'iban', 'teamId', 'jerseyNumber', 'monthlyFee'
     ];
     if (player.isOwnTutor) {
@@ -428,9 +440,10 @@ export default function PlayersPage() {
                                    <Label htmlFor="lastName">Apellidos</Label>
                                    <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
                                </div>
-                                <div className="space-y-2">
-                                   <Label htmlFor="age">Edad</Label>
-                                   <Input id="age" type="number" value={playerData.age || ''} onChange={handleInputChange} />
+                               <div className="space-y-2">
+                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                   <Input id="birthDate" type="date" value={playerData.birthDate || ''} onChange={handleInputChange} />
+                                   {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
                                </div>
                            </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -563,4 +576,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
