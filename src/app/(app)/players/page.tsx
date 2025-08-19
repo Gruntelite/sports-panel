@@ -74,6 +74,8 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query }
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
+import { DatePicker } from "@/components/ui/date-picker";
+import { format } from "date-fns";
 
 
 export default function PlayersPage() {
@@ -186,6 +188,12 @@ export default function PlayersPage() {
 
   const handleSelectChange = (id: keyof Player, value: string) => {
     setPlayerData(prev => ({ ...prev, [id]: value }));
+  };
+
+  const handleDateChange = (date: Date | undefined) => {
+    if (date) {
+        setPlayerData(prev => ({ ...prev, birthDate: format(date, "yyyy-MM-dd") }));
+    }
   };
   
   const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
@@ -441,8 +449,11 @@ export default function PlayersPage() {
                                    <Input id="lastName" value={playerData.lastName || ''} onChange={handleInputChange} />
                                </div>
                                <div className="space-y-2">
-                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-                                   <Input id="birthDate" type="date" value={playerData.birthDate || ''} onChange={handleInputChange} />
+                                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                  <DatePicker 
+                                    date={playerData.birthDate ? new Date(playerData.birthDate) : undefined} 
+                                    onDateChange={handleDateChange} 
+                                  />
                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
                                </div>
                            </div>
