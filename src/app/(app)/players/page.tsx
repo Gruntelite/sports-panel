@@ -132,14 +132,17 @@ export default function PlayersPage() {
   const hasMissingData = (player: any): boolean => {
     const requiredFields = [
       'birthDate', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
-      'tutorPhone', 'iban', 'teamId', 'jerseyNumber', 'monthlyFee'
+      'tutorPhone', 'iban', 'jerseyNumber'
     ];
+    if (player.monthlyFee === undefined || player.monthlyFee === null) {
+      requiredFields.push('monthlyFee');
+    }
     if (player.isOwnTutor) {
         // No need for tutor fields if player is their own tutor
     } else {
         requiredFields.push('tutorName', 'tutorLastName', 'tutorDni');
     }
-    return requiredFields.some(field => !player[field]);
+    return requiredFields.some(field => player[field] === undefined || player[field] === null || player[field] === '');
   };
 
   const fetchData = async (clubId: string) => {
@@ -236,6 +239,7 @@ export default function PlayersPage() {
       const dataToSave = {
         ...playerData,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
+        monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
 
 
@@ -463,7 +467,7 @@ export default function PlayersPage() {
                     <Badge variant="outline">{player.teamName}</Badge>
                   </TableCell>
                   <TableCell>{player.jerseyNumber || 'N/A'}</TableCell>
-                  <TableCell>{player.monthlyFee ? `${player.monthlyFee} €` : 'N/A'}</TableCell>
+                  <TableCell>{player.monthlyFee === null || player.monthlyFee === undefined ? 'N/A' : `${player.monthlyFee} €`}</TableCell>
                   <TableCell>{player.tutorEmail || 'N/A'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
@@ -643,7 +647,7 @@ export default function PlayersPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
+                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
                             </div>
                        </div>
                       </div>

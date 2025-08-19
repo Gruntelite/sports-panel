@@ -153,7 +153,7 @@ export default function EditTeamPage() {
     } else {
         requiredFields.push('tutorName', 'tutorLastName', 'tutorDni');
     }
-    return requiredFields.some(field => !player[field]);
+    return requiredFields.some(field => player[field] === undefined || player[field] === null || player[field] === '');
   };
 
   const fetchTeamData = async (currentClubId: string) => {
@@ -269,18 +269,18 @@ export default function EditTeamPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
 
-      const teamDocRef = doc(db, "clubs", clubId, "teams", teamId);
       const teamDataToUpdate = {
         name: team.name,
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
-        defaultMonthlyFee: team.defaultMonthlyFee ? Number(team.defaultMonthlyFee) : null,
+        defaultMonthlyFee: (team.defaultMonthlyFee === '' || team.defaultMonthlyFee === undefined || team.defaultMonthlyFee === null) ? null : Number(team.defaultMonthlyFee),
         image: imageUrl,
       };
+      const teamDocRef = doc(db, "clubs", clubId, "teams", teamId);
       batch.update(teamDocRef, teamDataToUpdate);
       
       // Update all players in the team with the new default fee
-      const newFee = team.defaultMonthlyFee ? Number(team.defaultMonthlyFee) : null;
+      const newFee = teamDataToUpdate.defaultMonthlyFee;
       if (newFee !== null) {
           const playersQuery = query(collection(db, "clubs", clubId, "players"), where("teamId", "==", teamId));
           const playersSnapshot = await getDocs(playersQuery);
@@ -296,6 +296,7 @@ export default function EditTeamPage() {
       setNewImage(null);
       setImagePreview(null);
       if(imageUrl) setTeam(prev => ({...prev, image: imageUrl}));
+      fetchTeamData(clubId); // Refresh data
     } catch (error) {
       console.error("Error saving changes: ", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
@@ -365,6 +366,7 @@ export default function EditTeamPage() {
       const dataToSave = {
         ...playerData,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
+        monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
 
       if (modalMode === 'edit' && playerData.id) {
@@ -518,7 +520,7 @@ export default function EditTeamPage() {
                           </div>
                            <div className="space-y-2">
                               <Label htmlFor="defaultMonthlyFee">Cuota Mensual por Defecto (€)</Label>
-                              <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee || ''} onChange={handleInputChange} />
+                              <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee ?? ''} onChange={handleInputChange} />
                           </div>
                            <Button onClick={handleSaveChanges} disabled={saving} className="w-full">
                               {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
@@ -817,7 +819,7 @@ export default function EditTeamPage() {
                             </div>
                             <div className="space-y-2">
                                 <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee || ''} onChange={handleInputChange} />
+                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
                             </div>
                        </div>
                       </div>
