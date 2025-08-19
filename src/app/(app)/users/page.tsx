@@ -145,8 +145,8 @@ export default function UsersPage() {
 
         playersSnapshot.forEach(doc => {
             const data = doc.data() as Player;
-            const contactEmail = data.isOwnTutor ? data.tutorEmail : data.tutorEmail;
-            const contactName = data.isOwnTutor ? `${data.name} ${data.lastName}` : data.tutorName ? `${data.tutorName} ${data.tutorLastName} (Tutor de ${data.name})` : `${data.name} ${data.lastName} (Familia)`;
+            const contactEmail = data.tutorEmail;
+            const contactName = data.isOwnTutor ? `${data.name} ${data.lastName}` : (data.tutorName ? `${data.tutorName} ${data.tutorLastName} (Tutor de ${data.name})` : `${data.name} ${data.lastName} (Familia)`);
             if (contactEmail) {
                 allContacts.push({ name: contactName, email: contactEmail });
             }
