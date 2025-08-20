@@ -37,19 +37,21 @@ export const processEmailBatchFlow = ai.defineFlow(
     // 1. Get a pending batch from the database via a server action
     const batchResult = await getBatchToProcess({ batchId: input.batchId });
 
-    if (!batchResult.success || !batchResult.batch) {
-        if (batchResult.error) output.errors.push(batchResult.error);
-        if(batchResult.batch === null && !input.batchId) { // No pending batches found
-            console.log("No pending email batches to process.");
-            return { processedCount: 0, errors: [] };
-        }
-        if(!batchResult.batch && input.batchId) {
-            const errorMsg = `Could not find batch with ID: ${input.batchId}`;
-            console.error(errorMsg);
-            output.errors.push(errorMsg);
-            return output;
-        }
-        return output;
+    if (!batchResult.success || !batchResult.batch || !batchResult.batchDocPath || !batchResult.clubId) {
+      if (batchResult.error) {
+        output.errors.push(batchResult.error);
+        console.error("Error getting batch to process:", batchResult.error);
+      }
+      if (batchResult.batch === null) {
+        console.log("No pending email batches to process.");
+      }
+      // If we specified an ID but it wasn't found, this is an error state
+      if (input.batchId) {
+        const errorMsg = `Could not find batch with ID: ${input.batchId}`;
+        console.error(errorMsg);
+        output.errors.push(errorMsg);
+      }
+      return output;
     }
     
     const { batch, clubId, batchDocPath } = batchResult;

@@ -141,30 +141,26 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 // Server actions for email batch processing using Admin SDK
 export async function getBatchToProcess({ batchId }: { batchId?: string }) {
     try {
-        let batchDoc: admin.firestore.DocumentSnapshot | undefined;
+        let batchQuery;
 
         if (batchId) {
-            // This is complex because we don't know the clubId on the admin-side from the user's auth state.
-            // A collectionGroup query is more robust for finding the batch regardless of its parent club.
-            const batchQuery = db.collectionGroup('emailBatches').where(admin.firestore.FieldPath.documentId(), '==', `emailBatches/${batchId}`);
-            const querySnapshot = await batchQuery.get();
-             if (!querySnapshot.empty) {
-                batchDoc = querySnapshot.docs[0];
-            }
+            // A collectionGroup query is necessary to find a specific batch
+            // without knowing its parent clubId on the server.
+            batchQuery = db.collectionGroup('emailBatches').where(admin.firestore.FieldPath.documentId(), 'ends-with', `/${batchId}`);
         } else {
-            const batchQuery = db.collectionGroup('emailBatches').where('status', '==', 'pending').orderBy('createdAt').limit(1);
-            const batchSnapshot = await batchQuery.get();
-            if (!batchSnapshot.empty) {
-                batchDoc = batchSnapshot.docs[0];
-            }
+            // Find any pending batch across all clubs.
+            batchQuery = db.collectionGroup('emailBatches').where('status', '==', 'pending').orderBy('createdAt').limit(1);
         }
 
-        if (!batchDoc || !batchDoc.exists) {
-            return { success: true, batch: null };
+        const snapshot = await batchQuery.get();
+
+        if (snapshot.empty) {
+            return { success: true, batch: null, batchDocPath: null, clubId: null };
         }
 
+        const batchDoc = snapshot.docs[0];
         const batchData = batchDoc.data();
-        const clubId = batchDoc.ref.parent.parent?.id;
+        const clubId = batchDoc.ref.parent.parent?.id; 
 
         if (!clubId) {
             await batchDoc.ref.update({ status: 'failed', error: 'Could not determine club ID.' });
@@ -179,6 +175,7 @@ export async function getBatchToProcess({ batchId }: { batchId?: string }) {
         return { success: false, error: error.message };
     }
 }
+
 
 export async function getClubConfig({ clubId }: { clubId: string }) {
     try {
@@ -202,7 +199,6 @@ export async function getClubConfig({ clubId }: { clubId: string }) {
             if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
                 config.fromEmail = data.fromEmail;
             }
-            // Prioritize the platform key, which should be the only one now
             if (data?.platformSendgridApiKey) {
                 config.apiKey = data.platformSendgridApiKey;
             }
@@ -235,7 +231,7 @@ export async function updateBatchWithResults({ batchDocPath, results, originalRe
         });
 
         const allProcessed = updatedRecipients.every(r => r.status === 'sent' || r.status === 'failed');
-        const newStatus = allProcessed ? 'completed' : 'processing'; // Keep as processing until all done
+        const newStatus = allProcessed ? 'completed' : 'processing'; 
 
         await batchRef.update({ recipients: updatedRecipients, status: newStatus, updatedAt: admin.firestore.FieldValue.serverTimestamp() });
 
@@ -302,8 +298,6 @@ export async function retryBatchAction({ clubId, batchId }: { clubId: string, ba
             updatedAt: serverTimestamp(),
         });
         
-        // The flow is designed to be triggered. We just reset the state.
-        // For immediate retry, we can call the flow.
         await processEmailBatchFlow({ batchId, limit: 100 });
         
         return { success: true };
