@@ -256,6 +256,9 @@ export default function PlayersPage() {
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
+      
+      // Remove id from data to save to avoid storing it in Firestore document
+      delete (dataToSave as Partial<Player>).id;
 
       if (modalMode === 'edit' && playerId) {
         const playerRef = doc(db, "clubs", clubId, "players", playerId);
@@ -882,3 +885,4 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+

@@ -249,6 +249,9 @@ export default function CoachesPage() {
         avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
         monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
+      
+      // Remove id from data to save to avoid storing it in Firestore document
+      delete (dataToSave as Partial<Coach>).id;
 
       if (modalMode === 'edit' && coachId) {
         const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
@@ -847,3 +850,4 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
