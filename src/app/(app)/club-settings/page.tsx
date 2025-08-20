@@ -214,7 +214,7 @@ export default function ClubSettingsPage() {
                                         placeholder="p.ej., info.club@gmail.com"
                                         value={fromEmail}
                                         onChange={(e) => setFromEmail(e.target.value)}
-                                        disabled={verificationStatus === 'pending' || verificationStatus === 'verified'}
+                                        readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
                                     />
                                 </div>
                                  <div className="flex items-center gap-2">
