@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
 import { Input } from "./ui/input";
 import { Textarea } from "./ui/textarea";
+import { processEmailBatchFlow } from "@/ai/flows/process-email-batch";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -129,14 +130,14 @@ export function DataUpdateSender() {
         }
     };
     
-    const filteredMembers = useMemo(() => {
+     const filteredMembers = useMemo(() => {
         if (selectedTypes.size === 0 && selectedTeams.size === 0) {
             return allMembers;
         }
         return allMembers.filter(member => {
-            const typeMatch = selectedTypes.size === 0 || selectedTypes.has(member.type);
-            const teamMatch = selectedTeams.size === 0 || (member.teamId && selectedTeams.has(member.teamId));
-            return typeMatch && teamMatch;
+            const typeMatch = selectedTypes.size > 0 && selectedTypes.has(member.type);
+            const teamMatch = selectedTeams.size > 0 && member.teamId && selectedTeams.has(member.teamId);
+            return typeMatch || teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
 
@@ -251,17 +252,18 @@ export function DataUpdateSender() {
               recipients: batchRecipients,
               fieldConfig: availableFields.length > 0 ? fieldConfig : {},
               emailSubject: emailPreview.subject,
-              emailBody: emailPreview.body,
+              emailBody: emailPreview.body.replace(/\n/g, '<br>'),
               status: 'pending',
               createdAt: serverTimestamp(),
           });
         }
         
         await firestoreBatch.commit();
+        await processEmailBatchFlow({ limit: 100 });
 
         toast({
-          title: "¡Solicitud en Cola!",
-          description: `Se han creado ${numBatches} lote(s) para enviar ${totalRecipients} correos. Se procesarán en segundo plano.`,
+          title: "¡Envío Iniciado!",
+          description: `Se ha enviado el primer lote y el resto está en cola. Consulta el estado de los envíos para ver el progreso.`,
         });
         setSelectedMemberIds(new Set());
         setIsPreviewModalOpen(false);
@@ -521,5 +523,3 @@ export function DataUpdateSender() {
         </Card>
     );
 }
-
-    
