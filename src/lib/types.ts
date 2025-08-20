@@ -1,4 +1,5 @@
 
+
 export type Team = {
     id: string;
     name: string;
@@ -107,4 +108,18 @@ export type OneTimePayment = {
     issueDate: string;
     targetTeamIds: string[];
     targetUserIds: string[];
+}
+
+export type TemplateHistoryItem = {
+    id: string;
+    subject: string;
+    body: string;
+    date: Date;
+}
+
+export type FormHistoryItem = {
+    id: string;
+    title: string;
+    url: string;
+    date: Date;
 }

@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -15,6 +15,10 @@ import { Loader2, Wand2, Clipboard, ExternalLink, ClipboardList, PlusCircle, Tra
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { OneTimePayment, FormHistoryItem } from "@/lib/types";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
 
 const initialFormFields = [
     { id: "name", label: "Nombre y Apellidos", required: true, custom: false },
@@ -38,17 +42,39 @@ const formSchema = z.object({
   fields: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Tienes que seleccionar al menos un campo.",
   }),
+  paymentId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export function RegistrationFormCreator() {
+type RegistrationFormCreatorProps = {
+  onFormCreated: (item: FormHistoryItem) => void;
+};
+
+export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreatorProps) {
   const [loading, setLoading] = useState(false);
   const [generatedForm, setGeneratedForm] = useState<{ id: string, url: string } | null>(null);
   const { toast } = useToast();
   
   const [formFields, setFormFields] = useState<FormFieldType[]>(initialFormFields);
   const [newFieldName, setNewFieldName] = useState("");
+  const [payments, setPayments] = useState<OneTimePayment[]>([]);
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = await getDoc(doc(db, "users", user.uid));
+        const clubId = userDocRef.data()?.clubId;
+        if (clubId) {
+          const paymentsCol = collection(db, "clubs", clubId, "oneTimePayments");
+          const snapshot = await getDocs(paymentsCol);
+          setPayments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as OneTimePayment)));
+        }
+      }
+    };
+    fetchPayments();
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -56,6 +82,7 @@ export function RegistrationFormCreator() {
       title: "",
       description: "",
       fields: ["name", "email"],
+      paymentId: "none",
     },
   });
   
@@ -77,7 +104,6 @@ export function RegistrationFormCreator() {
   
   const handleRemoveCustomField = (idToRemove: string) => {
     setFormFields(prev => prev.filter(field => field.id !== idToRemove));
-    // Also remove from form state if it was selected
     const currentSelected = form.getValues("fields");
     form.setValue("fields", currentSelected.filter(id => id !== idToRemove));
   };
@@ -87,13 +113,20 @@ export function RegistrationFormCreator() {
     setLoading(true);
     setGeneratedForm(null);
     
-    // Simulate AI generation and Firestore setup
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     const formId = values.title.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 6);
     const formUrl = `/form/${formId}`;
 
-    setGeneratedForm({ id: formId, url: formUrl });
+    const newForm = { id: formId, url: formUrl };
+    setGeneratedForm(newForm);
+    onFormCreated({
+      id: formId,
+      title: values.title,
+      url: formUrl,
+      date: new Date(),
+    });
+
     setLoading(false);
     toast({
       title: "¡Formulario Generado!",
@@ -128,9 +161,6 @@ export function RegistrationFormCreator() {
                     <FormControl>
                       <Input placeholder="p.ej., Torneo de Verano 3x3, Captación 2024" {...field} />
                     </FormControl>
-                    <FormDescription>
-                      Este será el título principal que verán los usuarios.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -149,6 +179,32 @@ export function RegistrationFormCreator() {
                   </FormItem>
                 )}
               />
+
+              <FormField
+                control={form.control}
+                name="paymentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-base">Vincular Pago (Opcional)</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un pago para este formulario..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No requerir pago</SelectItem>
+                        {payments.map(p => (
+                          <SelectItem key={p.id} value={p.id!}>{p.concept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormDescription>Si se vincula, se pedirá el pago al rellenar el formulario.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
 
               <FormField
                 control={form.control}

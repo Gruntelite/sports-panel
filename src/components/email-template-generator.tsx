@@ -1,13 +1,16 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { generateTemplateAction } from "@/lib/actions";
 import { GenerateCommunicationTemplateOutput } from "@/ai/flows/generate-communication-template";
+import type { OneTimePayment, TemplateHistoryItem } from "@/lib/types";
+import { auth, db } from "@/lib/firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +18,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Wand2, Copy } from "lucide-react";
+import { Loader2, Wand2, Copy, Link as LinkIcon } from "lucide-react";
 
 const formSchema = z.object({
   communicationGoal: z.string().min(1, "El objetivo de la comunicación es obligatorio."),
@@ -23,14 +26,36 @@ const formSchema = z.object({
   keyInformation: z.string().min(1, "La información clave es obligatoria."),
   tone: z.string().optional(),
   additionalContext: z.string().optional(),
+  paymentId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
-export function EmailTemplateGenerator() {
+type EmailTemplateGeneratorProps = {
+  onTemplateGenerated: (item: TemplateHistoryItem) => void;
+};
+
+export function EmailTemplateGenerator({ onTemplateGenerated }: EmailTemplateGeneratorProps) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<GenerateCommunicationTemplateOutput | null>(null);
+  const [payments, setPayments] = useState<OneTimePayment[]>([]);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const fetchPayments = async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userDocRef = await getDoc(doc(db, "users", user.uid));
+        const clubId = userDocRef.data()?.clubId;
+        if (clubId) {
+          const paymentsCol = collection(db, "clubs", clubId, "oneTimePayments");
+          const snapshot = await getDocs(paymentsCol);
+          setPayments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as OneTimePayment)));
+        }
+      }
+    };
+    fetchPayments();
+  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -40,6 +65,7 @@ export function EmailTemplateGenerator() {
       keyInformation: "",
       tone: "formal",
       additionalContext: "",
+      paymentId: "none",
     },
   });
 
@@ -47,10 +73,24 @@ export function EmailTemplateGenerator() {
     setLoading(true);
     setResult(null);
 
-    const response = await generateTemplateAction(values);
+    const selectedPayment = payments.find(p => p.id === values.paymentId);
+    const paymentInfo = selectedPayment 
+      ? `Concepto de Pago: ${selectedPayment.concept}, Cantidad: ${selectedPayment.amount}€.` 
+      : undefined;
+
+    const response = await generateTemplateAction({
+      ...values,
+      paymentInfo: paymentInfo,
+    });
 
     if (response.success && response.data) {
       setResult(response.data);
+      onTemplateGenerated({
+        id: crypto.randomUUID(),
+        subject: response.data.subject,
+        body: response.data.body,
+        date: new Date(),
+      });
       toast({
         title: "¡Plantilla Generada!",
         description: "Tu nueva plantilla de comunicación está lista a continuación.",
@@ -154,6 +194,29 @@ export function EmailTemplateGenerator() {
                     <FormControl>
                       <Textarea placeholder="p.ej., Mencionar el próximo torneo." {...field} />
                     </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="paymentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Vincular Pago (Opcional)</FormLabel>
+                     <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un pago para incluir en el email..." />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">No incluir pago</SelectItem>
+                        {payments.map(p => (
+                          <SelectItem key={p.id} value={p.id!}>{p.concept}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

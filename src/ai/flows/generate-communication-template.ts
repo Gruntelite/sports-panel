@@ -1,3 +1,4 @@
+
 // This file is machine-generated - edit at your own risk!
 
 'use server';
@@ -36,6 +37,10 @@ const GenerateCommunicationTemplateInputSchema = z.object({
     .string()
     .describe('Cualquier detalle adicional que pueda ser relevante para la comunicación.')
     .optional(),
+  paymentInfo: z
+    .string()
+    .describe('Información sobre un pago a incluir en el email. Incluirá concepto y cantidad.')
+    .optional(),
 });
 
 export type GenerateCommunicationTemplateInput = z.infer<
@@ -66,12 +71,16 @@ const generateCommunicationTemplatePrompt = ai.definePrompt({
   Basándote en la información proporcionada, genera una plantilla de comunicación que incluya una línea de asunto y un cuerpo.
   La plantilla debe ser adecuada para enviarla al público objetivo especificado y debe transmitir eficazmente la información clave.
   Considera el tono y cualquier contexto adicional proporcionado para adaptar la comunicación adecuadamente.
+  Si se proporciona información de pago, inclúyela de forma clara y añade un marcador de posición como [Enlace de Pago] para que el usuario pueda insertarlo.
 
   Objetivo: {{{communicationGoal}}}
   Público: {{{targetAudience}}}
   Información Clave: {{{keyInformation}}}
   Tono: {{{tone}}}
   Contexto Adicional: {{{additionalContext}}}
+  {{#if paymentInfo}}
+  Información de Pago: {{{paymentInfo}}}
+  {{/if}}
   `,
 });
 
