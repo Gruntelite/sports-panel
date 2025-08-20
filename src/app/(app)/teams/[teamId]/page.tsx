@@ -81,7 +81,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player, Coach, TeamMember } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -440,8 +440,26 @@ export default function EditTeamPage() {
         await updateDoc(playerRef, dataToSave);
         toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
       } else {
-        await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
+        const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al equipo.` });
+        
+        // Automatic user record creation
+        const contactEmail = dataToSave.tutorEmail;
+        const contactName = dataToSave.isOwnTutor ? `${dataToSave.name} ${dataToSave.lastName}` : (dataToSave.tutorName ? `${dataToSave.tutorName} ${dataToSave.tutorLastName}` : `${dataToSave.name} ${dataToSave.lastName} (Familia)`);
+        
+        if(contactEmail){
+            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            await setDoc(userRef, {
+                email: contactEmail,
+                name: contactName,
+                role: 'Family',
+                playerId: playerDocRef.id,
+            });
+            toast({
+                title: "Registro de Usuario Creado",
+                description: `Se ha creado un registro de usuario para ${contactName}.`,
+            });
+        }
       }
       
       setIsModalOpen(false);
@@ -650,7 +668,7 @@ export default function EditTeamPage() {
                           </div>
                            <Button onClick={() => setIsFeeUpdateAlertOpen(true)} disabled={saving} className="w-full">
                               {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
-                          </Button>
+                           </Button>
                       </CardContent>
                   </Card>
               </div>
