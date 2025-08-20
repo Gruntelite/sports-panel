@@ -46,8 +46,9 @@ export const processEmailBatchFlow = ai.defineFlow(
     // 2. Get club-specific configuration (like API keys) via a server action
     const configResult = await getClubConfig({ clubId });
     if (!configResult.success || !configResult.config) {
-        await finalizeBatch({ batchDocPath, status: 'failed', error: configResult.error });
-        output.errors.push(configResult.error || "Could not retrieve club config.");
+        const errorMsg = configResult.error || "Could not retrieve club config.";
+        await finalizeBatch({ batchDocPath, status: 'failed', error: errorMsg });
+        output.errors.push(errorMsg);
         return output;
     }
     const { clubName, fromEmail, apiKey } = configResult.config;
@@ -94,8 +95,7 @@ export const processEmailBatchFlow = ai.defineFlow(
     const processPromises = pendingRecipients.map(async (recipient: any) => {
         try {
             const tokenData = tokensToCreate.find(t => t.recipient.id === recipient.id);
-            // IMPORTANT: Use a real URL for the update link
-            const updateLink = `https://sportspanel.web.app/update-data?token=${tokenData?.token}`;
+            const updateLink = `https://${process.env.NEXT_PUBLIC_VERCEL_URL || 'sportspanel.web.app'}/update-data?token=${tokenData?.token}`;
             
             const emailBody = (batch.emailBody || defaultBody)
                 .replace(/\[Nombre del Miembro\]/g, recipient.name)
@@ -113,7 +113,7 @@ export const processEmailBatchFlow = ai.defineFlow(
             await sgMail.send(msg);
             return { id: recipient.id, status: 'sent' };
         } catch (error: any) {
-            console.error(`Failed to send email to ${recipient.email}:`, error);
+            console.error(`Failed to send email to ${recipient.email}:`, error.response?.body || error);
             output.errors.push(`Failed for ${recipient.email}: ${error.message}`);
             return { id: recipient.id, status: 'failed', error: error.message };
         }

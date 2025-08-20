@@ -156,8 +156,8 @@ export async function getClubConfig({ clubId }: { clubId: string }) {
         
         let config = {
           clubName: "Tu Club",
-          fromEmail: `notifications@sportspanel.app`, // Fallback email
-          apiKey: process.env.SENDGRID_API_KEY || null,
+          fromEmail: `notifications@${process.env.FIREBASE_PROJECT_ID || 'sportspanel'}.web.app`,
+          apiKey: null as string | null,
         };
         
         if(clubDoc.exists) {
@@ -169,12 +169,15 @@ export async function getClubConfig({ clubId }: { clubId: string }) {
             if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
                 config.fromEmail = data.fromEmail;
             }
-            // IMPORTANT: Use the platform key if the club-specific one isn't there or verified
             if (data?.platformSendgridApiKey) {
                 config.apiKey = data.platformSendgridApiKey;
             }
         }
         
+        if (!config.apiKey) {
+            return { success: false, error: "La API Key de SendGrid para la plataforma no está configurada." };
+        }
+
         return { success: true, config };
     } catch (error: any) {
         console.error("Error in getClubConfig:", error);
