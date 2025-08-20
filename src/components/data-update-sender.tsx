@@ -185,7 +185,6 @@ export function DataUpdateSender() {
         const typesInFilter = new Set<string>();
         filteredMembers.forEach(m => typesInFilter.add(m.type));
         initializeFieldConfig(Array.from(typesInFilter));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [filteredMembers]);
     
     
@@ -224,6 +223,7 @@ export function DataUpdateSender() {
     
     const recipientCount = selectedMemberIds.size > 0 ? selectedMemberIds.size : filteredMembers.length;
     const typesInFilter = Array.from(new Set(filteredMembers.map(m => m.type)));
+    const isAllFilteredSelected = filteredMembers.length > 0 && selectedMemberIds.size === filteredMembers.length;
 
     return (
         <Card>
@@ -334,13 +334,13 @@ export function DataUpdateSender() {
                                 <CommandList>
                                     <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
                                     <CommandGroup>
-                                        <CommandItem onSelect={() => handleSelectAllFiltered(! (selectedMemberIds.size === filteredMembers.length))} className="flex items-center space-x-2 font-semibold">
+                                        <CommandItem onSelect={() => handleSelectAllFiltered(!isAllFilteredSelected)} className="flex items-center space-x-2 font-semibold cursor-pointer">
                                             <Checkbox
                                                 id="select-all"
-                                                checked={selectedMemberIds.size === filteredMembers.length && filteredMembers.length > 0}
+                                                checked={isAllFilteredSelected}
                                                 onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                             />
-                                            <label htmlFor="select-all" className="flex-1">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
                                         </CommandItem>
                                         <ScrollArea className="h-64">
                                             {filteredMembers.map((member) => (
@@ -348,7 +348,7 @@ export function DataUpdateSender() {
                                                     key={member.id}
                                                     value={member.name}
                                                     onSelect={() => handleSelectMember(member.id)}
-                                                    className="flex items-center space-x-2"
+                                                    className="flex items-center space-x-2 cursor-pointer"
                                                 >
                                                     <Checkbox
                                                         id={`select-${member.id}`}
@@ -357,7 +357,7 @@ export function DataUpdateSender() {
                                                     />
                                                     <label
                                                         htmlFor={`select-${member.id}`}
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer"
                                                     >
                                                     {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
                                                     </label>
