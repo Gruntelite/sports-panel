@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect } from 'react';
@@ -35,8 +36,7 @@ function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
 
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    const applyTheme = (primaryHex: string | null, foregroundHex: string | null) => {
+  const applyTheme = (primaryHex: string | null, foregroundHex: string | null) => {
       if (primaryHex) {
         const primaryHsl = hexToHsl(primaryHex);
         if (primaryHsl) {
@@ -53,46 +53,68 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
           localStorage.setItem('clubThemeColorForeground', foregroundHex);
         }
       }
+  };
+
+  useEffect(() => {
+    
+    const fetchAndApplyTheme = async (user: any) => {
+        try {
+            const userDocRef = doc(db, "users", user.uid);
+            const userDocSnap = await getDoc(userDocRef);
+
+            if (userDocSnap.exists()) {
+                const userData = userDocSnap.data();
+                const clubId = userData.clubId;
+
+                if (clubId) {
+                    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                    const settingsSnap = await getDoc(settingsRef);
+
+                    if (settingsSnap.exists()) {
+                        const settingsData = settingsSnap.data();
+                        const themeColor = settingsData?.themeColor;
+                        const themeColorForeground = settingsData?.themeColorForeground;
+                        if (themeColor && themeColorForeground) {
+                            applyTheme(themeColor, themeColorForeground);
+                        }
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching club theme:", error);
+        }
     };
     
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === 'clubThemeColor' || e.key === 'clubThemeColorForeground') {
+        const localTheme = localStorage.getItem('clubThemeColor');
+        const localThemeForeground = localStorage.getItem('clubThemeColorForeground');
+        applyTheme(localTheme, localThemeForeground);
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
     const localTheme = localStorage.getItem('clubThemeColor');
     const localThemeForeground = localStorage.getItem('clubThemeColorForeground');
 
     if (localTheme && localThemeForeground) {
       applyTheme(localTheme, localThemeForeground);
-    } else {
-       const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                try {
-                    const userDocRef = doc(db, "users", user.uid);
-                    const userDocSnap = await getDoc(userDocRef);
+    } 
+    
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if(user) {
+            fetchAndApplyTheme(user);
+        }
+    });
 
-                    if (userDocSnap.exists()) {
-                        const userData = userDocSnap.data();
-                        const clubId = userData.clubId;
-
-                        if (clubId) {
-                            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-                            const settingsSnap = await getDoc(settingsRef);
-
-                            if (settingsSnap.exists()) {
-                                const settingsData = settingsSnap.data();
-                                const themeColor = settingsData?.themeColor;
-                                const themeColorForeground = settingsData?.themeColorForeground;
-                                if (themeColor && themeColorForeground) {
-                                   applyTheme(themeColor, themeColorForeground)
-                                }
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error fetching club theme:", error);
-                }
-            }
-        });
-        return () => unsubscribe();
-    }
+    return () => {
+        unsubscribe();
+        window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   return <>{children}</>;
 }
+
+    

@@ -11,16 +11,36 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Star } from "lucide-react";
+import { CheckCircle, Star, Palette, Save, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 type Plan = 'basic' | 'pro' | 'elite';
 
+function getLuminance(hex: string): number {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return 0;
+    
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+
 export default function ClubSettingsPage() {
     const { toast } = useToast();
+    const [clubId, setClubId] = useState<string | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [saving, setSaving] = useState(false);
+
     const [currentPlan, setCurrentPlan] = useState<Plan>('basic');
+    const [clubName, setClubName] = useState('');
+    const [themeColor, setThemeColor] = useState('#2563eb');
     
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -30,6 +50,7 @@ export default function ClubSettingsPage() {
                 if (userDocSnap.exists()) {
                     const currentClubId = userDocSnap.data().clubId;
                     if (currentClubId) {
+                        setClubId(currentClubId);
                         fetchSettings(currentClubId);
                     }
                 }
@@ -39,18 +60,69 @@ export default function ClubSettingsPage() {
     }, []);
 
     const fetchSettings = async (clubId: string) => {
+        setLoading(true);
         try {
+            const clubRef = doc(db, "clubs", clubId);
+            const clubSnap = await getDoc(clubRef);
+            if (clubSnap.exists()) {
+                setClubName(clubSnap.data().name);
+            }
+
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             const settingsSnap = await getDoc(settingsRef);
             if (settingsSnap.exists()) {
                 const settingsData = settingsSnap.data();
                 setCurrentPlan(settingsData?.billingPlan || 'basic');
+                setThemeColor(settingsData?.themeColor || '#2563eb');
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los ajustes." });
+        } finally {
+            setLoading(false);
         }
     };
+
+    const handleSaveChanges = async () => {
+        if (!clubId) return;
+        setSaving(true);
+        try {
+            // Update club name
+            const clubRef = doc(db, "clubs", clubId);
+            await updateDoc(clubRef, { name: clubName });
+
+            // Update theme color
+            const luminance = getLuminance(themeColor);
+            const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
+
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            await updateDoc(settingsRef, {
+                themeColor: themeColor,
+                themeColorForeground: foregroundColor
+            });
+            
+            // Force theme update by setting local storage which the ThemeProvider listens to
+            localStorage.setItem('clubThemeColor', themeColor);
+            localStorage.setItem('clubThemeColorForeground', foregroundColor);
+            window.dispatchEvent(new Event('storage')); // Notify other tabs/components
+
+            toast({ title: "Guardado!", description: "La configuración del club ha sido actualizada." });
+        } catch (error) {
+            console.error("Error saving settings:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -62,6 +134,41 @@ export default function ClubSettingsPage() {
                 Gestiona la configuración general y las integraciones de tu club.
                 </p>
             </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Ajustes Generales</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="clubName">Nombre del Club</Label>
+                        <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="clubColor">Color Principal del Club</Label>
+                        <div className="flex items-center gap-2">
+                            <Input
+                                id="clubColor"
+                                type="color"
+                                value={themeColor}
+                                onChange={(e) => setThemeColor(e.target.value)}
+                                className="p-1 h-10 w-14"
+                            />
+                            <Input
+                                type="text"
+                                value={themeColor}
+                                onChange={(e) => setThemeColor(e.target.value)}
+                                placeholder="#2563eb"
+                                className="w-full"
+                            />
+                        </div>
+                    </div>
+                     <Button onClick={handleSaveChanges} disabled={saving}>
+                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                        <Save className="mr-2 h-4 w-4" /> Guardar Cambios
+                    </Button>
+                </CardContent>
+            </Card>
             
              <Card>
                 <CardHeader>
@@ -88,7 +195,7 @@ export default function ClubSettingsPage() {
                         </CardHeader>
                     </Card>
                     <Card className={cn("flex flex-col relative", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
-                        <Card className="absolute -top-3 left-1/2 -translate-x-1/2"><Star className="h-3 w-3 mr-1.5"/>El más popular</Card>
+                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
                         <CardHeader>
                             <CardTitle className="text-xl">Pro</CardTitle>
                             <CardDescription>Perfecto para clubs en crecimiento y con más equipos.</CardDescription>
@@ -125,3 +232,5 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
+
+    
