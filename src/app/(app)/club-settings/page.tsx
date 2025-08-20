@@ -146,6 +146,7 @@ export default function ClubSettingsPage() {
                         </CardTitle>
                         <CardDescription>
                            Define la dirección de correo electrónico desde la que el club enviará las comunicaciones.
+                           Para que esto funcione, el administrador de la plataforma debe configurar primero la integración con SendGrid.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -187,15 +188,24 @@ export default function ClubSettingsPage() {
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="text-muted-foreground space-y-2">
+                                           <h4 className="font-bold text-foreground">Para el Administrador de la Plataforma:</h4>
                                            <p>
-                                               Para enviar correos en tu nombre de forma segura y profesional, usamos SendGrid. El proceso es muy sencillo:
+                                               Para que los clubes puedan verificar sus correos, la plataforma necesita una API Key global de SendGrid.
                                            </p>
                                            <ol className="list-decimal list-inside space-y-1">
-                                                <li>Introduce la dirección de correo que quieres usar (puede ser de Gmail, Outlook, etc.).</li>
-                                                <li>Haz clic en "Guardar y Verificar".</li>
-                                                <li>Recibirás un email de SendGrid en esa dirección. Haz clic en el enlace que contiene para confirmar que eres el propietario.</li>
-                                                <li>¡Listo! Tu correo estará verificado y la plataforma podrá enviar comunicaciones desde tu dirección.</li>
+                                                <li>
+                                                    <b>Crea una cuenta en SendGrid:</b> Ve a <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
+                                                </li>
+                                                <li>
+                                                    <b>Crea una API Key:</b> En tu panel de SendGrid, ve a "Settings" {'->'} "API Keys" y crea una nueva clave con permisos completos ("Full Access").
+                                                </li>
+                                                <li>
+                                                    <b>Configura la clave:</b> Deberás añadir esta API Key a las variables de entorno de tu proyecto como `SENDGRID_API_KEY`. Este es un paso de configuración único para toda la plataforma.
+                                                </li>
                                            </ol>
+                                           <p className="mt-2">
+                                            Una vez hecho esto, los clubes podrán verificar sus correos automáticamente.
+                                           </p>
                                         </AccordionContent>
                                     </AccordionItem>
                                 </Accordion>
