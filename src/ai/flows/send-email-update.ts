@@ -24,6 +24,7 @@ export type SendEmailUpdateInput = z.infer<typeof SendEmailUpdateInputSchema>;
 const SendEmailUpdateOutputSchema = z.object({
   success: z.boolean(),
   sentCount: z.number(),
+  requeuedCount: z.number().optional(),
   error: z.string().optional(),
 });
 export type SendEmailUpdateOutput = z.infer<typeof SendEmailUpdateOutputSchema>;
@@ -119,14 +120,17 @@ export const sendEmailUpdateFlow = ai.defineFlow(
                 reason: 'Re-queued after initial send failure',
             });
         }
+        
+        return { success: true, sentCount, requeuedCount: rejectedRecipients.length };
       }
       
-      return { success: true, sentCount };
+      // Case where there were no emails to send, which is technically a success
+      return { success: true, sentCount: 0, requeuedCount: 0 };
 
     } catch (error: any) {
       console.error('Error sending emails:', error.response?.body || error);
       const errorMessage = error.response?.body?.errors?.[0]?.message || error.message || 'Error desconocido al enviar correos.';
-      return { success: false, sentCount: 0, error: errorMessage };
+      return { success: false, sentCount: 0, requeuedCount: recipients.length, error: errorMessage };
     }
   }
 );

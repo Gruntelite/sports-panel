@@ -7,7 +7,7 @@
 import { ai } from '@/ai/genkit';
 import { db } from '@/lib/firebase';
 import { sendEmailUpdateFlow } from './send-email-update';
-import { doc, getDocs, collection, updateDoc, writeBatch, getDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDocs, collection, updateDoc, writeBatch, getDoc, deleteDoc, Timestamp, increment } from 'firebase/firestore';
 
 
 const DAILY_LIMIT = 100;
@@ -123,6 +123,14 @@ export const processQueuedEmailsFlow = ai.defineFlow(
             await deleteDoc(doc(queueRef, queuedBatchDoc.id));
             console.log(`Batch for club ${clubId} processed successfully. Deleting from queue.`);
           }
+
+          if (result.sentCount > 0) {
+            const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+            await updateDoc(settingsRef, {
+                dailyEmailCount: increment(result.sentCount),
+            });
+          }
+
         } else {
           console.error(`Failed to process queued batch for club ${clubId}:`, result.error);
           break; 

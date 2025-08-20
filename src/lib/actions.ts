@@ -4,7 +4,7 @@
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
 import { sendEmailUpdateFlow } from "@/ai/flows/send-email-update";
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment } from "firebase/firestore";
-import { db } from './firebase'; 
+import { db } from './firebase'; // Use client SDK
 
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
@@ -133,6 +133,8 @@ async function getClubConfig(clubId: string) {
       fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
       apiKey: null as string | null,
       availableToSendToday: DAILY_LIMIT,
+      dailyEmailCount: 0,
+      dailyEmailCountResetTimestamp: null as Timestamp | null,
     };
 
     if (clubDoc.exists()) {
@@ -150,11 +152,14 @@ async function getClubConfig(clubId: string) {
         const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
         const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
         
+        config.dailyEmailCountResetTimestamp = data?.dailyEmailCountResetTimestamp || null;
+        
         let currentCount = data?.dailyEmailCount || 0;
         if (lastReset < oneDayAgo) {
             currentCount = 0;
         }
 
+        config.dailyEmailCount = currentCount;
         config.availableToSendToday = DAILY_LIMIT - currentCount;
     }
     return config;
@@ -164,12 +169,12 @@ async function getClubConfig(clubId: string) {
 export async function directSendAction({ clubId, recipients, fieldConfig }: { clubId: string, recipients: any[], fieldConfig: any }) {
     
     const config = await getClubConfig(clubId);
-    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
+    const { availableToSendToday, apiKey, clubName, fromEmail, dailyEmailCount, dailyEmailCountResetTimestamp } = config;
     
     if (!apiKey) {
       const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
       console.error(errorMsg);
-      return { success: false, error: errorMsg };
+      return { success: false, sentCount: 0, queuedCount: 0, error: errorMsg };
     }
 
     const recipientsToSend = recipients.slice(0, availableToSendToday);
@@ -184,6 +189,7 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
         clubId,
     });
     
+    // Always queue the ones that were over the limit from the start
     if (recipientsToQueue.length > 0) {
         const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
         await setDoc(queueRef, {
@@ -193,12 +199,12 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
         });
     }
 
+    // Update daily send count only if emails were successfully sent
     if (result.success && result.sentCount > 0) {
         const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
-        const settingsSnap = await getDoc(settingsRef);
         const now = Timestamp.now();
         
-        if (!settingsSnap.exists() || !settingsSnap.data()?.dailyEmailCountResetTimestamp || settingsSnap.data()?.dailyEmailCountResetTimestamp.toMillis() < now.toMillis() - (24 * 60 * 60 * 1000)) {
+        if (!dailyEmailCountResetTimestamp || dailyEmailCountResetTimestamp.toMillis() < now.toMillis() - (24 * 60 * 60 * 1000)) {
              await setDoc(settingsRef, {
                   dailyEmailCount: result.sentCount,
                   dailyEmailCountResetTimestamp: now,
@@ -211,10 +217,11 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
     }
 
     if (result.success) {
+        const queuedCount = recipientsToQueue.length + (result.requeuedCount || 0);
         return {
             success: true,
-            title: `¡Envío completado!`,
-            description: `Se han enviado ${result.sentCount} correos. ${recipientsToQueue.length > 0 ? `Los ${recipientsToQueue.length} restantes se enviarán automáticamente.` : ''}`
+            title: `¡Envío Procesado!`,
+            description: `Se han enviado ${result.sentCount} correos. ${queuedCount > 0 ? `${queuedCount} correos no se pudieron enviar y se han encolado para un reintento automático.` : ''}`
         };
     } else {
         return {
