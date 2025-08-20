@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Info, Send } from "lucide-react";
+import { Loader2, Mail, Info, Send, Download } from "lucide-react";
 import Link from "next/link";
 import {
   Accordion,
@@ -194,12 +194,20 @@ export default function ClubSettingsPage() {
                                 <p className="text-muted-foreground text-sm mt-1 mb-4">
                                     Como administrador de la plataforma, necesitas configurar la integración con SendGrid para habilitar el envío de correos.
                                 </p>
-                                <Button asChild size="lg">
-                                    <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer">
-                                        <Send className="mr-2 h-4 w-4"/>
-                                        Ir a SendGrid para Configurar
-                                    </a>
-                                </Button>
+                                <div className="flex flex-col sm:flex-row gap-2 justify-center">
+                                    <Button asChild>
+                                        <a href="/guia-sendgrid.pdf" download target="_blank" rel="noopener noreferrer">
+                                            <Download className="mr-2 h-4 w-4"/>
+                                            Descargar Guía (PDF)
+                                        </a>
+                                    </Button>
+                                    <Button asChild variant="secondary">
+                                        <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer">
+                                            <Send className="mr-2 h-4 w-4"/>
+                                            Ir a SendGrid
+                                        </a>
+                                    </Button>
+                                 </div>
                              </div>
                         )}
                         <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
@@ -244,3 +252,6 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
+
+
+    
