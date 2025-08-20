@@ -77,7 +77,7 @@ export function Sidebar() {
     }
 
     return (
-        <div className="hidden border-r bg-card md:block">
+        <div className="hidden md:flex h-full w-[220px] lg:w-[280px] flex-col fixed inset-y-0 z-50 border-r bg-card">
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
