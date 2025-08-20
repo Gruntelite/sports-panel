@@ -1,5 +1,7 @@
 
 
+import type { Timestamp } from "firebase/firestore";
+
 export type Team = {
     id: string;
     name: string;
@@ -130,3 +132,17 @@ export type FormHistoryItem = {
     url: string;
     date: Date;
 }
+
+export type CalendarEvent = {
+    id: string;
+    title: string;
+    start: Timestamp;
+    end: Timestamp;
+    type: 'Entrenamiento' | 'Partido' | 'Evento' | 'Otro';
+    location?: string;
+    teamId?: string;
+    teamName?: string;
+    color: string;
+    isTemplateBased?: boolean;
+    description?: string;
+};
