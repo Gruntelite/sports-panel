@@ -5,10 +5,11 @@ import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailTemplateGenerator } from "@/components/email-template-generator";
 import { RegistrationFormCreator } from "@/components/registration-form-creator";
-import { Mail, ClipboardList } from "lucide-react";
+import { Mail, ClipboardList, UserCheck } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { TemplateHistoryItem, FormHistoryItem } from "@/lib/types";
+import { DataUpdateSender } from "@/components/data-update-sender";
 
 
 export default function CommunicationsPage() {
@@ -29,12 +30,12 @@ export default function CommunicationsPage() {
        <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight">Comunicaciones</h1>
         <p className="text-muted-foreground">
-          Genera emails para tu club o crea formularios de inscripción para eventos públicos.
+          Genera emails, crea formularios o solicita actualizaciones de datos a tus miembros.
         </p>
       </div>
       
       <Tabs defaultValue="email-templates" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="email-templates">
             <Mail className="mr-2 h-4 w-4" />
             Plantillas de Email
@@ -42,6 +43,10 @@ export default function CommunicationsPage() {
           <TabsTrigger value="registration-forms">
             <ClipboardList className="mr-2 h-4 w-4" />
             Formularios de Inscripción
+          </TabsTrigger>
+           <TabsTrigger value="data-update">
+            <UserCheck className="mr-2 h-4 w-4" />
+            Actualización de Datos
           </TabsTrigger>
         </TabsList>
 
@@ -99,6 +104,10 @@ export default function CommunicationsPage() {
                     )}
                 </CardContent>
             </Card>
+        </TabsContent>
+        
+        <TabsContent value="data-update" className="mt-6 space-y-8">
+            <DataUpdateSender />
         </TabsContent>
       </Tabs>
     </div>

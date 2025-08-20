@@ -84,6 +84,13 @@ export type TeamMember = {
     data: Player | Coach | Staff;
 }
 
+export type ClubMember = {
+    id: string;
+    name: string;
+    type: 'Jugador' | 'Entrenador' | 'Staff';
+    data: Player | Coach | Staff;
+};
+
 export type Contact = {
     name: string;
     email: string;
