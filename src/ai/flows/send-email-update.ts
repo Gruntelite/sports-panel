@@ -7,12 +7,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
+import { db } from '@/lib/firebase-admin';
 import * as admin from 'firebase-admin';
 
-if (!admin.apps.length) {
-    admin.initializeApp();
-}
-const db = admin.firestore();
 
 const DAILY_LIMIT = 100;
 
@@ -181,5 +178,3 @@ export const sendEmailUpdateFlow = ai.defineFlow(
     }
   }
 );
-
-    

@@ -5,25 +5,9 @@ import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } fro
 import { sendEmailUpdateFlow } from "@/ai/flows/send-email-update";
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db as clientDb } from "./firebase";
+import { db } from './firebase-admin';
 import * as admin from 'firebase-admin';
 
-// Initialize admin only if it hasn't been initialized
-if (!admin.apps.length) {
-    try {
-        admin.initializeApp();
-    } catch (error: any) {
-        if (error.code !== 'app/duplicate-app') {
-            console.warn('Admin SDK init failed (expected on client):', error.message);
-        }
-    }
-}
-
-let db: admin.firestore.Firestore;
-try {
-    db = admin.firestore();
-} catch (e) {
-    console.warn("Admin firestore could not be initialized");
-}
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
   try {
@@ -240,5 +224,3 @@ export async function saveMemberDataFromUpdate({ token, updatedData }: { token: 
         return { success: false, error: "No se pudieron guardar los cambios." };
     }
 }
-
-    
