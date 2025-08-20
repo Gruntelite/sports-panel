@@ -321,25 +321,35 @@ export function DataUpdateSender() {
                                     Elige los miembros a los que enviar la solicitud de actualización.
                                 </DialogDescription>
                             </DialogHeader>
-                            <ScrollArea className="h-72">
-                                <div className="space-y-2 pr-4">
-                                {filteredMembers.map((member) => (
-                                    <div key={member.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
-                                        <Checkbox
-                                            id={`select-${member.id}`}
-                                            checked={selectedMemberIds.has(member.id)}
-                                            onCheckedChange={() => handleSelectMember(member.id)}
-                                        />
-                                        <label
-                                            htmlFor={`select-${member.id}`}
-                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
-                                        >
-                                           {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
-                                        </label>
-                                    </div>
-                                ))}
-                                </div>
-                            </ScrollArea>
+                            <Command>
+                                <CommandInput placeholder="Buscar miembro..." />
+                                <CommandList>
+                                    <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
+                                    <CommandGroup>
+                                        {filteredMembers.map((member) => (
+                                            <CommandItem
+                                                key={member.id}
+                                                value={member.name}
+                                                onSelect={() => handleSelectMember(member.id)}
+                                                className="flex items-center space-x-2"
+                                            >
+                                                <Checkbox
+                                                    id={`select-${member.id}`}
+                                                    checked={selectedMemberIds.has(member.id)}
+                                                    onCheckedChange={() => handleSelectMember(member.id)}
+                                                />
+                                                <label
+                                                    htmlFor={`select-${member.id}`}
+                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                                                >
+                                                {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
+                                                </label>
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+
                             <DialogFooter>
                                 <DialogClose asChild>
                                     <Button>Aceptar</Button>
