@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, ExternalLink, Info } from "lucide-react";
+import { Loader2, KeyRound, ExternalLink, Info, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import {
   Accordion,
@@ -23,6 +23,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
@@ -113,8 +114,7 @@ export default function ClubSettingsPage() {
                             Integración de Correo (SendGrid)
                         </CardTitle>
                         <CardDescription>
-                            Para enviar correos electrónicos (como las solicitudes de actualización de datos) desde tu propia dirección, necesitas una cuenta de SendGrid.
-                            Pega aquí tu clave de API de SendGrid.
+                            Para enviar correos electrónicos profesionales desde tu propia dirección, necesitas una cuenta de SendGrid y un dominio propio.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -124,6 +124,13 @@ export default function ClubSettingsPage() {
                             </div>
                         ): (
                             <>
+                                <Alert variant="destructive" className="bg-destructive/10">
+                                  <AlertTriangle className="h-4 w-4" />
+                                  <AlertTitle className="font-semibold">Requisito: Dominio Propio</AlertTitle>
+                                  <AlertDescription>
+                                    Para usar esta función, el club debe tener un nombre de dominio (p.ej., `minombredeclub.com`). No se pueden usar direcciones de correo gratuitas como `@gmail.com` o `@hotmail.com` para el envío.
+                                  </AlertDescription>
+                                </Alert>
                                 <div className="space-y-2">
                                     <Label htmlFor="sendgrid-api-key">SendGrid API Key</Label>
                                     <Input 
@@ -155,7 +162,7 @@ export default function ClubSettingsPage() {
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="text-muted-foreground">
-                                            Para asegurar la entrega y respetar los límites de los proveedores, los correos se envían en lotes en segundo plano. Por ejemplo, el plan gratuito de SendGrid suele permitir unos 100 correos al día. Si envías una comunicación a más destinatarios, el sistema los procesará en grupos para no superar ese límite, asegurando que todos lleguen de forma fiable. Si necesitas más capacidad de envío, siempre puedes contratar un plan superior directamente con SendGrid.
+                                           Para asegurar la entrega y respetar los límites de los proveedores, los correos se envían en lotes en segundo plano. Por ejemplo, el plan gratuito de SendGrid suele permitir unos 100 correos al día. Si envías una comunicación a más destinatarios, el sistema los procesará en grupos para no superar ese límite, asegurando que todos lleguen de forma fiable. Si necesitas más capacidad de envío, siempre puedes contratar un plan superior directamente con SendGrid.
                                         </AccordionContent>
                                     </AccordionItem>
                                 </Accordion>
