@@ -2,7 +2,8 @@
 "use server";
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
-import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp } from "firebase/firestore";
+import { processEmailBatchFlow } from "@/ai/flows/process-email-batch";
+import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp, collectionGroup } from "firebase/firestore";
 import { db as clientDb } from "./firebase";
 import { db as adminDb } from "./firebase-admin";
 
@@ -120,16 +121,28 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 }
 
 // Server actions for email batch processing using Admin SDK
-export async function getBatchToProcess() {
+export async function getBatchToProcess({ batchId }: { batchId?: string }) {
     try {
-        const batchQuery = adminDb.collectionGroup('emailBatches').where('status', '==', 'pending').limit(1);
-        const batchSnapshot = await batchQuery.get();
+        let batchDoc: admin.firestore.QueryDocumentSnapshot | admin.firestore.DocumentSnapshot | undefined;
 
-        if (batchSnapshot.empty) {
-            return { success: true, batch: null };
+        if (batchId) {
+             const batchQuery = adminDb.collectionGroup('emailBatches').where('__name__', '==', `clubs/${batchId.split('/')[1]}/emailBatches/${batchId.split('/')[3]}`);
+             const snapshot = await batchQuery.get();
+             if (!snapshot.empty) {
+                batchDoc = snapshot.docs[0];
+             }
+        } else {
+            const batchQuery = adminDb.collectionGroup('emailBatches').where('status', '==', 'pending').limit(1);
+            const batchSnapshot = await batchQuery.get();
+            if (!batchSnapshot.empty) {
+                batchDoc = batchSnapshot.docs[0];
+            }
         }
 
-        const batchDoc = batchSnapshot.docs[0];
+        if (!batchDoc || !batchDoc.exists) {
+            return { success: true, batch: null, error: "No pending batch found." };
+        }
+
         const batchData = batchDoc.data();
         const clubId = batchDoc.ref.parent.parent?.id;
 
@@ -253,5 +266,21 @@ export async function createDataUpdateTokens({ tokensToCreate }: { tokensToCreat
     } catch (error: any) {
         console.error("Error creating data update tokens:", error);
         return { success: false, error: error.message };
+    }
+}
+
+export async function retryBatchAction({ clubId, batchId }: { clubId: string, batchId: string }) {
+    try {
+        const batchRef = doc(clientDb, "clubs", clubId, "emailBatches", batchId);
+        await updateDoc(batchRef, {
+            status: "pending"
+        });
+        
+        await processEmailBatchFlow({ batchId: batchRef.path });
+        
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error retrying batch:", error);
+        return { success: false, error: "No se pudo reintentar el lote." };
     }
 }

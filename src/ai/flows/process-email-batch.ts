@@ -13,6 +13,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 const ProcessEmailBatchInputSchema = z.object({
   limit: z.number().optional().default(20).describe('The number of emails to process in this batch.'),
+  batchId: z.string().optional().describe('The specific batch ID to process.'),
 });
 export type ProcessEmailBatchInput = z.infer<typeof ProcessEmailBatchInputSchema>;
 
@@ -34,7 +35,7 @@ export const processEmailBatchFlow = ai.defineFlow(
     const output: ProcessEmailBatchOutput = { processedCount: 0, errors: [] };
     
     // 1. Get a pending batch from the database via a server action
-    const batchResult = await getBatchToProcess();
+    const batchResult = await getBatchToProcess({ batchId: input.batchId });
 
     if (!batchResult.success || !batchResult.batch) {
         if (batchResult.error) output.errors.push(batchResult.error);
@@ -95,7 +96,10 @@ export const processEmailBatchFlow = ai.defineFlow(
     const processPromises = pendingRecipients.map(async (recipient: any) => {
         try {
             const tokenData = tokensToCreate.find(t => t.recipient.id === recipient.id);
-            const updateLink = `https://${process.env.NEXT_PUBLIC_VERCEL_URL || 'sportspanel.web.app'}/update-data?token=${tokenData?.token}`;
+            const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
+                ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` 
+                : 'http://localhost:9002';
+            const updateLink = `${baseUrl}/update-data?token=${tokenData?.token}`;
             
             const emailBody = (batch.emailBody || defaultBody)
                 .replace(/\[Nombre del Miembro\]/g, recipient.name)

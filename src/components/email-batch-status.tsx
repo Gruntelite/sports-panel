@@ -10,6 +10,7 @@ import { Badge } from "./ui/badge";
 import { Progress } from "./ui/progress";
 import { Loader2, RefreshCw, Send, CheckCircle, AlertCircle, Hourglass } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { retryBatchAction } from "@/lib/actions";
 
 type EmailBatch = {
     id: string;
@@ -25,12 +26,12 @@ export function EmailBatchStatus() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [batches, setBatches] = useState<EmailBatch[]>([]);
     const [loading, setLoading] = useState(true);
-    const [refreshing, setRefreshing] = useState(false);
+    const [isActionLoading, setIsActionLoading] = useState<{[key: string]: boolean}>({});
     const { toast } = useToast();
 
     const fetchBatches = useCallback(async (currentClubId: string) => {
         if (!currentClubId) return;
-        setRefreshing(true);
+        setIsActionLoading(prev => ({...prev, global: true }));
         try {
             const batchesQuery = query(
                 collection(db, "clubs", currentClubId, "emailBatches"),
@@ -51,7 +52,7 @@ export function EmailBatchStatus() {
             });
         } finally {
             setLoading(false);
-            setRefreshing(false);
+            setIsActionLoading(prev => ({...prev, global: false }));
         }
     }, [toast]);
 
@@ -77,6 +78,21 @@ export function EmailBatchStatus() {
         });
         return () => unsubscribe();
     }, [fetchBatches]);
+
+    const handleRetry = async (batchId: string) => {
+      if(!clubId) return;
+      setIsActionLoading(prev => ({...prev, [batchId]: true}));
+      
+      const result = await retryBatchAction({ clubId, batchId });
+      
+      if (result.success) {
+        toast({ title: "Reintento iniciado", description: `El lote se ha puesto en cola para ser procesado de nuevo.` });
+        fetchBatches(clubId);
+      } else {
+        toast({ variant: "destructive", title: "Error", description: result.error });
+      }
+      setIsActionLoading(prev => ({...prev, [batchId]: false}));
+    }
 
     const getBatchStatus = (batch: EmailBatch) => {
         const sentCount = batch.recipients.filter(r => r.status === 'sent').length;
@@ -132,8 +148,8 @@ export function EmailBatchStatus() {
                         Monitoriza el progreso de tus solicitudes de actualización de datos.
                     </CardDescription>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => clubId && fetchBatches(clubId)} disabled={refreshing}>
-                    {refreshing ? (
+                <Button variant="outline" size="sm" onClick={() => clubId && fetchBatches(clubId)} disabled={isActionLoading['global']}>
+                    {isActionLoading['global'] ? (
                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     ) : (
                         <RefreshCw className="mr-2 h-4 w-4" />
@@ -146,6 +162,7 @@ export function EmailBatchStatus() {
                     {batches.length > 0 ? (
                         batches.map(batch => {
                             const { sentCount, failedCount, total, progress, statusText, StatusIcon, badgeVariant } = getBatchStatus(batch);
+                            const isLoading = isActionLoading[batch.id];
                             return (
                                 <div key={batch.id} className="p-4 border rounded-lg space-y-3">
                                     <div className="flex justify-between items-start">
@@ -158,11 +175,19 @@ export function EmailBatchStatus() {
                                             </p>
                                         </div>
                                          <Badge variant={badgeVariant} className={batch.status === 'processing' ? "animate-pulse" : ""}>
-                                            <StatusIcon className={`mr-2 h-4 w-4 ${batch.status === 'processing' ? 'animate-spin' : ''}`} />
+                                            <StatusIcon className={`mr-2 h-4 w-4 ${batch.status === 'processing' || isLoading ? 'animate-spin' : ''}`} />
                                             {statusText}
                                         </Badge>
                                     </div>
                                     <Progress value={progress} />
+                                    { (batch.status === 'pending' || batch.status === 'failed') && (
+                                        <div className="flex justify-end">
+                                            <Button variant="secondary" size="sm" onClick={() => handleRetry(batch.id)} disabled={isLoading}>
+                                                { isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" /> }
+                                                { isLoading ? 'Procesando...' : 'Reintentar Envío' }
+                                            </Button>
+                                        </div>
+                                    )}
                                 </div>
                             )
                         })
