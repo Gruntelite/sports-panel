@@ -7,17 +7,61 @@ import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
-import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
-import { Check, ChevronsUpDown, Eye, EyeOff, Pencil, Send } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { Label } from "./ui/label";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
+import { Check, ChevronsUpDown, Eye, EyeOff, Pencil, Send, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
+import { Label } from "./ui/label";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Checkbox } from "./ui/checkbox";
+import { ScrollArea } from "./ui/scroll-area";
+
 
 type FieldPermission = "editable" | "readonly" | "hidden";
+
+const COMMON_FIELDS: { key: keyof (Player & Coach & Staff); label: string }[] = [
+    { key: "avatar", label: "Foto de Perfil" },
+    { key: "name", label: "Nombre" },
+    { key: "lastName", label: "Apellidos" },
+    { key: "birthDate", label: "Fecha de Nacimiento" },
+    { key: "dni", label: "DNI" },
+    { key: "address", label: "Dirección" },
+    { key: "city", label: "Ciudad" },
+    { key: "postalCode", label: "Código Postal" },
+    { key: "kitSize", label: "Talla de Equipación" },
+    { key: "iban", label: "IBAN" },
+];
+
+const FIELD_CONFIG_PLAYER: { key: keyof Player; label: string }[] = [
+    ...COMMON_FIELDS,
+    { key: "tutorName", label: "Nombre del Tutor" },
+    { key: "tutorLastName", label: "Apellidos del Tutor" },
+    { key: "tutorDni", label: "DNI del Tutor" },
+    { key: "tutorEmail", label: "Email del Tutor" },
+    { key: "tutorPhone", label: "Teléfono del Tutor" },
+    { key: "jerseyNumber", label: "Dorsal" },
+    { key: "monthlyFee", label: "Cuota Mensual (€)" },
+];
+
+const FIELD_CONFIG_COACH: { key: keyof Coach; label: string }[] = [
+    ...COMMON_FIELDS,
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Teléfono" },
+    { key: "monthlyPayment", label: "Pago Mensual (€)" },
+    { key: "tutorName", label: "Nombre del Tutor" },
+    { key: "tutorLastName", label: "Apellidos del Tutor" },
+    { key: "tutorDni", label: "DNI del Tutor" },
+];
+
+const FIELD_CONFIG_STAFF: { key: keyof Staff; label: string }[] = [
+    { key: "avatar", label: "Foto de Perfil" },
+    { key: "name", label: "Nombre" },
+    { key: "lastName", label: "Apellidos" },
+    { key: "role", label: "Cargo" },
+    { key: "email", label: "Email" },
+    { key: "phone", label: "Teléfono" },
+];
+
 type FieldConfig = {
     [key: string]: { label: string; permission: FieldPermission };
 };
@@ -28,7 +72,7 @@ export function DataUpdateSender() {
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     
-    const [selectedMember, setSelectedMember] = useState<ClubMember | null>(null);
+    const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
     const [isMemberSelectOpen, setIsMemberSelectOpen] = useState(false);
     
     const [filterType, setFilterType] = useState<string>('all');
@@ -98,48 +142,47 @@ export function DataUpdateSender() {
         });
     }, [allMembers, filterType, filterTeam]);
     
-    const initializeFieldConfig = (member: ClubMember) => {
+    const initializeFieldConfig = (memberType: 'Jugador' | 'Entrenador' | 'Staff') => {
         const config: FieldConfig = {};
-        const data = member.data;
+        let fields: { key: string; label: string }[] = [];
 
-        const fieldLabels: { [key: string]: string } = {
-            avatar: "Foto de Perfil",
-            name: "Nombre",
-            lastName: "Apellidos",
-            birthDate: "Fecha de Nacimiento",
-            dni: "DNI",
-            address: "Dirección",
-            city: "Ciudad",
-            postalCode: "Código Postal",
-            email: "Email (Entrenador/Staff)",
-            phone: "Teléfono (Entrenador/Staff)",
-            kitSize: "Talla de Equipación",
-            iban: "IBAN",
-            monthlyPayment: "Pago Mensual (€)",
-            tutorName: "Nombre del Tutor",
-            tutorLastName: "Apellidos del Tutor",
-            tutorDni: "DNI del Tutor",
-            tutorEmail: "Email del Tutor",
-            tutorPhone: "Teléfono del Tutor",
-            jerseyNumber: "Dorsal",
-        };
+        switch (memberType) {
+            case 'Jugador':
+                fields = FIELD_CONFIG_PLAYER;
+                break;
+            case 'Entrenador':
+                fields = FIELD_CONFIG_COACH;
+                break;
+            case 'Staff':
+                fields = FIELD_CONFIG_STAFF;
+                break;
+        }
 
-        Object.keys(data).forEach(key => {
-            if (fieldLabels[key]) {
-                config[key] = { label: fieldLabels[key], permission: 'editable' };
-            }
+        fields.forEach(({ key, label }) => {
+            config[key] = { label, permission: 'editable' };
         });
-        
+
         setFieldConfig(config);
     };
 
-    const handleSelectMember = (memberId: string) => {
-        const member = allMembers.find(m => m.id === memberId);
-        if (member) {
-            setSelectedMember(member);
-            initializeFieldConfig(member);
+    useEffect(() => {
+        if (filterType !== 'all') {
+            initializeFieldConfig(filterType as 'Jugador' | 'Entrenador' | 'Staff');
+        } else {
+            setFieldConfig({});
         }
-        setIsMemberSelectOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [filterType]);
+    
+    
+    const handleSelectMember = (memberId: string) => {
+        const newSelection = new Set(selectedMemberIds);
+        if (newSelection.has(memberId)) {
+            newSelection.delete(memberId);
+        } else {
+            newSelection.add(memberId);
+        }
+        setSelectedMemberIds(newSelection);
     };
 
     const setFieldPermission = (fieldKey: string, permission: FieldPermission) => {
@@ -155,17 +198,19 @@ export function DataUpdateSender() {
         description: "El envío del formulario de actualización aún no está implementado."
       });
     }
+    
+    const selectedCount = selectedMemberIds.size;
 
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Solicitar Actualización de Datos</CardTitle>
                 <CardDescription>
-                    Selecciona un miembro del club, elige qué campos puede actualizar y envíale un enlace seguro para que complete su información.
+                    Selecciona uno o más miembros, elige qué campos pueden actualizar y envíales un enlace seguro.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-                 <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 space-y-2">
                         <Label>Filtrar por tipo</Label>
                         <Select value={filterType} onValueChange={setFilterType}>
@@ -180,7 +225,7 @@ export function DataUpdateSender() {
                             </SelectContent>
                         </Select>
                     </div>
-                     <div className="flex-1 space-y-2">
+                    <div className="flex-1 space-y-2">
                         <Label>Filtrar por equipo</Label>
                         <Select value={filterTeam} onValueChange={setFilterTeam} disabled={filterType === 'Staff'}>
                             <SelectTrigger>
@@ -194,53 +239,55 @@ export function DataUpdateSender() {
                             </SelectContent>
                         </Select>
                     </div>
-                 </div>
+                </div>
 
                 <div className="space-y-2">
-                    <Label>Selecciona un Miembro</Label>
-                    <Popover open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-full md:w-[400px] justify-between">
-                                {selectedMember ? (
-                                    <>
-                                        <div className="flex items-center gap-2">
-                                            <Avatar className="h-6 w-6">
-                                                <AvatarImage src={(selectedMember.data as any).avatar} />
-                                                <AvatarFallback>{selectedMember.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            {selectedMember.name} ({selectedMember.type})
-                                        </div>
-                                    </>
-                                ) : "Buscar miembro del club..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <Label>Destinatarios</Label>
+                     <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
+                        <DialogTrigger asChild>
+                             <Button variant="outline" className="w-full md:w-[400px] justify-between">
+                                {selectedCount > 0 ? `${selectedCount} miembro(s) seleccionado(s)` : "Seleccionar miembros..."}
+                                <UserPlus className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                                <CommandInput placeholder="Buscar por nombre..." />
-                                <CommandList>
-                                    <CommandEmpty>No se encontró ningún miembro con esos filtros.</CommandEmpty>
-                                    <CommandGroup>
-                                        {filteredMembers.map((member) => (
-                                            <CommandItem
-                                                key={member.id}
-                                                value={member.name}
-                                                onSelect={() => handleSelectMember(member.id)}
-                                            >
-                                                <Check className={cn("mr-2 h-4 w-4", selectedMember?.id === member.id ? "opacity-100" : "opacity-0")} />
-                                                {member.name} ({member.type})
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                             <DialogHeader>
+                                <DialogTitle>Seleccionar Destinatarios</DialogTitle>
+                                <DialogDescription>
+                                    Elige los miembros a los que enviar la solicitud de actualización.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <ScrollArea className="h-72">
+                                <div className="space-y-2 pr-4">
+                                {filteredMembers.map((member) => (
+                                    <div key={member.id} className="flex items-center space-x-2 p-2 rounded-md hover:bg-muted">
+                                        <Checkbox
+                                            id={`select-${member.id}`}
+                                            checked={selectedMemberIds.has(member.id)}
+                                            onCheckedChange={() => handleSelectMember(member.id)}
+                                        />
+                                        <label
+                                            htmlFor={`select-${member.id}`}
+                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                                        >
+                                           {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
+                                        </label>
+                                    </div>
+                                ))}
+                                </div>
+                            </ScrollArea>
+                            <DialogFooter>
+                                <DialogClose asChild>
+                                    <Button>Aceptar</Button>
+                                </DialogClose>
+                            </DialogFooter>
+                        </DialogContent>
+                    </Dialog>
                 </div>
                 
-                {selectedMember && (
+                 {selectedCount > 0 && filterType !== 'all' && (
                     <div className="border-t pt-6">
-                        <h3 className="text-lg font-medium mb-4">Configurar Campos del Formulario</h3>
+                        <h3 className="text-lg font-medium mb-4">Configurar Campos para <span className="capitalize text-primary">{filterType}s</span></h3>
                         <div className="space-y-3">
                            {Object.entries(fieldConfig).map(([key, { label, permission }]) => (
                                 <div key={key} className="flex items-center justify-between rounded-lg border p-3">
@@ -268,12 +315,18 @@ export function DataUpdateSender() {
                                 </div>
                            ))}
                         </div>
-                        <Button className="w-full mt-6 gap-2" onClick={handleSend}>
+                        <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={selectedCount === 0}>
                             <Send className="h-4 w-4"/>
-                            Generar y Enviar Enlace de Actualización
+                            Generar y Enviar Enlace(s) de Actualización
                         </Button>
                     </div>
                 )}
+
+                 {selectedCount > 0 && filterType === 'all' && (
+                     <div className="border-t pt-6 text-center text-muted-foreground">
+                         <p>Por favor, selecciona un tipo de miembro (Jugador, Entrenador o Staff) para configurar los campos del formulario.</p>
+                     </div>
+                 )}
             </CardContent>
         </Card>
     );
