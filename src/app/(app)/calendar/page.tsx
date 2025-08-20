@@ -269,7 +269,8 @@ function CalendarView() {
   const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
   const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
   const daysInMonth = endOfMonth.getDate();
-  const startDay = startOfMonth.getDay();
+  const startDayRaw = startOfMonth.getDay(); // 0 = Dom, 1 = Lun, ...
+  const startDay = startDayRaw === 0 ? 6 : startDayRaw - 1; // 0 = Lun, 1 = Mar, ..., 6 = Dom
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const placeholders = Array.from({ length: startDay }, (_, i) => i);
@@ -364,7 +365,7 @@ function CalendarView() {
             </div>
         ) : (
             <div className="grid grid-cols-7 gap-px border-t border-l border-border bg-border">
-                {['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'].map(day => (
+                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
                     <div key={day} className="text-center font-semibold py-2 bg-card text-muted-foreground text-sm">{day}</div>
                 ))}
                 {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
@@ -428,3 +429,5 @@ export default function CalendarPage() {
     </div>
   )
 }
+
+    
