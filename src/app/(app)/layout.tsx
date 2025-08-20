@@ -1,3 +1,4 @@
+
 import * as React from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';

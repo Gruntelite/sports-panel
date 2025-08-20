@@ -1,3 +1,4 @@
+
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -77,7 +78,7 @@ export function Sidebar() {
     }
 
     return (
-        <div className="hidden md:flex h-full w-[220px] lg:w-[280px] flex-col fixed inset-y-0 z-50 border-r bg-card">
+        <div className="hidden border-r bg-card md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
@@ -131,9 +132,11 @@ export function Sidebar() {
                         <DropdownMenuContent align="end" className="w-56 mb-2">
                             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                                <Settings className="mr-2 h-4 w-4"/>
-                                Ajustes
+                            <DropdownMenuItem asChild>
+                                <Link href="/account" className="w-full">
+                                    <Settings className="mr-2 h-4 w-4"/>
+                                    Ajustes
+                                </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={handleLogout}>
                               <LogOut className="mr-2 h-4 w-4"/>
