@@ -155,7 +155,7 @@ export default function ClubSettingsPage() {
                                             </div>
                                         </AccordionTrigger>
                                         <AccordionContent className="text-muted-foreground">
-                                            Para asegurar la entrega y respetar los límites de los proveedores (incluso los gratuitos), los correos se envían en lotes en segundo plano. Esto significa que si envías una comunicación a muchos destinatarios, pueden tardar un poco en llegar todos, pero el sistema se encarga de que se entreguen de forma fiable sin que tengas que esperar.
+                                            Para asegurar la entrega y respetar los límites de los proveedores, los correos se envían en lotes en segundo plano. Por ejemplo, el plan gratuito de SendGrid suele permitir unos 100 correos al día. Si envías una comunicación a más destinatarios, el sistema los procesará en grupos para no superar ese límite, asegurando que todos lleguen de forma fiable. Si necesitas más capacidad de envío, siempre puedes contratar un plan superior directamente con SendGrid.
                                         </AccordionContent>
                                     </AccordionItem>
                                 </Accordion>
