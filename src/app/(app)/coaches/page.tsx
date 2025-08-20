@@ -771,12 +771,13 @@ export default function CoachesPage() {
                     </TabsContent>
                     <TabsContent value="docs" className="pt-6">
                         <div className="min-h-[280px]">
+                          {modalMode === 'edit' ? (
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
                                     <div className="flex gap-2">
                                         <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc || modalMode === 'add'}>
+                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc}>
                                             {uploadingDoc ? <Loader2 className="animate-spin" /> : <Upload className="h-4 w-4"/>}
                                         </Button>
                                     </div>
@@ -804,6 +805,11 @@ export default function CoachesPage() {
                                     )}
                                 </div>
                             </div>
+                          ) : (
+                                <div className="text-center text-muted-foreground py-10">
+                                    <p>Guarda primero al entrenador para poder subir documentos.</p>
+                                </div>
+                          )}
                         </div>
                     </TabsContent>
                 </Tabs>
