@@ -141,29 +141,25 @@ export function DataUpdateSender() {
     const filteredMembers = useMemo(() => {
         return allMembers.filter(member => {
             const typeMatch = selectedTypes.size === 0 || selectedTypes.has(member.type);
-            const teamMatch = selectedTeams.size === 0 || selectedTeams.has((member.data as Player | Coach).teamId || '');
-
-            if (selectedTypes.has('Staff')) {
-                 if (selectedTeams.size > 0) { // If filtering by team and staff is selected, staff should only show if no team filter active
-                    return typeMatch && member.type === 'Staff' ? true : typeMatch && teamMatch;
-                 }
-                 return typeMatch;
+            
+            if (member.type === 'Staff') {
+                return typeMatch;
             }
 
+            const teamMatch = selectedTeams.size === 0 || selectedTeams.has((member.data as Player | Coach).teamId || '');
             return typeMatch && teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
     
-    const initializeFieldConfig = (memberTypes: Set<string>) => {
+    const initializeFieldConfig = (memberTypes: string[]) => {
         const config: FieldConfig = {};
         
-        // For now, we only allow configuring fields if a single member type is selected.
-        if (memberTypes.size !== 1) {
+        if (memberTypes.length !== 1) {
             setFieldConfig({});
             return;
         }
 
-        const memberType = memberTypes.values().next().value;
+        const memberType = memberTypes[0];
         let fields: { key: string; label: string }[] = [];
 
         switch (memberType) {
@@ -186,9 +182,11 @@ export function DataUpdateSender() {
     };
 
     useEffect(() => {
-        initializeFieldConfig(selectedTypes);
+        const typesInFilter = new Set<string>();
+        filteredMembers.forEach(m => typesInFilter.add(m.type));
+        initializeFieldConfig(Array.from(typesInFilter));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [selectedTypes]);
+    }, [filteredMembers]);
     
     
     const handleSelectMember = (memberId: string) => {
@@ -200,6 +198,15 @@ export function DataUpdateSender() {
         }
         setSelectedMemberIds(newSelection);
     };
+    
+    const handleSelectAllFiltered = (checked: boolean) => {
+        if (checked) {
+            setSelectedMemberIds(new Set(filteredMembers.map(m => m.id)));
+        } else {
+            setSelectedMemberIds(new Set());
+        }
+    }
+
 
     const setFieldPermission = (fieldKey: string, permission: FieldPermission) => {
         setFieldConfig(prev => ({
@@ -215,7 +222,8 @@ export function DataUpdateSender() {
       });
     }
     
-    const selectedCount = selectedMemberIds.size;
+    const recipientCount = selectedMemberIds.size > 0 ? selectedMemberIds.size : filteredMembers.length;
+    const typesInFilter = Array.from(new Set(filteredMembers.map(m => m.type)));
 
     return (
         <Card>
@@ -310,7 +318,7 @@ export function DataUpdateSender() {
                      <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
                         <DialogTrigger asChild>
                              <Button variant="outline" className="w-full md:w-[400px] justify-between">
-                                {selectedCount > 0 ? `${selectedCount} miembro(s) seleccionado(s)` : "Seleccionar miembros..."}
+                                {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : filteredMembers.length > 0 ? `${filteredMembers.length} miembros en filtro` : "Seleccionar miembros..."}
                                 <UserPlus className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                         </DialogTrigger>
@@ -326,26 +334,36 @@ export function DataUpdateSender() {
                                 <CommandList>
                                     <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
                                     <CommandGroup>
-                                        {filteredMembers.map((member) => (
-                                            <CommandItem
-                                                key={member.id}
-                                                value={member.name}
-                                                onSelect={() => handleSelectMember(member.id)}
-                                                className="flex items-center space-x-2"
-                                            >
-                                                <Checkbox
-                                                    id={`select-${member.id}`}
-                                                    checked={selectedMemberIds.has(member.id)}
-                                                    onCheckedChange={() => handleSelectMember(member.id)}
-                                                />
-                                                <label
-                                                    htmlFor={`select-${member.id}`}
-                                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                                        <CommandItem onSelect={() => handleSelectAllFiltered(! (selectedMemberIds.size === filteredMembers.length))} className="flex items-center space-x-2 font-semibold">
+                                            <Checkbox
+                                                id="select-all"
+                                                checked={selectedMemberIds.size === filteredMembers.length && filteredMembers.length > 0}
+                                                onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
+                                            />
+                                            <label htmlFor="select-all" className="flex-1">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                        </CommandItem>
+                                        <ScrollArea className="h-64">
+                                            {filteredMembers.map((member) => (
+                                                <CommandItem
+                                                    key={member.id}
+                                                    value={member.name}
+                                                    onSelect={() => handleSelectMember(member.id)}
+                                                    className="flex items-center space-x-2"
                                                 >
-                                                {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
-                                                </label>
-                                            </CommandItem>
-                                        ))}
+                                                    <Checkbox
+                                                        id={`select-${member.id}`}
+                                                        checked={selectedMemberIds.has(member.id)}
+                                                        onCheckedChange={() => handleSelectMember(member.id)}
+                                                    />
+                                                    <label
+                                                        htmlFor={`select-${member.id}`}
+                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1"
+                                                    >
+                                                    {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
+                                                    </label>
+                                                </CommandItem>
+                                            ))}
+                                        </ScrollArea>
                                     </CommandGroup>
                                 </CommandList>
                             </Command>
@@ -359,44 +377,46 @@ export function DataUpdateSender() {
                     </Dialog>
                 </div>
                 
-                 {selectedCount > 0 && selectedTypes.size === 1 && (
+                 {recipientCount > 0 && typesInFilter.length === 1 && (
                     <div className="border-t pt-6">
-                        <h3 className="text-lg font-medium mb-4">Configurar Campos para <span className="capitalize text-primary">{MEMBER_TYPES.find(t => t.value === selectedTypes.values().next().value)?.label}</span></h3>
-                        <div className="space-y-3">
-                           {Object.entries(fieldConfig).map(([key, { label, permission }]) => (
-                                <div key={key} className="flex items-center justify-between rounded-lg border p-3">
-                                    <span className="font-medium text-sm">{label}</span>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="sm" className="gap-2">
-                                                {permission === 'editable' && <><Pencil className="h-3.5 w-3.5" /><span>Editable</span></>}
-                                                {permission === 'readonly' && <><Eye className="h-3.5 w-3.5" /><span>Solo Lectura</span></>}
-                                                {permission === 'hidden' && <><EyeOff className="h-3.5 w-3.5" /><span>Oculto</span></>}
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                            <DropdownMenuItem onSelect={() => setFieldPermission(key, 'editable')}>
-                                                <Pencil className="mr-2 h-4 w-4" /> Editable
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={() => setFieldPermission(key, 'readonly')}>
-                                                <Eye className="mr-2 h-4 w-4" /> Solo Lectura
-                                            </DropdownMenuItem>
-                                             <DropdownMenuItem onSelect={() => setFieldPermission(key, 'hidden')}>
-                                                <EyeOff className="mr-2 h-4 w-4" /> Oculto
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </div>
-                           ))}
-                        </div>
-                        <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={selectedCount === 0}>
+                        <h3 className="text-lg font-medium mb-4">Configurar Campos para <span className="capitalize text-primary">{MEMBER_TYPES.find(t => t.value === typesInFilter[0])?.label}</span></h3>
+                        <ScrollArea className="h-72 pr-4">
+                            <div className="space-y-3">
+                               {Object.entries(fieldConfig).map(([key, { label, permission }]) => (
+                                    <div key={key} className="flex items-center justify-between rounded-lg border p-3">
+                                        <span className="font-medium text-sm">{label}</span>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="sm" className="gap-2">
+                                                    {permission === 'editable' && <><Pencil className="h-3.5 w-3.5" /><span>Editable</span></>}
+                                                    {permission === 'readonly' && <><Eye className="h-3.5 w-3.5" /><span>Solo Lectura</span></>}
+                                                    {permission === 'hidden' && <><EyeOff className="h-3.5 w-3.5" /><span>Oculto</span></>}
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => setFieldPermission(key, 'editable')}>
+                                                    <Pencil className="mr-2 h-4 w-4" /> Editable
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => setFieldPermission(key, 'readonly')}>
+                                                    <Eye className="mr-2 h-4 w-4" /> Solo Lectura
+                                                </DropdownMenuItem>
+                                                 <DropdownMenuItem onSelect={() => setFieldPermission(key, 'hidden')}>
+                                                    <EyeOff className="mr-2 h-4 w-4" /> Oculto
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </div>
+                               ))}
+                            </div>
+                        </ScrollArea>
+                        <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0}>
                             <Send className="h-4 w-4"/>
-                            Generar y Enviar Enlace(s) de Actualización
+                            Generar y Enviar a {recipientCount} Miembro(s)
                         </Button>
                     </div>
                 )}
 
-                 {selectedCount > 0 && selectedTypes.size !== 1 && (
+                 {recipientCount > 0 && typesInFilter.length > 1 && (
                      <div className="border-t pt-6 text-center text-muted-foreground">
                          <p>Por favor, selecciona un único tipo de miembro (Jugador, Entrenador o Staff) para poder configurar los campos del formulario.</p>
                      </div>
