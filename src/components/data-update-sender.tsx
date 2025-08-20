@@ -135,8 +135,12 @@ export function DataUpdateSender() {
             return allMembers;
         }
         return allMembers.filter(member => {
-            const typeMatch = selectedTypes.size > 0 && selectedTypes.has(member.type);
-            const teamMatch = selectedTeams.size > 0 && member.teamId && selectedTeams.has(member.teamId);
+            const typeMatch = selectedTypes.size > 0 ? selectedTypes.has(member.type) : true;
+            const teamMatch = selectedTeams.size > 0 ? (member.teamId && selectedTeams.has(member.teamId)) : true;
+            
+            if (selectedTypes.size > 0 && selectedTeams.size > 0) {
+                return typeMatch && teamMatch;
+            }
             return typeMatch || teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
