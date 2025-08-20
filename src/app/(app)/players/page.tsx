@@ -812,7 +812,7 @@ export default function PlayersPage() {
                                     <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
                                     <div className="flex gap-2">
                                         <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc}>
+                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc || modalMode === 'add'}>
                                             {uploadingDoc ? <Loader2 className="animate-spin" /> : <Upload className="h-4 w-4"/>}
                                         </Button>
                                     </div>
@@ -889,6 +889,7 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
 
 
 
