@@ -74,7 +74,7 @@ const TableHead = React.forwardRef<
     ref={ref}
     className={cn(
       "h-12 text-left align-middle font-medium text-muted-foreground",
-      padding === 'default' ? 'px-4' : 'px-2',
+      padding === 'default' ? 'px-4' : 'pl-4',
       className
     )}
     {...props}
@@ -90,7 +90,7 @@ const TableCell = React.forwardRef<
     ref={ref}
     className={cn(
       "align-middle",
-      padding === 'default' ? 'p-4' : 'px-2',
+      padding === 'default' ? 'p-4' : 'pl-4',
       className
       )}
     {...props}
