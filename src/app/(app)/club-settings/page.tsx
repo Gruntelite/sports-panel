@@ -17,7 +17,12 @@ import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, KeyRound, ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
@@ -141,13 +146,19 @@ export default function ClubSettingsPage() {
                                         </Link>
                                     </Button>
                                  </div>
-                                 <Alert className="mt-4">
-                                  <Info className="h-4 w-4" />
-                                  <AlertTitle>¿Cómo funciona el envío de correos?</AlertTitle>
-                                  <AlertDescription>
-                                    Para asegurar la entrega y respetar los límites de los proveedores (incluso los gratuitos), los correos se envían en lotes en segundo plano. Esto significa que si envías una comunicación a muchos destinatarios, pueden tardar un poco en llegar todos, pero el sistema se encarga de que se entreguen de forma fiable sin que tengas que esperar.
-                                  </AlertDescription>
-                                </Alert>
+                                 <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
+                                    <AccordionItem value="item-1" className="border-b-0">
+                                        <AccordionTrigger className="py-3 hover:no-underline">
+                                            <div className="flex items-center gap-2 font-semibold text-sm">
+                                                <Info className="h-4 w-4" />
+                                                ¿Cómo funciona el envío de correos?
+                                            </div>
+                                        </AccordionTrigger>
+                                        <AccordionContent className="text-muted-foreground">
+                                            Para asegurar la entrega y respetar los límites de los proveedores (incluso los gratuitos), los correos se envían en lotes en segundo plano. Esto significa que si envías una comunicación a muchos destinatarios, pueden tardar un poco en llegar todos, pero el sistema se encarga de que se entreguen de forma fiable sin que tengas que esperar.
+                                        </AccordionContent>
+                                    </AccordionItem>
+                                </Accordion>
                             </>
                         )}
                     </CardContent>
