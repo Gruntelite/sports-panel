@@ -139,21 +139,24 @@ export function DataUpdateSender() {
             
             let teamMatch = selectedTeams.size === 0;
             if (selectedTeams.size > 0) {
+                 // Member must have a teamId and that teamId must be in the selected teams set
                 if(member.teamId && selectedTeams.has(member.teamId)) {
                     teamMatch = true;
-                } else if (member.type !== 'Jugador' && member.type !== 'Entrenador') {
-                    // For staff or other non-team members, they should not be filtered out by team selection
-                    // if their type is selected.
-                    teamMatch = true; 
                 } else {
                     teamMatch = false;
                 }
             }
              
-            if(selectedTypes.size > 0 && selectedTeams.size > 0){
+            if (selectedTypes.size > 0 && selectedTeams.size > 0) {
                 return typeMatch && teamMatch;
             }
-            return typeMatch || teamMatch;
+            if (selectedTypes.size > 0) {
+                return typeMatch;
+            }
+            if (selectedTeams.size > 0) {
+                return teamMatch;
+            }
+            return false;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
 
