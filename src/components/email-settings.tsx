@@ -10,10 +10,20 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Mail, Info, Save, RefreshCw, Edit } from "lucide-react";
 import {
@@ -36,6 +46,8 @@ export function EmailSettings() {
     const [fromEmail, setFromEmail] = useState("");
     const [apiKey, setApiKey] = useState("");
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("unconfigured");
+    const [isEditing, setIsEditing] = useState(false);
+    const [isConfirmAlertOpen, setIsConfirmAlertOpen] = useState(false);
     
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -65,7 +77,11 @@ export function EmailSettings() {
                 const settingsData = settingsSnap.data();
                 setFromEmail(settingsData?.fromEmail || "");
                 setApiKey(settingsData?.sendgridApiKey || "");
-                setVerificationStatus(settingsData?.senderVerificationStatus || "unconfigured");
+                const status = settingsData?.senderVerificationStatus || "unconfigured";
+                setVerificationStatus(status);
+                setIsEditing(status !== 'verified');
+            } else {
+                 setIsEditing(true);
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
@@ -123,7 +139,8 @@ export function EmailSettings() {
         if (result.success) {
             if (result.data.verified) {
                 setVerificationStatus('verified');
-                await setDoc(doc(db, "clubs", clubId, "settings", "config"), { senderVerificationStatus: 'verified' }, { merge: true });
+                setIsEditing(false);
+                await updateDoc(doc(db, "clubs", clubId, "settings", "config"), { senderVerificationStatus: 'verified' });
                 toast({ title: "¡Verificado!", description: "Tu dirección de correo ha sido verificada correctamente." });
             } else {
                 toast({ title: "Aún Pendiente", description: "La verificación todavía no se ha completado. Revisa tu email." });
@@ -154,6 +171,7 @@ export function EmailSettings() {
 
 
     return (
+        <>
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -179,7 +197,7 @@ export function EmailSettings() {
                                 placeholder="SG.xxxxxxxx"
                                 value={apiKey}
                                 onChange={(e) => setApiKey(e.target.value)}
-                                readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
+                                readOnly={!isEditing}
                             />
                         </div>
                         <div className="space-y-2">
@@ -193,26 +211,33 @@ export function EmailSettings() {
                                 placeholder="p.ej., info.club@gmail.com"
                                 value={fromEmail}
                                 onChange={(e) => setFromEmail(e.target.value)}
-                                readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
+                                readOnly={!isEditing}
                             />
                         </div>
                             <div className="flex items-center gap-2">
-                            <Button onClick={handleSaveAndVerify} disabled={saving || verificationStatus === 'pending' || verificationStatus === 'verified'}>
-                                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                <Save className="mr-2 h-4 w-4"/> 
-                                {verificationStatus === 'verified' ? 'Configuración Guardada' : 'Guardar y Verificar'}
-                            </Button>
+                            {isEditing ? (
+                                <Button onClick={handleSaveAndVerify} disabled={saving}>
+                                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    <Save className="mr-2 h-4 w-4"/> 
+                                    Guardar y Verificar
+                                </Button>
+                            ) : (
+                                <>
+                                <Button disabled className="bg-green-600 hover:bg-green-700">
+                                    <Save className="mr-2 h-4 w-4"/> 
+                                    Configuración Guardada
+                                </Button>
+                                <Button onClick={() => setIsConfirmAlertOpen(true)} variant="outline">
+                                    <Edit className="mr-2 h-4 w-4"/>
+                                    Cambiar
+                                </Button>
+                                </>
+                            )}
                             {verificationStatus === 'pending' && (
                                 <Button onClick={handleCheckStatus} variant="secondary" disabled={checkingStatus}>
                                     {checkingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     <RefreshCw className="mr-2 h-4 w-4"/>
                                     Comprobar Estado
-                                </Button>
-                            )}
-                                {verificationStatus === 'verified' && (
-                                <Button onClick={() => setVerificationStatus('unconfigured')} variant="outline" size="sm">
-                                    <Edit className="mr-2 h-4 w-4"/>
-                                    Cambiar
                                 </Button>
                             )}
                             </div>
@@ -252,5 +277,25 @@ export function EmailSettings() {
                 </Accordion>
             </CardContent>
         </Card>
+        
+        <AlertDialog open={isConfirmAlertOpen} onOpenChange={setIsConfirmAlertOpen}>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Si cambias la API Key o el correo electrónico, deberás volver a realizar todo el proceso de verificación con SendGrid para poder enviar correos.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                    setIsEditing(true);
+                    setVerificationStatus('unconfigured');
+                    setIsConfirmAlertOpen(false);
+                }}>Aceptar y Cambiar</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+        </>
     );
 }
