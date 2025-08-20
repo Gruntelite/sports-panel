@@ -37,6 +37,7 @@ export default function ClubSettingsPage() {
     const [saving, setSaving] = useState(false);
     const [clubId, setClubId] = useState<string | null>(null);
     const [fromEmail, setFromEmail] = useState("");
+    const [apiKey, setApiKey] = useState("");
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("unconfigured");
     const [mailConfigured, setMailConfigured] = useState(false);
     
@@ -189,25 +190,24 @@ export default function ClubSettingsPage() {
                                  </div>
                             </>
                         ) : (
-                             <div className="p-4 border-2 border-dashed rounded-lg text-center bg-muted/50">
-                                <h3 className="text-lg font-semibold">Servicio de Correo No Configurado</h3>
+                             <div className="p-4 border-2 border-dashed rounded-lg bg-muted/50">
+                                <h3 className="text-lg font-semibold">Configurar Servicio de Correo</h3>
                                 <p className="text-muted-foreground text-sm mt-1 mb-4">
-                                    Como administrador de la plataforma, necesitas configurar la integración con SendGrid para habilitar el envío de correos.
+                                   Para habilitar el envío de correos, necesitas una API Key de SendGrid. Pega tu clave a continuación para guardarla de forma segura.
                                 </p>
-                                <div className="flex flex-col sm:flex-row gap-2 justify-center">
-                                    <Button asChild>
-                                        <a href="/guia-sendgrid.pdf" download target="_blank" rel="noopener noreferrer">
-                                            <Download className="mr-2 h-4 w-4"/>
-                                            Descargar Guía (PDF)
-                                        </a>
-                                    </Button>
-                                    <Button asChild variant="secondary">
-                                        <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer">
-                                            <Send className="mr-2 h-4 w-4"/>
-                                            Ir a SendGrid
-                                        </a>
-                                    </Button>
-                                 </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="apiKey">Clave de API de SendGrid</Label>
+                                    <Input 
+                                        id="apiKey" 
+                                        type="password" 
+                                        placeholder="SG.xxxxxxxx"
+                                        value={apiKey}
+                                        onChange={(e) => setApiKey(e.target.value)}
+                                    />
+                                </div>
+                                <Button className="w-full mt-4" disabled={!apiKey}>
+                                    Guardar Clave de API
+                                </Button>
                              </div>
                         )}
                         <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
@@ -237,12 +237,9 @@ export default function ClubSettingsPage() {
                                             <b>Guarda la clave:</b> SendGrid te mostrará la clave una sola vez. Cópiala inmediatamente.
                                         </li>
                                         <li>
-                                            <b>Configura la clave:</b> Pega esta API Key en el archivo `.env` de tu proyecto, en una variable llamada `SENDGRID_API_KEY`.
+                                            <b>Configura la clave:</b> Pega esta API Key en el campo de arriba y guárdala.
                                         </li>
                                    </ol>
-                                   <p className="mt-2 text-xs">
-                                    Una vez completado, el mensaje de "Servicio de Correo No Configurado" desaparecerá y los clubes podrán empezar a verificar sus propias direcciones de correo.
-                                   </p>
                                 </AccordionContent>
                             </AccordionItem>
                         </Accordion>
@@ -252,5 +249,3 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
-
-    
