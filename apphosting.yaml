@@ -1,3 +1,4 @@
+
 # Settings to manage and configure a Firebase App Hosting backend.
 # https://firebase.google.com/docs/app-hosting/configure
 
@@ -5,3 +6,10 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+
+# Defines a scheduled job that will be triggered by Cloud Scheduler.
+# The job will send a POST request to the specified path.
+# This is ideal for tasks like daily email processing.
+scheduledJobs:
+- path: /__run/processQueuedEmailsFlow
+  schedule: "every 24 hours"
