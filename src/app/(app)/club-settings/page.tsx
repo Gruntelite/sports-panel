@@ -217,7 +217,7 @@ export default function ClubSettingsPage() {
                                         disabled={verificationStatus === 'pending' || verificationStatus === 'verified'}
                                     />
                                 </div>
-                                 <div className="flex items-center justify-between gap-2">
+                                 <div className="flex items-center gap-2">
                                     <Button onClick={handleSaveAndVerify} disabled={saving || verificationStatus === 'pending' || verificationStatus === 'verified'}>
                                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                         {verificationStatus === 'pending' ? 'Verificación Enviada' : 'Guardar y Verificar Correo'}
@@ -227,12 +227,6 @@ export default function ClubSettingsPage() {
                                             {checkingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                             Comprobar Verificación
                                         </Button>
-                                    )}
-                                    {(verificationStatus === 'pending' || verificationStatus === 'verified') && (
-                                        <Button variant="outline" onClick={() => {
-                                            setVerificationStatus('unconfigured');
-                                            setFromEmail('');
-                                        }}>Cambiar Correo</Button>
                                     )}
                                  </div>
                             </>
