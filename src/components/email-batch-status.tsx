@@ -186,7 +186,7 @@ export function EmailBatchStatus() {
                                     <div className="flex justify-between items-start">
                                         <div>
                                             <h4 className="font-semibold">
-                                                Lote de envío - {new Date(batch.createdAt.seconds * 1000).toLocaleString('es-ES')}
+                                                Lote de envío - {batch.createdAt ? new Date(batch.createdAt.seconds * 1000).toLocaleString('es-ES') : 'Creando...'}
                                             </h4>
                                             <p className="text-sm text-muted-foreground">
                                                 {sentCount} de {total} enviados ({failedCount > 0 ? `${failedCount} fallidos` : '0 fallidos'})
