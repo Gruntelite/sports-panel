@@ -7,7 +7,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import * as sgMail from '@sendgrid/mail';
 import { getClubConfig, getBatchToProcess, updateBatchWithResults, finalizeBatch } from '@/lib/actions';
 
 
@@ -58,6 +57,7 @@ export const processEmailBatchFlow = ai.defineFlow(
         output.errors.push(errorMsg);
         return output;
     }
+    const sgMail = await import('@sendgrid/mail');
     sgMail.setApiKey(apiKey);
 
     // 3. Process the recipients
