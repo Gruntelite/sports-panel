@@ -3,12 +3,12 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
-import { Check, ChevronsUpDown, Eye, EyeOff, Pencil, Send, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, Eye, EyeOff, Pencil, Send, UserPlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
@@ -76,9 +76,11 @@ const MEMBER_TYPES = [
 
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
+    const [clubName, setClubName] = useState<string>("");
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     
+    const [sending, setSending] = useState(false);
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
     const [isMemberSelectOpen, setIsMemberSelectOpen] = useState(false);
     
@@ -110,6 +112,12 @@ export function DataUpdateSender() {
     const fetchAllData = async (clubId: string) => {
         const members: ClubMember[] = [];
         try {
+            const clubDocRef = doc(db, "clubs", clubId);
+            const clubDocSnap = await getDoc(clubDocRef);
+            if(clubDocSnap.exists()) {
+                setClubName(clubDocSnap.data()?.name || "Tu Club");
+            }
+
             const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
             playersSnap.forEach(doc => {
                 const data = doc.data() as Player;
@@ -214,11 +222,57 @@ export function DataUpdateSender() {
         }));
     };
     
-    const handleSend = () => {
-      toast({
-        title: "Funcionalidad en desarrollo",
-        description: "El envío del formulario de actualización aún no está implementado."
-      });
+    const handleSend = async () => {
+      if (!clubId) return;
+
+      const membersToSend = selectedMemberIds.size > 0 
+        ? allMembers.filter(m => selectedMemberIds.has(m.id))
+        : filteredMembers;
+
+      if (membersToSend.length === 0) {
+        toast({ variant: "destructive", title: "Error", description: "No hay destinatarios seleccionados." });
+        return;
+      }
+      
+      setSending(true);
+
+      const recipients = membersToSend.map(member => {
+        let email = '';
+        if (member.type === 'Jugador') {
+          email = (member.data as Player).tutorEmail || '';
+        } else {
+          email = (member.data as Coach | Staff).email || '';
+        }
+        return {
+          id: member.id,
+          name: member.name,
+          email: email,
+          type: member.type,
+          status: 'pending',
+        };
+      }).filter(r => r.email);
+
+      try {
+        const batchRef = collection(db, 'clubs', clubId, 'emailBatches');
+        await addDoc(batchRef, {
+            clubName: clubName,
+            recipients: recipients,
+            fieldConfig: fieldConfig,
+            status: 'pending',
+            createdAt: serverTimestamp(),
+        });
+
+        toast({
+          title: "¡Solicitud en Cola!",
+          description: `Se ha creado una tarea para enviar ${recipients.length} correos. Se procesarán en segundo plano.`,
+        });
+
+      } catch (error) {
+        console.error("Error creating email batch:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo crear la tarea de envío." });
+      } finally {
+        setSending(false);
+      }
     }
     
     const recipientCount = selectedMemberIds.size > 0 ? selectedMemberIds.size : filteredMembers.length;
@@ -409,9 +463,9 @@ export function DataUpdateSender() {
                                ))}
                             </div>
                         </ScrollArea>
-                        <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0}>
-                            <Send className="h-4 w-4"/>
-                            Generar y Enviar a {recipientCount} Miembro(s)
+                        <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0 || sending}>
+                            {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                            {sending ? "Enviando..." : `Generar y Enviar a ${recipientCount} Miembro(s)`}
                         </Button>
                     </div>
                 )}

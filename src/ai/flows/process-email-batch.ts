@@ -32,9 +32,9 @@ async function getSenderConfig(clubId: string): Promise<{fromEmail: string, apiK
     const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
     const doc = await settingsRef.get();
     
-    // Default platform sender
+    // Default platform sender - this should ideally not be used if setup is correct
     let config = {
-      fromEmail: `notifications@sportspanel.app`, // Replace with your actual platform domain
+      fromEmail: `notifications@sportspanel.app`, // Fallback email
       apiKey: process.env.SENDGRID_API_KEY || null,
     };
 
@@ -43,6 +43,9 @@ async function getSenderConfig(clubId: string): Promise<{fromEmail: string, apiK
         // If club has a verified sender, use it. The platform API key is still used for sending.
         if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
             config.fromEmail = data.fromEmail;
+        }
+        if (data?.platformSendgridApiKey) {
+            config.apiKey = data.platformSendgridApiKey;
         }
     }
     
@@ -75,8 +78,12 @@ export const processEmailBatchFlow = ai.defineFlow(
         output.errors.push('Could not determine club ID for a batch.');
         return output;
     }
+    
+    await batchDoc.ref.update({ status: 'processing' });
 
     const senderConfig = await getSenderConfig(clubId);
+    
+    const clubName = batchData.clubName || "Tu Club";
 
     if (!senderConfig.apiKey) {
         const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
@@ -112,16 +119,16 @@ export const processEmailBatchFlow = ai.defineFlow(
                 to: recipient.email,
                 from: {
                   email: senderConfig.fromEmail,
-                  name: `${batchData.clubName}`
+                  name: `${clubName}`
                 },
-                subject: `Actualización de datos para ${batchData.clubName}`,
+                subject: `Actualización de datos para ${clubName}`,
                 html: `
                     <h1>Hola ${recipient.name},</h1>
                     <p>Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.</p>
                     <a href="${updateLink}">Actualizar mis datos</a>
                     <p>Este enlace es válido por 7 días.</p>
                     <p>Gracias,</p>
-                    <p>El equipo de ${batchData.clubName}</p>
+                    <p>El equipo de ${clubName}</p>
                 `,
             };
             await sgMail.send(msg);
@@ -153,6 +160,9 @@ export const processEmailBatchFlow = ai.defineFlow(
     const allProcessed = updatedRecipients.every(r => r.status === 'sent' || r.status === 'failed');
     if (allProcessed) {
         await batchDoc.ref.update({ status: 'completed' });
+    } else {
+        // If there are still pending recipients, set status back to pending to be picked up again
+        await batchDoc.ref.update({ status: 'pending' });
     }
 
     output.processedCount = results.filter(r => r.status === 'sent').length;
