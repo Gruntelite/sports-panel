@@ -9,6 +9,7 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import * as sgMail from '@sendgrid/mail';
+import { db } from '@/lib/firebase-admin';
 
 const ProcessEmailBatchInputSchema = z.object({
   limit: z.number().optional().default(20).describe('The number of emails to process in this batch.'),
@@ -53,12 +54,7 @@ export const processEmailBatchFlow = ai.defineFlow(
     outputSchema: ProcessEmailBatchOutputSchema,
   },
   async (input) => {
-    // Initialize Firebase Admin SDK if not already initialized
-    if (!admin.apps.length) {
-      admin.initializeApp();
-    }
-    const db = admin.firestore();
-
+    
     const output: ProcessEmailBatchOutput = { processedCount: 0, errors: [] };
     
     // Find the first email batch job that is 'pending'
