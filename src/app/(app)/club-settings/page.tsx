@@ -24,6 +24,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
+import { initiateSenderVerificationAction } from "@/lib/actions";
 
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
@@ -78,22 +79,32 @@ export default function ClubSettingsPage() {
             return;
         }
         setSaving(true);
-        // In a real scenario, here you would call a backend function (e.g., a Cloud Function)
-        // that uses the SendGrid API to create a verified sender.
-        // That function would trigger an email to `fromEmail`.
-        // For now, we'll simulate this process.
+        
         try {
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             await setDoc(settingsRef, { 
                 fromEmail: fromEmail,
-                senderVerificationStatus: 'pending', // Set status to pending
+                senderVerificationStatus: 'pending', // Set status to pending initially
             }, { merge: true });
 
-            toast({ 
-                title: "Verificación Iniciada", 
-                description: `Se ha enviado un correo de verificación a ${fromEmail}. Por favor, revisa tu bandeja de entrada.` 
-            });
-            fetchSettings(clubId); // Re-fetch to update status on screen
+            const result = await initiateSenderVerificationAction({ email: fromEmail, clubId });
+
+            if (result.success) {
+                toast({ 
+                    title: "Verificación Iniciada", 
+                    description: `Se ha enviado un correo de verificación a ${fromEmail}. Por favor, revisa tu bandeja de entrada.` 
+                });
+            } else {
+                toast({ 
+                    variant: "destructive",
+                    title: "Error de Verificación", 
+                    description: result.error 
+                });
+                 // Revert status if API call failed
+                await setDoc(settingsRef, { senderVerificationStatus: 'unconfigured' }, { merge: true });
+            }
+
+            if(clubId) fetchSettings(clubId);
         } catch (error) {
             console.error("Error saving email for verification:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la dirección de correo." });
@@ -155,13 +166,17 @@ export default function ClubSettingsPage() {
                                         placeholder="p.ej., info.club@gmail.com"
                                         value={fromEmail}
                                         onChange={(e) => setFromEmail(e.target.value)}
+                                        disabled={verificationStatus === 'pending' || verificationStatus === 'verified'}
                                     />
                                 </div>
                                  <div className="flex items-center justify-between">
-                                    <Button onClick={handleSaveAndVerify} disabled={saving}>
+                                    <Button onClick={handleSaveAndVerify} disabled={saving || verificationStatus === 'pending' || verificationStatus === 'verified'}>
                                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                        {verificationStatus === 'pending' ? 'Reenviar Verificación' : 'Guardar y Verificar Correo'}
+                                        {verificationStatus === 'pending' ? 'Verificación Pendiente' : 'Guardar y Verificar Correo'}
                                     </Button>
+                                    {(verificationStatus === 'pending' || verificationStatus === 'verified') && (
+                                        <Button variant="outline" onClick={() => setVerificationStatus('unconfigured')}>Cambiar Correo</Button>
+                                    )}
                                  </div>
                                  <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
                                     <AccordionItem value="item-1" className="border-b-0">
