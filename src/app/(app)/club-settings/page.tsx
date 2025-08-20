@@ -213,21 +213,27 @@ export default function ClubSettingsPage() {
                                 <AccordionContent className="text-muted-foreground space-y-2">
                                    <h4 className="font-bold text-foreground">Para el Administrador de la Plataforma:</h4>
                                    <p>
-                                       Para que los clubes puedan verificar sus correos, la plataforma necesita una API Key global de SendGrid.
+                                       Para que los clubes puedan verificar sus correos, la plataforma necesita una API Key global de SendGrid. Este es un paso de configuración único para toda la plataforma.
                                    </p>
-                                   <ol className="list-decimal list-inside space-y-1">
+                                   <ol className="list-decimal list-inside space-y-1 pl-2">
                                         <li>
-                                            <b>Crea una cuenta en SendGrid:</b> Ve a <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
+                                            <b>Crea una cuenta:</b> Ve a <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
                                         </li>
                                         <li>
-                                            <b>Crea una API Key:</b> En tu panel de SendGrid, ve a "Settings" {'->'} "API Keys" y crea una nueva clave con permisos completos ("Full Access").
+                                            <b>Busca las API Keys:</b> En el menú de la izquierda de SendGrid, busca "Settings" y luego haz clic en "API Keys".
+                                        </li>
+                                         <li>
+                                            <b>Crea la clave:</b> Haz clic en el botón "Create API Key". Dale un nombre (p.ej., "SportsPanel Key") y selecciona "Full Access" para los permisos.
                                         </li>
                                         <li>
-                                            <b>Configura la clave:</b> Deberás añadir esta API Key a las variables de entorno de tu proyecto como `SENDGRID_API_KEY`. Este es un paso de configuración único para toda la plataforma.
+                                            <b>Guarda la clave:</b> SendGrid te mostrará la clave una sola vez. Cópiala inmediatamente.
+                                        </li>
+                                        <li>
+                                            <b>Configura la clave:</b> Pega esta API Key en el archivo `.env` de tu proyecto, en una variable llamada `SENDGRID_API_KEY`.
                                         </li>
                                    </ol>
-                                   <p className="mt-2">
-                                    Una vez hecho esto, los clubes podrán verificar sus correos automáticamente.
+                                   <p className="mt-2 text-xs">
+                                    Una vez completado, el mensaje de "Servicio de Correo No Configurado" desaparecerá y los clubes podrán empezar a verificar sus propias direcciones de correo.
                                    </p>
                                 </AccordionContent>
                             </AccordionItem>
