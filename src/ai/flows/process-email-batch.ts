@@ -10,12 +10,6 @@ import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import * as sgMail from '@sendgrid/mail';
 
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp();
-}
-const db = admin.firestore();
-
 const ProcessEmailBatchInputSchema = z.object({
   limit: z.number().optional().default(20).describe('The number of emails to process in this batch.'),
 });
@@ -28,7 +22,7 @@ const ProcessEmailBatchOutputSchema = z.object({
 export type ProcessEmailBatchOutput = z.infer<typeof ProcessEmailBatchOutputSchema>;
 
 
-async function getSenderConfig(clubId: string): Promise<{fromEmail: string, apiKey: string | null}> {
+async function getSenderConfig(db: admin.firestore.Firestore, clubId: string): Promise<{fromEmail: string, apiKey: string | null}> {
     const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
     const doc = await settingsRef.get();
     
@@ -59,6 +53,12 @@ export const processEmailBatchFlow = ai.defineFlow(
     outputSchema: ProcessEmailBatchOutputSchema,
   },
   async (input) => {
+    // Initialize Firebase Admin SDK if not already initialized
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
+    const db = admin.firestore();
+
     const output: ProcessEmailBatchOutput = { processedCount: 0, errors: [] };
     
     // Find the first email batch job that is 'pending'
@@ -81,7 +81,7 @@ export const processEmailBatchFlow = ai.defineFlow(
     
     await batchDoc.ref.update({ status: 'processing' });
 
-    const senderConfig = await getSenderConfig(clubId);
+    const senderConfig = await getSenderConfig(db, clubId);
     
     const clubName = batchData.clubName || "Tu Club";
 
