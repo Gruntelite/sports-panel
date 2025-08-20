@@ -535,10 +535,13 @@ function CalendarView() {
                     </div>
                     <div className="space-y-2">
                         <Label>Equipo (Opcional)</Label>
-                        <Select value={eventData.teamId || ''} onValueChange={(value) => setEventData({...eventData, teamId: value})}>
+                        <Select 
+                            value={eventData.teamId || 'none'} 
+                            onValueChange={(value) => setEventData({...eventData, teamId: value === 'none' ? undefined : value})}
+                        >
                             <SelectTrigger><SelectValue placeholder="Ninguno"/></SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="">Ninguno</SelectItem>
+                                <SelectItem value="none">Ninguno</SelectItem>
                                 {teams.map(team => <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
