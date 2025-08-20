@@ -3,8 +3,9 @@
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Send } from "lucide-react";
+import { Mail, Send, Settings } from "lucide-react";
 import { DirectEmailSender } from "@/components/direct-email-sender";
+import { EmailSettings } from "@/components/email-settings";
 
 
 export default function CommunicationsPage() {
@@ -15,20 +16,27 @@ export default function CommunicationsPage() {
        <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight">Comunicaciones</h1>
         <p className="text-muted-foreground">
-          Contacta con los miembros de tu club.
+          Contacta con los miembros de tu club y gestiona la configuración de envío.
         </p>
       </div>
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-1">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="direct-send">
             <Send className="mr-2 h-4 w-4" />
             Envío Directo
+          </TabsTrigger>
+          <TabsTrigger value="email-settings">
+            <Settings className="mr-2 h-4 w-4" />
+            Configuración
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="direct-send" className="mt-6">
           <DirectEmailSender />
+        </TabsContent>
+        <TabsContent value="email-settings" className="mt-6">
+          <EmailSettings />
         </TabsContent>
       </Tabs>
     </div>
