@@ -110,63 +110,20 @@ export default function StaffPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
-        const adminRoles = ['Staff', 'Admin', 'super-admin'];
-        const usersQuery = query(collection(db, "clubs", clubId, "users"), where("role", "in", adminRoles));
-        const usersSnapshot = await getDocs(usersQuery);
+        const staffCol = collection(db, "clubs", clubId, "staff");
+        const staffSnapshot = await getDocs(staffCol);
 
-        const staffDetailsQuery = query(collection(db, "clubs", clubId, "staff"));
-        const staffDetailsSnapshot = await getDocs(staffDetailsQuery);
-        const staffDetailsMap = new Map(staffDetailsSnapshot.docs.map(d => [d.data().email, { id: d.id, ...d.data() }]));
-
-        const batch = writeBatch(db);
-        let syncNeeded = false;
-
-        const staffListPromises = usersSnapshot.docs.map(async userDoc => {
-            const userData = userDoc.data();
-            let details = staffDetailsMap.get(userData.email);
-
-            // If a user with an admin role exists but doesn't have a staff profile, create one.
-            if (!details) {
-                syncNeeded = true;
-                const [name, ...lastNameParts] = (userData.name || "").split(" ");
-                const lastName = lastNameParts.join(" ");
-                
-                const newStaffData = {
-                    name: name || '',
-                    lastName: lastName || '',
-                    email: userData.email,
-                    role: userData.role, // Default role title from access role
-                    phone: userData.phone || '',
-                    avatar: userData.avatar || '',
-                };
-
-                const newStaffRef = doc(collection(db, "clubs", clubId, "staff"));
-                batch.set(newStaffRef, newStaffData);
-                
-                details = { id: newStaffRef.id, ...newStaffData };
-            }
-
+        const staffList = staffSnapshot.docs.map(doc => {
+            const data = doc.data();
             return {
-                id: details.id,
-                name: details.name,
-                lastName: details.lastName,
-                email: details.email,
-                role: details.role,
-                phone: details.phone,
-                avatar: details.avatar || `https://placehold.co/40x40.png?text=${(details.name || '').charAt(0)}`,
-                hasMissingData: hasMissingData(details),
+                id: doc.id,
+                ...data,
+                avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
+                hasMissingData: hasMissingData(data)
             } as Staff;
         });
-
-        if (syncNeeded) {
-            await batch.commit();
-            // Refetch data after sync
-            fetchData(clubId); 
-            return;
-        }
-
-        const resolvedStaffList = await Promise.all(staffListPromises);
-        setStaff(resolvedStaffList);
+        
+        setStaff(staffList);
 
     } catch (error) {
         console.error("Error fetching data: ", error);
@@ -461,4 +418,3 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
-
