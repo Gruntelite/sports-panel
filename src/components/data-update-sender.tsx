@@ -152,14 +152,12 @@ export function DataUpdateSender() {
       }, [selectedMemberIds, allMembers, filteredMembers]);
 
     const availableFieldsInfo = useMemo(() => {
-        const membersToConsider = membersToProcess;
-
-        if (membersToConsider.length === 0) {
+        if (membersToProcess.length === 0) {
             return { fields: [], uniqueType: null };
         }
 
-        const firstMemberType = membersToConsider[0].type;
-        const allSameType = membersToConsider.every(m => m.type === firstMemberType);
+        const firstMemberType = membersToProcess[0].type;
+        const allSameType = membersToProcess.every(m => m.type === firstMemberType);
 
         if (!allSameType) {
             return { fields: [], uniqueType: null };
