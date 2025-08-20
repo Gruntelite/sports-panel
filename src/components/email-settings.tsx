@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -34,6 +34,7 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { initiateSenderVerificationAction, checkSenderStatusAction } from "@/lib/actions";
+import { cn } from "@/lib/utils";
 
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
@@ -288,11 +289,13 @@ export function EmailSettings() {
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                <AlertDialogAction onClick={() => {
-                    setIsEditing(true);
-                    setVerificationStatus('unconfigured');
-                    setIsConfirmAlertOpen(false);
-                }}>Aceptar y Cambiar</AlertDialogAction>
+                <AlertDialogAction 
+                    className={cn(buttonVariants({ variant: "destructive" }))}
+                    onClick={() => {
+                        setIsEditing(true);
+                        setVerificationStatus('unconfigured');
+                        setIsConfirmAlertOpen(false);
+                    }}>Aceptar y Cambiar</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
