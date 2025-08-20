@@ -61,19 +61,27 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
   const [payments, setPayments] = useState<OneTimePayment[]>([]);
 
   useEffect(() => {
-    const fetchPayments = async () => {
-      const user = auth.currentUser;
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
-        const userDocRef = await getDoc(doc(db, "users", user.uid));
-        const clubId = userDocRef.data()?.clubId;
-        if (clubId) {
-          const paymentsCol = collection(db, "clubs", clubId, "oneTimePayments");
-          const snapshot = await getDocs(paymentsCol);
-          setPayments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as OneTimePayment)));
+        try {
+          const userDocRef = doc(db, "users", user.uid);
+          const userDocSnap = await getDoc(userDocRef);
+
+          if (userDocSnap.exists()) {
+            const clubId = userDocSnap.data().clubId;
+            if (clubId) {
+              const paymentsCol = collection(db, "clubs", clubId, "oneTimePayments");
+              const snapshot = await getDocs(paymentsCol);
+              setPayments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as OneTimePayment)));
+            }
+          }
+        } catch (error) {
+          console.error("Error fetching payments:", error);
         }
       }
-    };
-    fetchPayments();
+    });
+    
+    return () => unsubscribe();
   }, []);
 
   const form = useForm<FormData>({
