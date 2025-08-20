@@ -16,7 +16,8 @@ const SendEmailUpdateInputSchema = z.object({
   apiKey: z.string(),
   fromEmail: z.string(),
   clubName: z.string(),
-  // fieldConfig is no longer needed in this simplified flow
+  subject: z.string().optional(),
+  body: z.string().optional(),
 });
 export type SendEmailUpdateInput = z.infer<typeof SendEmailUpdateInputSchema>;
 
@@ -34,7 +35,7 @@ export const sendEmailUpdateFlow = ai.defineFlow(
     inputSchema: SendEmailUpdateInputSchema,
     outputSchema: SendEmailUpdateOutputSchema,
   },
-  async ({ clubId, recipients, apiKey, fromEmail, clubName }) => {
+  async ({ clubId, recipients, apiKey, fromEmail, clubName, subject, body }) => {
     
     const sgMail = await import('@sendgrid/mail');
     sgMail.setApiKey(apiKey);
@@ -46,7 +47,7 @@ export const sendEmailUpdateFlow = ai.defineFlow(
 
     for (const recipient of recipients) {
         
-        const emailBody = `
+        const emailBody = body ? body.replace(/\n/g, '<br>') : `
             <p>Hola ${recipient.name},</p>
             <p>Por favor, ayúdanos a mantener tus datos actualizados. Inicia sesión en la aplicación para revisar y confirmar tu información en tu perfil.</p>
             <p style="text-align: center; margin: 20px 0;">
@@ -60,7 +61,7 @@ export const sendEmailUpdateFlow = ai.defineFlow(
             to: recipient.email,
             from: { email: fromEmail, name: clubName },
             reply_to: fromEmail,
-            subject: `Actualización de datos para ${clubName}`,
+            subject: subject || `Actualización de datos para ${clubName}`,
             html: emailBody,
             asm: { group_id: 12345 }, // Replace with your actual Unsubscribe Group ID
             custom_args: {
@@ -95,8 +96,9 @@ export const sendEmailUpdateFlow = ai.defineFlow(
             console.log(`Re-queueing ${rejectedRecipients.length} failed emails.`);
             const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
             await setDoc(queueRef, { 
-                recipients: rejectedRecipients, 
-                // fieldConfig is no longer needed
+                recipients: rejectedRecipients,
+                subject,
+                body,
                 createdAt: Timestamp.now(),
                 reason: 'Re-queued after initial send failure',
             });

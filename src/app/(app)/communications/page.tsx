@@ -1,15 +1,15 @@
-
 "use client";
 
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailTemplateGenerator } from "@/components/email-template-generator";
 import { RegistrationFormCreator } from "@/components/registration-form-creator";
-import { Mail, ClipboardList, UserCheck } from "lucide-react";
+import { Mail, ClipboardList, UserCheck, Send } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { TemplateHistoryItem, FormHistoryItem } from "@/lib/types";
 import { DataUpdateSender } from "@/components/data-update-sender";
+import { DirectEmailSender } from "@/components/direct-email-sender";
 
 
 export default function CommunicationsPage() {
@@ -30,25 +30,33 @@ export default function CommunicationsPage() {
        <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight">Comunicaciones</h1>
         <p className="text-muted-foreground">
-          Genera emails, crea formularios o solicita actualizaciones de datos a tus miembros.
+          Envía correos, genera plantillas con IA, crea formularios o solicita actualizaciones de datos.
         </p>
       </div>
       
-      <Tabs defaultValue="email-templates" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+      <Tabs defaultValue="direct-send" className="w-full">
+        <TabsList className="grid w-full grid-cols-4">
+          <TabsTrigger value="direct-send">
+            <Send className="mr-2 h-4 w-4" />
+            Envío Directo
+          </TabsTrigger>
           <TabsTrigger value="email-templates">
             <Mail className="mr-2 h-4 w-4" />
-            Plantillas de Email
+            Plantillas con IA
           </TabsTrigger>
           <TabsTrigger value="registration-forms">
             <ClipboardList className="mr-2 h-4 w-4" />
-            Formularios de Inscripción
+            Formularios
           </TabsTrigger>
            <TabsTrigger value="data-update">
             <UserCheck className="mr-2 h-4 w-4" />
             Actualización de Datos
           </TabsTrigger>
         </TabsList>
+        
+        <TabsContent value="direct-send" className="mt-6 space-y-8">
+            <DirectEmailSender />
+        </TabsContent>
 
         <TabsContent value="email-templates" className="mt-6 space-y-8">
           <EmailTemplateGenerator onTemplateGenerated={addEmailToHistory} />
@@ -85,7 +93,7 @@ export default function CommunicationsPage() {
                 <CardHeader>
                     <CardTitle>Historial de Formularios</CardTitle>
                     <CardDescription>Formularios de inscripción creados anteriormente.</CardDescription>
-                </CardHeader>
+                </Header>
                 <CardContent>
                      {formHistory.length > 0 ? (
                         <div className="space-y-4">

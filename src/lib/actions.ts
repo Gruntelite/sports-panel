@@ -162,6 +162,84 @@ async function getClubConfig(clubId: string) {
     return config;
 }
 
+export async function sendDirectEmailAction({ clubId, recipients, subject, body }: { clubId: string, recipients: any[], subject: string, body: string }) {
+    
+    const config = await getClubConfig(clubId);
+    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
+    
+    if (!apiKey) {
+      const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
+      console.error(errorMsg);
+      return { success: false, sentCount: 0, queuedCount: 0, error: errorMsg };
+    }
+
+    const recipientsToSend = recipients.slice(0, availableToSendToday);
+    const recipientsToQueue = recipients.slice(availableToSendToday);
+
+    const result = await sendEmailUpdateFlow({
+        recipients: recipientsToSend,
+        subject,
+        body,
+        apiKey,
+        clubName,
+        fromEmail,
+        clubId,
+    });
+    
+    // Always queue the ones that were over the limit from the start
+    if (recipientsToQueue.length > 0) {
+        const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
+        await setDoc(queueRef, {
+            recipients: recipientsToQueue,
+            subject,
+            body,
+            createdAt: Timestamp.now(),
+        });
+    }
+
+    if (result.success && result.sentCount > 0) {
+        const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+        const settingsSnap = await getDoc(settingsRef);
+        const now = Timestamp.now();
+        
+        if (settingsSnap.exists()) {
+            const data = settingsSnap.data();
+            const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
+            const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+
+            if (lastReset < oneDayAgo) {
+                 await updateDoc(settingsRef, {
+                      dailyEmailCount: result.sentCount,
+                      dailyEmailCountResetTimestamp: now,
+                  });
+            } else {
+                 await updateDoc(settingsRef, {
+                      dailyEmailCount: increment(result.sentCount),
+                 });
+            }
+        } else {
+             await setDoc(settingsRef, {
+                  dailyEmailCount: result.sentCount,
+                  dailyEmailCountResetTimestamp: now,
+              }, { merge: true });
+        }
+    }
+
+    if (result.success) {
+        const queuedCount = recipientsToQueue.length + (result.requeuedCount || 0);
+        return {
+            success: true,
+            title: `¡Envío Procesado!`,
+            description: `Se han enviado ${result.sentCount} correos. ${queuedCount > 0 ? `${queuedCount} correos no se pudieron enviar y se han encolado para un reintento automático.` : ''}`
+        };
+    } else {
+        return {
+            success: false,
+            error: result.error || "Ocurrió un error desconocido durante el envío.",
+        };
+    }
+}
+
 
 export async function directSendAction({ clubId, recipients }: { clubId: string, recipients: any[] }) {
     
@@ -188,9 +266,8 @@ export async function directSendAction({ clubId, recipients }: { clubId: string,
     // Always queue the ones that were over the limit from the start
     if (recipientsToQueue.length > 0) {
         const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
-        await setDoc(queueRef, {
-            recipients: recipientsToQueue,
-            // fieldConfig is no longer needed
+        await setDoc(queueRef, { 
+            recipients: recipientsToQueue, 
             createdAt: Timestamp.now(),
         });
     }

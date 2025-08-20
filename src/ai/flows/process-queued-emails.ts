@@ -96,7 +96,7 @@ export const processQueuedEmailsFlow = ai.defineFlow(
       for (const queuedBatchDoc of queueSnapshot.docs) {
         if(emailsSentThisRun >= availableToSendToday) break;
 
-        const { recipients } = queuedBatchDoc.data();
+        const { recipients, subject, body } = queuedBatchDoc.data();
         const remainingDailyQuota = availableToSendToday - emailsSentThisRun;
         
         const recipientsToSend = recipients.slice(0, remainingDailyQuota);
@@ -109,7 +109,9 @@ export const processQueuedEmailsFlow = ai.defineFlow(
           recipients: recipientsToSend,
           apiKey,
           clubName,
-          fromEmail
+          fromEmail,
+          subject,
+          body
         });
 
         emailsSentThisRun += result.sentCount;
