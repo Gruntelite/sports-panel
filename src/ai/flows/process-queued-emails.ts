@@ -17,9 +17,6 @@ export const processQueuedEmailsFlow = ai.defineFlow(
   async () => {
     console.log('Running scheduled job: processQueuedEmailsFlow');
     
-    // In a real multi-club scenario, you'd iterate through all clubs.
-    // For this example, we assume a single known club or a mechanism to get all club IDs.
-    // This part would need to be adapted for a real multi-tenant application.
     const clubsSnapshot = await db.collection('clubs').get();
     
     if (clubsSnapshot.empty) {
@@ -32,40 +29,50 @@ export const processQueuedEmailsFlow = ai.defineFlow(
       console.log(`Checking email queue for club: ${clubId}`);
 
       const queueRef = db.collection('clubs').doc(clubId).collection('emailQueue');
-      const queueSnapshot = await queueRef.orderBy('createdAt', 'asc').limit(1).get();
+      const queueSnapshot = await queueRef.orderBy('createdAt', 'asc').get();
 
       if (queueSnapshot.empty) {
         console.log(`Email queue for club ${clubId} is empty.`);
-        continue; // No items to process for this club
+        continue;
       }
 
-      const queuedBatch = queueSnapshot.docs[0];
-      const { recipients, fieldConfig } = queuedBatch.data();
+      for (const queuedBatch of queueSnapshot.docs) {
+        const { recipients, fieldConfig } = queuedBatch.data();
 
-      console.log(`Processing batch of ${recipients.length} queued emails for club ${clubId}.`);
+        console.log(`Processing batch of ${recipients.length} queued emails for club ${clubId}.`);
 
-      // Use the existing flow to send emails, respecting daily limits.
-      const result = await sendEmailUpdateFlow({
-        clubId,
-        recipients,
-        fieldConfig,
-      });
+        // Use the existing flow to send emails, respecting daily limits.
+        const result = await sendEmailUpdateFlow({
+          clubId,
+          recipients,
+          fieldConfig,
+        });
 
-      if (result.success) {
-        // If the batch was fully sent, remove it from the queue
-        if (result.queuedCount === 0) {
-          console.log(`Batch for club ${clubId} processed successfully. Deleting from queue.`);
-          await queuedBatch.ref.delete();
+        if (result.success) {
+          // If the batch was fully sent, remove it from the queue
+          if (result.queuedCount === 0) {
+            console.log(`Batch for club ${clubId} processed successfully. Deleting from queue.`);
+            await queuedBatch.ref.delete();
+          } else {
+            // If only part of the batch was sent, update the remaining recipients in the queue
+            const remainingRecipients = recipients.slice(result.sentCount);
+             console.log(`${result.sentCount} emails sent. ${remainingRecipients.length} emails remain in the queue for club ${clubId}.`);
+            await queuedBatch.ref.update({ recipients: remainingRecipients });
+          }
         } else {
-          // If only part of the batch was sent, update the remaining recipients in the queue
-          const remainingRecipients = recipients.slice(result.sentCount);
-           console.log(`${result.sentCount} emails sent. ${remainingRecipients.length} emails remain in the queue for club ${clubId}.`);
-          await queuedBatch.ref.update({ recipients: remainingRecipients });
+          console.error(`Failed to process queued batch for club ${clubId}:`, result.error);
+          // If we fail, we stop processing this club's queue for this run to avoid hammering a failing service.
+          // The error could be transient (e.g., API key revoked), so we'll try again on the next scheduled run.
+          break; 
         }
-      } else {
-        console.error(`Failed to process queued batch for club ${clubId}:`, result.error);
-        // Optionally, add error handling like marking the batch as failed
+
+        // If the last run used up all available daily sends, stop processing for this club.
+        if (result.sentCount < recipients.length) {
+            console.log(`Daily limit likely reached for club ${clubId}. Pausing queue processing for this run.`);
+            break;
+        }
       }
     }
   }
 );
+
