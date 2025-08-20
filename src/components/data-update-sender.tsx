@@ -139,8 +139,7 @@ export function DataUpdateSender() {
             
             let teamMatch = selectedTeams.size === 0;
             if (selectedTeams.size > 0) {
-                 // Member must have a teamId and that teamId must be in the selected teams set
-                if(member.teamId && selectedTeams.has(member.teamId)) {
+                 if(member.teamId && selectedTeams.has(member.teamId)) {
                     teamMatch = true;
                 } else {
                     teamMatch = false;
@@ -260,7 +259,7 @@ El equipo de ${clubName}`;
           firestoreBatch.set(batchRef, {
               clubName: clubName,
               recipients: batchRecipients,
-              fieldConfig: fieldConfig,
+              fieldConfig: availableFields.length > 0 ? fieldConfig : {},
               status: 'pending',
               createdAt: serverTimestamp(),
           });
@@ -438,7 +437,7 @@ El equipo de ${clubName}`;
                     </Dialog>
                 </div>
 
-                {availableFields.length > 0 && (
+                {availableFields.length > 0 ? (
                     <div className="space-y-4 pt-4 border-t">
                         <div className="flex items-center gap-2">
                            <Settings className="h-5 w-5 text-primary" />
@@ -474,6 +473,12 @@ El equipo de ${clubName}`;
                             </div>
                         </ScrollArea>
                     </div>
+                ) : (
+                    selectedTypes.size > 1 && (
+                        <div className="pt-4 border-t text-sm text-muted-foreground">
+                            Para configurar campos específicos, por favor selecciona un único tipo de miembro (p.ej., solo 'Jugadores').
+                        </div>
+                    )
                 )}
                  
             </CardContent>
@@ -516,3 +521,4 @@ El equipo de ${clubName}`;
     );
 }
 
+    
