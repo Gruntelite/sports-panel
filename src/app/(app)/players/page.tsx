@@ -257,7 +257,7 @@ export default function PlayersPage() {
         
         // Automatic user record creation
         const contactEmail = dataToSave.tutorEmail;
-        const contactName = dataToSave.isOwnTutor ? `${dataToSave.name} ${dataToSave.lastName}` : (dataToSave.tutorName ? `${dataToSave.tutorName} ${dataToSave.tutorLastName}` : `${dataToSave.name} ${dataToSave.lastName} (Familia)`);
+        const contactName = `${dataToSave.name} ${dataToSave.lastName}`;
         
         if(contactEmail){
             const userRef = doc(collection(db, "clubs", clubId, "users"));
@@ -782,5 +782,6 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
 
 

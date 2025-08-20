@@ -259,7 +259,7 @@ export default function CoachesPage() {
             });
             toast({
                 title: "Registro de Usuario Creado",
-                description: `Se ha creado un registro de usuario para ${dataToSave.name}.`,
+                description: `Se ha creado un registro de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
             });
         }
       }

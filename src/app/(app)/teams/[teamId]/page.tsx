@@ -445,7 +445,7 @@ export default function EditTeamPage() {
         
         // Automatic user record creation
         const contactEmail = dataToSave.tutorEmail;
-        const contactName = dataToSave.isOwnTutor ? `${dataToSave.name} ${dataToSave.lastName}` : (dataToSave.tutorName ? `${dataToSave.tutorName} ${dataToSave.tutorLastName}` : `${dataToSave.name} ${dataToSave.lastName} (Familia)`);
+        const contactName = `${dataToSave.name} ${dataToSave.lastName}`;
         
         if(contactEmail){
             const userRef = doc(collection(db, "clubs", clubId, "users"));
@@ -525,7 +525,7 @@ export default function EditTeamPage() {
             });
             toast({
                 title: "Registro de Usuario Creado",
-                description: `Se ha creado un registro de usuario para ${dataToSave.name}.`,
+                description: `Se ha creado un registro de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
             });
         }
       }
