@@ -474,8 +474,8 @@ export default function EditTeamPage() {
   };
 
   const handleSaveCoach = async () => {
-    if (!coachData.name || !coachData.lastName || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
+    if (!coachData.name || !coachData.lastName || !coachData.email || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email son obligatorios." });
         return;
     }
 
@@ -511,8 +511,23 @@ export default function EditTeamPage() {
         await updateDoc(coachRef, dataToSave);
         toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
       } else {
-        await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
+        const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al equipo.` });
+        
+        // Automatic user record creation
+        if (dataToSave.email) {
+            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            await setDoc(userRef, {
+                email: dataToSave.email,
+                name: `${dataToSave.name} ${dataToSave.lastName}`,
+                role: 'Entrenador',
+                coachId: coachDocRef.id,
+            });
+            toast({
+                title: "Registro de Usuario Creado",
+                description: `Se ha creado un registro de usuario para ${dataToSave.name}.`,
+            });
+        }
       }
       
       setIsModalOpen(false);
@@ -950,8 +965,8 @@ export default function EditTeamPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
+                                     <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email *" : "Email del Tutor/a *"}</Label>
+                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} required />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
@@ -1073,3 +1088,5 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
+    
