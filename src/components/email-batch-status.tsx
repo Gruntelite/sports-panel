@@ -112,7 +112,7 @@ export function EmailBatchStatus() {
       // No need to set loading to false, the real-time listener will update the UI.
     }
 
-    const getBatchStatus = (batch: EmailBatch) => {
+    const getBatchStatus = (batch: EmailBatch, isLoading: boolean) => {
         const sentCount = batch.recipients.filter(r => r.status === 'sent').length;
         const failedCount = batch.recipients.filter(r => r.status === 'failed').length;
         const total = batch.recipients.length;
@@ -122,7 +122,9 @@ export function EmailBatchStatus() {
         let StatusIcon = Hourglass;
         let badgeVariant: "default" | "secondary" | "destructive" | "outline" = "outline";
 
-        switch (batch.status) {
+        const currentStatus = isLoading ? 'processing' : batch.status;
+
+        switch (currentStatus) {
             case 'processing':
                 statusText = "Procesando";
                 StatusIcon = Loader2;
@@ -146,7 +148,7 @@ export function EmailBatchStatus() {
                  break;
         }
 
-        return { sentCount, failedCount, total, progress, statusText, StatusIcon, badgeVariant };
+        return { sentCount, failedCount, total, progress, statusText, StatusIcon, badgeVariant, currentStatus };
     };
 
     if (loading) {
@@ -179,8 +181,8 @@ export function EmailBatchStatus() {
                 <div className="space-y-4">
                     {batches.length > 0 ? (
                         batches.map(batch => {
-                            const { sentCount, failedCount, total, progress, statusText, StatusIcon, badgeVariant } = getBatchStatus(batch);
                             const isLoading = isActionLoading[batch.id];
+                            const { sentCount, failedCount, total, progress, statusText, StatusIcon, badgeVariant, currentStatus } = getBatchStatus(batch, isLoading);
                             return (
                                 <div key={batch.id} className="p-4 border rounded-lg space-y-3">
                                     <div className="flex justify-between items-start">
@@ -193,14 +195,14 @@ export function EmailBatchStatus() {
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-2">
-                                            <Badge variant={badgeVariant} className={batch.status === 'processing' ? "animate-pulse" : ""}>
-                                                <StatusIcon className={`mr-2 h-4 w-4 ${batch.status === 'processing' || isLoading ? 'animate-spin' : ''}`} />
+                                            <Badge variant={badgeVariant} className={currentStatus === 'processing' ? "animate-pulse" : ""}>
+                                                <StatusIcon className={`mr-2 h-4 w-4 ${currentStatus === 'processing' ? 'animate-spin' : ''}`} />
                                                 {statusText}
                                             </Badge>
-                                             { (batch.status !== 'completed' && batch.status !== 'processing') && (
+                                             { (currentStatus !== 'completed' && currentStatus !== 'processing') && (
                                                 <Button variant="secondary" size="sm" onClick={() => handleRetry(batch.id)} disabled={isLoading}>
                                                     { isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" /> }
-                                                    { isLoading ? 'Procesando...' : 'Reintentar' }
+                                                    { isLoading ? 'Procesando...' : 'Procesar' }
                                                 </Button>
                                             )}
                                         </div>
