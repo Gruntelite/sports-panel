@@ -10,11 +10,13 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { Check, ChevronsUpDown, Eye, EyeOff, Pencil, Send, UserPlus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Label } from "./ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 
 type FieldPermission = "editable" | "readonly" | "hidden";
@@ -66,6 +68,11 @@ type FieldConfig = {
     [key: string]: { label: string; permission: FieldPermission };
 };
 
+const MEMBER_TYPES = [
+    { value: 'Jugador', label: 'Jugadores' },
+    { value: 'Entrenador', label: 'Entrenadores' },
+    { value: 'Staff', label: 'Staff' }
+];
 
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
@@ -75,9 +82,11 @@ export function DataUpdateSender() {
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
     const [isMemberSelectOpen, setIsMemberSelectOpen] = useState(false);
     
-    const [filterType, setFilterType] = useState<string>('all');
-    const [filterTeam, setFilterTeam] = useState<string>('all');
-
+    const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
+    const [isTypePopoverOpen, setIsTypePopoverOpen] = useState(false);
+    const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
+    const [isTeamPopoverOpen, setIsTeamPopoverOpen] = useState(false);
+    
     const [fieldConfig, setFieldConfig] = useState<FieldConfig>({});
     const { toast } = useToast();
 
@@ -131,19 +140,30 @@ export function DataUpdateSender() {
     
     const filteredMembers = useMemo(() => {
         return allMembers.filter(member => {
-            const typeMatch = filterType === 'all' || member.type === filterType;
-            const teamMatch = filterTeam === 'all' || (member.data as Player | Coach).teamId === filterTeam;
+            const typeMatch = selectedTypes.size === 0 || selectedTypes.has(member.type);
+            const teamMatch = selectedTeams.size === 0 || selectedTeams.has((member.data as Player | Coach).teamId || '');
 
-            if (filterType === 'Staff') {
-                return typeMatch;
+            if (selectedTypes.has('Staff')) {
+                 if (selectedTeams.size > 0) { // If filtering by team and staff is selected, staff should only show if no team filter active
+                    return typeMatch && member.type === 'Staff' ? true : typeMatch && teamMatch;
+                 }
+                 return typeMatch;
             }
 
             return typeMatch && teamMatch;
         });
-    }, [allMembers, filterType, filterTeam]);
+    }, [allMembers, selectedTypes, selectedTeams]);
     
-    const initializeFieldConfig = (memberType: 'Jugador' | 'Entrenador' | 'Staff') => {
+    const initializeFieldConfig = (memberTypes: Set<string>) => {
         const config: FieldConfig = {};
+        
+        // For now, we only allow configuring fields if a single member type is selected.
+        if (memberTypes.size !== 1) {
+            setFieldConfig({});
+            return;
+        }
+
+        const memberType = memberTypes.values().next().value;
         let fields: { key: string; label: string }[] = [];
 
         switch (memberType) {
@@ -166,13 +186,9 @@ export function DataUpdateSender() {
     };
 
     useEffect(() => {
-        if (filterType !== 'all') {
-            initializeFieldConfig(filterType as 'Jugador' | 'Entrenador' | 'Staff');
-        } else {
-            setFieldConfig({});
-        }
+        initializeFieldConfig(selectedTypes);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [filterType]);
+    }, [selectedTypes]);
     
     
     const handleSelectMember = (memberId: string) => {
@@ -213,31 +229,79 @@ export function DataUpdateSender() {
                 <div className="flex flex-col md:flex-row gap-4">
                     <div className="flex-1 space-y-2">
                         <Label>Filtrar por tipo</Label>
-                        <Select value={filterType} onValueChange={setFilterType}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Tipo de miembro" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos los tipos</SelectItem>
-                                <SelectItem value="Jugador">Jugadores</SelectItem>
-                                <SelectItem value="Entrenador">Entrenadores</SelectItem>
-                                <SelectItem value="Staff">Staff</SelectItem>
-                            </SelectContent>
-                        </Select>
+                         <Popover open={isTypePopoverOpen} onOpenChange={setIsTypePopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start">
+                                    {selectedTypes.size > 0 ? `${selectedTypes.size} tipo(s) seleccionado(s)` : "Seleccionar tipo..."}
+                                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                                <Command>
+                                    <CommandInput placeholder="Buscar tipo..." />
+                                    <CommandList>
+                                        <CommandEmpty>No se encontró el tipo.</CommandEmpty>
+                                        <CommandGroup>
+                                            {MEMBER_TYPES.map(type => (
+                                                <CommandItem
+                                                    key={type.value}
+                                                    onSelect={() => {
+                                                        const newSelection = new Set(selectedTypes);
+                                                        if (newSelection.has(type.value)) {
+                                                            newSelection.delete(type.value);
+                                                        } else {
+                                                            newSelection.add(type.value);
+                                                        }
+                                                        setSelectedTypes(newSelection);
+                                                    }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", selectedTypes.has(type.value) ? "opacity-100" : "opacity-0")} />
+                                                    {type.label}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                     <div className="flex-1 space-y-2">
                         <Label>Filtrar por equipo</Label>
-                        <Select value={filterTeam} onValueChange={setFilterTeam} disabled={filterType === 'Staff'}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Equipo" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">Todos los equipos</SelectItem>
-                                {teams.map(team => (
-                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Popover open={isTeamPopoverOpen} onOpenChange={setIsTeamPopoverOpen}>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start">
+                                    {selectedTeams.size > 0 ? `${selectedTeams.size} equipo(s) seleccionado(s)` : "Seleccionar equipo..."}
+                                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                             <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                                <Command>
+                                    <CommandInput placeholder="Buscar equipo..." />
+                                    <CommandList>
+                                        <CommandEmpty>No se encontró el equipo.</CommandEmpty>
+                                        <CommandGroup>
+                                            {teams.map(team => (
+                                                <CommandItem
+                                                    key={team.id}
+                                                    onSelect={() => {
+                                                        const newSelection = new Set(selectedTeams);
+                                                        if (newSelection.has(team.id)) {
+                                                            newSelection.delete(team.id);
+                                                        } else {
+                                                            newSelection.add(team.id);
+                                                        }
+                                                        setSelectedTeams(newSelection);
+                                                    }}
+                                                >
+                                                    <Check className={cn("mr-2 h-4 w-4", selectedTeams.has(team.id) ? "opacity-100" : "opacity-0")} />
+                                                    {team.name}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
                 </div>
 
@@ -285,9 +349,9 @@ export function DataUpdateSender() {
                     </Dialog>
                 </div>
                 
-                 {selectedCount > 0 && filterType !== 'all' && (
+                 {selectedCount > 0 && selectedTypes.size === 1 && (
                     <div className="border-t pt-6">
-                        <h3 className="text-lg font-medium mb-4">Configurar Campos para <span className="capitalize text-primary">{filterType}s</span></h3>
+                        <h3 className="text-lg font-medium mb-4">Configurar Campos para <span className="capitalize text-primary">{MEMBER_TYPES.find(t => t.value === selectedTypes.values().next().value)?.label}</span></h3>
                         <div className="space-y-3">
                            {Object.entries(fieldConfig).map(([key, { label, permission }]) => (
                                 <div key={key} className="flex items-center justify-between rounded-lg border p-3">
@@ -322,9 +386,9 @@ export function DataUpdateSender() {
                     </div>
                 )}
 
-                 {selectedCount > 0 && filterType === 'all' && (
+                 {selectedCount > 0 && selectedTypes.size !== 1 && (
                      <div className="border-t pt-6 text-center text-muted-foreground">
-                         <p>Por favor, selecciona un tipo de miembro (Jugador, Entrenador o Staff) para configurar los campos del formulario.</p>
+                         <p>Por favor, selecciona un único tipo de miembro (Jugador, Entrenador o Staff) para poder configurar los campos del formulario.</p>
                      </div>
                  )}
             </CardContent>
