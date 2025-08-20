@@ -7,8 +7,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import { db } from '@/lib/firebase-admin';
-import * as admin from 'firebase-admin';
+import admin, { db } from '@/lib/firebase-admin';
 
 
 const DAILY_LIMIT = 100;

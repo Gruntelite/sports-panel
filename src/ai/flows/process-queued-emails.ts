@@ -5,7 +5,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { db } from '@/lib/firebase-admin';
+import admin, { db } from '@/lib/firebase-admin';
 import { sendEmailUpdateFlow } from './send-email-update';
 
 // Scheduled flow to run periodically (e.g., daily via cron)
@@ -75,4 +75,3 @@ export const processQueuedEmailsFlow = ai.defineFlow(
     }
   }
 );
-
