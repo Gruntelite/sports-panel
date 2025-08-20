@@ -4,7 +4,7 @@
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
 import { sendEmailUpdateFlow } from "@/ai/flows/send-email-update";
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, serverTimestamp } from "firebase/firestore";
-import admin, { db } from './firebase-admin';
+import { db } from './firebase'; // Use client SDK
 
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
@@ -121,48 +121,56 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 
 const DAILY_LIMIT = 100;
 
+// Helper to get club configuration and daily send limit
 async function getClubConfig(clubId: string) {
-    const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
-    const clubRef = db.collection('clubs').doc(clubId);
+    const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+    const clubRef = doc(db, 'clubs', clubId);
 
-    const [settingsDoc, clubDoc] = await Promise.all([settingsRef.get(), clubRef.get()]);
+    const [settingsDoc, clubDoc] = await Promise.all([getDoc(settingsRef), getDoc(clubRef)]);
 
     let config = {
       clubName: "Tu Club",
       fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
       apiKey: null as string | null,
       availableToSendToday: DAILY_LIMIT,
+      dailyEmailCount: 0,
+      dailyEmailCountResetTimestamp: null as Timestamp | null,
     };
 
-    if (clubDoc.exists) {
+    if (clubDoc.exists()) {
         config.clubName = clubDoc.data()?.name || "Tu Club";
     }
 
-    if (settingsDoc.exists) {
+    if (settingsDoc.exists()) {
         const data = settingsDoc.data();
         if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
             config.fromEmail = data.fromEmail;
         }
         config.apiKey = data?.platformSendgridApiKey || null;
 
-        const now = admin.firestore.Timestamp.now();
+        const now = Timestamp.now();
         const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
         const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+        
+        config.dailyEmailCountResetTimestamp = data?.dailyEmailCountResetTimestamp || null;
+        
         let currentCount = data?.dailyEmailCount || 0;
-
         if (lastReset < oneDayAgo) {
             currentCount = 0;
         }
+
+        config.dailyEmailCount = currentCount;
         config.availableToSendToday = DAILY_LIMIT - currentCount;
     }
     return config;
 }
 
+
 export async function directSendAction({ clubId, recipients, fieldConfig }: { clubId: string, recipients: any[], fieldConfig: any }) {
     
     const config = await getClubConfig(clubId);
-    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
-
+    const { availableToSendToday, apiKey, clubName, fromEmail, dailyEmailCount, dailyEmailCountResetTimestamp } = config;
+    
     if (!apiKey) {
       const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
       console.error(errorMsg);
@@ -182,8 +190,8 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
     });
     
     if (recipientsToQueue.length > 0) {
-        const queueRef = db.collection('clubs').doc(clubId).collection('emailQueue').doc();
-        await queueRef.set({
+        const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
+        await setDoc(queueRef, {
             recipients: recipientsToQueue,
             fieldConfig,
             createdAt: serverTimestamp(),
@@ -192,19 +200,18 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
 
      // Update daily send count only if emails were actually sent
     if (result.success && result.sentCount > 0) {
-        const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
-        const settingsDoc = await settingsRef.get();
-        const lastReset = settingsDoc.data()?.dailyEmailCountResetTimestamp?.toMillis() || 0;
-        const now = admin.firestore.Timestamp.now();
-
-        if (lastReset < now.toMillis() - (24 * 60 * 60 * 1000)) {
-             await settingsRef.set({
+        const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+        const now = Timestamp.now();
+        
+        if (!dailyEmailCountResetTimestamp || dailyEmailCountResetTimestamp.toMillis() < now.toMillis() - (24 * 60 * 60 * 1000)) {
+             await setDoc(settingsRef, {
                   dailyEmailCount: result.sentCount,
                   dailyEmailCountResetTimestamp: now,
               }, { merge: true });
         } else {
-             await settingsRef.update({
-                  dailyEmailCount: admin.firestore.FieldValue.increment(result.sentCount)
+            const newCount = dailyEmailCount + result.sentCount;
+             await updateDoc(settingsRef, {
+                  dailyEmailCount: newCount,
              });
         }
     }
