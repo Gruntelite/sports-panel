@@ -111,7 +111,7 @@ export const processEmailBatchFlow = ai.defineFlow(
                 clubId: clubId,
                 memberId: recipient.id,
                 memberType: recipient.type,
-                fieldConfig: batchData.fieldConfig,
+                fieldConfig: batchData.fieldConfig || {},
                 expires: admin.firestore.Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
             });
 
