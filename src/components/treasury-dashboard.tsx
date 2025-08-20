@@ -157,7 +157,7 @@ export function TreasuryDashboard() {
         <div className="flex items-center justify-between">
             <TabsList>
                 <TabsTrigger value="fees">Cuotas de Jugadores</TabsTrigger>
-                <TabsTrigger value="other" disabled>Pagos Adicionales</TabsTrigger>
+                <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
