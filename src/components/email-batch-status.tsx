@@ -109,7 +109,7 @@ export function EmailBatchStatus() {
       } else {
         toast({ variant: "destructive", title: "Error", description: result.error });
       }
-      // No need to set loading to false, the real-time listener will update the UI.
+      setIsActionLoading(prev => ({...prev, [batchId]: false}));
     }
 
     const getBatchStatus = (batch: EmailBatch, isLoading: boolean) => {

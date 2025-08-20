@@ -379,7 +379,6 @@ export async function retryBatchAction({ clubId, batchId }: { clubId: string, ba
             updatedAt: serverTimestamp(),
         });
         
-        // The scheduler will pick this up, but we can also trigger it immediately
         await processEmailBatchFlow({ batchId, limit: 100 });
         
         return { success: true };
