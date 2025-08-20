@@ -29,7 +29,7 @@ import { initiateSenderVerificationAction } from "@/lib/actions";
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
 // This will be false on the server and true on the client if the key is set.
-const isPlatformMailConfigured = !!process.env.NEXT_PUBLIC_SENDGRID_API_KEY_CONFIGURED;
+const isPlatformMailConfigured = process.env.NEXT_PUBLIC_SENDGRID_API_KEY_CONFIGURED === "true";
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
@@ -251,5 +251,6 @@ export default function ClubSettingsPage() {
             </div>
         </div>
     );
+}
 
     
