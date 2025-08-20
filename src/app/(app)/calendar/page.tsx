@@ -168,7 +168,7 @@ function CalendarView() {
                   end: Timestamp.fromDate(new Date(`${dayStr}T${training.endTime}`)),
                   type: 'Entrenamiento',
                   location: training.venueName,
-                  color: 'bg-primary/20 text-primary-foreground border border-primary/50',
+                  color: 'bg-primary/20 text-primary border border-primary/50',
                   isTemplateBased: true,
               });
           });
@@ -198,7 +198,7 @@ function CalendarView() {
     if(mode === 'add' && selectedDays.size > 0) {
         const firstDay = Array.from(selectedDays)[0];
         const date = new Date(firstDay + 'T12:00:00'); // Default to noon
-        setEventData({ start: Timestamp.fromDate(date), color: EVENT_COLORS[0].value, type: "Evento" });
+        setEventData({ start: Timestamp.fromDate(date), end: Timestamp.fromDate(date), color: EVENT_COLORS[0].value, type: "Evento" });
     } else {
         setEventData(event || { color: EVENT_COLORS[0].value, type: "Evento" });
     }
@@ -206,7 +206,7 @@ function CalendarView() {
   };
   
   const handleSaveEvent = async () => {
-    if (!clubId || !eventData.title || !eventData.start) return;
+    if (!clubId || !eventData.title || !eventData.start || !eventData.end) return;
     setIsUpdating(true);
     try {
         if(modalMode === 'edit' && eventData.id) {
@@ -495,27 +495,52 @@ function CalendarView() {
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="event-date">Fecha</Label>
+                        <Label>Fecha de Inicio</Label>
                         <DatePicker 
                             date={eventData.start ? eventData.start.toDate() : undefined}
                             onDateChange={(date) => {
                                 if(date) {
-                                    const newDate = new Date(date);
                                     const oldDate = eventData.start?.toDate() || new Date();
-                                    newDate.setHours(oldDate.getHours(), oldDate.getMinutes());
-                                    setEventData({...eventData, start: Timestamp.fromDate(newDate)})
+                                    date.setHours(oldDate.getHours(), oldDate.getMinutes());
+                                    setEventData({...eventData, start: Timestamp.fromDate(date)})
                                 }
                             }}
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="event-time">Hora</Label>
-                        <Input id="event-time" type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => {
+                        <Label>Fecha de Fin</Label>
+                        <DatePicker 
+                            date={eventData.end ? eventData.end.toDate() : undefined}
+                            onDateChange={(date) => {
+                                if(date) {
+                                    const oldDate = eventData.end?.toDate() || new Date();
+                                    date.setHours(oldDate.getHours(), oldDate.getMinutes());
+                                    setEventData({...eventData, end: Timestamp.fromDate(date)})
+                                }
+                            }}
+                        />
+                    </div>
+                </div>
+                 <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="event-start-time">Hora de Inicio</Label>
+                        <Input id="event-start-time" type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => {
                              if(eventData.start) {
                                 const [h, m] = e.target.value.split(':');
                                 const newDate = eventData.start.toDate();
                                 newDate.setHours(Number(h), Number(m));
                                 setEventData({...eventData, start: Timestamp.fromDate(newDate)})
+                            }
+                        }}/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="event-end-time">Hora de Fin</Label>
+                        <Input id="event-end-time" type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => {
+                             if(eventData.end) {
+                                const [h, m] = e.target.value.split(':');
+                                const newDate = eventData.end.toDate();
+                                newDate.setHours(Number(h), Number(m));
+                                setEventData({...eventData, end: Timestamp.fromDate(newDate)})
                             }
                         }}/>
                     </div>
@@ -597,3 +622,5 @@ export default function CalendarPage() {
     </div>
   )
 }
+
+    
