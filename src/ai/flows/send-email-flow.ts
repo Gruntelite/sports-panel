@@ -36,33 +36,38 @@ export const sendEmailFlow = ai.defineFlow(
 
     const sgMail = await import('@sendgrid/mail');
     sgMail.setApiKey(apiKey);
-
-    const emailPromises = recipients.map(recipient => {
-        const msg = {
-            to: recipient.email,
-            from: { email: fromEmail, name: clubName },
-            subject: subject,
-            html: body.replace(/\n/g, '<br>'), // Simple newline to HTML conversion
-        };
-        return sgMail.send(msg);
-    });
     
     let sentCount = 0;
-    try {
-      const results = await Promise.allSettled(emailPromises);
-      sentCount = results.filter(r => r.status === 'fulfilled').length;
-      
-      const failed = results.filter(r => r.status === 'rejected');
-      if (failed.length > 0) {
-          console.error('Some emails failed to send:', failed);
-      }
-      
-      return { success: true, sentCount };
+    const errors = [];
 
-    } catch (error: any) {
-      console.error('Error sending emails:', error.response?.body || error);
-      const errorMessage = error.response?.body?.errors?.[0]?.message || error.message || 'Error desconocido al enviar correos.';
-      return { success: false, sentCount: 0, error: errorMessage };
+    for (const recipient of recipients) {
+      if (!recipient.email) continue;
+      
+      const msg = {
+        to: recipient.email,
+        from: { email: fromEmail, name: clubName },
+        subject: subject,
+        html: body.replace(/\n/g, '<br>'),
+      };
+      
+      try {
+        await sgMail.send(msg);
+        sentCount++;
+      } catch (error: any) {
+        const errorMessage = error.response?.body?.errors?.[0]?.message || error.message || 'Error desconocido';
+        console.error(`Failed to send email to ${recipient.email}:`, errorMessage);
+        errors.push(errorMessage);
+      }
+    }
+
+    if (sentCount > 0) {
+      return { success: true, sentCount: sentCount };
+    } else {
+      return { 
+        success: false, 
+        sentCount: 0, 
+        error: `Todos los correos fallaron. Último error: ${errors[errors.length - 1] || 'Error desconocido'}`
+      };
     }
   }
 );
