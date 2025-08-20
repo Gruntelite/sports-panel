@@ -45,6 +45,7 @@ export const processEmailBatchFlow = ai.defineFlow(
         }
         if(!batchResult.batch && input.batchId) {
             const errorMsg = `Could not find batch with ID: ${input.batchId}`;
+            console.error(errorMsg);
             output.errors.push(errorMsg);
             return output;
         }

@@ -257,6 +257,7 @@ export function DataUpdateSender() {
               emailBody: emailPreview.body.replace(/\n/g, '<br>'),
               status: 'pending',
               createdAt: serverTimestamp(),
+              updatedAt: serverTimestamp(),
           });
         }
         

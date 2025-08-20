@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, orderBy, onSnapshot } from "firebase/firestore";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -57,18 +57,14 @@ export function EmailBatchStatus() {
     }, [toast]);
 
     useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
             if (user) {
                 const userDocRef = doc(db, "users", user.uid);
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
                     const currentClubId = userDocSnap.data().clubId;
                     setClubId(currentClubId);
-                    if (currentClubId) {
-                       fetchBatches(currentClubId);
-                    } else {
-                        setLoading(false);
-                    }
+                    setLoading(false);
                 } else {
                     setLoading(false);
                 }
@@ -76,8 +72,31 @@ export function EmailBatchStatus() {
                 setLoading(false);
             }
         });
-        return () => unsubscribe();
-    }, [fetchBatches]);
+        return () => unsubscribeAuth();
+    }, []);
+
+    useEffect(() => {
+        if (!clubId) return;
+
+        const batchesQuery = query(
+            collection(db, "clubs", clubId, "emailBatches"),
+            orderBy("createdAt", "desc")
+        );
+
+        const unsubscribeFirestore = onSnapshot(batchesQuery, (snapshot) => {
+            const fetchedBatches = snapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            } as EmailBatch));
+            setBatches(fetchedBatches);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error with real-time listener:", error);
+            setLoading(false);
+        });
+
+        return () => unsubscribeFirestore();
+    }, [clubId]);
 
     const handleRetry = async (batchId: string) => {
       if(!clubId) return;
@@ -87,11 +106,10 @@ export function EmailBatchStatus() {
       
       if (result.success) {
         toast({ title: "Reintento iniciado...", description: `El lote se está procesando de nuevo.` });
-        fetchBatches(clubId);
       } else {
         toast({ variant: "destructive", title: "Error", description: result.error });
       }
-      setIsActionLoading(prev => ({...prev, [batchId]: false}));
+      // No need to set loading to false, the real-time listener will update the UI.
     }
 
     const getBatchStatus = (batch: EmailBatch) => {
@@ -179,7 +197,7 @@ export function EmailBatchStatus() {
                                                 <StatusIcon className={`mr-2 h-4 w-4 ${batch.status === 'processing' || isLoading ? 'animate-spin' : ''}`} />
                                                 {statusText}
                                             </Badge>
-                                             { (batch.status === 'pending' || batch.status === 'failed') && (
+                                             { (batch.status !== 'completed' && batch.status !== 'processing') && (
                                                 <Button variant="secondary" size="sm" onClick={() => handleRetry(batch.id)} disabled={isLoading}>
                                                     { isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" /> }
                                                     { isLoading ? 'Procesando...' : 'Reintentar' }
@@ -194,8 +212,8 @@ export function EmailBatchStatus() {
                     ) : (
                         <div className="text-center text-muted-foreground py-10">
                             <Send className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay lotes de envío</h3>
-                            <p className="mt-1 text-sm text-gray-500">Cuando envíes una solicitud de actualización, su estado aparecerá aquí.</p>
+                            <h3 className="mt-2 text-sm font-medium">No hay lotes de envío</h3>
+                            <p className="mt-1 text-sm">Cuando envíes una solicitud de actualización, su estado aparecerá aquí.</p>
                         </div>
                     )}
                 </div>
