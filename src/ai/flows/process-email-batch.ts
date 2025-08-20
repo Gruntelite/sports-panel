@@ -2,7 +2,7 @@
 'use server';
 /**
  * @fileOverview A flow to process queued email batches for data update requests.
- * This flow is designed to be triggered by a scheduler.
+ * This flow is designed to be triggered by a scheduler or manually.
  */
 
 import { ai } from '@/ai/genkit';
@@ -10,9 +10,10 @@ import { z } from 'zod';
 import { getClubConfig, getBatchToProcess, updateBatchWithResults, finalizeBatch, createDataUpdateTokens } from '@/lib/actions';
 import { v4 as uuidv4 } from 'uuid';
 
+const BATCH_SIZE = 100;
 
 const ProcessEmailBatchInputSchema = z.object({
-  limit: z.number().optional().default(20).describe('The number of emails to process in this batch.'),
+  limit: z.number().optional().default(BATCH_SIZE).describe('The number of emails to process in this batch.'),
   batchId: z.string().optional().describe('The specific batch ID to process.'),
 });
 export type ProcessEmailBatchInput = z.infer<typeof ProcessEmailBatchInputSchema>;
@@ -34,7 +35,6 @@ export const processEmailBatchFlow = ai.defineFlow(
     
     const output: ProcessEmailBatchOutput = { processedCount: 0, errors: [] };
     
-    // 1. Get a pending batch from the database via a server action
     const batchResult = await getBatchToProcess({ batchId: input.batchId });
 
     if (!batchResult.success || !batchResult.batch || !batchResult.batchDocPath || !batchResult.clubId) {
@@ -42,11 +42,10 @@ export const processEmailBatchFlow = ai.defineFlow(
         output.errors.push(batchResult.error);
         console.error("Error getting batch to process:", batchResult.error);
       }
-      if (batchResult.batch === null) {
+      if (batchResult.batch === null && !input.batchId) {
         console.log("No pending email batches to process.");
       }
-      // If we specified an ID but it wasn't found, this is an error state
-      if (input.batchId) {
+      if (input.batchId && !batchResult.batch) {
         const errorMsg = `Could not find batch with ID: ${input.batchId}`;
         console.error(errorMsg);
         output.errors.push(errorMsg);
@@ -56,7 +55,6 @@ export const processEmailBatchFlow = ai.defineFlow(
     
     const { batch, clubId, batchDocPath } = batchResult;
 
-    // 2. Get club-specific configuration (like API keys) via a server action
     const configResult = await getClubConfig({ clubId });
     if (!configResult.success || !configResult.config) {
         const errorMsg = configResult.error || "Could not retrieve club config.";
@@ -64,7 +62,7 @@ export const processEmailBatchFlow = ai.defineFlow(
         output.errors.push(errorMsg);
         return output;
     }
-    const { clubName, fromEmail, apiKey } = configResult.config;
+    const { clubName, fromEmail, apiKey, availableToSendToday } = configResult.config;
     
     if (!apiKey) {
         const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
@@ -72,20 +70,31 @@ export const processEmailBatchFlow = ai.defineFlow(
         output.errors.push(errorMsg);
         return output;
     }
+
+    if (availableToSendToday <= 0) {
+        console.log(`Daily email limit reached for club ${clubId}.`);
+        // We don't fail the batch, just leave it for the next day.
+        // We update its status back to pending so the scheduler can pick it up again.
+        await finalizeBatch({ batchDocPath, status: 'pending' });
+        return { ...output, processedCount: 0 };
+    }
     
     const sgMail = await import('@sendgrid/mail');
     sgMail.setApiKey(apiKey);
 
-    // 3. Process the recipients
     const recipients = batch.recipients || [];
-    const pendingRecipients = recipients.filter((r: any) => r.status === 'pending').slice(0, input.limit);
+    const pendingRecipients = recipients.filter((r: any) => r.status === 'pending').slice(0, availableToSendToday);
 
     if (pendingRecipients.length === 0) {
-        await finalizeBatch({ batchDocPath, status: 'completed' });
+        const allProcessed = recipients.every((r: any) => r.status === 'sent' || r.status === 'failed');
+        if (allProcessed) {
+            await finalizeBatch({ batchDocPath, status: 'completed' });
+        } else {
+             await finalizeBatch({ batchDocPath, status: 'pending' });
+        }
         return output;
     }
     
-    // Create tokens for all pending recipients before sending emails
     const tokensToCreate = pendingRecipients.map(recipient => ({
       clubId,
       recipient,
@@ -109,10 +118,13 @@ export const processEmailBatchFlow = ai.defineFlow(
     const processPromises = pendingRecipients.map(async (recipient: any) => {
         try {
             const tokenData = tokensToCreate.find(t => t.recipient.id === recipient.id);
+            if (!tokenData) {
+                throw new Error(`Could not find token for recipient ${recipient.id}`);
+            }
             const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL 
                 ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` 
                 : 'http://localhost:9002';
-            const updateLink = `${baseUrl}/update-data?token=${tokenData?.token}`;
+            const updateLink = `${baseUrl}/update-data?token=${tokenData.token}`;
             
             const emailBody = (batch.emailBody || defaultBody)
                 .replace(/\[Nombre del Miembro\]/g, recipient.name)
@@ -129,20 +141,26 @@ export const processEmailBatchFlow = ai.defineFlow(
             };
 
             await sgMail.send(msg);
-            return { id: recipient.id, status: 'sent' };
+            return { id: recipient.id, status: 'sent', error: null };
         } catch (error: any) {
             console.error(`Failed to send email to ${recipient.email}:`, error.response?.body || error);
-            output.errors.push(`Failed for ${recipient.email}: ${error.message}`);
-            return { id: recipient.id, status: 'failed', error: error.message };
+            const errorMessage = error.response?.body?.errors?.[0]?.message || error.message || 'Unknown error';
+            output.errors.push(`Failed for ${recipient.email}: ${errorMessage}`);
+            return { id: recipient.id, status: 'failed', error: errorMessage };
         }
     });
 
     const results = await Promise.all(processPromises);
-    
-    // 4. Update the batch document with the results via a server action
-    await updateBatchWithResults({ batchDocPath, results, originalRecipients: recipients });
+    const successfulSends = results.filter(r => r.status === 'sent').length;
 
-    output.processedCount = results.filter(r => r.status === 'sent').length;
+    await updateBatchWithResults({ 
+      batchDocPath, 
+      results, 
+      originalRecipients: recipients,
+      emailsSentCount: successfulSends 
+    });
+
+    output.processedCount = successfulSends;
     return output;
   }
 );
