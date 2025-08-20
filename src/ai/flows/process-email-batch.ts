@@ -39,7 +39,16 @@ export const processEmailBatchFlow = ai.defineFlow(
 
     if (!batchResult.success || !batchResult.batch) {
         if (batchResult.error) output.errors.push(batchResult.error);
-        return output; // No pending batches or an error occurred
+        if(batchResult.batch === null && !input.batchId) { // No pending batches found
+            console.log("No pending email batches to process.");
+            return { processedCount: 0, errors: [] };
+        }
+        if(!batchResult.batch && input.batchId) {
+            const errorMsg = `Could not find batch with ID: ${input.batchId}`;
+            output.errors.push(errorMsg);
+            return output;
+        }
+        return output;
     }
     
     const { batch, clubId, batchDocPath } = batchResult;
@@ -60,6 +69,7 @@ export const processEmailBatchFlow = ai.defineFlow(
         output.errors.push(errorMsg);
         return output;
     }
+    
     const sgMail = await import('@sendgrid/mail');
     sgMail.setApiKey(apiKey);
 
@@ -114,6 +124,7 @@ export const processEmailBatchFlow = ai.defineFlow(
                 subject: batch.emailSubject || defaultSubject,
                 html: emailBody,
             };
+
             await sgMail.send(msg);
             return { id: recipient.id, status: 'sent' };
         } catch (error: any) {
