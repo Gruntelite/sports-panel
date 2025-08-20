@@ -16,6 +16,9 @@ import {
   Shield,
   AlertCircle,
   ChevronDown,
+  FileText,
+  Trash2,
+  Download,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -75,9 +78,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, Timestamp, arrayUnion, arrayRemove } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player } from "@/lib/types";
+import type { Team, Player, Document } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -100,6 +103,10 @@ export default function PlayersPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+
+  const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -212,6 +219,7 @@ export default function PlayersPage() {
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
+    setDocumentToUpload(null);
   }
 
   const handleSavePlayer = async () => {
@@ -399,6 +407,67 @@ export default function PlayersPage() {
     } finally {
         setIsDeleting(false);
         setIsBulkDeleteAlertOpen(false);
+    }
+  };
+
+  const handleDocumentUpload = async () => {
+    if (!documentToUpload || !playerData.id || !clubId) return;
+    setUploadingDoc(true);
+    try {
+        const filePath = `player-documents/${clubId}/${playerData.id}/${uuidv4()}-${documentToUpload.name}`;
+        const docRef = ref(storage, filePath);
+        await uploadBytes(docRef, documentToUpload);
+        const url = await getDownloadURL(docRef);
+
+        const newDocument: Document = {
+            name: documentToUpload.name,
+            url,
+            path: filePath,
+            createdAt: Timestamp.now(),
+        };
+        
+        const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+        await updateDoc(playerDocRef, {
+            documents: arrayUnion(newDocument)
+        });
+        
+        setPlayerData(prev => ({
+            ...prev,
+            documents: [...(prev.documents || []), newDocument]
+        }));
+        
+        toast({ title: "Documento subido", description: `${documentToUpload.name} se ha guardado correctamente.` });
+        setDocumentToUpload(null);
+
+    } catch (error) {
+        console.error("Error uploading document:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
+    } finally {
+        setUploadingDoc(false);
+    }
+  };
+
+  const handleDocumentDelete = async (documentToDelete: Document) => {
+    if (!playerData.id || !clubId) return;
+
+    try {
+        const fileRef = ref(storage, documentToDelete.path);
+        await deleteObject(fileRef);
+
+        const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+        await updateDoc(playerDocRef, {
+            documents: arrayRemove(documentToDelete)
+        });
+        
+        setPlayerData(prev => ({
+            ...prev,
+            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+        }));
+
+        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
+    } catch (error) {
+        console.error("Error deleting document:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
     }
   };
 
@@ -603,10 +672,11 @@ export default function PlayersPage() {
                 </div>
                 
                 <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
                         <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                        <TabsTrigger value="docs"><FileText className="mr-2 h-4 w-4"/>Documentación</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -735,6 +805,43 @@ export default function PlayersPage() {
                         </div>
                       </div>
                     </TabsContent>
+                    <TabsContent value="docs" className="pt-6">
+                        <div className="min-h-[280px]">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
+                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc}>
+                                            {uploadingDoc ? <Loader2 className="animate-spin" /> : <Upload className="h-4 w-4"/>}
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-medium">Documentos Guardados</h4>
+                                    {(playerData.documents && playerData.documents.length > 0) ? (
+                                        <div className="border rounded-md">
+                                            {playerData.documents.map(doc => (
+                                                <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
+                                                    <span className="text-sm font-medium truncate pr-2">{doc.name}</span>
+                                                    <div className="flex gap-1">
+                                                        <Button asChild size="icon" variant="outline" className="h-8 w-8">
+                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
+                                                        </Button>
+                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">No hay documentos para este jugador.</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
                 </Tabs>
             </div>
             <DialogFooter>
@@ -782,6 +889,7 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
 
 
 

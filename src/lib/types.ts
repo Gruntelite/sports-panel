@@ -2,6 +2,13 @@
 
 import type { Timestamp } from "firebase/firestore";
 
+export type Document = {
+    name: string;
+    url: string;
+    path: string;
+    createdAt: Timestamp;
+}
+
 export type Team = {
     id: string;
     name: string;
@@ -39,6 +46,7 @@ export type Player = {
     tutorDni?: string;
     hasMissingData?: boolean;
     kitSize?: string;
+    documents?: Document[];
 }
 
 export type Coach = {
@@ -63,6 +71,7 @@ export type Coach = {
     hasMissingData?: boolean;
     monthlyPayment?: number;
     kitSize?: string;
+    documents?: Document[];
 }
 
 export type Staff = {

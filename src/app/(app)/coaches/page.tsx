@@ -16,6 +16,9 @@ import {
   CircleDollarSign,
   ChevronDown,
   Filter,
+  FileText,
+  Trash2,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,9 +76,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where, Timestamp, arrayUnion, arrayRemove } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Coach } from "@/lib/types";
+import type { Team, Coach, Document } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -98,6 +101,10 @@ export default function CoachesPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+
+  const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
+  const [uploadingDoc, setUploadingDoc] = useState(false);
+
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -205,6 +212,7 @@ export default function CoachesPage() {
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
+    setDocumentToUpload(null);
   }
 
   const handleSaveCoach = async () => {
@@ -392,6 +400,67 @@ export default function CoachesPage() {
     }
   };
 
+  const handleDocumentUpload = async () => {
+    if (!documentToUpload || !coachData.id || !clubId) return;
+    setUploadingDoc(true);
+    try {
+        const filePath = `coach-documents/${clubId}/${coachData.id}/${uuidv4()}-${documentToUpload.name}`;
+        const docRef = ref(storage, filePath);
+        await uploadBytes(docRef, documentToUpload);
+        const url = await getDownloadURL(docRef);
+
+        const newDocument: Document = {
+            name: documentToUpload.name,
+            url,
+            path: filePath,
+            createdAt: Timestamp.now(),
+        };
+        
+        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+        await updateDoc(coachDocRef, {
+            documents: arrayUnion(newDocument)
+        });
+        
+        setCoachData(prev => ({
+            ...prev,
+            documents: [...(prev.documents || []), newDocument]
+        }));
+        
+        toast({ title: "Documento subido", description: `${documentToUpload.name} se ha guardado correctamente.` });
+        setDocumentToUpload(null);
+
+    } catch (error) {
+        console.error("Error uploading document:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
+    } finally {
+        setUploadingDoc(false);
+    }
+  };
+
+  const handleDocumentDelete = async (documentToDelete: Document) => {
+    if (!coachData.id || !clubId) return;
+
+    try {
+        const fileRef = ref(storage, documentToDelete.path);
+        await deleteObject(fileRef);
+
+        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+        await updateDoc(coachDocRef, {
+            documents: arrayRemove(documentToDelete)
+        });
+        
+        setCoachData(prev => ({
+            ...prev,
+            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+        }));
+
+        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
+    } catch (error) {
+        console.error("Error deleting document:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+    }
+  };
+
 
   if (loading && !coaches.length) {
     return (
@@ -571,10 +640,11 @@ export default function CoachesPage() {
                 </div>
                 
                  <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
                         <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
+                        <TabsTrigger value="docs"><FileText className="mr-2 h-4 w-4"/>Documentación</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -695,6 +765,43 @@ export default function CoachesPage() {
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                            </div>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="docs" className="pt-6">
+                        <div className="min-h-[280px]">
+                            <div className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
+                                    <div className="flex gap-2">
+                                        <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
+                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc}>
+                                            {uploadingDoc ? <Loader2 className="animate-spin" /> : <Upload className="h-4 w-4"/>}
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <h4 className="font-medium">Documentos Guardados</h4>
+                                    {(coachData.documents && coachData.documents.length > 0) ? (
+                                        <div className="border rounded-md">
+                                            {coachData.documents.map(doc => (
+                                                <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
+                                                    <span className="text-sm font-medium truncate pr-2">{doc.name}</span>
+                                                    <div className="flex gap-1">
+                                                        <Button asChild size="icon" variant="outline" className="h-8 w-8">
+                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
+                                                        </Button>
+                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
+                                                            <Trash2 className="h-4 w-4" />
+                                                        </Button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground text-center py-4">No hay documentos para este entrenador.</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
