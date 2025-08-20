@@ -26,6 +26,30 @@ const MEMBER_TYPES = [
     { value: 'Staff', label: 'Staff' }
 ];
 
+const playerFields = [
+  { id: 'name', label: 'Nombre' }, { id: 'lastName', label: 'Apellidos' }, { id: 'birthDate', label: 'Fecha de Nacimiento' },
+  { id: 'dni', label: 'DNI' }, { id: 'address', label: 'Dirección' }, { id: 'city', label: 'Ciudad' }, { id: 'postalCode', label: 'Código Postal' },
+  { id: 'tutorEmail', label: 'Email de Contacto' }, { id: 'tutorPhone', label: 'Teléfono de Contacto' }, { id: 'iban', label: 'IBAN' },
+  { id: 'jerseyNumber', label: 'Dorsal' }, { id: 'monthlyFee', label: 'Cuota Mensual' }, { id: 'kitSize', label: 'Talla Equipación' },
+  { id: 'tutorName', label: 'Nombre Tutor/a' }, { id: 'tutorLastName', label: 'Apellidos Tutor/a' }, { id: 'tutorDni', label: 'DNI Tutor/a' },
+];
+
+const coachFields = [
+  { id: 'name', label: 'Nombre' }, { id: 'lastName', label: 'Apellidos' }, { id: 'birthDate', label: 'Fecha de Nacimiento' },
+  { id: 'dni', label: 'DNI' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' },
+  { id: 'address', label: 'Dirección' }, { id: 'city', label: 'Ciudad' }, { id: 'postalCode', label: 'Código Postal' },
+  { id: 'iban', label: 'IBAN' }, { id: 'monthlyPayment', label: 'Pago Mensual' }, { id: 'kitSize', label: 'Talla Equipación' },
+  { id: 'tutorName', label: 'Nombre Tutor/a' }, { id: 'tutorLastName', label: 'Apellidos Tutor/a' }, { id: 'tutorDni', label: 'DNI Tutor/a' },
+];
+
+const staffFields = [
+    { id: 'name', label: 'Nombre' }, { id: 'lastName', label: 'Apellidos' },
+    { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' },
+];
+
+type FieldConfigState = 'editable' | 'locked' | 'hidden';
+type FieldConfig = Record<string, FieldConfigState>;
+
 
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
@@ -40,6 +64,8 @@ export function DataUpdateSender() {
     const [isTypePopoverOpen, setIsTypePopoverOpen] = useState(false);
     const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
     const [isTeamPopoverOpen, setIsTeamPopoverOpen] = useState(false);
+    
+    const [fieldConfig, setFieldConfig] = useState<FieldConfig>({});
     
     const { toast } = useToast();
 
@@ -111,6 +137,41 @@ export function DataUpdateSender() {
           ? allMembers.filter(m => selectedMemberIds.has(m.id))
           : filteredMembers;
       }, [selectedMemberIds, allMembers, filteredMembers]);
+
+    const availableFieldsInfo = useMemo(() => {
+        if (membersToProcess.length === 0) {
+            return { fields: [], uniqueType: null };
+        }
+
+        const firstMemberType = membersToProcess[0].type;
+        const allSameType = membersToProcess.every(m => m.type === firstMemberType);
+
+        if (!allSameType) {
+            return { fields: [], uniqueType: null };
+        }
+
+        switch (firstMemberType) {
+            case 'Jugador': return { fields: playerFields, uniqueType: 'Jugador' };
+            case 'Entrenador': return { fields: coachFields, uniqueType: 'Entrenador' };
+            case 'Staff': return { fields: staffFields, uniqueType: 'Staff' };
+            default: return { fields: [], uniqueType: null };
+        }
+    }, [membersToProcess]);
+
+    const { fields: availableFields, uniqueType } = availableFieldsInfo;
+
+
+    useEffect(() => {
+      const newConfig: FieldConfig = {};
+      availableFields.forEach(field => {
+        newConfig[field.id] = 'editable'; 
+      });
+      setFieldConfig(newConfig);
+    }, [availableFields]);
+
+    const handleFieldConfigChange = (fieldId: string, value: FieldConfigState) => {
+        setFieldConfig(prev => ({ ...prev, [fieldId]: value }));
+    };
     
     const handleSelectMember = (memberId: string) => {
         const newSelection = new Set(selectedMemberIds);
@@ -159,6 +220,7 @@ export function DataUpdateSender() {
       const result = await directSendAction({
           clubId,
           recipients,
+          fieldConfig: availableFields.length > 0 ? fieldConfig : {},
       });
 
       if (result.success) {
@@ -332,6 +394,50 @@ export function DataUpdateSender() {
                         </DialogContent>
                     </Dialog>
                 </div>
+
+                {availableFields.length > 0 && uniqueType ? (
+                    <div className="space-y-4 pt-4 border-t">
+                        <div className="flex items-center gap-2">
+                           <Settings className="h-5 w-5 text-primary" />
+                           <h3 className="text-lg font-semibold">Configurar Campos del Formulario ({uniqueType})</h3>
+                        </div>
+                        <p className="text-sm text-muted-foreground">Define qué campos podrán ver o editar los destinatarios. Estos ajustes se aplicarán a todos los miembros de esta solicitud.</p>
+                         <ScrollArea className="h-72">
+                            <div className="space-y-4 pr-4">
+                                {availableFields.map(field => (
+                                    <div key={field.id} className="grid grid-cols-[1fr_250px] items-center gap-4 p-3 rounded-lg border">
+                                        <Label htmlFor={`config-${field.id}`} className="font-medium">{field.label}</Label>
+                                        <RadioGroup
+                                            id={`config-${field.id}`}
+                                            value={fieldConfig[field.id]}
+                                            onValueChange={(value) => handleFieldConfigChange(field.id, value as FieldConfigState)}
+                                            className="flex items-center"
+                                        >
+                                            <div className="flex items-center space-x-1">
+                                                <RadioGroupItem value="editable" id={`editable-${field.id}`} />
+                                                <Label htmlFor={`editable-${field.id}`} className="text-xs font-normal flex items-center gap-1"><Edit className="h-3 w-3"/> Editable</Label>
+                                            </div>
+                                             <div className="flex items-center space-x-1">
+                                                <RadioGroupItem value="locked" id={`locked-${field.id}`} />
+                                                <Label htmlFor={`locked-${field.id}`} className="text-xs font-normal flex items-center gap-1"><Lock className="h-3 w-3"/> Bloqueado</Label>
+                                            </div>
+                                             <div className="flex items-center space-x-1">
+                                                <RadioGroupItem value="hidden" id={`hidden-${field.id}`} />
+                                                <Label htmlFor={`hidden-${field.id}`} className="text-xs font-normal flex items-center gap-1"><Eye className="h-3 w-3"/> Oculto</Label>
+                                            </div>
+                                        </RadioGroup>
+                                    </div>
+                                ))}
+                            </div>
+                        </ScrollArea>
+                    </div>
+                ) : (
+                    membersToProcess.length > 0 && !uniqueType && (
+                        <div className="pt-4 border-t text-sm text-muted-foreground">
+                            Has seleccionado miembros de diferentes tipos. Para configurar campos específicos, por favor, filtra o selecciona manualmente miembros de un único tipo (p.ej., solo 'Jugadores').
+                        </div>
+                    )
+                )}
                  
             </CardContent>
              <CardFooter className="border-t pt-6">
@@ -343,3 +449,4 @@ export function DataUpdateSender() {
         </Card>
     );
 }
+    
