@@ -103,7 +103,6 @@ export default function CoachesPage() {
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
 
   const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
 
 
   const calculateAge = (birthDate: string | undefined): number | null => {
@@ -222,6 +221,8 @@ export default function CoachesPage() {
     }
 
     setLoading(true);
+    let coachId = coachData.id;
+
     try {
       let imageUrl = coachData.avatar;
 
@@ -248,12 +249,13 @@ export default function CoachesPage() {
         monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
 
-      if (modalMode === 'edit' && coachData.id) {
-        const coachRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+      if (modalMode === 'edit' && coachId) {
+        const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
         await updateDoc(coachRef, dataToSave);
         toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
       } else {
         const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
+        coachId = coachDocRef.id;
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
         
         // Automatic user record creation
@@ -271,6 +273,11 @@ export default function CoachesPage() {
             });
         }
       }
+
+      // Handle document upload if a file is selected
+      if (documentToUpload && coachId) {
+        await handleDocumentUpload(coachId, documentToUpload);
+      }
       
       setIsModalOpen(false);
       setCoachData({});
@@ -282,6 +289,37 @@ export default function CoachesPage() {
       setLoading(false);
     }
   };
+
+  const handleDocumentUpload = async (coachId: string, file: File) => {
+      if (!clubId) return;
+      try {
+          const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
+          const docRef = ref(storage, filePath);
+          await uploadBytes(docRef, file);
+          const url = await getDownloadURL(docRef);
+
+          const newDocument: Document = {
+              name: file.name,
+              url,
+              path: filePath,
+              createdAt: Timestamp.now(),
+          };
+          
+          const coachDocRef = doc(db, "clubs", clubId, "coaches", coachId);
+          await updateDoc(coachDocRef, {
+              documents: arrayUnion(newDocument)
+          });
+          
+          setDocumentToUpload(null);
+          toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
+
+      } catch (error) {
+          console.error("Error uploading document:", error);
+          toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
+          throw error; // Re-throw to be caught by the main save function
+      }
+  };
+
 
   const handleDeleteCoach = async () => {
     if (!coachToDelete || !clubId) return;
@@ -397,43 +435,6 @@ export default function CoachesPage() {
     } finally {
         setIsDeleting(false);
         setIsBulkDeleteAlertOpen(false);
-    }
-  };
-
-  const handleDocumentUpload = async () => {
-    if (!documentToUpload || !coachData.id || !clubId) return;
-    setUploadingDoc(true);
-    try {
-        const filePath = `coach-documents/${clubId}/${coachData.id}/${uuidv4()}-${documentToUpload.name}`;
-        const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, documentToUpload);
-        const url = await getDownloadURL(docRef);
-
-        const newDocument: Document = {
-            name: documentToUpload.name,
-            url,
-            path: filePath,
-            createdAt: Timestamp.now(),
-        };
-        
-        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        await updateDoc(coachDocRef, {
-            documents: arrayUnion(newDocument)
-        });
-        
-        setCoachData(prev => ({
-            ...prev,
-            documents: [...(prev.documents || []), newDocument]
-        }));
-        
-        toast({ title: "Documento subido", description: `${documentToUpload.name} se ha guardado correctamente.` });
-        setDocumentToUpload(null);
-
-    } catch (error) {
-        console.error("Error uploading document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
-    } finally {
-        setUploadingDoc(false);
     }
   };
 
@@ -775,12 +776,7 @@ export default function CoachesPage() {
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc}>
-                                            {uploadingDoc ? <Loader2 className="animate-spin" /> : <Upload className="h-4 w-4"/>}
-                                        </Button>
-                                    </div>
+                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
                                 </div>
                                 <div className="space-y-2">
                                     <h4 className="font-medium">Documentos Guardados</h4>

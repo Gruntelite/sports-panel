@@ -105,7 +105,6 @@ export default function PlayersPage() {
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
 
   const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
-  const [uploadingDoc, setUploadingDoc] = useState(false);
 
 
   const calculateAge = (birthDate: string | undefined): number | null => {
@@ -229,6 +228,8 @@ export default function PlayersPage() {
     }
 
     setLoading(true);
+    let playerId = playerData.id;
+
     try {
       let imageUrl = playerData.avatar;
 
@@ -255,12 +256,13 @@ export default function PlayersPage() {
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
 
-      if (modalMode === 'edit' && playerData.id) {
-        const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
+      if (modalMode === 'edit' && playerId) {
+        const playerRef = doc(db, "clubs", clubId, "players", playerId);
         await updateDoc(playerRef, dataToSave);
         toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
       } else {
         const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
+        playerId = playerDocRef.id;
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
         
         // Automatic user record creation
@@ -282,6 +284,11 @@ export default function PlayersPage() {
         }
       }
       
+      // Handle document upload if a file is selected
+      if (documentToUpload && playerId) {
+        await handleDocumentUpload(playerId, documentToUpload);
+      }
+
       setIsModalOpen(false);
       setPlayerData({});
       fetchData(clubId);
@@ -410,40 +417,33 @@ export default function PlayersPage() {
     }
   };
 
-  const handleDocumentUpload = async () => {
-    if (!documentToUpload || !playerData.id || !clubId) return;
-    setUploadingDoc(true);
+  const handleDocumentUpload = async (playerId: string, file: File) => {
+    if (!clubId) return;
     try {
-        const filePath = `player-documents/${clubId}/${playerData.id}/${uuidv4()}-${documentToUpload.name}`;
+        const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
         const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, documentToUpload);
+        await uploadBytes(docRef, file);
         const url = await getDownloadURL(docRef);
 
         const newDocument: Document = {
-            name: documentToUpload.name,
+            name: file.name,
             url,
             path: filePath,
             createdAt: Timestamp.now(),
         };
         
-        const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+        const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
         await updateDoc(playerDocRef, {
             documents: arrayUnion(newDocument)
         });
         
-        setPlayerData(prev => ({
-            ...prev,
-            documents: [...(prev.documents || []), newDocument]
-        }));
-        
-        toast({ title: "Documento subido", description: `${documentToUpload.name} se ha guardado correctamente.` });
         setDocumentToUpload(null);
+        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
 
     } catch (error) {
         console.error("Error uploading document:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
-    } finally {
-        setUploadingDoc(false);
+        throw error; // Re-throw to be caught by the main save function
     }
   };
 
@@ -811,12 +811,7 @@ export default function PlayersPage() {
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <div className="flex gap-2">
-                                        <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || uploadingDoc}>
-                                            {uploadingDoc ? <Loader2 className="animate-spin" /> : <Upload className="h-4 w-4"/>}
-                                        </Button>
-                                    </div>
+                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
                                 </div>
                                 <div className="space-y-2">
                                     <h4 className="font-medium">Documentos Guardados</h4>
@@ -895,4 +890,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
