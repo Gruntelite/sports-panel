@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Info, Send, Download } from "lucide-react";
+import { Loader2, Mail, Info, Send, Download, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import {
   Accordion,
@@ -24,7 +24,7 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { initiateSenderVerificationAction } from "@/lib/actions";
+import { initiateSenderVerificationAction, checkSenderStatusAction } from "@/lib/actions";
 
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
@@ -32,6 +32,7 @@ export default function ClubSettingsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [checkingStatus, setCheckingStatus] = useState(false);
     const [clubId, setClubId] = useState<string | null>(null);
     const [fromEmail, setFromEmail] = useState("");
     const [apiKey, setApiKey] = useState("");
@@ -67,9 +68,6 @@ export default function ClubSettingsPage() {
                 setFromEmail(settingsData?.fromEmail || "");
                 setVerificationStatus(settingsData?.senderVerificationStatus || "unconfigured");
                 
-                // A club has settings, so we can assume the platform key *might* be configured.
-                // The actual check if the key works happens on the server.
-                // This logic determines which UI to show to the admin.
                 if (settingsData?.platformSendgridApiKey) {
                   setIsPlatformMailConfigured(true);
                 }
@@ -92,7 +90,7 @@ export default function ClubSettingsPage() {
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             await setDoc(settingsRef, { platformSendgridApiKey: apiKey }, { merge: true });
             toast({ title: "Clave de API guardada", description: "La clave se ha guardado de forma segura." });
-            setIsPlatformMailConfigured(true); // Switch UI after saving
+            setIsPlatformMailConfigured(true);
         } catch (error) {
             console.error("Error saving API key:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la clave de API." });
@@ -112,7 +110,7 @@ export default function ClubSettingsPage() {
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             await setDoc(settingsRef, { 
                 fromEmail: fromEmail,
-                senderVerificationStatus: 'pending', // Set status to pending initially
+                senderVerificationStatus: 'pending',
             }, { merge: true });
 
             const result = await initiateSenderVerificationAction({ email: fromEmail, clubId });
@@ -128,7 +126,6 @@ export default function ClubSettingsPage() {
                     title: "Error de Verificación", 
                     description: result.error 
                 });
-                 // Revert status if API call failed
                 await setDoc(settingsRef, { senderVerificationStatus: 'unconfigured' }, { merge: true });
             }
 
@@ -139,6 +136,29 @@ export default function ClubSettingsPage() {
         } finally {
             setSaving(false);
         }
+    };
+    
+    const handleCheckStatus = async () => {
+      if (!clubId) return;
+      setCheckingStatus(true);
+      try {
+        const result = await checkSenderStatusAction({ clubId });
+        if (result.success) {
+            if (result.data.verified) {
+                setVerificationStatus('verified');
+                toast({ title: "¡Verificado!", description: "Tu dirección de correo ha sido verificada correctamente." });
+            } else {
+                toast({ title: "Aún Pendiente", description: "La verificación todavía no se ha completado. Revisa tu email." });
+            }
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.error });
+        }
+      } catch (error) {
+        console.error("Error checking status:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo comprobar el estado de la verificación." });
+      } finally {
+        setCheckingStatus(false);
+      }
     };
     
     const getStatusBadge = () => {
@@ -197,13 +217,22 @@ export default function ClubSettingsPage() {
                                         disabled={verificationStatus === 'pending' || verificationStatus === 'verified'}
                                     />
                                 </div>
-                                 <div className="flex items-center justify-between">
+                                 <div className="flex items-center justify-between gap-2">
                                     <Button onClick={handleSaveAndVerify} disabled={saving || verificationStatus === 'pending' || verificationStatus === 'verified'}>
                                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                        {verificationStatus === 'pending' ? 'Verificación Pendiente' : 'Guardar y Verificar Correo'}
+                                        {verificationStatus === 'pending' ? 'Verificación Enviada' : 'Guardar y Verificar Correo'}
                                     </Button>
+                                    {verificationStatus === 'pending' && (
+                                        <Button onClick={handleCheckStatus} variant="secondary" disabled={checkingStatus}>
+                                            {checkingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                            Comprobar Verificación
+                                        </Button>
+                                    )}
                                     {(verificationStatus === 'pending' || verificationStatus === 'verified') && (
-                                        <Button variant="outline" onClick={() => setVerificationStatus('unconfigured')}>Cambiar Correo</Button>
+                                        <Button variant="outline" onClick={() => {
+                                            setVerificationStatus('unconfigured');
+                                            setFromEmail('');
+                                        }}>Cambiar Correo</Button>
                                     )}
                                  </div>
                             </>

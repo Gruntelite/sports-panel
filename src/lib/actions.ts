@@ -2,7 +2,7 @@
 "use server";
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { db } from "./firebase";
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
@@ -54,9 +54,12 @@ export async function initiateSenderVerificationAction(input: VerificationInput)
         if (response.ok) {
             return { success: true, data: data };
         } else {
-            // Check for specific SendGrid errors
             if (data.errors && data.errors.some((e: any) => e.message.includes("already exists"))) {
-                 return { success: true, data: "El remitente ya existe y está verificado." };
+                 const checkStatusResult = await checkSenderStatusAction(input);
+                 if(checkStatusResult.success && checkStatusResult.data.verified) {
+                    await updateDoc(settingsRef, { senderVerificationStatus: 'verified' });
+                    return { success: true, data: "El remitente ya existe y está verificado." };
+                 }
             }
             console.error('SendGrid API Error:', data.errors);
             return { success: false, error: `Error de SendGrid: ${data.errors?.[0]?.message || 'Ocurrió un error.'}` };
@@ -64,5 +67,52 @@ export async function initiateSenderVerificationAction(input: VerificationInput)
     } catch (error) {
         console.error('Failed to initiate sender verification:', error);
         return { success: false, error: "No se pudo conectar con el servicio de correo." };
+    }
+}
+
+export async function checkSenderStatusAction(input: { clubId: string }) {
+    const settingsRef = doc(db, "clubs", input.clubId, "settings", "config");
+    const settingsSnap = await getDoc(settingsRef);
+
+    if (!settingsSnap.exists()) {
+        return { success: false, error: "No se encontraron los ajustes del club." };
+    }
+    const settingsData = settingsSnap.data();
+    const apiKey = settingsData?.platformSendgridApiKey;
+    const email = settingsData?.fromEmail;
+
+    if (!apiKey || !email) {
+        return { success: false, error: "La API Key o el email no están configurados." };
+    }
+
+    try {
+        const response = await fetch(`https://api.sendgrid.com/v3/verified_senders`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+            },
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            console.error('SendGrid API Error:', data.errors);
+            return { success: false, error: `Error de SendGrid: ${data.errors?.[0]?.message || 'Ocurrió un error.'}` };
+        }
+        
+        const sender = data.results.find((s: any) => s.from_email === email);
+        
+        if (sender) {
+            if (sender.verified) {
+                await updateDoc(settingsRef, { senderVerificationStatus: 'verified' });
+            }
+            return { success: true, data: { verified: sender.verified } };
+        } else {
+            return { success: false, error: "El remitente no fue encontrado en SendGrid." };
+        }
+        
+    } catch (error) {
+        console.error('Failed to check sender status:', error);
+        return { success: false, error: "No se pudo conectar con el servicio de correo para verificar el estado." };
     }
 }
