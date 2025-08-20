@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -194,7 +195,7 @@ export default function ClubSettingsPage() {
                                     Como administrador de la plataforma, necesitas configurar la integración con SendGrid para habilitar el envío de correos.
                                 </p>
                                 <Button asChild size="lg">
-                                    <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer">
+                                    <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer">
                                         <Send className="mr-2 h-4 w-4"/>
                                         Ir a SendGrid para Configurar
                                     </a>
@@ -216,7 +217,7 @@ export default function ClubSettingsPage() {
                                    </p>
                                    <ol className="list-decimal list-inside space-y-1">
                                         <li>
-                                            <b>Crea una cuenta en SendGrid:</b> Ve a <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
+                                            <b>Crea una cuenta en SendGrid:</b> Ve a <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
                                         </li>
                                         <li>
                                             <b>Crea una API Key:</b> En tu panel de SendGrid, ve a "Settings" {'->'} "API Keys" y crea una nueva clave con permisos completos ("Full Access").
