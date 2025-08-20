@@ -3,7 +3,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, serverTimestamp, writeBatch } from "firebase/firestore";
 import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
@@ -73,6 +73,8 @@ const MEMBER_TYPES = [
     { value: 'Entrenador', label: 'Entrenadores' },
     { value: 'Staff', label: 'Staff' }
 ];
+
+const BATCH_SIZE = 100;
 
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
@@ -253,18 +255,29 @@ export function DataUpdateSender() {
       }).filter(r => r.email);
 
       try {
-        const batchRef = collection(db, 'clubs', clubId, 'emailBatches');
-        await addDoc(batchRef, {
-            clubName: clubName,
-            recipients: recipients,
-            fieldConfig: fieldConfig,
-            status: 'pending',
-            createdAt: serverTimestamp(),
-        });
+        const totalRecipients = recipients.length;
+        const numBatches = Math.ceil(totalRecipients / BATCH_SIZE);
+        
+        const firestoreBatch = writeBatch(db);
+        
+        for (let i = 0; i < numBatches; i++) {
+          const batchRecipients = recipients.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
+          const batchRef = doc(collection(db, 'clubs', clubId, 'emailBatches'));
+          
+          firestoreBatch.set(batchRef, {
+              clubName: clubName,
+              recipients: batchRecipients,
+              fieldConfig: fieldConfig,
+              status: 'pending',
+              createdAt: serverTimestamp(),
+          });
+        }
+        
+        await firestoreBatch.commit();
 
         toast({
           title: "¡Solicitud en Cola!",
-          description: `Se ha creado una tarea para enviar ${recipients.length} correos. Se procesarán en segundo plano.`,
+          description: `Se han creado ${numBatches} lote(s) para enviar ${totalRecipients} correos. Se procesarán en segundo plano.`,
         });
 
       } catch (error) {
@@ -479,3 +492,5 @@ export function DataUpdateSender() {
         </Card>
     );
 }
+
+    
