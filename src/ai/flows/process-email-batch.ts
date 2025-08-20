@@ -28,14 +28,25 @@ const ProcessEmailBatchOutputSchema = z.object({
 export type ProcessEmailBatchOutput = z.infer<typeof ProcessEmailBatchOutputSchema>;
 
 
-async function getSendGridApiKey(clubId: string): Promise<string | null> {
+async function getSenderConfig(clubId: string): Promise<{fromEmail: string, apiKey: string | null}> {
     const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
     const doc = await settingsRef.get();
-    if (!doc.exists) {
-        console.warn(`Settings not found for club ${clubId}`);
-        return null;
+    
+    // Default platform sender
+    let config = {
+      fromEmail: `notifications@sportspanel.app`, // Replace with your actual platform domain
+      apiKey: process.env.SENDGRID_API_KEY || null,
+    };
+
+    if (doc.exists) {
+        const data = doc.data();
+        // If club has a verified sender, use it. The platform API key is still used for sending.
+        if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
+            config.fromEmail = data.fromEmail;
+        }
     }
-    return doc.data()?.sendgridApiKey || null;
+    
+    return config;
 }
 
 export const processEmailBatchFlow = ai.defineFlow(
@@ -65,26 +76,15 @@ export const processEmailBatchFlow = ai.defineFlow(
         return output;
     }
 
-    let apiKey = await getSendGridApiKey(clubId);
-    let fromEmail = 'notifications@yourdomain.com'; // Default platform email
+    const senderConfig = await getSenderConfig(clubId);
 
-    if (apiKey) {
-      // If club has its own key, we assume they have a verified sender.
-      // In a real scenario, you'd have a field for this in club settings.
-      const clubSettings = await db.collection('clubs').doc(clubId).get();
-      fromEmail = clubSettings.data()?.fromEmail || fromEmail; // Or a dedicated field
-    } else {
-      // Fallback to platform's global API key from environment variables
-      apiKey = process.env.SENDGRID_API_KEY || null;
-    }
-
-    if (!apiKey) {
-        const errorMsg = `No SendGrid API Key is configured for club ${clubId} and no platform fallback is available.`;
+    if (!senderConfig.apiKey) {
+        const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
         await batchDoc.ref.update({ status: 'failed', error: errorMsg });
         output.errors.push(errorMsg);
         return output;
     }
-    sgMail.setApiKey(apiKey);
+    sgMail.setApiKey(senderConfig.apiKey);
 
     const recipients = batchData.recipients || [];
     const pendingRecipients = recipients.filter((r: any) => r.status === 'pending').slice(0, input.limit);
@@ -111,8 +111,8 @@ export const processEmailBatchFlow = ai.defineFlow(
             const msg = {
                 to: recipient.email,
                 from: {
-                  email: fromEmail,
-                  name: `${batchData.clubName} (vía SportsPanel)`
+                  email: senderConfig.fromEmail,
+                  name: `${batchData.clubName}`
                 },
                 subject: `Actualización de datos para ${batchData.clubName}`,
                 html: `

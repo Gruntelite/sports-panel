@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, ExternalLink, Info } from "lucide-react";
+import { Loader2, Mail, Info, Send } from "lucide-react";
 import Link from "next/link";
 import {
   Accordion,
@@ -23,13 +23,17 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
+
+type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [clubId, setClubId] = useState<string | null>(null);
-    const [sendgridApiKey, setSendgridApiKey] = useState("");
+    const [fromEmail, setFromEmail] = useState("");
+    const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("unconfigured");
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -57,7 +61,8 @@ export default function ClubSettingsPage() {
             const settingsSnap = await getDoc(settingsRef);
             if (settingsSnap.exists()) {
                 const settingsData = settingsSnap.data();
-                setSendgridApiKey(settingsData?.sendgridApiKey || "");
+                setFromEmail(settingsData?.fromEmail || "");
+                setVerificationStatus(settingsData?.senderVerificationStatus || "unconfigured");
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
@@ -67,33 +72,49 @@ export default function ClubSettingsPage() {
         }
     };
 
-    const handleSaveChanges = async () => {
-        if (!clubId) return;
+    const handleSaveAndVerify = async () => {
+        if (!clubId || !fromEmail) {
+            toast({ variant: "destructive", title: "Error", description: "La dirección de correo es obligatoria." });
+            return;
+        }
         setSaving(true);
+        // In a real scenario, here you would call a backend function (e.g., a Cloud Function)
+        // that uses the SendGrid API to create a verified sender.
+        // That function would trigger an email to `fromEmail`.
+        // For now, we'll simulate this process.
         try {
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-            await updateDoc(settingsRef, { 
-                sendgridApiKey: sendgridApiKey 
+            await setDoc(settingsRef, { 
+                fromEmail: fromEmail,
+                senderVerificationStatus: 'pending', // Set status to pending
+            }, { merge: true });
+
+            toast({ 
+                title: "Verificación Iniciada", 
+                description: `Se ha enviado un correo de verificación a ${fromEmail}. Por favor, revisa tu bandeja de entrada.` 
             });
-            toast({ title: "Ajustes Guardados", description: "La clave de API de SendGrid se ha guardado correctamente." });
-        } catch (error: any) {
-            if (error.code === 'not-found') {
-                try {
-                    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-                    await setDoc(settingsRef, { sendgridApiKey: sendgridApiKey }, { merge: true });
-                     toast({ title: "Ajustes Guardados", description: "La clave de API de SendGrid se ha guardado correctamente." });
-                } catch (createError) {
-                    console.error("Error creating settings:", createError);
-                    toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los ajustes." });
-                }
-            } else {
-                console.error("Error updating settings:", error);
-                toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los ajustes." });
-            }
+            fetchSettings(clubId); // Re-fetch to update status on screen
+        } catch (error) {
+            console.error("Error saving email for verification:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la dirección de correo." });
         } finally {
             setSaving(false);
         }
     };
+    
+    const getStatusBadge = () => {
+        switch (verificationStatus) {
+            case "verified":
+                return <Badge variant="secondary" className="bg-green-100 text-green-800">Verificado</Badge>;
+            case "pending":
+                return <Badge variant="outline">Pendiente de Verificación</Badge>;
+            case "failed":
+                 return <Badge variant="destructive">Fallido</Badge>;
+            default:
+                return <Badge variant="destructive">Sin configurar</Badge>;
+        }
+    }
+
 
     return (
         <div className="flex flex-col gap-6">
@@ -109,11 +130,11 @@ export default function ClubSettingsPage() {
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <KeyRound className="h-5 w-5"/>
-                            Integración de Correo (SendGrid)
+                            <Mail className="h-5 w-5"/>
+                            Configuración de Envío de Correo
                         </CardTitle>
                         <CardDescription>
-                            Para enviar correos electrónicos profesionales desde tu propia dirección, necesitas una cuenta de SendGrid y un dominio propio. No se pueden usar direcciones de correo gratuitas como `@gmail.com`.
+                           Define la dirección de correo electrónico desde la que el club enviará las comunicaciones.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -124,25 +145,22 @@ export default function ClubSettingsPage() {
                         ): (
                             <>
                                 <div className="space-y-2">
-                                    <Label htmlFor="sendgrid-api-key">SendGrid API Key</Label>
+                                    <div className="flex items-center justify-between">
+                                      <Label htmlFor="fromEmail">Dirección de Correo para Envíos</Label>
+                                      {getStatusBadge()}
+                                    </div>
                                     <Input 
-                                        id="sendgrid-api-key" 
-                                        type="password" 
-                                        placeholder="SG.XXXXXXXXXXXXXXXXXXXX.XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-                                        value={sendgridApiKey}
-                                        onChange={(e) => setSendgridApiKey(e.target.value)}
+                                        id="fromEmail" 
+                                        type="email" 
+                                        placeholder="p.ej., info.club@gmail.com"
+                                        value={fromEmail}
+                                        onChange={(e) => setFromEmail(e.target.value)}
                                     />
                                 </div>
                                  <div className="flex items-center justify-between">
-                                    <Button onClick={handleSaveChanges} disabled={saving}>
+                                    <Button onClick={handleSaveAndVerify} disabled={saving}>
                                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                        Guardar Clave
-                                    </Button>
-                                    <Button variant="link" asChild>
-                                        <Link href="https://app.sendgrid.com/settings/api_keys" target="_blank">
-                                            Obtener mi API Key de SendGrid
-                                            <ExternalLink className="ml-2 h-4 w-4" />
-                                        </Link>
+                                        {verificationStatus === 'pending' ? 'Reenviar Verificación' : 'Guardar y Verificar Correo'}
                                     </Button>
                                  </div>
                                  <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
@@ -153,8 +171,16 @@ export default function ClubSettingsPage() {
                                                 ¿Cómo funciona el envío de correos?
                                             </div>
                                         </AccordionTrigger>
-                                        <AccordionContent className="text-muted-foreground">
-                                           Para asegurar la entrega y respetar los límites de los proveedores, los correos se envían en lotes en segundo plano. Por ejemplo, el plan gratuito de SendGrid suele permitir unos 100 correos al día. Si envías una comunicación a más destinatarios, el sistema los procesará en grupos para no superar ese límite, asegurando que todos lleguen de forma fiable. Si necesitas más capacidad de envío, siempre puedes contratar un plan superior directamente con SendGrid.
+                                        <AccordionContent className="text-muted-foreground space-y-2">
+                                           <p>
+                                               Para enviar correos en tu nombre de forma segura y profesional, usamos SendGrid. El proceso es muy sencillo:
+                                           </p>
+                                           <ol className="list-decimal list-inside space-y-1">
+                                                <li>Introduce la dirección de correo que quieres usar (puede ser de Gmail, Outlook, etc.).</li>
+                                                <li>Haz clic en "Guardar y Verificar".</li>
+                                                <li>Recibirás un email de SendGrid en esa dirección. Haz clic en el enlace que contiene para confirmar que eres el propietario.</li>
+                                                <li>¡Listo! Tu correo estará verificado y la plataforma podrá enviar comunicaciones desde tu dirección.</li>
+                                           </ol>
                                         </AccordionContent>
                                     </AccordionItem>
                                 </Accordion>
