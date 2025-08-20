@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, KeyRound, ExternalLink, Info, AlertTriangle } from "lucide-react";
+import { Loader2, KeyRound, ExternalLink, Info } from "lucide-react";
 import Link from "next/link";
 import {
   Accordion,
@@ -23,7 +23,6 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
@@ -114,7 +113,7 @@ export default function ClubSettingsPage() {
                             Integración de Correo (SendGrid)
                         </CardTitle>
                         <CardDescription>
-                            Para enviar correos electrónicos profesionales desde tu propia dirección, necesitas una cuenta de SendGrid y un dominio propio.
+                            Para enviar correos electrónicos profesionales desde tu propia dirección, necesitas una cuenta de SendGrid y un dominio propio. No se pueden usar direcciones de correo gratuitas como `@gmail.com`.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -124,13 +123,6 @@ export default function ClubSettingsPage() {
                             </div>
                         ): (
                             <>
-                                <Alert variant="destructive" className="bg-destructive/10">
-                                  <AlertTriangle className="h-4 w-4" />
-                                  <AlertTitle className="font-semibold">Requisito: Dominio Propio</AlertTitle>
-                                  <AlertDescription>
-                                    Para usar esta función, el club debe tener un nombre de dominio (p.ej., `minombredeclub.com`). No se pueden usar direcciones de correo gratuitas como `@gmail.com` o `@hotmail.com` para el envío.
-                                  </AlertDescription>
-                                </Alert>
                                 <div className="space-y-2">
                                     <Label htmlFor="sendgrid-api-key">SendGrid API Key</Label>
                                     <Input 
