@@ -28,9 +28,6 @@ import { initiateSenderVerificationAction } from "@/lib/actions";
 
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
-// This will be false on the server and true on the client if the key is set.
-const isPlatformMailConfigured = !!process.env.NEXT_PUBLIC_SENDGRID_API_KEY_CONFIGURED;
-
 export default function ClubSettingsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
@@ -39,13 +36,8 @@ export default function ClubSettingsPage() {
     const [fromEmail, setFromEmail] = useState("");
     const [apiKey, setApiKey] = useState("");
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("unconfigured");
-    const [mailConfigured, setMailConfigured] = useState(false);
+    const [isPlatformMailConfigured, setIsPlatformMailConfigured] = useState(false);
     
-    useEffect(() => {
-        // We check this on the client-side to ensure env var is available.
-        setMailConfigured(isPlatformMailConfigured);
-    }, [])
-
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -74,6 +66,13 @@ export default function ClubSettingsPage() {
                 const settingsData = settingsSnap.data();
                 setFromEmail(settingsData?.fromEmail || "");
                 setVerificationStatus(settingsData?.senderVerificationStatus || "unconfigured");
+                
+                // A club has settings, so we can assume the platform key *might* be configured.
+                // The actual check if the key works happens on the server.
+                // This logic determines which UI to show to the admin.
+                if (settingsData?.platformSendgridApiKey) {
+                  setIsPlatformMailConfigured(true);
+                }
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
@@ -82,6 +81,25 @@ export default function ClubSettingsPage() {
             setLoading(false);
         }
     };
+    
+    const handleSaveApiKey = async () => {
+        if (!clubId || !apiKey) {
+            toast({ variant: "destructive", title: "Error", description: "La clave de API es obligatoria." });
+            return;
+        }
+        setSaving(true);
+        try {
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            await setDoc(settingsRef, { platformSendgridApiKey: apiKey }, { merge: true });
+            toast({ title: "Clave de API guardada", description: "La clave se ha guardado de forma segura." });
+            setIsPlatformMailConfigured(true); // Switch UI after saving
+        } catch (error) {
+            console.error("Error saving API key:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la clave de API." });
+        } finally {
+            setSaving(false);
+        }
+    }
 
     const handleSaveAndVerify = async () => {
         if (!clubId || !fromEmail) {
@@ -163,7 +181,7 @@ export default function ClubSettingsPage() {
                              <div className="flex items-center justify-center h-24">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>
-                        ) : mailConfigured ? (
+                        ) : isPlatformMailConfigured ? (
                              <>
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
@@ -205,7 +223,8 @@ export default function ClubSettingsPage() {
                                         onChange={(e) => setApiKey(e.target.value)}
                                     />
                                 </div>
-                                <Button className="w-full mt-4" disabled={!apiKey}>
+                                <Button className="w-full mt-4" disabled={!apiKey || saving} onClick={handleSaveApiKey}>
+                                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                     Guardar Clave de API
                                 </Button>
                              </div>

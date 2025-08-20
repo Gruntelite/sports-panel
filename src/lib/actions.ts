@@ -2,6 +2,8 @@
 "use server";
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
+import { doc, getDoc } from "firebase/firestore";
+import { db } from "./firebase";
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
   try {
@@ -19,7 +21,10 @@ type VerificationInput = {
 }
 
 export async function initiateSenderVerificationAction(input: VerificationInput) {
-    const apiKey = process.env.SENDGRID_API_KEY;
+    
+    const settingsRef = doc(db, "clubs", input.clubId, "settings", "config");
+    const settingsSnap = await getDoc(settingsRef);
+    const apiKey = settingsSnap.exists() ? settingsSnap.data()?.platformSendgridApiKey : null;
 
     if (!apiKey) {
         console.error("SendGrid API Key is not configured on the platform.");
