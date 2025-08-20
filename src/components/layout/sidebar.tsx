@@ -49,6 +49,7 @@ export function Sidebar() {
 
                     if (rootUserDocSnap.exists()) {
                         const clubId = rootUserDocSnap.data().clubId;
+                        // Use a different doc ref for club-specific user data
                         const userDocRef = doc(db, "clubs", clubId, "users", user.uid);
                         const userDocSnap = await getDoc(userDocRef);
 
@@ -136,7 +137,7 @@ export function Sidebar() {
                             <DropdownMenuItem asChild>
                                 <Link href="/account" className="w-full">
                                     <Settings className="mr-2 h-4 w-4"/>
-                                    Ajustes
+                                    Mi Perfil
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onClick={handleLogout}>

@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Team = {
@@ -73,6 +74,7 @@ export type Staff = {
     phone?: string;
     avatar?: string;
     hasMissingData?: boolean;
+    staffId?: string;
 }
 
 export type TeamMember = {
@@ -106,6 +108,9 @@ export type User = {
     role: 'super-admin' | 'Admin' | 'Entrenador' | 'Family' | 'Staff';
     avatar?: string;
     authUid?: string; // To link to Firebase Auth user if needed
+    playerId?: string;
+    coachId?: string;
+    staffId?: string;
 }
 
 export type OneTimePayment = {

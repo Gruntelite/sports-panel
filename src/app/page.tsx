@@ -154,12 +154,13 @@ export default function SignUpPage() {
       });
 
       // 5. Create the super-admin's entry in the staff subcollection
-      const staffRef = doc(db, "clubs", clubId, "staff", user.uid);
+      const staffRef = doc(collection(db, "clubs", clubId, "staff"));
       batch.set(staffRef, {
           name: firstName,
           lastName: lastName,
           email: email,
           role: "Super-Admin",
+          staffId: staffRef.id,
       });
 
       // Commit all writes to the database
