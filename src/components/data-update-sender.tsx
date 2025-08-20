@@ -129,40 +129,25 @@ export function DataUpdateSender() {
         }
     };
     
+    const membersToProcess = useMemo(() => {
+        return selectedMemberIds.size > 0
+          ? allMembers.filter(m => selectedMemberIds.has(m.id))
+          : filteredMembers;
+      }, [selectedMemberIds, allMembers, filteredMembers]);
+
     const filteredMembers = useMemo(() => {
         if (selectedTypes.size === 0 && selectedTeams.size === 0) {
             return allMembers;
         }
-
         return allMembers.filter(member => {
             const typeMatch = selectedTypes.size === 0 || selectedTypes.has(member.type);
-            
-            let teamMatch = selectedTeams.size === 0;
-            if (selectedTeams.size > 0) {
-                 if(member.teamId && selectedTeams.has(member.teamId)) {
-                    teamMatch = true;
-                } else {
-                    teamMatch = false;
-                }
-            }
-             
-            if (selectedTypes.size > 0 && selectedTeams.size > 0) {
-                return typeMatch && teamMatch;
-            }
-            if (selectedTypes.size > 0) {
-                return typeMatch;
-            }
-            if (selectedTeams.size > 0) {
-                return teamMatch;
-            }
-            return false;
+            const teamMatch = selectedTeams.size === 0 || (member.teamId && selectedTeams.has(member.teamId));
+            return typeMatch && teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
 
     const availableFieldsInfo = useMemo(() => {
-        const membersToConsider = selectedMemberIds.size > 0 
-            ? allMembers.filter(m => selectedMemberIds.has(m.id))
-            : filteredMembers;
+        const membersToConsider = membersToProcess;
 
         if (membersToConsider.length === 0) {
             return { fields: [], uniqueType: null };
@@ -181,7 +166,7 @@ export function DataUpdateSender() {
             case 'Staff': return { fields: staffFields, uniqueType: 'Staff' };
             default: return { fields: [], uniqueType: null };
         }
-    }, [filteredMembers, selectedMemberIds, allMembers]);
+    }, [membersToProcess]);
 
     const { fields: availableFields, uniqueType } = availableFieldsInfo;
 
@@ -219,14 +204,7 @@ export function DataUpdateSender() {
 
     const handleGeneratePreview = () => {
         const subject = `Actualización de datos para ${clubName}`;
-        const body = `Hola [Nombre del Miembro],
-
-Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.
-
-El enlace es personal y solo será válido durante los próximos 7 días.
-
-Gracias,
-El equipo de ${clubName}`;
+        const body = `Hola [Nombre del Miembro],\n\nPor favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.\n\nEl enlace es personal y solo será válido durante los próximos 7 días.\n\nGracias,\nEl equipo de ${clubName}`;
 
         setEmailPreview({ subject, body });
         setIsPreviewModalOpen(true);
@@ -235,18 +213,14 @@ El equipo de ${clubName}`;
     const handleSend = async () => {
       if (!clubId) return;
 
-      const membersToSend = selectedMemberIds.size > 0 
-        ? allMembers.filter(m => selectedMemberIds.has(m.id))
-        : filteredMembers;
-
-      if (membersToSend.length === 0) {
+      if (membersToProcess.length === 0) {
         toast({ variant: "destructive", title: "Error", description: "No hay destinatarios seleccionados." });
         return;
       }
       
       setSending(true);
 
-      const recipients = membersToSend.map(member => {
+      const recipients = membersToProcess.map(member => {
         let email = '';
         if (member.type === 'Jugador') {
           email = (member.data as Player).tutorEmail || '';
@@ -276,6 +250,8 @@ El equipo de ${clubName}`;
               clubName: clubName,
               recipients: batchRecipients,
               fieldConfig: availableFields.length > 0 ? fieldConfig : {},
+              emailSubject: emailPreview.subject,
+              emailBody: emailPreview.body,
               status: 'pending',
               createdAt: serverTimestamp(),
           });
@@ -298,7 +274,7 @@ El equipo de ${clubName}`;
       }
     }
     
-    const recipientCount = selectedMemberIds.size > 0 ? selectedMemberIds.size : filteredMembers.length;
+    const recipientCount = membersToProcess.length;
     const isAllFilteredSelected = filteredMembers.length > 0 && selectedMemberIds.size === filteredMembers.length;
 
     return (
@@ -490,9 +466,9 @@ El equipo de ${clubName}`;
                         </ScrollArea>
                     </div>
                 ) : (
-                    (selectedMemberIds.size > 0 || filteredMembers.length > 0) && !uniqueType && (
+                    membersToProcess.length > 0 && !uniqueType && (
                         <div className="pt-4 border-t text-sm text-muted-foreground">
-                            Has seleccionado miembros de diferentes tipos. Para configurar campos específicos, por favor, filtra por un único tipo de miembro (p.ej., solo 'Jugadores').
+                            Has seleccionado miembros de diferentes tipos. Para configurar campos específicos, por favor, filtra o selecciona manualmente miembros de un único tipo (p.ej., solo 'Jugadores').
                         </div>
                     )
                 )}
@@ -516,11 +492,20 @@ El equipo de ${clubName}`;
                     <div className="space-y-4 py-4">
                         <div className="space-y-1">
                             <Label htmlFor="preview-subject">Asunto</Label>
-                            <Input id="preview-subject" readOnly value={emailPreview.subject} />
+                            <Input
+                                id="preview-subject"
+                                value={emailPreview.subject}
+                                onChange={(e) => setEmailPreview({ ...emailPreview, subject: e.target.value })}
+                            />
                         </div>
                         <div className="space-y-1">
                             <Label htmlFor="preview-body">Cuerpo del Mensaje</Label>
-                            <Textarea id="preview-body" readOnly value={emailPreview.body} className="h-48 bg-muted/50" />
+                            <Textarea
+                                id="preview-body"
+                                value={emailPreview.body}
+                                onChange={(e) => setEmailPreview({ ...emailPreview, body: e.target.value })}
+                                className="h-48 bg-muted/50"
+                            />
                             <p className="text-xs text-muted-foreground">La etiqueta [Nombre del Miembro] se reemplazará automáticamente.</p>
                         </div>
                     </div>

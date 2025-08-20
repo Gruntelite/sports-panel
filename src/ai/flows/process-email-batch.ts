@@ -6,7 +6,7 @@
  */
 
 import { ai } from '@/ai/genkit';
-import { z } from 'genkit';
+import { z } from 'zod';
 import * as admin from 'firebase-admin';
 import * as sgMail from '@sendgrid/mail';
 
@@ -100,6 +100,18 @@ export const processEmailBatchFlow = ai.defineFlow(
         await batchDoc.ref.update({ status: 'completed' });
         return output;
     }
+    
+    const defaultSubject = `Actualización de datos para ${clubName}`;
+    const defaultBody = `
+        <p>Hola [Nombre del Miembro],</p>
+        <p>Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.</p>
+        <p style="text-align: center; margin: 20px 0;">
+            <a href="[updateLink]" style="background-color: #1d4ed8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Actualizar mis datos</a>
+        </p>
+        <p>El enlace es personal y solo será válido durante los próximos 7 días.</p>
+        <p>Gracias,</p>
+        <p>El equipo de ${clubName}</p>
+    `;
 
     const processPromises = pendingRecipients.map(async (recipient: any) => {
         try {
@@ -115,23 +127,18 @@ export const processEmailBatchFlow = ai.defineFlow(
                 expires: admin.firestore.Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
             });
 
+            const emailBody = (batchData.emailBody || defaultBody)
+                .replace(/\[Nombre del Miembro\]/g, recipient.name)
+                .replace(/\[updateLink\]/g, updateLink);
+
             const msg = {
                 to: recipient.email,
                 from: {
                   email: senderConfig.fromEmail,
                   name: `${clubName}`
                 },
-                subject: `Actualización de datos para ${clubName}`,
-                html: `
-                    <p>Hola ${recipient.name},</p>
-                    <p>Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.</p>
-                    <p style="text-align: center; margin: 20px 0;">
-                        <a href="${updateLink}" style="background-color: #1d4ed8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Actualizar mis datos</a>
-                    </p>
-                    <p>El enlace es personal y solo será válido durante los próximos 7 días.</p>
-                    <p>Gracias,</p>
-                    <p>El equipo de ${clubName}</p>
-                `,
+                subject: batchData.emailSubject || defaultSubject,
+                html: emailBody,
             };
             await sgMail.send(msg);
             return { id: recipient.id, status: 'sent' };
