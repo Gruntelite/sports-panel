@@ -7,7 +7,9 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { v4 as uuidv4 } from 'uuid';
-import admin, { db } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase';
+import { collection, writeBatch, doc, Timestamp, setDoc } from 'firebase/firestore';
+
 
 const SendEmailUpdateInputSchema = z.object({
   clubId: z.string(),
@@ -61,8 +63,14 @@ export const sendEmailUpdateFlow = ai.defineFlow(
         const msg = {
             to: recipient.email,
             from: { email: fromEmail, name: clubName },
+            reply_to: fromEmail,
             subject: `Actualización de datos para ${clubName}`,
             html: emailBody,
+            asm: { group_id: 12345 }, // Replace with your actual Unsubscribe Group ID
+            custom_args: {
+                clubId: clubId,
+                memberId: recipient.id,
+            }
         };
         emailPromises.push(sgMail.send(msg));
     }
@@ -71,25 +79,46 @@ export const sendEmailUpdateFlow = ai.defineFlow(
     try {
       if (emailPromises.length > 0) {
         const results = await Promise.allSettled(emailPromises);
-        sentCount = results.filter(r => r.status === 'fulfilled').length;
         
-        const failed = results.filter(r => r.status === 'rejected');
-        if (failed.length > 0) {
-            console.error('Some emails failed to send:', failed);
-        }
-      }
+        const fulfilledIndexes: number[] = [];
+        const rejectedRecipients: any[] = [];
 
-      // Create tokens in Firestore even if some emails failed
-      if (tokensToCreate.length > 0) {
-          const tokenBatch = db.batch();
-          for (const tokenData of tokensToCreate) {
-              const tokenRef = db.collection('dataUpdateTokens').doc(tokenData.token);
-              tokenBatch.set(tokenRef, {
-                  ...tokenData,
-                  expires: admin.firestore.Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-              });
-          }
-          await tokenBatch.commit();
+        results.forEach((result, index) => {
+            if (result.status === 'fulfilled') {
+                fulfilledIndexes.push(index);
+            } else {
+                rejectedRecipients.push(recipients[index]);
+                console.error(`Failed to send email to ${recipients[index].email}:`, result.reason);
+            }
+        });
+
+        sentCount = fulfilledIndexes.length;
+
+        // Create tokens ONLY for emails that were successfully sent
+        if (fulfilledIndexes.length > 0) {
+            const tokenBatch = writeBatch(db);
+            for (const index of fulfilledIndexes) {
+                const tokenData = tokensToCreate[index];
+                const tokenRef = doc(db, "dataUpdateTokens", tokenData.token);
+                tokenBatch.set(tokenRef, {
+                    ...tokenData,
+                    expires: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+                });
+            }
+            await tokenBatch.commit();
+        }
+        
+        // Re-queue failed emails for a later attempt
+        if (rejectedRecipients.length > 0) {
+            console.log(`Re-queueing ${rejectedRecipients.length} failed emails.`);
+            const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
+            await setDoc(queueRef, { 
+                recipients: rejectedRecipients, 
+                fieldConfig, 
+                createdAt: Timestamp.now(),
+                reason: 'Re-queued after initial send failure',
+            });
+        }
       }
       
       return { success: true, sentCount };

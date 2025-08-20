@@ -1,10 +1,10 @@
 
-"use server";
+"use client";
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
 import { sendEmailUpdateFlow } from "@/ai/flows/send-email-update";
-import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, serverTimestamp } from "firebase/firestore";
-import { db } from './firebase'; // Use client SDK
+import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment } from "firebase/firestore";
+import { db } from './firebase'; 
 
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
@@ -41,11 +41,11 @@ export async function initiateSenderVerificationAction(input: VerificationInput)
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                nickname: input.email.split('@')[0], // A friendly name for the sender
+                nickname: input.email.split('@')[0],
                 from_email: input.email,
-                from_name: 'SportsPanel Sender', // This can be customized
+                from_name: 'SportsPanel Sender',
                 reply_to: input.email,
-                address: '123 Main Street', // Dummy data required by SendGrid
+                address: '123 Main Street', 
                 city: 'Anytown',
                 country: 'USA'
             }),
@@ -133,8 +133,6 @@ async function getClubConfig(clubId: string) {
       fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
       apiKey: null as string | null,
       availableToSendToday: DAILY_LIMIT,
-      dailyEmailCount: 0,
-      dailyEmailCountResetTimestamp: null as Timestamp | null,
     };
 
     if (clubDoc.exists()) {
@@ -152,14 +150,11 @@ async function getClubConfig(clubId: string) {
         const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
         const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
         
-        config.dailyEmailCountResetTimestamp = data?.dailyEmailCountResetTimestamp || null;
-        
         let currentCount = data?.dailyEmailCount || 0;
         if (lastReset < oneDayAgo) {
             currentCount = 0;
         }
 
-        config.dailyEmailCount = currentCount;
         config.availableToSendToday = DAILY_LIMIT - currentCount;
     }
     return config;
@@ -169,12 +164,12 @@ async function getClubConfig(clubId: string) {
 export async function directSendAction({ clubId, recipients, fieldConfig }: { clubId: string, recipients: any[], fieldConfig: any }) {
     
     const config = await getClubConfig(clubId);
-    const { availableToSendToday, apiKey, clubName, fromEmail, dailyEmailCount, dailyEmailCountResetTimestamp } = config;
+    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
     
     if (!apiKey) {
       const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
       console.error(errorMsg);
-      return { success: false, sentCount: 0, queuedCount: 0, error: errorMsg };
+      return { success: false, error: errorMsg };
     }
 
     const recipientsToSend = recipients.slice(0, availableToSendToday);
@@ -194,24 +189,23 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
         await setDoc(queueRef, {
             recipients: recipientsToQueue,
             fieldConfig,
-            createdAt: serverTimestamp(),
+            createdAt: Timestamp.now(),
         });
     }
 
-     // Update daily send count only if emails were actually sent
     if (result.success && result.sentCount > 0) {
         const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+        const settingsSnap = await getDoc(settingsRef);
         const now = Timestamp.now();
         
-        if (!dailyEmailCountResetTimestamp || dailyEmailCountResetTimestamp.toMillis() < now.toMillis() - (24 * 60 * 60 * 1000)) {
+        if (!settingsSnap.exists() || !settingsSnap.data()?.dailyEmailCountResetTimestamp || settingsSnap.data()?.dailyEmailCountResetTimestamp.toMillis() < now.toMillis() - (24 * 60 * 60 * 1000)) {
              await setDoc(settingsRef, {
                   dailyEmailCount: result.sentCount,
                   dailyEmailCountResetTimestamp: now,
               }, { merge: true });
         } else {
-            const newCount = dailyEmailCount + result.sentCount;
              await updateDoc(settingsRef, {
-                  dailyEmailCount: newCount,
+                  dailyEmailCount: increment(result.sentCount),
              });
         }
     }
@@ -230,7 +224,6 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
     }
 }
 
-// New actions for the public data update form
 export async function getMemberDataForUpdate({ token }: { token: string }) {
     try {
         const tokenRef = doc(db, "dataUpdateTokens", token);
@@ -243,7 +236,7 @@ export async function getMemberDataForUpdate({ token }: { token: string }) {
         const tokenData = tokenSnap.data();
         const now = Timestamp.now();
         if (tokenData.expires.toMillis() < now.toMillis()) {
-             await doc(db, "dataUpdateTokens", token).delete();
+             await deleteDoc(tokenRef);
              return { success: false, error: "El enlace ha caducado. Por favor, solicita uno nuevo." };
         }
         
@@ -300,7 +293,7 @@ export async function saveMemberDataFromUpdate({ token, updatedData }: { token: 
         
         const batch = writeBatch(db);
         batch.update(memberRef, updatedData);
-        batch.delete(tokenRef); // Invalidate token after use
+        batch.delete(tokenRef);
         
         await batch.commit();
 

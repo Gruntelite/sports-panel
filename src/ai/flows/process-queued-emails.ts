@@ -7,10 +7,49 @@
 import { ai } from '@/ai/genkit';
 import { db } from '@/lib/firebase';
 import { sendEmailUpdateFlow } from './send-email-update';
-import { doc, getDocs, collection, updateDoc, writeBatch } from 'firebase/firestore';
+import { doc, getDocs, collection, updateDoc, writeBatch, getDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 
 
 const DAILY_LIMIT = 100;
+
+// Helper to get club configuration and daily send limit
+async function getClubConfig(clubId: string) {
+    const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+    const clubRef = doc(db, 'clubs', clubId);
+
+    const [settingsDoc, clubDoc] = await Promise.all([getDoc(settingsRef), getDoc(clubRef)]);
+
+    let config = {
+      clubName: "Tu Club",
+      fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
+      apiKey: null as string | null,
+      availableToSendToday: DAILY_LIMIT,
+    };
+
+    if (clubDoc.exists()) {
+        config.clubName = clubDoc.data()?.name || "Tu Club";
+    }
+
+    if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
+            config.fromEmail = data.fromEmail;
+        }
+        config.apiKey = data?.platformSendgridApiKey || null;
+
+        const now = Timestamp.now();
+        const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
+        const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+        
+        let currentCount = data?.dailyEmailCount || 0;
+        if (lastReset < oneDayAgo) {
+            currentCount = 0;
+        }
+
+        config.availableToSendToday = DAILY_LIMIT - currentCount;
+    }
+    return config;
+}
 
 // Scheduled flow to run periodically (e.g., daily via cron)
 export const processQueuedEmailsFlow = ai.defineFlow(
@@ -32,25 +71,17 @@ export const processQueuedEmailsFlow = ai.defineFlow(
       const clubId = clubDoc.id;
       console.log(`Checking email queue for club: ${clubId}`);
       
-      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-      const settingsSnap = await getDoc(settingsRef);
-
-      const apiKey = settingsSnap.exists() ? settingsSnap.data()?.platformSendgridApiKey : null;
-      let fromEmail = `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`;
-      if (settingsSnap.exists()) {
-          const data = settingsSnap.data();
-          if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
-              fromEmail = data.fromEmail;
-          }
-      }
+      const { availableToSendToday, apiKey, clubName, fromEmail } = await getClubConfig(clubId);
 
       if (!apiKey) {
         console.error(`No API Key for club ${clubId}, skipping.`);
         continue;
       }
-
-      const clubData = clubDoc.data();
-      const clubName = clubData.name || "Tu Club";
+      
+      if (availableToSendToday <= 0) {
+        console.log(`Daily limit reached for club ${clubId}. Skipping queue processing.`);
+        continue;
+      }
 
       const queueRef = collection(db, "clubs", clubId, "emailQueue");
       const queueSnapshot = await getDocs(queueRef);
@@ -60,43 +91,41 @@ export const processQueuedEmailsFlow = ai.defineFlow(
         continue;
       }
 
-      for (const queuedBatch of queueSnapshot.docs) {
-        const { recipients, fieldConfig } = queuedBatch.data();
+      let emailsSentThisRun = 0;
 
-        console.log(`Processing batch of ${recipients.length} queued emails for club ${clubId}.`);
+      for (const queuedBatchDoc of queueSnapshot.docs) {
+        if(emailsSentThisRun >= availableToSendToday) break;
 
-        // Use the existing flow to send emails, respecting daily limits.
+        const { recipients, fieldConfig } = queuedBatchDoc.data();
+        const remainingDailyQuota = availableToSendToday - emailsSentThisRun;
+        
+        const recipientsToSend = recipients.slice(0, remainingDailyQuota);
+        const recipientsToKeepInQueue = recipients.slice(remainingDailyQuota);
+
+        console.log(`Processing batch for club ${clubId}. To send: ${recipientsToSend.length}, Remaining in batch: ${recipientsToKeepInQueue.length}`);
+
         const result = await sendEmailUpdateFlow({
           clubId,
-          recipients,
+          recipients: recipientsToSend,
           fieldConfig,
           apiKey,
           clubName,
           fromEmail
         });
 
+        emailsSentThisRun += result.sentCount;
+
         if (result.success) {
-          // If the batch was fully sent, remove it from the queue
-          if (result.queuedCount === 0) {
-            console.log(`Batch for club ${clubId} processed successfully. Deleting from queue.`);
-            await doc(queueRef, queuedBatch.id).delete();
+          if (recipientsToKeepInQueue.length > 0) {
+            await updateDoc(doc(queueRef, queuedBatchDoc.id), { recipients: recipientsToKeepInQueue });
+            console.log(`${result.sentCount} emails sent. ${recipientsToKeepInQueue.length} emails remain in the batch.`);
           } else {
-            // If only part of the batch was sent, update the remaining recipients in the queue
-            const remainingRecipients = recipients.slice(result.sentCount);
-             console.log(`${result.sentCount} emails sent. ${remainingRecipients.length} emails remain in the queue for club ${clubId}.`);
-            await updateDoc(doc(queueRef, queuedBatch.id), { recipients: remainingRecipients });
+            await deleteDoc(doc(queueRef, queuedBatchDoc.id));
+            console.log(`Batch for club ${clubId} processed successfully. Deleting from queue.`);
           }
         } else {
           console.error(`Failed to process queued batch for club ${clubId}:`, result.error);
-          // If we fail, we stop processing this club's queue for this run to avoid hammering a failing service.
-          // The error could be transient (e.g., API key revoked), so we'll try again on the next scheduled run.
           break; 
-        }
-
-        // If the last run used up all available daily sends, stop processing for this club.
-        if (result.sentCount < recipients.length) {
-            console.log(`Daily limit likely reached for club ${clubId}. Pausing queue processing for this run.`);
-            break;
         }
       }
     }
