@@ -1,12 +1,11 @@
 
 'use server';
 /**
- * @fileOverview A flow to send data update emails directly. This flow is simplified to only handle the sending logic.
+ * @fileOverview A flow to send data update emails directly. This flow invites users to log in and update their data.
  */
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { v4 as uuidv4 } from 'uuid';
 import { db } from '@/lib/firebase';
 import { collection, writeBatch, doc, Timestamp, setDoc } from 'firebase/firestore';
 
@@ -14,10 +13,10 @@ import { collection, writeBatch, doc, Timestamp, setDoc } from 'firebase/firesto
 const SendEmailUpdateInputSchema = z.object({
   clubId: z.string(),
   recipients: z.array(z.any()),
-  fieldConfig: z.record(z.string()),
   apiKey: z.string(),
   fromEmail: z.string(),
   clubName: z.string(),
+  // fieldConfig is no longer needed in this simplified flow
 });
 export type SendEmailUpdateInput = z.infer<typeof SendEmailUpdateInputSchema>;
 
@@ -35,28 +34,24 @@ export const sendEmailUpdateFlow = ai.defineFlow(
     inputSchema: SendEmailUpdateInputSchema,
     outputSchema: SendEmailUpdateOutputSchema,
   },
-  async ({ clubId, recipients, fieldConfig, apiKey, fromEmail, clubName }) => {
+  async ({ clubId, recipients, apiKey, fromEmail, clubName }) => {
     
     const sgMail = await import('@sendgrid/mail');
     sgMail.setApiKey(apiKey);
 
-    const tokensToCreate: { token: string, clubId: string, memberId: string, memberType: string, fieldConfig: any }[] = [];
     const emailPromises = [];
 
-    for (const recipient of recipients) {
-        const token = uuidv4();
-        tokensToCreate.push({ token, clubId, memberId: recipient.id, memberType: recipient.type, fieldConfig });
+    const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002';
+    const loginLink = `${baseUrl}/login`;
 
-        const baseUrl = process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : 'http://localhost:9002';
-        const updateLink = `${baseUrl}/update-data?token=${token}`;
+    for (const recipient of recipients) {
         
         const emailBody = `
             <p>Hola ${recipient.name},</p>
-            <p>Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.</p>
+            <p>Por favor, ayúdanos a mantener tus datos actualizados. Inicia sesión en la aplicación para revisar y confirmar tu información en tu perfil.</p>
             <p style="text-align: center; margin: 20px 0;">
-                <a href="${updateLink}" style="background-color: #1d4ed8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Actualizar mis datos</a>
+                <a href="${loginLink}" style="background-color: #1d4ed8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Acceder a mi cuenta</a>
             </p>
-            <p>El enlace es personal y solo será válido durante los próximos 7 días.</p>
             <p>Gracias,</p>
             <p>El equipo de ${clubName}</p>
         `;
@@ -94,20 +89,6 @@ export const sendEmailUpdateFlow = ai.defineFlow(
         });
 
         sentCount = fulfilledIndexes.length;
-
-        // Create tokens ONLY for emails that were successfully sent
-        if (fulfilledIndexes.length > 0) {
-            const tokenBatch = writeBatch(db);
-            for (const index of fulfilledIndexes) {
-                const tokenData = tokensToCreate[index];
-                const tokenRef = doc(db, "dataUpdateTokens", tokenData.token);
-                tokenBatch.set(tokenRef, {
-                    ...tokenData,
-                    expires: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-                });
-            }
-            await tokenBatch.commit();
-        }
         
         // Re-queue failed emails for a later attempt
         if (rejectedRecipients.length > 0) {
@@ -115,7 +96,7 @@ export const sendEmailUpdateFlow = ai.defineFlow(
             const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
             await setDoc(queueRef, { 
                 recipients: rejectedRecipients, 
-                fieldConfig, 
+                // fieldConfig is no longer needed
                 createdAt: Timestamp.now(),
                 reason: 'Re-queued after initial send failure',
             });
@@ -124,7 +105,6 @@ export const sendEmailUpdateFlow = ai.defineFlow(
         return { success: true, sentCount, requeuedCount: rejectedRecipients.length };
       }
       
-      // Case where there were no emails to send, which is technically a success
       return { success: true, sentCount: 0, requeuedCount: 0 };
 
     } catch (error: any) {

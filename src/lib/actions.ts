@@ -73,6 +73,9 @@ export async function initiateSenderVerificationAction(input: VerificationInput)
 }
 
 export async function checkSenderStatusAction(input: { clubId: string }) {
+  if (!input.clubId) {
+    return { success: false, error: "Club ID no proporcionado." };
+  }
     const settingsRef = doc(db, "clubs", input.clubId, "settings", "config");
     const settingsSnap = await getDoc(settingsRef);
 
@@ -121,7 +124,6 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 
 const DAILY_LIMIT = 100;
 
-// Helper to get club configuration and daily send limit
 async function getClubConfig(clubId: string) {
     const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
     const clubRef = doc(db, 'clubs', clubId);
@@ -133,8 +135,6 @@ async function getClubConfig(clubId: string) {
       fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
       apiKey: null as string | null,
       availableToSendToday: DAILY_LIMIT,
-      dailyEmailCount: 0,
-      dailyEmailCountResetTimestamp: null as Timestamp | null,
     };
 
     if (clubDoc.exists()) {
@@ -152,24 +152,21 @@ async function getClubConfig(clubId: string) {
         const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
         const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
         
-        config.dailyEmailCountResetTimestamp = data?.dailyEmailCountResetTimestamp || null;
-        
         let currentCount = data?.dailyEmailCount || 0;
         if (lastReset < oneDayAgo) {
             currentCount = 0;
         }
 
-        config.dailyEmailCount = currentCount;
         config.availableToSendToday = DAILY_LIMIT - currentCount;
     }
     return config;
 }
 
 
-export async function directSendAction({ clubId, recipients, fieldConfig }: { clubId: string, recipients: any[], fieldConfig: any }) {
+export async function directSendAction({ clubId, recipients }: { clubId: string, recipients: any[] }) {
     
     const config = await getClubConfig(clubId);
-    const { availableToSendToday, apiKey, clubName, fromEmail, dailyEmailCount, dailyEmailCountResetTimestamp } = config;
+    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
     
     if (!apiKey) {
       const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
@@ -182,7 +179,6 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
 
     const result = await sendEmailUpdateFlow({
         recipients: recipientsToSend,
-        fieldConfig,
         apiKey,
         clubName,
         fromEmail,
@@ -194,25 +190,36 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
         const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
         await setDoc(queueRef, {
             recipients: recipientsToQueue,
-            fieldConfig,
+            // fieldConfig is no longer needed
             createdAt: Timestamp.now(),
         });
     }
 
-    // Update daily send count only if emails were successfully sent
     if (result.success && result.sentCount > 0) {
         const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+        const settingsSnap = await getDoc(settingsRef);
         const now = Timestamp.now();
         
-        if (!dailyEmailCountResetTimestamp || dailyEmailCountResetTimestamp.toMillis() < now.toMillis() - (24 * 60 * 60 * 1000)) {
+        if (settingsSnap.exists()) {
+            const data = settingsSnap.data();
+            const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
+            const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+
+            if (lastReset < oneDayAgo) {
+                 await updateDoc(settingsRef, {
+                      dailyEmailCount: result.sentCount,
+                      dailyEmailCountResetTimestamp: now,
+                  });
+            } else {
+                 await updateDoc(settingsRef, {
+                      dailyEmailCount: increment(result.sentCount),
+                 });
+            }
+        } else {
              await setDoc(settingsRef, {
                   dailyEmailCount: result.sentCount,
                   dailyEmailCountResetTimestamp: now,
               }, { merge: true });
-        } else {
-             await updateDoc(settingsRef, {
-                  dailyEmailCount: increment(result.sentCount),
-             });
         }
     }
 
