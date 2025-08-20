@@ -1,6 +1,7 @@
 
 "use client";
 
+import { sendEmailFlow } from "@/ai/flows/send-email-flow";
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment } from "firebase/firestore";
 import { db } from './firebase'; // Use client SDK
 
@@ -188,5 +189,101 @@ export async function saveMemberDataFromUpdate({ token, updatedData }: { token: 
     } catch(error: any) {
         console.error("Error saving member data from update:", error);
         return { success: false, error: "No se pudieron guardar los cambios." };
+    }
+}
+
+
+const DAILY_LIMIT = 100;
+
+async function getClubConfig(clubId: string) {
+    const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+    const clubRef = doc(db, 'clubs', clubId);
+
+    const [settingsDoc, clubDoc] = await Promise.all([getDoc(settingsRef), getDoc(clubRef)]);
+
+    let config = {
+      clubName: "Tu Club",
+      fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
+      apiKey: null as string | null,
+      availableToSendToday: DAILY_LIMIT,
+    };
+
+    if (clubDoc.exists()) {
+        config.clubName = clubDoc.data()?.name || "Tu Club";
+    }
+
+    if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
+            config.fromEmail = data.fromEmail;
+        }
+        config.apiKey = data?.platformSendgridApiKey || null;
+
+        const now = Timestamp.now();
+        const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
+        const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+        
+        let currentCount = data?.dailyEmailCount || 0;
+        if (lastReset < oneDayAgo) {
+            currentCount = 0;
+        }
+
+        config.availableToSendToday = DAILY_LIMIT - currentCount;
+    }
+    return config;
+}
+
+export async function sendDirectEmailAction({ clubId, recipients, subject, body }: { clubId: string, recipients: any[], subject: string, body: string }) {
+    
+    const config = await getClubConfig(clubId);
+    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
+    
+    if (!apiKey) {
+      const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
+      console.error(errorMsg);
+      return { success: false, sentCount: 0, queuedCount: 0, error: errorMsg };
+    }
+
+    const recipientsToSend = recipients.slice(0, availableToSendToday);
+    const recipientsToQueue = recipients.slice(availableToSendToday);
+
+    const result = await sendEmailFlow({
+        recipients: recipientsToSend,
+        subject,
+        body,
+        apiKey,
+        clubName,
+        fromEmail,
+    });
+    
+    if (recipientsToQueue.length > 0) {
+        const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
+        await setDoc(queueRef, {
+            recipients: recipientsToQueue,
+            subject,
+            body,
+            createdAt: Timestamp.now(),
+        });
+    }
+
+    if (result.success && result.sentCount > 0) {
+        const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
+        await setDoc(settingsRef, {
+            dailyEmailCount: increment(result.sentCount),
+            dailyEmailCountResetTimestamp: Timestamp.now(),
+        }, { merge: true });
+    }
+
+    if (result.success) {
+        return {
+            success: true,
+            title: `¡Envío completado!`,
+            description: `Se han enviado ${result.sentCount} correos. ${recipientsToQueue.length > 0 ? `Los ${recipientsToQueue.length} restantes se enviarán automáticamente.` : ''}`
+        };
+    } else {
+        return {
+            success: false,
+            error: result.error || "Ocurrió un error desconocido durante el envío.",
+        };
     }
 }
