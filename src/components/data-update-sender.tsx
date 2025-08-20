@@ -8,65 +8,14 @@ import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
-import { Check, ChevronsUpDown, Eye, EyeOff, Pencil, Send, UserPlus, Loader2 } from "lucide-react";
+import { Check, ChevronsUpDown, Send, UserPlus, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Label } from "./ui/label";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
-
-
-type FieldPermission = "editable" | "readonly" | "hidden";
-
-const COMMON_FIELDS: { key: keyof (Player & Coach & Staff); label: string }[] = [
-    { key: "avatar", label: "Foto de Perfil" },
-    { key: "name", label: "Nombre" },
-    { key: "lastName", label: "Apellidos" },
-    { key: "birthDate", label: "Fecha de Nacimiento" },
-    { key: "dni", label: "DNI" },
-    { key: "address", label: "Dirección" },
-    { key: "city", label: "Ciudad" },
-    { key: "postalCode", label: "Código Postal" },
-    { key: "kitSize", label: "Talla de Equipación" },
-    { key: "iban", label: "IBAN" },
-];
-
-const FIELD_CONFIG_PLAYER: { key: keyof Player; label: string }[] = [
-    ...COMMON_FIELDS,
-    { key: "tutorName", label: "Nombre del Tutor" },
-    { key: "tutorLastName", label: "Apellidos del Tutor" },
-    { key: "tutorDni", label: "DNI del Tutor" },
-    { key: "tutorEmail", label: "Email del Tutor" },
-    { key: "tutorPhone", label: "Teléfono del Tutor" },
-    { key: "jerseyNumber", label: "Dorsal" },
-    { key: "monthlyFee", label: "Cuota Mensual (€)" },
-];
-
-const FIELD_CONFIG_COACH: { key: keyof Coach; label: string }[] = [
-    ...COMMON_FIELDS,
-    { key: "email", label: "Email" },
-    { key: "phone", label: "Teléfono" },
-    { key: "monthlyPayment", label: "Pago Mensual (€)" },
-    { key: "tutorName", label: "Nombre del Tutor" },
-    { key: "tutorLastName", label: "Apellidos del Tutor" },
-    { key: "tutorDni", label: "DNI del Tutor" },
-];
-
-const FIELD_CONFIG_STAFF: { key: keyof Staff; label: string }[] = [
-    { key: "avatar", label: "Foto de Perfil" },
-    { key: "name", label: "Nombre" },
-    { key: "lastName", label: "Apellidos" },
-    { key: "role", label: "Cargo" },
-    { key: "email", label: "Email" },
-    { key: "phone", label: "Teléfono" },
-];
-
-type FieldConfig = {
-    [key: string]: { label: string; permission: FieldPermission };
-};
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -91,7 +40,6 @@ export function DataUpdateSender() {
     const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
     const [isTeamPopoverOpen, setIsTeamPopoverOpen] = useState(false);
     
-    const [fieldConfig, setFieldConfig] = useState<FieldConfig>({});
     const { toast } = useToast();
 
     useEffect(() => {
@@ -149,54 +97,22 @@ export function DataUpdateSender() {
     };
     
     const filteredMembers = useMemo(() => {
+        if (selectedTypes.size === 0 && selectedTeams.size === 0) {
+            return allMembers;
+        }
+
         return allMembers.filter(member => {
             const typeMatch = selectedTypes.size === 0 || selectedTypes.has(member.type);
-            
-            if (member.type === 'Staff') {
-                return typeMatch;
-            }
+            const teamData = member.data as Player | Coach;
+            const teamMatch = selectedTeams.size === 0 || (teamData.teamId && selectedTeams.has(teamData.teamId));
 
-            const teamMatch = selectedTeams.size === 0 || selectedTeams.has((member.data as Player | Coach).teamId || '');
-            return typeMatch && teamMatch;
+            if (selectedTypes.size > 0 && selectedTeams.size > 0) {
+                return typeMatch && teamMatch;
+            }
+            return typeMatch || teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
-    
-    const initializeFieldConfig = (memberTypes: string[]) => {
-        const config: FieldConfig = {};
-        
-        if (memberTypes.length !== 1) {
-            setFieldConfig({});
-            return;
-        }
 
-        const memberType = memberTypes[0];
-        let fields: { key: string; label: string }[] = [];
-
-        switch (memberType) {
-            case 'Jugador':
-                fields = FIELD_CONFIG_PLAYER;
-                break;
-            case 'Entrenador':
-                fields = FIELD_CONFIG_COACH;
-                break;
-            case 'Staff':
-                fields = FIELD_CONFIG_STAFF;
-                break;
-        }
-
-        fields.forEach(({ key, label }) => {
-            config[key] = { label, permission: 'editable' };
-        });
-
-        setFieldConfig(config);
-    };
-
-    useEffect(() => {
-        const typesInFilter = new Set<string>();
-        filteredMembers.forEach(m => typesInFilter.add(m.type));
-        initializeFieldConfig(Array.from(typesInFilter));
-    }, [filteredMembers]);
-    
     
     const handleSelectMember = (memberId: string) => {
         const newSelection = new Set(selectedMemberIds);
@@ -215,14 +131,6 @@ export function DataUpdateSender() {
             setSelectedMemberIds(new Set());
         }
     }
-
-
-    const setFieldPermission = (fieldKey: string, permission: FieldPermission) => {
-        setFieldConfig(prev => ({
-            ...prev,
-            [fieldKey]: { ...prev[fieldKey], permission },
-        }));
-    };
     
     const handleSend = async () => {
       if (!clubId) return;
@@ -267,7 +175,7 @@ export function DataUpdateSender() {
           firestoreBatch.set(batchRef, {
               clubName: clubName,
               recipients: batchRecipients,
-              fieldConfig: fieldConfig,
+              fieldConfig: {}, // Empty config, all fields will be editable
               status: 'pending',
               createdAt: serverTimestamp(),
           });
@@ -289,7 +197,6 @@ export function DataUpdateSender() {
     }
     
     const recipientCount = selectedMemberIds.size > 0 ? selectedMemberIds.size : filteredMembers.length;
-    const typesInFilter = Array.from(new Set(filteredMembers.map(m => m.type)));
     const isAllFilteredSelected = filteredMembers.length > 0 && selectedMemberIds.size === filteredMembers.length;
 
     return (
@@ -297,7 +204,7 @@ export function DataUpdateSender() {
             <CardHeader>
                 <CardTitle>Solicitar Actualización de Datos</CardTitle>
                 <CardDescription>
-                    Selecciona uno o más miembros, elige qué campos pueden actualizar y envíales un enlace seguro.
+                    Selecciona uno o más miembros y envíales un enlace seguro para que actualicen su información.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -444,53 +351,14 @@ export function DataUpdateSender() {
                     </Dialog>
                 </div>
                 
-                 {recipientCount > 0 && typesInFilter.length === 1 && (
-                    <div className="border-t pt-6">
-                        <h3 className="text-lg font-medium mb-4">Configurar Campos para <span className="capitalize text-primary">{MEMBER_TYPES.find(t => t.value === typesInFilter[0])?.label}</span></h3>
-                        <ScrollArea className="h-72 pr-4">
-                            <div className="space-y-3">
-                               {Object.entries(fieldConfig).map(([key, { label, permission }]) => (
-                                    <div key={key} className="flex items-center justify-between rounded-lg border p-3">
-                                        <span className="font-medium text-sm">{label}</span>
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="sm" className="gap-2">
-                                                    {permission === 'editable' && <><Pencil className="h-3.5 w-3.5" /><span>Editable</span></>}
-                                                    {permission === 'readonly' && <><Eye className="h-3.5 w-3.5" /><span>Solo Lectura</span></>}
-                                                    {permission === 'hidden' && <><EyeOff className="h-3.5 w-3.5" /><span>Oculto</span></>}
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent>
-                                                <DropdownMenuItem onSelect={() => setFieldPermission(key, 'editable')}>
-                                                    <Pencil className="mr-2 h-4 w-4" /> Editable
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => setFieldPermission(key, 'readonly')}>
-                                                    <Eye className="mr-2 h-4 w-4" /> Solo Lectura
-                                                </DropdownMenuItem>
-                                                 <DropdownMenuItem onSelect={() => setFieldPermission(key, 'hidden')}>
-                                                    <EyeOff className="mr-2 h-4 w-4" /> Oculto
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                    </div>
-                               ))}
-                            </div>
-                        </ScrollArea>
-                        <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0 || sending}>
-                            {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                            {sending ? "Enviando..." : `Generar y Enviar a ${recipientCount} Miembro(s)`}
-                        </Button>
-                    </div>
-                )}
+                 <div className="border-t pt-6">
+                    <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0 || sending}>
+                        {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                        {sending ? "Enviando..." : `Generar y Enviar a ${recipientCount} Miembro(s)`}
+                    </Button>
+                </div>
 
-                 {recipientCount > 0 && typesInFilter.length > 1 && (
-                     <div className="border-t pt-6 text-center text-muted-foreground">
-                         <p>Por favor, selecciona un único tipo de miembro (Jugador, Entrenador o Staff) para poder configurar los campos del formulario.</p>
-                     </div>
-                 )}
             </CardContent>
         </Card>
     );
 }
-
-    
