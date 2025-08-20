@@ -8,7 +8,7 @@ import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
-import { Check, ChevronsUpDown, Send, UserPlus, Loader2, Settings, Eye, Lock, Edit } from "lucide-react";
+import { Check, ChevronsUpDown, Send, UserPlus, Loader2, Settings, Eye, Lock, Edit, Wand2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
@@ -17,6 +17,8 @@ import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Input } from "./ui/input";
+import { Textarea } from "./ui/textarea";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -61,6 +63,9 @@ export function DataUpdateSender() {
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
     const [isMemberSelectOpen, setIsMemberSelectOpen] = useState(false);
     
+    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
+    const [emailPreview, setEmailPreview] = useState({ subject: "", body: "" });
+
     const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
     const [isTypePopoverOpen, setIsTypePopoverOpen] = useState(false);
     const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
@@ -131,16 +136,24 @@ export function DataUpdateSender() {
 
         return allMembers.filter(member => {
             const typeMatch = selectedTypes.size === 0 || selectedTypes.has(member.type);
-            const teamMatch = selectedTeams.size === 0 || (member.teamId && selectedTeams.has(member.teamId));
-
-            if (selectedTypes.size > 0 && selectedTeams.size > 0) {
-                // If both filters are active, member must match both
-                if (selectedTypes.has(member.type) && member.teamId && selectedTeams.has(member.teamId)) {
-                    return true;
+            
+            let teamMatch = selectedTeams.size === 0;
+            if (selectedTeams.size > 0) {
+                if(member.teamId && selectedTeams.has(member.teamId)) {
+                    teamMatch = true;
+                } else if (member.type !== 'Jugador' && member.type !== 'Entrenador') {
+                    // For staff or other non-team members, they should not be filtered out by team selection
+                    // if their type is selected.
+                    teamMatch = true; 
+                } else {
+                    teamMatch = false;
                 }
-                return false;
             }
-            return typeMatch && teamMatch;
+             
+            if(selectedTypes.size > 0 && selectedTeams.size > 0){
+                return typeMatch && teamMatch;
+            }
+            return typeMatch || teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
 
@@ -156,10 +169,9 @@ export function DataUpdateSender() {
     }, [selectedTypes]);
 
     useEffect(() => {
-      // Reset field config when available fields change
       const newConfig: FieldConfig = {};
       availableFields.forEach(field => {
-        newConfig[field.id] = 'editable'; // Default to editable
+        newConfig[field.id] = 'editable'; 
       });
       setFieldConfig(newConfig);
     }, [availableFields]);
@@ -186,6 +198,21 @@ export function DataUpdateSender() {
             setSelectedMemberIds(new Set());
         }
     }
+
+    const handleGeneratePreview = () => {
+        const subject = `Actualización de datos para ${clubName}`;
+        const body = `Hola [Nombre del Miembro],
+
+Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.
+
+El enlace es personal y solo será válido durante los próximos 7 días.
+
+Gracias,
+El equipo de ${clubName}`;
+
+        setEmailPreview({ subject, body });
+        setIsPreviewModalOpen(true);
+    };
     
     const handleSend = async () => {
       if (!clubId) return;
@@ -243,6 +270,7 @@ export function DataUpdateSender() {
           description: `Se han creado ${numBatches} lote(s) para enviar ${totalRecipients} correos. Se procesarán en segundo plano.`,
         });
         setSelectedMemberIds(new Set());
+        setIsPreviewModalOpen(false);
 
       } catch (error) {
         console.error("Error creating email batch:", error);
@@ -447,11 +475,41 @@ export function DataUpdateSender() {
                  
             </CardContent>
              <CardFooter className="border-t pt-6">
-                <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0 || sending}>
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                    {sending ? "Enviando..." : `Generar y Enviar a ${recipientCount} Miembro(s)`}
+                <Button className="w-full mt-6 gap-2" onClick={handleGeneratePreview} disabled={recipientCount === 0 || sending}>
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Wand2 className="h-4 w-4 mr-2"/>}
+                    {sending ? "Enviando..." : `Configurar y Generar Email para ${recipientCount} Miembro(s)`}
                 </Button>
             </CardFooter>
+
+            <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
+                <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                        <DialogTitle>Previsualización del Email</DialogTitle>
+                        <DialogDescription>
+                            Así es como verán el correo tus miembros. Revisa que todo esté correcto antes de enviar.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="space-y-1">
+                            <Label htmlFor="preview-subject">Asunto</Label>
+                            <Input id="preview-subject" readOnly value={emailPreview.subject} />
+                        </div>
+                        <div className="space-y-1">
+                            <Label htmlFor="preview-body">Cuerpo del Mensaje</Label>
+                            <Textarea id="preview-body" readOnly value={emailPreview.body} className="h-48 bg-muted/50" />
+                            <p className="text-xs text-muted-foreground">La etiqueta [Nombre del Miembro] se reemplazará automáticamente.</p>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                        <Button onClick={handleSend} disabled={sending}>
+                           {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                           {sending ? 'Enviando...' : `Enviar a ${recipientCount} Miembro(s)`}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </Card>
     );
 }
+

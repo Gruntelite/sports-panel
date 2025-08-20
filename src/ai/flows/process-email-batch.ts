@@ -123,10 +123,12 @@ export const processEmailBatchFlow = ai.defineFlow(
                 },
                 subject: `Actualización de datos para ${clubName}`,
                 html: `
-                    <h1>Hola ${recipient.name},</h1>
+                    <p>Hola ${recipient.name},</p>
                     <p>Por favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.</p>
-                    <a href="${updateLink}">Actualizar mis datos</a>
-                    <p>Este enlace es válido por 7 días.</p>
+                    <p style="text-align: center; margin: 20px 0;">
+                        <a href="${updateLink}" style="background-color: #1d4ed8; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Actualizar mis datos</a>
+                    </p>
+                    <p>El enlace es personal y solo será válido durante los próximos 7 días.</p>
                     <p>Gracias,</p>
                     <p>El equipo de ${clubName}</p>
                 `,
