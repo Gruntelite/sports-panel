@@ -169,6 +169,7 @@ export async function getClubConfig({ clubId }: { clubId: string }) {
             if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
                 config.fromEmail = data.fromEmail;
             }
+            // IMPORTANT: Use the platform key if the club-specific one isn't there or verified
             if (data?.platformSendgridApiKey) {
                 config.apiKey = data.platformSendgridApiKey;
             }

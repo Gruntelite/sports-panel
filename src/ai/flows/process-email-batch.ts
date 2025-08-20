@@ -94,7 +94,8 @@ export const processEmailBatchFlow = ai.defineFlow(
     const processPromises = pendingRecipients.map(async (recipient: any) => {
         try {
             const tokenData = tokensToCreate.find(t => t.recipient.id === recipient.id);
-            const updateLink = `https://YOUR_APP_URL/update-data?token=${tokenData?.token}`;
+            // IMPORTANT: Use a real URL for the update link
+            const updateLink = `https://sportspanel.web.app/update-data?token=${tokenData?.token}`;
             
             const emailBody = (batch.emailBody || defaultBody)
                 .replace(/\[Nombre del Miembro\]/g, recipient.name)
