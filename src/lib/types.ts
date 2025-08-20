@@ -99,10 +99,10 @@ export type User = {
 }
 
 export type OneTimePayment = {
-    id: string;
+    id?: string;
     concept: string;
     description?: string;
-    amount: number;
+    amount: number | string;
     status: 'pending' | 'paid';
     issueDate: string;
     targetTeamIds: string[];

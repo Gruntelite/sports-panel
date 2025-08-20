@@ -20,12 +20,14 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, where, addDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import type { Player, Team, OneTimePayment, User } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
@@ -54,14 +56,13 @@ export function TreasuryDashboard() {
       totalFees: 0,
   });
 
-  const [isCreatePaymentOpen, setIsCreatePaymentOpen] = useState(false);
-  const [newPaymentConcept, setNewPaymentConcept] = useState("");
-  const [newPaymentDescription, setNewPaymentDescription] = useState("");
-  const [newPaymentAmount, setNewPaymentAmount] = useState<number | string>("");
-  const [selectedTeamsForPayment, setSelectedTeamsForPayment] = useState<string[]>([]);
-  const [selectedUsersForPayment, setSelectedUsersForPayment] = useState<string[]>([]);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [paymentData, setPaymentData] = useState<Partial<OneTimePayment>>({});
+
   const [isTeamSelectOpen, setIsTeamSelectOpen] = useState(false);
   const [isUserSelectOpen, setIsUserSelectOpen] = useState(false);
+  const [paymentToDelete, setPaymentToDelete] = useState<OneTimePayment | null>(null);
 
 
   useEffect(() => {
@@ -135,44 +136,76 @@ export function TreasuryDashboard() {
       setLoading(false);
     }
   };
+
+  const handleOpenPaymentModal = (mode: 'add' | 'edit', payment?: OneTimePayment) => {
+    setModalMode(mode);
+    if (mode === 'edit' && payment) {
+        setPaymentData(payment);
+    } else {
+        setPaymentData({
+            concept: "",
+            description: "",
+            amount: "",
+            targetTeamIds: [],
+            targetUserIds: [],
+        });
+    }
+    setIsPaymentModalOpen(true);
+  }
   
-  const handleCreatePayment = async () => {
-    if (!clubId || !newPaymentConcept || !newPaymentAmount || (selectedTeamsForPayment.length === 0 && selectedUsersForPayment.length === 0)) {
-        toast({ variant: "destructive", title: "Error", description: "El concepto, la cantidad y al menos un destinatario (equipo o usuario) son obligatorios." });
+  const handleSavePayment = async () => {
+    if (!clubId || !paymentData.concept || !paymentData.amount || ((paymentData.targetTeamIds?.length || 0) === 0 && (paymentData.targetUserIds?.length || 0) === 0)) {
+        toast({ variant: "destructive", title: "Error", description: "El concepto, la cantidad y al menos un destinatario son obligatorios." });
         return;
     }
     setSaving(true);
+    
+    const dataToSave = {
+        ...paymentData,
+        amount: Number(paymentData.amount),
+    };
+
     try {
-        const paymentData: Omit<OneTimePayment, 'id'> = {
-            concept: newPaymentConcept,
-            description: newPaymentDescription,
-            amount: Number(newPaymentAmount),
-            status: "pending",
-            issueDate: new Date().toISOString(),
-            targetTeamIds: selectedTeamsForPayment,
-            targetUserIds: selectedUsersForPayment,
-        };
-
-        await addDoc(collection(db, "clubs", clubId, "oneTimePayments"), paymentData);
-        toast({ title: "Pago creado", description: "El nuevo pago puntual se ha guardado correctamente." });
+        if (modalMode === 'edit' && paymentData.id) {
+            const paymentRef = doc(db, "clubs", clubId, "oneTimePayments", paymentData.id);
+            await updateDoc(paymentRef, dataToSave);
+            toast({ title: "Pago actualizado", description: "El pago puntual se ha actualizado correctamente." });
+        } else {
+            await addDoc(collection(db, "clubs", clubId, "oneTimePayments"), {
+                ...dataToSave,
+                status: "pending",
+                issueDate: new Date().toISOString(),
+            });
+            toast({ title: "Pago creado", description: "El nuevo pago puntual se ha guardado correctamente." });
+        }
         
-        setIsCreatePaymentOpen(false);
-        setNewPaymentConcept("");
-        setNewPaymentDescription("");
-        setNewPaymentAmount("");
-        setSelectedTeamsForPayment([]);
-        setSelectedUsersForPayment([]);
-
+        setIsPaymentModalOpen(false);
         fetchData(clubId);
 
     } catch (error) {
-        console.error("Error creating payment:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo crear el pago." });
+        console.error("Error creating/updating payment:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el pago." });
     } finally {
         setSaving(false);
     }
   }
 
+  const handleDeletePayment = async () => {
+    if (!clubId || !paymentToDelete) return;
+    setSaving(true);
+    try {
+      await deleteDoc(doc(db, "clubs", clubId, "oneTimePayments", paymentToDelete.id));
+      toast({ title: "Pago eliminado", description: "El pago ha sido eliminado." });
+      setPaymentToDelete(null);
+      fetchData(clubId);
+    } catch(e) {
+      console.error("Error deleting payment", e);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el pago." });
+    } finally {
+      setSaving(false);
+    }
+
+  }
 
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
       switch (status) {
@@ -212,7 +245,7 @@ export function TreasuryDashboard() {
       if (teamNames && userNames) {
           return `${teamNames}, ${userNames}`;
       }
-      return teamNames || userNames;
+      return teamNames || userNames || 'N/A';
   }
 
 
@@ -319,7 +352,7 @@ export function TreasuryDashboard() {
                   Crea y gestiona cobros únicos para campus, torneos, material, etc.
                 </CardDescription>
               </div>
-              <Button onClick={() => setIsCreatePaymentOpen(true)}>
+              <Button onClick={() => handleOpenPaymentModal('add')}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Crear Nuevo Pago
               </Button>
@@ -333,6 +366,7 @@ export function TreasuryDashboard() {
                     <TableHead>Fecha de Emisión</TableHead>
                     <TableHead>Destinatarios</TableHead>
                     <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -352,12 +386,36 @@ export function TreasuryDashboard() {
                                 {getStatusText(payment.status)}
                             </Badge>
                           </TableCell>
+                          <TableCell className="text-right">
+                             <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onSelect={() => handleOpenPaymentModal('edit', payment)}>
+                                    <Edit className="mr-2 h-4 w-4" />
+                                    Editar
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem disabled>
+                                    <Link className="mr-2 h-4 w-4" />
+                                    Generar Link de Pago
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive" onSelect={() => setPaymentToDelete(payment)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                       )
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
+                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
                         No has creado ningún pago puntual todavía.
                       </TableCell>
                     </TableRow>
@@ -369,10 +427,10 @@ export function TreasuryDashboard() {
         </TabsContent>
       </Tabs>
     </div>
-    <Dialog open={isCreatePaymentOpen} onOpenChange={setIsCreatePaymentOpen}>
+    <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Crear Nuevo Pago Puntual</DialogTitle>
+            <DialogTitle>{modalMode === 'add' ? 'Crear Nuevo Pago Puntual' : 'Editar Pago Puntual'}</DialogTitle>
             <DialogDescription>
               Define los detalles del cobro único que quieres generar. Se notificará a los destinatarios seleccionados.
             </DialogDescription>
@@ -380,22 +438,22 @@ export function TreasuryDashboard() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="payment-concept">Concepto</Label>
-              <Input id="payment-concept" placeholder="p.ej., Inscripción Campus Verano" value={newPaymentConcept} onChange={(e) => setNewPaymentConcept(e.target.value)} />
+              <Input id="payment-concept" placeholder="p.ej., Inscripción Campus Verano" value={paymentData.concept || ''} onChange={(e) => setPaymentData(prev => ({...prev, concept: e.target.value}))} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="payment-description">Descripción (Opcional)</Label>
-              <Textarea id="payment-description" placeholder="Información adicional sobre el pago." value={newPaymentDescription} onChange={(e) => setNewPaymentDescription(e.target.value)} />
+              <Textarea id="payment-description" placeholder="Información adicional sobre el pago." value={paymentData.description || ''} onChange={(e) => setPaymentData(prev => ({...prev, description: e.target.value}))} />
             </div>
              <div className="space-y-2">
               <Label htmlFor="payment-amount">Cantidad (€)</Label>
-              <Input id="payment-amount" type="number" placeholder="30.00" value={newPaymentAmount} onChange={(e) => setNewPaymentAmount(e.target.value)} />
+              <Input id="payment-amount" type="number" placeholder="30.00" value={paymentData.amount || ''} onChange={(e) => setPaymentData(prev => ({...prev, amount: e.target.value}))} />
             </div>
              <div className="space-y-2">
               <Label>Equipos Destinatarios</Label>
                <Popover open={isTeamSelectOpen} onOpenChange={setIsTeamSelectOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start font-normal">
-                    {selectedTeamsForPayment.length > 0 ? getTargetTeamNames(selectedTeamsForPayment) : "Seleccionar equipos..."}
+                    {(paymentData.targetTeamIds?.length || 0) > 0 ? getTargetTeamNames(paymentData.targetTeamIds!) : "Seleccionar equipos..."}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -409,18 +467,19 @@ export function TreasuryDashboard() {
                             key={team.id}
                             value={team.name}
                             onSelect={() => {
-                              const isSelected = selectedTeamsForPayment.includes(team.id);
+                              const selected = paymentData.targetTeamIds || [];
+                              const isSelected = selected.includes(team.id);
                               if (isSelected) {
-                                setSelectedTeamsForPayment(selectedTeamsForPayment.filter(id => id !== team.id));
+                                setPaymentData(prev => ({...prev, targetTeamIds: selected.filter(id => id !== team.id)}));
                               } else {
-                                setSelectedTeamsForPayment([...selectedTeamsForPayment, team.id]);
+                                setPaymentData(prev => ({...prev, targetTeamIds: [...selected, team.id]}));
                               }
                             }}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                selectedTeamsForPayment.includes(team.id) ? "opacity-100" : "opacity-0"
+                                paymentData.targetTeamIds?.includes(team.id) ? "opacity-100" : "opacity-0"
                               )}
                             />
                             {team.name}
@@ -437,7 +496,7 @@ export function TreasuryDashboard() {
                <Popover open={isUserSelectOpen} onOpenChange={setIsUserSelectOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start font-normal">
-                    {selectedUsersForPayment.length > 0 ? getTargetUserNames(selectedUsersForPayment) : "Seleccionar usuarios..."}
+                    {(paymentData.targetUserIds?.length || 0) > 0 ? getTargetUserNames(paymentData.targetUserIds!) : "Seleccionar usuarios..."}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -451,18 +510,19 @@ export function TreasuryDashboard() {
                             key={user.id}
                             value={user.name}
                             onSelect={() => {
-                              const isSelected = selectedUsersForPayment.includes(user.id);
-                              if (isSelected) {
-                                setSelectedUsersForPayment(selectedUsersForPayment.filter(id => id !== user.id));
-                              } else {
-                                setSelectedUsersForPayment([...selectedUsersForPayment, user.id]);
-                              }
+                               const selected = paymentData.targetUserIds || [];
+                               const isSelected = selected.includes(user.id);
+                               if (isSelected) {
+                                  setPaymentData(prev => ({...prev, targetUserIds: selected.filter(id => id !== user.id)}));
+                               } else {
+                                  setPaymentData(prev => ({...prev, targetUserIds: [...selected, user.id]}));
+                               }
                             }}
                           >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
-                                selectedUsersForPayment.includes(user.id) ? "opacity-100" : "opacity-0"
+                                paymentData.targetUserIds?.includes(user.id) ? "opacity-100" : "opacity-0"
                               )}
                             />
                             {user.name}
@@ -479,13 +539,29 @@ export function TreasuryDashboard() {
             <DialogClose asChild>
               <Button type="button" variant="secondary">Cancelar</Button>
             </DialogClose>
-            <Button onClick={handleCreatePayment} disabled={saving}>
+            <Button onClick={handleSavePayment} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Guardar Pago
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <AlertDialog open={!!paymentToDelete} onOpenChange={(open) => !open && setPaymentToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+                Esta acción no se puede deshacer. Se eliminará permanentemente el pago "{paymentToDelete?.concept}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeletePayment} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
