@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc } from "firebase/firestore";
-import type { Player, Team, OneTimePayment } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { Input } from "./ui/input";
@@ -42,6 +42,7 @@ export function TreasuryDashboard() {
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [players, setPlayers] = useState<Player[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [oneTimePayments, setOneTimePayments] = useState<OneTimePayment[]>([]);
 
@@ -58,7 +59,9 @@ export function TreasuryDashboard() {
   const [newPaymentDescription, setNewPaymentDescription] = useState("");
   const [newPaymentAmount, setNewPaymentAmount] = useState<number | string>("");
   const [selectedTeamsForPayment, setSelectedTeamsForPayment] = useState<string[]>([]);
+  const [selectedUsersForPayment, setSelectedUsersForPayment] = useState<string[]>([]);
   const [isTeamSelectOpen, setIsTeamSelectOpen] = useState(false);
+  const [isUserSelectOpen, setIsUserSelectOpen] = useState(false);
 
 
   useEffect(() => {
@@ -110,6 +113,11 @@ export function TreasuryDashboard() {
       });
       setPlayers(playersList);
       setFilteredPlayers(playersList);
+
+      const usersQuery = query(collection(db, "clubs", clubId, "users"));
+      const usersSnapshot = await getDocs(usersQuery);
+      const usersList = usersSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as User));
+      setUsers(usersList);
       
       const paymentsQuery = query(collection(db, "clubs", clubId, "oneTimePayments"));
       const paymentsSnapshot = await getDocs(paymentsQuery);
@@ -129,8 +137,8 @@ export function TreasuryDashboard() {
   };
   
   const handleCreatePayment = async () => {
-    if (!clubId || !newPaymentConcept || !newPaymentAmount || selectedTeamsForPayment.length === 0) {
-        toast({ variant: "destructive", title: "Error", description: "El concepto, la cantidad y al menos un equipo destinatario son obligatorios." });
+    if (!clubId || !newPaymentConcept || !newPaymentAmount || (selectedTeamsForPayment.length === 0 && selectedUsersForPayment.length === 0)) {
+        toast({ variant: "destructive", title: "Error", description: "El concepto, la cantidad y al menos un destinatario (equipo o usuario) son obligatorios." });
         return;
     }
     setSaving(true);
@@ -142,6 +150,7 @@ export function TreasuryDashboard() {
             status: "pending",
             issueDate: new Date().toISOString(),
             targetTeamIds: selectedTeamsForPayment,
+            targetUserIds: selectedUsersForPayment,
         };
 
         await addDoc(collection(db, "clubs", clubId, "oneTimePayments"), paymentData);
@@ -152,6 +161,7 @@ export function TreasuryDashboard() {
         setNewPaymentDescription("");
         setNewPaymentAmount("");
         setSelectedTeamsForPayment([]);
+        setSelectedUsersForPayment([]);
 
         fetchData(clubId);
 
@@ -183,9 +193,26 @@ export function TreasuryDashboard() {
   }
 
   const getTargetTeamNames = (teamIds: string[]): string => {
+    if (!teamIds || teamIds.length === 0) return "";
     if (teamIds.length === teams.length) return "Todos los equipos";
     if (teamIds.length > 2) return `${teamIds.length} equipos`;
     return teamIds.map(id => teams.find(t => t.id === id)?.name || id).join(', ');
+  }
+
+  const getTargetUserNames = (userIds: string[]): string => {
+    if (!userIds || userIds.length === 0) return "";
+    if (userIds.length > 2) return `${userIds.length} usuarios`;
+    return userIds.map(id => users.find(u => u.id === id)?.name || id).join(', ');
+  }
+
+  const getCombinedTargetNames = (payment: OneTimePayment): string => {
+      const teamNames = getTargetTeamNames(payment.targetTeamIds || []);
+      const userNames = getTargetUserNames(payment.targetUserIds || []);
+
+      if (teamNames && userNames) {
+          return `${teamNames}, ${userNames}`;
+      }
+      return teamNames || userNames;
   }
 
 
@@ -318,7 +345,7 @@ export function TreasuryDashboard() {
                           <TableCell className="font-medium">{payment.concept}</TableCell>
                           <TableCell>{payment.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
                           <TableCell>{new Date(payment.issueDate).toLocaleDateString('es-ES')}</TableCell>
-                          <TableCell>{getTargetTeamNames(payment.targetTeamIds)}</TableCell>
+                          <TableCell>{getCombinedTargetNames(payment)}</TableCell>
                           <TableCell>
                             <Badge variant={status.variant}>
                                 <StatusIcon className="mr-1 h-3 w-3" />
@@ -347,7 +374,7 @@ export function TreasuryDashboard() {
           <DialogHeader>
             <DialogTitle>Crear Nuevo Pago Puntual</DialogTitle>
             <DialogDescription>
-              Define los detalles del cobro único que quieres generar. Se notificará a los equipos seleccionados.
+              Define los detalles del cobro único que quieres generar. Se notificará a los destinatarios seleccionados.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -364,7 +391,7 @@ export function TreasuryDashboard() {
               <Input id="payment-amount" type="number" placeholder="30.00" value={newPaymentAmount} onChange={(e) => setNewPaymentAmount(e.target.value)} />
             </div>
              <div className="space-y-2">
-              <Label>Destinatarios</Label>
+              <Label>Equipos Destinatarios</Label>
                <Popover open={isTeamSelectOpen} onOpenChange={setIsTeamSelectOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start font-normal">
@@ -397,6 +424,48 @@ export function TreasuryDashboard() {
                               )}
                             />
                             {team.name}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div className="space-y-2">
+              <Label>Usuarios Individuales</Label>
+               <Popover open={isUserSelectOpen} onOpenChange={setIsUserSelectOpen}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="w-full justify-start font-normal">
+                    {selectedUsersForPayment.length > 0 ? getTargetUserNames(selectedUsersForPayment) : "Seleccionar usuarios..."}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                  <Command>
+                    <CommandInput placeholder="Buscar usuario..." />
+                    <CommandList>
+                      <CommandEmpty>No se encontraron usuarios.</CommandEmpty>
+                      <CommandGroup>
+                        {users.map((user) => (
+                          <CommandItem
+                            key={user.id}
+                            value={user.name}
+                            onSelect={() => {
+                              const isSelected = selectedUsersForPayment.includes(user.id);
+                              if (isSelected) {
+                                setSelectedUsersForPayment(selectedUsersForPayment.filter(id => id !== user.id));
+                              } else {
+                                setSelectedUsersForPayment([...selectedUsersForPayment, user.id]);
+                              }
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedUsersForPayment.includes(user.id) ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            {user.name}
                           </CommandItem>
                         ))}
                       </CommandGroup>

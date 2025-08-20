@@ -106,4 +106,5 @@ export type OneTimePayment = {
     status: 'pending' | 'paid';
     issueDate: string;
     targetTeamIds: string[];
+    targetUserIds: string[];
 }
