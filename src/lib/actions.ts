@@ -201,28 +201,6 @@ export async function updateBatchWithResults({ batchDocPath, results, originalRe
 
         await batchRef.update({ recipients: updatedRecipients, status: newStatus });
 
-        // Additionally, create data update tokens for sent emails
-        const tokenBatch = adminDb.batch();
-        const sentRecipients = results.filter(r => r.status === 'sent');
-        const batchData = (await batchRef.get()).data();
-        const clubId = batchRef.parent.parent?.id;
-
-        if (clubId && batchData) {
-            for (const recipient of sentRecipients) {
-                // This logic should be expanded to create real tokens and store them
-                const token = Math.random().toString(36).substring(2);
-                const tokenRef = adminDb.collection('dataUpdateTokens').doc(token);
-                tokenBatch.set(tokenRef, {
-                    clubId: clubId,
-                    memberId: recipient.id,
-                    memberType: originalRecipients.find(r => r.id === recipient.id)?.type,
-                    fieldConfig: batchData.fieldConfig || {},
-                    expires: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-                });
-            }
-            await tokenBatch.commit();
-        }
-
         return { success: true };
     } catch (error: any) {
         console.error("Error in updateBatchWithResults:", error);
@@ -241,6 +219,35 @@ export async function finalizeBatch({ batchDocPath, status, error }: { batchDocP
         return { success: true };
     } catch (error: any) {
         console.error("Error in finalizeBatch:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+type TokenData = {
+    clubId: string;
+    recipient: any;
+    fieldConfig: any;
+    token: string;
+}
+
+export async function createDataUpdateTokens({ tokensToCreate }: { tokensToCreate: TokenData[] }) {
+    try {
+        const tokenBatch = adminDb.batch();
+        for (const tokenData of tokensToCreate) {
+            const { clubId, recipient, fieldConfig, token } = tokenData;
+            const tokenRef = adminDb.collection('dataUpdateTokens').doc(token);
+            tokenBatch.set(tokenRef, {
+                clubId: clubId,
+                memberId: recipient.id,
+                memberType: recipient.type,
+                fieldConfig: fieldConfig || {},
+                expires: Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+            });
+        }
+        await tokenBatch.commit();
+        return { success: true };
+    } catch (error: any) {
+        console.error("Error creating data update tokens:", error);
         return { success: false, error: error.message };
     }
 }

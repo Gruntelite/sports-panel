@@ -7,7 +7,8 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { getClubConfig, getBatchToProcess, updateBatchWithResults, finalizeBatch } from '@/lib/actions';
+import { getClubConfig, getBatchToProcess, updateBatchWithResults, finalizeBatch, createDataUpdateTokens } from '@/lib/actions';
+import { v4 as uuidv4 } from 'uuid';
 
 
 const ProcessEmailBatchInputSchema = z.object({
@@ -69,6 +70,15 @@ export const processEmailBatchFlow = ai.defineFlow(
         return output;
     }
     
+    // Create tokens for all pending recipients before sending emails
+    const tokensToCreate = pendingRecipients.map(recipient => ({
+      clubId,
+      recipient,
+      fieldConfig: batch.fieldConfig || {},
+      token: uuidv4()
+    }));
+    await createDataUpdateTokens({ tokensToCreate });
+    
     const defaultSubject = `Actualización de datos para ${clubName}`;
     const defaultBody = `
         <p>Hola [Nombre del Miembro],</p>
@@ -83,10 +93,8 @@ export const processEmailBatchFlow = ai.defineFlow(
 
     const processPromises = pendingRecipients.map(async (recipient: any) => {
         try {
-            // NOTE: The generation of tokens and links will eventually be handled by another server action.
-            // For now, this part is simplified.
-            const token = Math.random().toString(36).substring(2); // Simplified token
-            const updateLink = `https://YOUR_APP_URL/update-data?token=${token}`;
+            const tokenData = tokensToCreate.find(t => t.recipient.id === recipient.id);
+            const updateLink = `https://YOUR_APP_URL/update-data?token=${tokenData?.token}`;
             
             const emailBody = (batch.emailBody || defaultBody)
                 .replace(/\[Nombre del Miembro\]/g, recipient.name)
