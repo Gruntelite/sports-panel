@@ -33,7 +33,7 @@ type DayOverride = {
 };
 
 const EVENT_COLORS = [
-    { name: 'Primary', value: 'bg-primary/20 text-primary-foreground border border-primary/50', hex: 'hsl(var(--primary))' },
+    { name: 'Primary', value: 'bg-primary/20 text-primary border border-primary/50', hex: 'hsl(var(--primary))' },
     { name: 'Green', value: 'bg-green-500/20 text-green-700 border border-green-500/50', hex: '#22c55e' },
     { name: 'Yellow', value: 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/50', hex: '#eab308' },
     { name: 'Orange', value: 'bg-orange-500/20 text-orange-700 border border-orange-500/50', hex: '#f97316' },
