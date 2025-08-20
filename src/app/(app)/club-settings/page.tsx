@@ -231,7 +231,7 @@ export default function ClubSettingsPage() {
                                             <b>Busca las API Keys:</b> En el menú de la izquierda de SendGrid, busca "Settings" y luego haz clic en "API Keys".
                                         </li>
                                          <li>
-                                            <b>Crea la clave:</b> Haz clic en el botón "Create API Key". Dale un nombre (p.ej., "SportsPanel Key") y selecciona "Full Access" para los permisos.
+                                            <b>Crea la clave:</b> Haz clic en el botón "Create API Key". Dale un nombre (p.ej., "API Santa Coloma"), y selecciona "Full Access" para los permisos.
                                         </li>
                                         <li>
                                             <b>Guarda la clave:</b> SendGrid te mostrará la clave una sola vez. Cópiala inmediatamente.
@@ -251,7 +251,5 @@ export default function ClubSettingsPage() {
             </div>
         </div>
     );
-}
-
 
     
