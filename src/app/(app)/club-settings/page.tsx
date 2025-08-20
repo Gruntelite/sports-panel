@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -28,6 +27,9 @@ import { initiateSenderVerificationAction } from "@/lib/actions";
 
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
 
+// This will be false on the server and true on the client if the key is set.
+const isPlatformMailConfigured = !!process.env.NEXT_PUBLIC_SENDGRID_API_KEY_CONFIGURED;
+
 export default function ClubSettingsPage() {
     const { toast } = useToast();
     const [loading, setLoading] = useState(true);
@@ -35,6 +37,12 @@ export default function ClubSettingsPage() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [fromEmail, setFromEmail] = useState("");
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("unconfigured");
+    const [mailConfigured, setMailConfigured] = useState(false);
+    
+    useEffect(() => {
+        // We check this on the client-side to ensure env var is available.
+        setMailConfigured(isPlatformMailConfigured);
+    }, [])
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -145,8 +153,7 @@ export default function ClubSettingsPage() {
                             Configuración de Envío de Correo
                         </CardTitle>
                         <CardDescription>
-                           Define la dirección de correo electrónico desde la que el club enviará las comunicaciones.
-                           Para que esto funcione, el administrador de la plataforma debe configurar primero la integración con SendGrid.
+                           Configura desde qué dirección de correo electrónico se enviarán las comunicaciones del club.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -154,8 +161,8 @@ export default function ClubSettingsPage() {
                              <div className="flex items-center justify-center h-24">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                             </div>
-                        ): (
-                            <>
+                        ) : mailConfigured ? (
+                             <>
                                 <div className="space-y-2">
                                     <div className="flex items-center justify-between">
                                       <Label htmlFor="fromEmail">Dirección de Correo para Envíos</Label>
@@ -179,38 +186,51 @@ export default function ClubSettingsPage() {
                                         <Button variant="outline" onClick={() => setVerificationStatus('unconfigured')}>Cambiar Correo</Button>
                                     )}
                                  </div>
-                                 <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
-                                    <AccordionItem value="item-1" className="border-b-0">
-                                        <AccordionTrigger className="py-3 hover:no-underline">
-                                            <div className="flex items-center gap-2 font-semibold text-sm">
-                                                <Info className="h-4 w-4" />
-                                                ¿Cómo funciona el envío de correos?
-                                            </div>
-                                        </AccordionTrigger>
-                                        <AccordionContent className="text-muted-foreground space-y-2">
-                                           <h4 className="font-bold text-foreground">Para el Administrador de la Plataforma:</h4>
-                                           <p>
-                                               Para que los clubes puedan verificar sus correos, la plataforma necesita una API Key global de SendGrid.
-                                           </p>
-                                           <ol className="list-decimal list-inside space-y-1">
-                                                <li>
-                                                    <b>Crea una cuenta en SendGrid:</b> Ve a <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
-                                                </li>
-                                                <li>
-                                                    <b>Crea una API Key:</b> En tu panel de SendGrid, ve a "Settings" {'->'} "API Keys" y crea una nueva clave con permisos completos ("Full Access").
-                                                </li>
-                                                <li>
-                                                    <b>Configura la clave:</b> Deberás añadir esta API Key a las variables de entorno de tu proyecto como `SENDGRID_API_KEY`. Este es un paso de configuración único para toda la plataforma.
-                                                </li>
-                                           </ol>
-                                           <p className="mt-2">
-                                            Una vez hecho esto, los clubes podrán verificar sus correos automáticamente.
-                                           </p>
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
                             </>
+                        ) : (
+                             <div className="p-4 border-2 border-dashed rounded-lg text-center bg-muted/50">
+                                <h3 className="text-lg font-semibold">Servicio de Correo No Configurado</h3>
+                                <p className="text-muted-foreground text-sm mt-1 mb-4">
+                                    Como administrador de la plataforma, necesitas configurar la integración con SendGrid para habilitar el envío de correos.
+                                </p>
+                                <Button asChild size="lg">
+                                    <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer">
+                                        <Send className="mr-2 h-4 w-4"/>
+                                        Ir a SendGrid para Configurar
+                                    </a>
+                                </Button>
+                             </div>
                         )}
+                        <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
+                            <AccordionItem value="item-1" className="border-b-0">
+                                <AccordionTrigger className="py-3 hover:no-underline">
+                                    <div className="flex items-center gap-2 font-semibold text-sm">
+                                        <Info className="h-4 w-4" />
+                                        ¿Cómo funciona el envío de correos?
+                                    </div>
+                                </AccordionTrigger>
+                                <AccordionContent className="text-muted-foreground space-y-2">
+                                   <h4 className="font-bold text-foreground">Para el Administrador de la Plataforma:</h4>
+                                   <p>
+                                       Para que los clubes puedan verificar sus correos, la plataforma necesita una API Key global de SendGrid.
+                                   </p>
+                                   <ol className="list-decimal list-inside space-y-1">
+                                        <li>
+                                            <b>Crea una cuenta en SendGrid:</b> Ve a <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
+                                        </li>
+                                        <li>
+                                            <b>Crea una API Key:</b> En tu panel de SendGrid, ve a "Settings" {'->'} "API Keys" y crea una nueva clave con permisos completos ("Full Access").
+                                        </li>
+                                        <li>
+                                            <b>Configura la clave:</b> Deberás añadir esta API Key a las variables de entorno de tu proyecto como `SENDGRID_API_KEY`. Este es un paso de configuración único para toda la plataforma.
+                                        </li>
+                                   </ol>
+                                   <p className="mt-2">
+                                    Una vez hecho esto, los clubes podrán verificar sus correos automáticamente.
+                                   </p>
+                                </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
                     </CardContent>
                 </Card>
             </div>
