@@ -25,6 +25,7 @@ const menuItems = [
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/staff", label: "Staff y Directiva", icon: UserCog},
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
+    { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
   ];
 
 type UserProfile = {
@@ -147,5 +148,5 @@ export function Sidebar() {
                 </div>
             </div>
         </div>
-    )
+    );
 }
