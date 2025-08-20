@@ -3,7 +3,7 @@
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
 import { processEmailBatchFlow } from "@/ai/flows/process-email-batch";
-import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp, collectionGroup } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp } from "firebase/firestore";
 import { db as clientDb } from "./firebase";
 import { db as adminDb } from "./firebase-admin";
 
@@ -124,19 +124,17 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 export async function getBatchToProcess({ batchId }: { batchId?: string }) {
     try {
         let batchDoc: admin.firestore.QueryDocumentSnapshot | admin.firestore.DocumentSnapshot | undefined;
+        
+        const batchQuery = adminDb.collectionGroup('emailBatches').where('status', '==', 'pending').orderBy('createdAt').limit(1);
+        const batchSnapshot = await batchQuery.get();
+        if (!batchSnapshot.empty) {
+            batchDoc = batchSnapshot.docs[0];
+        }
+
 
         if (batchId) {
-             const batchQuery = adminDb.collectionGroup('emailBatches').where('__name__', '==', `clubs/${batchId.split('/')[1]}/emailBatches/${batchId.split('/')[3]}`);
-             const snapshot = await batchQuery.get();
-             if (!snapshot.empty) {
-                batchDoc = snapshot.docs[0];
-             }
-        } else {
-            const batchQuery = adminDb.collectionGroup('emailBatches').where('status', '==', 'pending').limit(1);
-            const batchSnapshot = await batchQuery.get();
-            if (!batchSnapshot.empty) {
-                batchDoc = batchSnapshot.docs[0];
-            }
+             const specificBatchRef = adminDb.doc(batchId);
+             batchDoc = await specificBatchRef.get();
         }
 
         if (!batchDoc || !batchDoc.exists) {
@@ -177,7 +175,7 @@ export async function getClubConfig({ clubId }: { clubId: string }) {
             config.clubName = clubDoc.data()?.name || "Tu Club";
         }
 
-        if (settingsDoc.exists) {
+        if (settingsDoc.exists()) {
             const data = settingsDoc.data();
             if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
                 config.fromEmail = data.fromEmail;
@@ -276,7 +274,7 @@ export async function retryBatchAction({ clubId, batchId }: { clubId: string, ba
             status: "pending"
         });
         
-        await processEmailBatchFlow({ batchId: batchRef.path });
+        await processEmailBatchFlow({ batchId: batchId });
         
         return { success: true };
     } catch (error: any) {

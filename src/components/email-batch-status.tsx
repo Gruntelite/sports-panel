@@ -86,7 +86,7 @@ export function EmailBatchStatus() {
       const result = await retryBatchAction({ clubId, batchId });
       
       if (result.success) {
-        toast({ title: "Reintento iniciado", description: `El lote se ha puesto en cola para ser procesado de nuevo.` });
+        toast({ title: "Reintento iniciado...", description: `El lote se está procesando de nuevo.` });
         fetchBatches(clubId);
       } else {
         toast({ variant: "destructive", title: "Error", description: result.error });
@@ -174,20 +174,20 @@ export function EmailBatchStatus() {
                                                 {sentCount} de {total} enviados ({failedCount > 0 ? `${failedCount} fallidos` : '0 fallidos'})
                                             </p>
                                         </div>
-                                         <Badge variant={badgeVariant} className={batch.status === 'processing' ? "animate-pulse" : ""}>
-                                            <StatusIcon className={`mr-2 h-4 w-4 ${batch.status === 'processing' || isLoading ? 'animate-spin' : ''}`} />
-                                            {statusText}
-                                        </Badge>
+                                        <div className="flex items-center gap-2">
+                                            <Badge variant={badgeVariant} className={batch.status === 'processing' ? "animate-pulse" : ""}>
+                                                <StatusIcon className={`mr-2 h-4 w-4 ${batch.status === 'processing' || isLoading ? 'animate-spin' : ''}`} />
+                                                {statusText}
+                                            </Badge>
+                                             { (batch.status === 'pending' || batch.status === 'failed') && (
+                                                <Button variant="secondary" size="sm" onClick={() => handleRetry(batch.id)} disabled={isLoading}>
+                                                    { isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" /> }
+                                                    { isLoading ? 'Procesando...' : 'Reintentar' }
+                                                </Button>
+                                            )}
+                                        </div>
                                     </div>
                                     <Progress value={progress} />
-                                    { (batch.status === 'pending' || batch.status === 'failed') && (
-                                        <div className="flex justify-end">
-                                            <Button variant="secondary" size="sm" onClick={() => handleRetry(batch.id)} disabled={isLoading}>
-                                                { isLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Send className="mr-2 h-4 w-4" /> }
-                                                { isLoading ? 'Procesando...' : 'Reintentar Envío' }
-                                            </Button>
-                                        </div>
-                                    )}
                                 </div>
                             )
                         })
