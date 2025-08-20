@@ -1,10 +1,10 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
-import type { Player, Coach, Staff, ClubMember } from "@/lib/types";
+import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "./ui/card";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Label } from "./ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
 
 type FieldPermission = "editable" | "readonly" | "hidden";
 type FieldConfig = {
@@ -25,8 +26,14 @@ type FieldConfig = {
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
+    const [teams, setTeams] = useState<Team[]>([]);
+    
     const [selectedMember, setSelectedMember] = useState<ClubMember | null>(null);
     const [isMemberSelectOpen, setIsMemberSelectOpen] = useState(false);
+    
+    const [filterType, setFilterType] = useState<string>('all');
+    const [filterTeam, setFilterTeam] = useState<string>('all');
+
     const [fieldConfig, setFieldConfig] = useState<FieldConfig>({});
     const { toast } = useToast();
 
@@ -36,20 +43,18 @@ export function DataUpdateSender() {
                 const userDocRef = doc(db, "users", user.uid);
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
-                    setClubId(userDocSnap.data().clubId);
+                    const currentClubId = userDocSnap.data().clubId;
+                    setClubId(currentClubId);
+                    if (currentClubId) {
+                        fetchAllData(currentClubId);
+                    }
                 }
             }
         });
         return () => unsubscribe();
     }, []);
 
-    useEffect(() => {
-        if (clubId) {
-            fetchAllMembers(clubId);
-        }
-    }, [clubId]);
-
-    const fetchAllMembers = async (clubId: string) => {
+    const fetchAllData = async (clubId: string) => {
         const members: ClubMember[] = [];
         try {
             const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
@@ -71,10 +76,27 @@ export function DataUpdateSender() {
             });
             
             setAllMembers(members);
+            
+            const teamsSnap = await getDocs(collection(db, "clubs", clubId, "teams"));
+            setTeams(teamsSnap.docs.map(doc => ({id: doc.id, ...doc.data()} as Team)));
+
         } catch (error) {
             console.error("Error fetching club members:", error);
         }
     };
+    
+    const filteredMembers = useMemo(() => {
+        return allMembers.filter(member => {
+            const typeMatch = filterType === 'all' || member.type === filterType;
+            const teamMatch = filterTeam === 'all' || (member.data as Player | Coach).teamId === filterTeam;
+
+            if (filterType === 'Staff') {
+                return typeMatch;
+            }
+
+            return typeMatch && teamMatch;
+        });
+    }, [allMembers, filterType, filterTeam]);
     
     const initializeFieldConfig = (member: ClubMember) => {
         const config: FieldConfig = {};
@@ -143,6 +165,37 @@ export function DataUpdateSender() {
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
+                 <div className="flex flex-col md:flex-row gap-4">
+                    <div className="flex-1 space-y-2">
+                        <Label>Filtrar por tipo</Label>
+                        <Select value={filterType} onValueChange={setFilterType}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Tipo de miembro" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los tipos</SelectItem>
+                                <SelectItem value="Jugador">Jugadores</SelectItem>
+                                <SelectItem value="Entrenador">Entrenadores</SelectItem>
+                                <SelectItem value="Staff">Staff</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="flex-1 space-y-2">
+                        <Label>Filtrar por equipo</Label>
+                        <Select value={filterTeam} onValueChange={setFilterTeam} disabled={filterType === 'Staff'}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Equipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los equipos</SelectItem>
+                                {teams.map(team => (
+                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                 </div>
+
                 <div className="space-y-2">
                     <Label>Selecciona un Miembro</Label>
                     <Popover open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
@@ -166,9 +219,9 @@ export function DataUpdateSender() {
                             <Command>
                                 <CommandInput placeholder="Buscar por nombre..." />
                                 <CommandList>
-                                    <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
+                                    <CommandEmpty>No se encontró ningún miembro con esos filtros.</CommandEmpty>
                                     <CommandGroup>
-                                        {allMembers.map((member) => (
+                                        {filteredMembers.map((member) => (
                                             <CommandItem
                                                 key={member.id}
                                                 value={member.name}
