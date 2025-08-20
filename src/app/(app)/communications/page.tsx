@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import type { TemplateHistoryItem, FormHistoryItem } from "@/lib/types";
 import { DataUpdateSender } from "@/components/data-update-sender";
+import { EmailBatchStatus } from "@/components/email-batch-status";
 
 
 export default function CommunicationsPage() {
@@ -108,6 +109,8 @@ export default function CommunicationsPage() {
         
         <TabsContent value="data-update" className="mt-6 space-y-8">
             <DataUpdateSender />
+            <Separator />
+            <EmailBatchStatus />
         </TabsContent>
       </Tabs>
     </div>
