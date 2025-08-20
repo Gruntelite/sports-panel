@@ -159,16 +159,32 @@ export function DataUpdateSender() {
         });
     }, [allMembers, selectedTypes, selectedTeams]);
 
-    const availableFields = useMemo(() => {
-        if (selectedTypes.size !== 1) return [];
-        const type = Array.from(selectedTypes)[0];
-        switch (type) {
-            case 'Jugador': return playerFields;
-            case 'Entrenador': return coachFields;
-            case 'Staff': return staffFields;
-            default: return [];
+    const availableFieldsInfo = useMemo(() => {
+        const membersToConsider = selectedMemberIds.size > 0 
+            ? allMembers.filter(m => selectedMemberIds.has(m.id))
+            : filteredMembers;
+
+        if (membersToConsider.length === 0) {
+            return { fields: [], uniqueType: null };
         }
-    }, [selectedTypes]);
+
+        const firstMemberType = membersToConsider[0].type;
+        const allSameType = membersToConsider.every(m => m.type === firstMemberType);
+
+        if (!allSameType) {
+            return { fields: [], uniqueType: null };
+        }
+
+        switch (firstMemberType) {
+            case 'Jugador': return { fields: playerFields, uniqueType: 'Jugador' };
+            case 'Entrenador': return { fields: coachFields, uniqueType: 'Entrenador' };
+            case 'Staff': return { fields: staffFields, uniqueType: 'Staff' };
+            default: return { fields: [], uniqueType: null };
+        }
+    }, [filteredMembers, selectedMemberIds, allMembers]);
+
+    const { fields: availableFields, uniqueType } = availableFieldsInfo;
+
 
     useEffect(() => {
       const newConfig: FieldConfig = {};
@@ -437,11 +453,11 @@ El equipo de ${clubName}`;
                     </Dialog>
                 </div>
 
-                {availableFields.length > 0 ? (
+                {availableFields.length > 0 && uniqueType ? (
                     <div className="space-y-4 pt-4 border-t">
                         <div className="flex items-center gap-2">
                            <Settings className="h-5 w-5 text-primary" />
-                           <h3 className="text-lg font-semibold">Configurar Campos del Formulario</h3>
+                           <h3 className="text-lg font-semibold">Configurar Campos del Formulario ({uniqueType})</h3>
                         </div>
                         <p className="text-sm text-muted-foreground">Define qué campos podrán ver o editar los destinatarios. Estos ajustes se aplicarán a todos los miembros de esta solicitud.</p>
                          <ScrollArea className="h-72">
@@ -474,9 +490,9 @@ El equipo de ${clubName}`;
                         </ScrollArea>
                     </div>
                 ) : (
-                    selectedTypes.size > 1 && (
+                    (selectedMemberIds.size > 0 || filteredMembers.length > 0) && !uniqueType && (
                         <div className="pt-4 border-t text-sm text-muted-foreground">
-                            Para configurar campos específicos, por favor selecciona un único tipo de miembro (p.ej., solo 'Jugadores').
+                            Has seleccionado miembros de diferentes tipos. Para configurar campos específicos, por favor, filtra por un único tipo de miembro (p.ej., solo 'Jugadores').
                         </div>
                     )
                 )}
@@ -520,5 +536,3 @@ El equipo de ${clubName}`;
         </Card>
     );
 }
-
-    
