@@ -19,6 +19,7 @@ import {
   FileText,
   Trash2,
   Download,
+  Save,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -286,7 +287,25 @@ export default function PlayersPage() {
       
       // Handle document upload if a file is selected
       if (documentToUpload && playerId) {
-        await handleDocumentUpload(playerId, documentToUpload);
+        const file = documentToUpload;
+        const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
+        const docRef = ref(storage, filePath);
+        await uploadBytes(docRef, file);
+        const url = await getDownloadURL(docRef);
+
+        const newDocument: Document = {
+            name: file.name,
+            url,
+            path: filePath,
+            createdAt: Timestamp.now(),
+        };
+        
+        const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
+        await updateDoc(playerDocRef, {
+            documents: arrayUnion(newDocument)
+        });
+        
+        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
       }
 
       setIsModalOpen(false);
@@ -417,36 +436,6 @@ export default function PlayersPage() {
     }
   };
 
-  const handleDocumentUpload = async (playerId: string, file: File) => {
-    if (!clubId) return;
-    try {
-        const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
-        const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, file);
-        const url = await getDownloadURL(docRef);
-
-        const newDocument: Document = {
-            name: file.name,
-            url,
-            path: filePath,
-            createdAt: Timestamp.now(),
-        };
-        
-        const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
-        await updateDoc(playerDocRef, {
-            documents: arrayUnion(newDocument)
-        });
-        
-        setDocumentToUpload(null);
-        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
-
-    } catch (error) {
-        console.error("Error uploading document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
-        throw error; // Re-throw to be caught by the main save function
-    }
-  };
-
   const handleDocumentDelete = async (documentToDelete: Document) => {
     if (!playerData.id || !clubId) return;
 
@@ -455,13 +444,16 @@ export default function PlayersPage() {
         await deleteObject(fileRef);
 
         const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+        const currentPlayer = players.find(p => p.id === playerData.id);
+        const updatedDocuments = currentPlayer?.documents?.filter(d => d.path !== documentToDelete.path);
+        
         await updateDoc(playerDocRef, {
-            documents: arrayRemove(documentToDelete)
+            documents: updatedDocuments || []
         });
         
         setPlayerData(prev => ({
             ...prev,
-            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+            documents: updatedDocuments
         }));
 
         toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
