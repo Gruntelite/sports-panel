@@ -200,19 +200,6 @@ export default function SignUpPage() {
     }
   };
 
-   useEffect(() => {
-    const localTheme = localStorage.getItem('clubThemeColor');
-    const localThemeForeground = localStorage.getItem('clubThemeColorForeground');
-    if(localTheme && localThemeForeground) {
-      const primaryHsl = hexToHsl(localTheme);
-      const foregroundHsl = hexToHsl(localThemeForeground);
-       if (primaryHsl && foregroundHsl) {
-          document.documentElement.style.setProperty('--primary', `${primaryHsl.h} ${primaryHsl.s}% ${primaryHsl.l}%`);
-          document.documentElement.style.setProperty('--primary-foreground', `${foregroundHsl.h} ${foregroundHsl.s}% ${foregroundHsl.l}%`);
-       }
-    }
-  }, []);
-
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="mx-auto max-w-sm w-full shadow-lg">
