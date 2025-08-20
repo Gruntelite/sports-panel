@@ -19,6 +19,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, Wand2, Copy, Link as LinkIcon } from "lucide-react";
+import { Label } from "@/components/ui/label";
 
 const formSchema = z.object({
   communicationGoal: z.string().min(1, "El objetivo de la comunicación es obligatorio."),
