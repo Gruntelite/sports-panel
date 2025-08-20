@@ -144,10 +144,12 @@ export async function getBatchToProcess({ batchId }: { batchId?: string }) {
         let batchDoc: admin.firestore.DocumentSnapshot | undefined;
 
         if (batchId) {
-            const clubId = (await clientDb.collection('users').doc(auth.currentUser?.uid).get()).data()?.clubId;
-            if (clubId) {
-              const specificBatchRef = db.collection('clubs').doc(clubId).collection('emailBatches').doc(batchId);
-              batchDoc = await specificBatchRef.get();
+            // This is complex because we don't know the clubId on the admin-side from the user's auth state.
+            // A collectionGroup query is more robust for finding the batch regardless of its parent club.
+            const batchQuery = db.collectionGroup('emailBatches').where(admin.firestore.FieldPath.documentId(), '==', `emailBatches/${batchId}`);
+            const querySnapshot = await batchQuery.get();
+             if (!querySnapshot.empty) {
+                batchDoc = querySnapshot.docs[0];
             }
         } else {
             const batchQuery = db.collectionGroup('emailBatches').where('status', '==', 'pending').orderBy('createdAt').limit(1);
@@ -253,6 +255,7 @@ export async function finalizeBatch({ batchDocPath, status, error }: { batchDocP
          };
         if (error) {
             updateData.error = error;
+             console.error(`Finalizing batch ${batchDocPath} with error: ${error}`);
         }
         await batchRef.update(updateData);
         return { success: true };
@@ -309,3 +312,5 @@ export async function retryBatchAction({ clubId, batchId }: { clubId: string, ba
         return { success: false, error: "No se pudo reintentar el lote." };
     }
 }
+
+    

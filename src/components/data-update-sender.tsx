@@ -243,9 +243,8 @@ export function DataUpdateSender() {
         const totalRecipients = recipients.length;
         const numBatches = Math.ceil(totalRecipients / BATCH_SIZE);
         
-        const firestoreBatch = writeBatch(db);
-        
         for (let i = 0; i < numBatches; i++) {
+          const firestoreBatch = writeBatch(db);
           const batchRecipients = recipients.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
           const batchRef = doc(collection(db, 'clubs', clubId, 'emailBatches'));
           
@@ -259,14 +258,15 @@ export function DataUpdateSender() {
               createdAt: serverTimestamp(),
               updatedAt: serverTimestamp(),
           });
+          
+          await firestoreBatch.commit();
+          // Trigger the flow immediately after creating the batch
+          await processEmailBatchFlow({ batchId: batchRef.id, limit: BATCH_SIZE });
         }
         
-        await firestoreBatch.commit();
-        await processEmailBatchFlow({ limit: 100 });
-
         toast({
           title: "¡Envío Iniciado!",
-          description: `Se ha enviado el primer lote y el resto está en cola. Consulta el estado de los envíos para ver el progreso.`,
+          description: `Se están enviando los correos. Consulta el estado de los envíos para ver el progreso.`,
         });
         setSelectedMemberIds(new Set());
         setIsPreviewModalOpen(false);
@@ -526,3 +526,5 @@ export function DataUpdateSender() {
         </Card>
     );
 }
+
+    
