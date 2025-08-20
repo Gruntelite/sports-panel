@@ -4,9 +4,7 @@
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
 import { sendEmailUpdateFlow } from "@/ai/flows/send-email-update";
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, serverTimestamp } from "firebase/firestore";
-import { db as clientDb } from "./firebase";
-import { db } from './firebase-admin';
-import * as admin from 'firebase-admin';
+import admin, { db } from './firebase-admin';
 
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
@@ -26,7 +24,7 @@ type VerificationInput = {
 
 export async function initiateSenderVerificationAction(input: VerificationInput) {
     
-    const settingsRef = doc(clientDb, "clubs", input.clubId, "settings", "config");
+    const settingsRef = doc(db, "clubs", input.clubId, "settings", "config");
     const settingsSnap = await getDoc(settingsRef);
     const apiKey = settingsSnap.exists() ? settingsSnap.data()?.platformSendgridApiKey : null;
 
@@ -75,7 +73,7 @@ export async function initiateSenderVerificationAction(input: VerificationInput)
 }
 
 export async function checkSenderStatusAction(input: { clubId: string }) {
-    const settingsRef = doc(clientDb, "clubs", input.clubId, "settings", "config");
+    const settingsRef = doc(db, "clubs", input.clubId, "settings", "config");
     const settingsSnap = await getDoc(settingsRef);
 
     if (!settingsSnap.exists()) {
@@ -121,19 +119,101 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
     }
 }
 
-// New action for direct sending
+const DAILY_LIMIT = 100;
+
+async function getClubConfig(clubId: string) {
+    const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
+    const clubRef = db.collection('clubs').doc(clubId);
+
+    const [settingsDoc, clubDoc] = await Promise.all([settingsRef.get(), clubRef.get()]);
+
+    let config = {
+      clubName: "Tu Club",
+      fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
+      apiKey: null as string | null,
+      availableToSendToday: DAILY_LIMIT,
+    };
+
+    if (clubDoc.exists) {
+        config.clubName = clubDoc.data()?.name || "Tu Club";
+    }
+
+    if (settingsDoc.exists) {
+        const data = settingsDoc.data();
+        if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
+            config.fromEmail = data.fromEmail;
+        }
+        config.apiKey = data?.platformSendgridApiKey || null;
+
+        const now = admin.firestore.Timestamp.now();
+        const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
+        const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+        let currentCount = data?.dailyEmailCount || 0;
+
+        if (lastReset < oneDayAgo) {
+            currentCount = 0;
+        }
+        config.availableToSendToday = DAILY_LIMIT - currentCount;
+    }
+    return config;
+}
+
 export async function directSendAction({ clubId, recipients, fieldConfig }: { clubId: string, recipients: any[], fieldConfig: any }) {
+    
+    const config = await getClubConfig(clubId);
+    const { availableToSendToday, apiKey, clubName, fromEmail } = config;
+
+    if (!apiKey) {
+      const errorMsg = `No SendGrid API Key is configured for the platform. Email sending is disabled.`;
+      console.error(errorMsg);
+      return { success: false, sentCount: 0, queuedCount: 0, error: errorMsg };
+    }
+
+    const recipientsToSend = recipients.slice(0, availableToSendToday);
+    const recipientsToQueue = recipients.slice(availableToSendToday);
+
     const result = await sendEmailUpdateFlow({
-        clubId,
-        recipients,
+        recipients: recipientsToSend,
         fieldConfig,
+        apiKey,
+        clubName,
+        fromEmail,
+        clubId,
     });
+    
+    if (recipientsToQueue.length > 0) {
+        const queueRef = db.collection('clubs').doc(clubId).collection('emailQueue').doc();
+        await queueRef.set({
+            recipients: recipientsToQueue,
+            fieldConfig,
+            createdAt: serverTimestamp(),
+        });
+    }
+
+     // Update daily send count only if emails were actually sent
+    if (result.success && result.sentCount > 0) {
+        const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
+        const settingsDoc = await settingsRef.get();
+        const lastReset = settingsDoc.data()?.dailyEmailCountResetTimestamp?.toMillis() || 0;
+        const now = admin.firestore.Timestamp.now();
+
+        if (lastReset < now.toMillis() - (24 * 60 * 60 * 1000)) {
+             await settingsRef.set({
+                  dailyEmailCount: result.sentCount,
+                  dailyEmailCountResetTimestamp: now,
+              }, { merge: true });
+        } else {
+             await settingsRef.update({
+                  dailyEmailCount: admin.firestore.FieldValue.increment(result.sentCount)
+             });
+        }
+    }
 
     if (result.success) {
         return {
             success: true,
             title: `¡Envío completado!`,
-            description: `Se han enviado ${result.sentCount} correos. ${result.queuedCount > 0 ? `Los ${result.queuedCount} restantes se enviarán automáticamente.` : ''}`
+            description: `Se han enviado ${result.sentCount} correos. ${recipientsToQueue.length > 0 ? `Los ${recipientsToQueue.length} restantes se enviarán automáticamente.` : ''}`
         };
     } else {
         return {
@@ -146,7 +226,7 @@ export async function directSendAction({ clubId, recipients, fieldConfig }: { cl
 // New actions for the public data update form
 export async function getMemberDataForUpdate({ token }: { token: string }) {
     try {
-        const tokenRef = doc(clientDb, "dataUpdateTokens", token);
+        const tokenRef = doc(db, "dataUpdateTokens", token);
         const tokenSnap = await getDoc(tokenRef);
 
         if (!tokenSnap.exists()) {
@@ -156,7 +236,7 @@ export async function getMemberDataForUpdate({ token }: { token: string }) {
         const tokenData = tokenSnap.data();
         const now = Timestamp.now();
         if (tokenData.expires.toMillis() < now.toMillis()) {
-             await doc(clientDb, "dataUpdateTokens", token).delete();
+             await doc(db, "dataUpdateTokens", token).delete();
              return { success: false, error: "El enlace ha caducado. Por favor, solicita uno nuevo." };
         }
         
@@ -168,14 +248,14 @@ export async function getMemberDataForUpdate({ token }: { token: string }) {
         else if (memberType === 'Staff') collectionName = 'staff';
         else return { success: false, error: "Tipo de miembro no válido." };
 
-        const memberRef = doc(clientDb, "clubs", clubId, collectionName, memberId);
+        const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
         const memberSnap = await getDoc(memberRef);
 
         if (!memberSnap.exists()) {
             return { success: false, error: "No se encontró el registro del miembro." };
         }
 
-        const clubDoc = await getDoc(doc(clientDb, 'clubs', clubId));
+        const clubDoc = await getDoc(doc(db, 'clubs', clubId));
 
         return {
             success: true,
@@ -195,7 +275,7 @@ export async function getMemberDataForUpdate({ token }: { token: string }) {
 
 export async function saveMemberDataFromUpdate({ token, updatedData }: { token: string, updatedData: any }) {
     try {
-         const tokenRef = doc(clientDb, "dataUpdateTokens", token);
+        const tokenRef = doc(db, "dataUpdateTokens", token);
         const tokenSnap = await getDoc(tokenRef);
 
         if (!tokenSnap.exists()) {
@@ -209,9 +289,9 @@ export async function saveMemberDataFromUpdate({ token, updatedData }: { token: 
         else if (memberType === 'Staff') collectionName = 'staff';
         else return { success: false, error: "Tipo de miembro no válido." };
 
-        const memberRef = doc(clientDb, "clubs", clubId, collectionName, memberId);
+        const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
         
-        const batch = writeBatch(clientDb);
+        const batch = writeBatch(db);
         batch.update(memberRef, updatedData);
         batch.delete(tokenRef); // Invalidate token after use
         
