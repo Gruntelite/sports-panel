@@ -13,9 +13,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Mail, Info, Send, Save, RefreshCw } from "lucide-react";
+import { Loader2, Mail, Info, Save, RefreshCw, Edit, BadgeCheck, Star, CheckCircle } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
@@ -24,8 +24,10 @@ import {
 } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { initiateSenderVerificationAction, checkSenderStatusAction } from "@/lib/actions";
+import { cn } from "@/lib/utils";
 
 type VerificationStatus = "unconfigured" | "pending" | "verified" | "failed";
+type Plan = 'basic' | 'pro' | 'elite';
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
@@ -36,6 +38,7 @@ export default function ClubSettingsPage() {
     const [fromEmail, setFromEmail] = useState("");
     const [apiKey, setApiKey] = useState("");
     const [verificationStatus, setVerificationStatus] = useState<VerificationStatus>("unconfigured");
+    const [currentPlan, setCurrentPlan] = useState<Plan>('basic');
     
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -66,6 +69,7 @@ export default function ClubSettingsPage() {
                 setFromEmail(settingsData?.fromEmail || "");
                 setApiKey(settingsData?.sendgridApiKey || "");
                 setVerificationStatus(settingsData?.senderVerificationStatus || "unconfigured");
+                setCurrentPlan(settingsData?.billingPlan || 'basic');
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
@@ -163,106 +167,165 @@ export default function ClubSettingsPage() {
                 Gestiona la configuración general y las integraciones de tu club.
                 </p>
             </div>
-            <div className="grid gap-6 md:grid-cols-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Mail className="h-5 w-5"/>
-                            Configuración de Envío de Correo
-                        </CardTitle>
-                        <CardDescription>
-                           Configura desde qué dirección de correo y con qué API Key de SendGrid se enviarán las comunicaciones del club.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        {loading ? (
-                             <div className="flex items-center justify-center h-24">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            
+             <Card>
+                <CardHeader>
+                    <CardTitle>Plan de Suscripción</CardTitle>
+                    <CardDescription>
+                        Selecciona el plan que mejor se ajuste al tamaño y las necesidades de tu club.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                    <Card className={cn("flex flex-col", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
+                        <CardHeader>
+                            <CardTitle className="text-xl">Básico</CardTitle>
+                            <CardDescription>Ideal para clubs pequeños que están empezando.</CardDescription>
+                            <p className="text-3xl font-bold pt-2">24,99 €<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+                        </CardHeader>
+                        <CardContent className="flex-grow space-y-3">
+                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Hasta <b>80</b> jugadores</span></div>
+                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Funcionalidades básicas</span></div>
+                        </CardContent>
+                        <CardHeader>
+                            <Button disabled={currentPlan === 'basic'}>
+                                {currentPlan === 'basic' ? 'Plan Actual' : 'Seleccionar Plan'}
+                            </Button>
+                        </CardHeader>
+                    </Card>
+                    <Card className={cn("flex flex-col relative", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
+                        <Badge className="absolute -top-3 left-1/2 -translate-x-1/2"><Star className="h-3 w-3 mr-1.5"/>El más popular</Badge>
+                        <CardHeader>
+                            <CardTitle className="text-xl">Pro</CardTitle>
+                            <CardDescription>Perfecto para clubs en crecimiento y con más equipos.</CardDescription>
+                            <p className="text-3xl font-bold pt-2">34,99 €<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+                        </CardHeader>
+                        <CardContent className="flex-grow space-y-3">
+                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Hasta <b>150</b> jugadores</span></div>
+                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Soporte prioritario</span></div>
+                        </CardContent>
+                        <CardHeader>
+                           <Button disabled={currentPlan === 'pro'}>
+                                {currentPlan === 'pro' ? 'Plan Actual' : 'Seleccionar Plan'}
+                            </Button>
+                        </CardHeader>
+                    </Card>
+                    <Card className={cn("flex flex-col", currentPlan === 'elite' && "border-primary ring-2 ring-primary")}>
+                        <CardHeader>
+                            <CardTitle className="text-xl">Élite</CardTitle>
+                            <CardDescription>La solución completa para clubs grandes y academias.</CardDescription>
+                             <p className="text-3xl font-bold pt-2">54,99 €<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
+                        </CardHeader>
+                        <CardContent className="flex-grow space-y-3">
+                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Hasta <b>300</b> jugadores</span></div>
+                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Funciones avanzadas</span></div>
+                        </CardContent>
+                        <CardHeader>
+                            <Button disabled={currentPlan === 'elite'}>
+                                {currentPlan === 'elite' ? 'Plan Actual' : 'Seleccionar Plan'}
+                            </Button>
+                        </CardHeader>
+                    </Card>
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <Mail className="h-5 w-5"/>
+                        Configuración de Envío de Correo
+                    </CardTitle>
+                    <CardDescription>
+                        Configura desde qué dirección de correo y con qué API Key de SendGrid se enviarán las comunicaciones del club.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {loading ? (
+                            <div className="flex items-center justify-center h-24">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                        </div>
+                    ) : (
+                            <>
+                            <div className="space-y-2">
+                                <Label htmlFor="apiKey">Clave de API de SendGrid</Label>
+                                <Input 
+                                    id="apiKey" 
+                                    type="password" 
+                                    placeholder="SG.xxxxxxxx"
+                                    value={apiKey}
+                                    onChange={(e) => setApiKey(e.target.value)}
+                                    readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
+                                />
                             </div>
-                        ) : (
-                             <>
-                                <div className="space-y-2">
-                                    <Label htmlFor="apiKey">Clave de API de SendGrid</Label>
-                                    <Input 
-                                        id="apiKey" 
-                                        type="password" 
-                                        placeholder="SG.xxxxxxxx"
-                                        value={apiKey}
-                                        onChange={(e) => setApiKey(e.target.value)}
-                                        readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
-                                    />
+                            <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <Label htmlFor="fromEmail">Dirección de Correo para Envíos</Label>
+                                    {getStatusBadge()}
                                 </div>
-                                <div className="space-y-2">
-                                    <div className="flex items-center justify-between">
-                                      <Label htmlFor="fromEmail">Dirección de Correo para Envíos</Label>
-                                      {getStatusBadge()}
-                                    </div>
-                                    <Input 
-                                        id="fromEmail" 
-                                        type="email" 
-                                        placeholder="p.ej., info.club@gmail.com"
-                                        value={fromEmail}
-                                        onChange={(e) => setFromEmail(e.target.value)}
-                                        readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
-                                    />
-                                </div>
-                                 <div className="flex items-center gap-2">
-                                    <Button onClick={handleSaveAndVerify} disabled={saving || verificationStatus === 'pending' || verificationStatus === 'verified'}>
-                                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                        <Save className="mr-2 h-4 w-4"/> 
-                                        {verificationStatus === 'verified' ? 'Configuración Guardada' : 'Guardar y Verificar'}
+                                <Input 
+                                    id="fromEmail" 
+                                    type="email" 
+                                    placeholder="p.ej., info.club@gmail.com"
+                                    value={fromEmail}
+                                    onChange={(e) => setFromEmail(e.target.value)}
+                                    readOnly={verificationStatus === 'pending' || verificationStatus === 'verified'}
+                                />
+                            </div>
+                                <div className="flex items-center gap-2">
+                                <Button onClick={handleSaveAndVerify} disabled={saving || verificationStatus === 'pending' || verificationStatus === 'verified'}>
+                                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    <Save className="mr-2 h-4 w-4"/> 
+                                    {verificationStatus === 'verified' ? 'Configuración Guardada' : 'Guardar y Verificar'}
+                                </Button>
+                                {verificationStatus === 'pending' && (
+                                    <Button onClick={handleCheckStatus} variant="secondary" disabled={checkingStatus}>
+                                        {checkingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                        <RefreshCw className="mr-2 h-4 w-4"/>
+                                        Comprobar Estado
                                     </Button>
-                                    {verificationStatus === 'pending' && (
-                                        <Button onClick={handleCheckStatus} variant="secondary" disabled={checkingStatus}>
-                                            {checkingStatus && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                            <RefreshCw className="mr-2 h-4 w-4"/>
-                                            Comprobar Estado
-                                        </Button>
-                                    )}
-                                     {verificationStatus === 'verified' && (
-                                        <Button onClick={() => setVerificationStatus('unconfigured')} variant="destructive" size="sm">
-                                            <Edit className="mr-2 h-4 w-4"/>
-                                            Cambiar
-                                        </Button>
-                                    )}
-                                 </div>
-                            </>
-                        )}
-                        <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
-                            <AccordionItem value="item-1" className="border-b-0">
-                                <AccordionTrigger className="py-3 hover:no-underline">
-                                    <div className="flex items-center gap-2 font-semibold text-sm">
-                                        <Info className="h-4 w-4" />
-                                        ¿Cómo funciona el envío de correos?
-                                    </div>
-                                </AccordionTrigger>
-                                <AccordionContent className="text-muted-foreground space-y-2">
-                                   <p>
-                                       Para habilitar el envío de correos, cada club necesita su propia API Key de SendGrid y un correo de remitente verificado.
-                                   </p>
-                                   <ol className="list-decimal list-inside space-y-1 pl-2">
+                                )}
+                                    {verificationStatus === 'verified' && (
+                                    <Button onClick={() => setVerificationStatus('unconfigured')} variant="outline" size="sm">
+                                        <Edit className="mr-2 h-4 w-4"/>
+                                        Cambiar
+                                    </Button>
+                                )}
+                                </div>
+                        </>
+                    )}
+                    <Accordion type="single" collapsible className="w-full mt-4 border rounded-lg px-4 bg-muted/50">
+                        <AccordionItem value="item-1" className="border-b-0">
+                            <AccordionTrigger className="py-3 hover:no-underline">
+                                <div className="flex items-center gap-2 font-semibold text-sm">
+                                    <Info className="h-4 w-4" />
+                                    ¿Cómo funciona el envío de correos?
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="text-muted-foreground space-y-2">
+                                <p>
+                                    Para habilitar el envío de correos, cada club necesita su propia API Key de SendGrid y un correo de remitente verificado.
+                                </p>
+                                <ol className="list-decimal list-inside space-y-1 pl-2">
+                                    <li>
+                                        <b>Crea una cuenta de SendGrid:</b> Ve a <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
+                                    </li>
+                                    <li>
+                                        <b>Crea una API Key:</b> En SendGrid, ve a "Settings" {'>'} "API Keys". Crea una clave con permisos "Full Access".
+                                    </li>
+                                    <li>
+                                        <b>Guarda la clave:</b> Pega la API Key y tu correo en los campos de arriba. Guarda y verifica.
+                                    </li>
                                         <li>
-                                            <b>Crea una cuenta de SendGrid:</b> Ve a <a href="https://www.twilio.com/login" target="_blank" rel="noopener noreferrer" className="text-primary underline">sendgrid.com</a> y regístrate.
-                                        </li>
-                                        <li>
-                                            <b>Crea una API Key:</b> En SendGrid, ve a "Settings" {'>'} "API Keys". Crea una clave con permisos "Full Access".
-                                        </li>
-                                        <li>
-                                            <b>Guarda la clave:</b> Pega la API Key y tu correo en los campos de arriba. Guarda y verifica.
-                                        </li>
-                                         <li>
-                                            <b>Verifica tu email:</b> Recibirás un correo de SendGrid. Haz clic en el enlace para verificar que eres el propietario.
-                                        </li>
-                                        <li>
-                                            <b>Comprueba el estado:</b> Vuelve aquí y haz clic en "Comprobar Estado" hasta que aparezca como "Verificado".
-                                        </li>
-                                   </ol>
-                                </AccordionContent>
-                            </AccordionItem>
-                        </Accordion>
-                    </CardContent>
-                </Card>
-            </div>
+                                        <b>Verifica tu email:</b> Recibirás un correo de SendGrid. Haz clic en el enlace para verificar que eres el propietario.
+                                    </li>
+                                    <li>
+                                        <b>Comprueba el estado:</b> Vuelve aquí y haz clic en "Comprobar Estado" hasta que aparezca como "Verificado".
+                                    </li>
+                                </ol>
+                            </AccordionContent>
+                        </AccordionItem>
+                    </Accordion>
+                </CardContent>
+            </Card>
         </div>
     );
 }
