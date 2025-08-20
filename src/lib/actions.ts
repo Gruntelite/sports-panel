@@ -2,12 +2,10 @@
 "use server";
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
-import { processEmailBatchFlow } from "@/ai/flows/process-email-batch";
-import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp, serverTimestamp, FieldValue, deleteDoc } from "firebase/firestore";
+import { sendEmailUpdateFlow } from "@/ai/flows/send-email-update";
+import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, serverTimestamp } from "firebase/firestore";
 import { db as clientDb } from "./firebase";
 import * as admin from 'firebase-admin';
-import type { Player, Coach, Staff } from "./types";
-
 
 // Initialize admin only if it hasn't been initialized
 if (!admin.apps.length) {
@@ -26,7 +24,6 @@ try {
 } catch (e) {
     console.warn("Admin firestore could not be initialized");
 }
-
 
 export async function generateTemplateAction(input: GenerateCommunicationTemplateInput) {
   try {
@@ -140,254 +137,27 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
     }
 }
 
-// Server actions for email batch processing using Admin SDK
-export async function getBatchToProcess({ batchId }: { batchId?: string }) {
-    if (!db) {
-        return { success: false, error: 'Admin DB not initialized' };
-    }
-    try {
-        let batchQuery;
-        
-        if (batchId) {
-            // This is a targeted retry/initial send, we need to find the batch across all clubs.
-            // This is inefficient but necessary with the current structure.
-            // A better structure might be a root `emailBatches` collection.
-            const clubsSnapshot = await db.collection('clubs').get();
-            let foundDoc = null;
-            for (const clubDoc of clubsSnapshot.docs) {
-                const batchDocRef = clubDoc.ref.collection('emailBatches').doc(batchId);
-                const batchDoc = await batchDocRef.get();
-                if (batchDoc.exists) {
-                    foundDoc = batchDoc;
-                    break;
-                }
-            }
+// New action for direct sending
+export async function directSendAction({ clubId, recipients, fieldConfig }: { clubId: string, recipients: any[], fieldConfig: any }) {
+    const result = await sendEmailUpdateFlow({
+        clubId,
+        recipients,
+        fieldConfig,
+    });
 
-            if (foundDoc) {
-                 const batchData = foundDoc.data();
-                 const clubId = foundDoc.ref.parent.parent?.id; 
-                 await foundDoc.ref.update({ status: 'processing', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-                 return { success: true, batch: batchData, clubId, batchDocPath: foundDoc.ref.path };
-            } else {
-                 return { success: true, batch: null, batchDocPath: null, clubId: null, error: `Batch with ID ${batchId} not found.` };
-            }
-
-        } else {
-            // This is a scheduled run, find any pending batch.
-            batchQuery = db.collectionGroup('emailBatches').where('status', '==', 'pending').orderBy('createdAt').limit(1);
-            const snapshot = await batchQuery.get();
-
-            if (snapshot.empty) {
-                return { success: true, batch: null, batchDocPath: null, clubId: null };
-            }
-
-            const batchDoc = snapshot.docs[0];
-            const batchData = batchDoc.data();
-            const clubId = batchDoc.ref.parent.parent?.id;
-
-            if (!clubId) {
-                await batchDoc.ref.update({ status: 'failed', error: 'Could not determine club ID.' });
-                return { success: false, error: 'Could not determine club ID for a batch.' };
-            }
-
-            await batchDoc.ref.update({ status: 'processing', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
-            
-            return { success: true, batch: batchData, clubId, batchDocPath: batchDoc.ref.path };
-        }
-
-    } catch (error: any) {
-        console.error("Error in getBatchToProcess:", error);
-        return { success: false, error: error.message };
-    }
-}
-
-
-const DAILY_LIMIT = 100;
-
-export async function getClubConfig({ clubId }: { clubId: string }) {
-    if (!db) {
-        return { success: false, error: 'Admin DB not initialized' };
-    }
-    try {
-        const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
-        const clubRef = db.collection('clubs').doc(clubId);
-
-        const [settingsDoc, clubDoc] = await Promise.all([settingsRef.get(), clubRef.get()]);
-        
-        let config = {
-          clubName: "Tu Club",
-          fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
-          apiKey: null as string | null,
-          availableToSendToday: DAILY_LIMIT,
+    if (result.success) {
+        return {
+            success: true,
+            title: `¡Envío completado!`,
+            description: `Se han enviado ${result.sentCount} correos. ${result.queuedCount > 0 ? `Los ${result.queuedCount} restantes se enviarán automáticamente.` : ''}`
         };
-        
-        if(clubDoc.exists) {
-            config.clubName = clubDoc.data()?.name || "Tu Club";
-        }
-
-        if (settingsDoc.exists()) {
-            const data = settingsDoc.data();
-            if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
-                config.fromEmail = data.fromEmail;
-            }
-            if (data?.platformSendgridApiKey) {
-                config.apiKey = data.platformSendgridApiKey;
-            }
-
-            const now = admin.firestore.Timestamp.now();
-            const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
-            
-            const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
-            let currentCount = data?.dailyEmailCount || 0;
-
-            if (lastReset < oneDayAgo) {
-                // It's a new day, reset the counter
-                currentCount = 0;
-                await settingsRef.update({
-                    dailyEmailCount: 0,
-                    dailyEmailCountResetTimestamp: now,
-                });
-            }
-            config.availableToSendToday = DAILY_LIMIT - currentCount;
-            
-        }
-        
-        if (!config.apiKey) {
-            return { success: false, error: "La API Key de SendGrid para la plataforma no está configurada." };
-        }
-
-        return { success: true, config };
-    } catch (error: any) {
-        console.error("Error in getClubConfig:", error);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function updateBatchWithResults({ batchDocPath, results, originalRecipients, emailsSentCount }: { batchDocPath: string, results: any[], originalRecipients: any[], emailsSentCount: number }) {
-    if (!db) {
-        return { success: false, error: 'Admin DB not initialized' };
-    }
-    try {
-        const batchRef = db.doc(batchDocPath);
-        const clubId = batchRef.parent.parent?.id;
-
-        if(!clubId) {
-            throw new Error("Could not determine clubId from batch path");
-        }
-        
-        const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
-
-        const updatedRecipients = [...originalRecipients];
-
-        results.forEach(result => {
-            const index = updatedRecipients.findIndex(r => r.id === result.id);
-            if (index !== -1) {
-                updatedRecipients[index].status = result.status;
-                if (result.status === 'failed') {
-                    updatedRecipients[index].error = result.error;
-                }
-            }
-        });
-
-        const allProcessed = updatedRecipients.every(r => r.status === 'sent' || r.status === 'failed');
-        const newStatus = allProcessed ? 'completed' : 'pending'; 
-
-        const batchUpdateData: { recipients: any[], status: string, updatedAt: FieldValue } = {
-            recipients: updatedRecipients,
-            status: newStatus,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    } else {
+        return {
+            success: false,
+            error: result.error || "Ocurrió un error desconocido durante el envío.",
         };
-
-        await db.runTransaction(async (transaction) => {
-            transaction.update(batchRef, batchUpdateData);
-            if (emailsSentCount > 0) {
-                transaction.update(settingsRef, {
-                    dailyEmailCount: admin.firestore.FieldValue.increment(emailsSentCount)
-                });
-            }
-        });
-        
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error in updateBatchWithResults:", error);
-        await db.doc(batchDocPath).update({ status: 'failed', error: `Update failed: ${error.message}` });
-        return { success: false, error: error.message };
     }
 }
-
-export async function finalizeBatch({ batchDocPath, status, error }: { batchDocPath: string, status: 'completed' | 'failed' | 'pending', error?: string }) {
-    if (!db) {
-        return { success: false, error: 'Admin DB not initialized' };
-    }
-    try {
-        const batchRef = db.doc(batchDocPath);
-        const updateData: { status: string, error?: string | FieldValue, updatedAt: admin.firestore.FieldValue } = { 
-            status,
-            updatedAt: admin.firestore.FieldValue.serverTimestamp(),
-         };
-        if (error) {
-            updateData.error = error;
-            console.error(`Finalizing batch ${batchDocPath} with error: ${error}`);
-        } else {
-            updateData.error = admin.firestore.FieldValue.delete();
-        }
-        await batchRef.update(updateData);
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error in finalizeBatch:", error);
-        return { success: false, error: error.message };
-    }
-}
-
-type TokenData = {
-    clubId: string;
-    recipient: any;
-    fieldConfig: any;
-    token: string;
-}
-
-export async function createDataUpdateTokens({ tokensToCreate }: { tokensToCreate: TokenData[] }) {
-    if (!db) {
-        return { success: false, error: 'Admin DB not initialized' };
-    }
-    try {
-        const tokenBatch = db.batch();
-        for (const tokenData of tokensToCreate) {
-            const { clubId, recipient, fieldConfig, token } = tokenData;
-            const tokenRef = db.collection('dataUpdateTokens').doc(token);
-            tokenBatch.set(tokenRef, {
-                clubId: clubId,
-                memberId: recipient.id,
-                memberType: recipient.type,
-                fieldConfig: fieldConfig || {},
-                expires: admin.firestore.Timestamp.fromMillis(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
-            });
-        }
-        await tokenBatch.commit();
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error creating data update tokens:", error);
-        return { success: false, error: error.message };
-    }
-}
-
-export async function retryBatchAction({ clubId, batchId }: { clubId: string, batchId: string }) {
-    try {
-        const batchRef = doc(clientDb, "clubs", clubId, "emailBatches", batchId);
-        await updateDoc(batchRef, {
-            status: "pending",
-            updatedAt: serverTimestamp(),
-        });
-        
-        await processEmailBatchFlow({ batchId, limit: 100 });
-        
-        return { success: true };
-    } catch (error: any) {
-        console.error("Error retrying batch:", error);
-        return { success: false, error: "No se pudo reintentar el lote." };
-    }
-}
-
 
 // New actions for the public data update form
 export async function getMemberDataForUpdate({ token }: { token: string }) {
@@ -402,7 +172,7 @@ export async function getMemberDataForUpdate({ token }: { token: string }) {
         const tokenData = tokenSnap.data();
         const now = Timestamp.now();
         if (tokenData.expires.toMillis() < now.toMillis()) {
-             await deleteDoc(tokenRef);
+             await doc(clientDb, "dataUpdateTokens", token).delete();
              return { success: false, error: "El enlace ha caducado. Por favor, solicita uno nuevo." };
         }
         
@@ -439,7 +209,7 @@ export async function getMemberDataForUpdate({ token }: { token: string }) {
     }
 }
 
-export async function saveMemberDataFromUpdate({ token, updatedData }: { token: string, updatedData: Partial<Player | Coach | Staff> }) {
+export async function saveMemberDataFromUpdate({ token, updatedData }: { token: string, updatedData: any }) {
     try {
          const tokenRef = doc(clientDb, "dataUpdateTokens", token);
         const tokenSnap = await getDoc(tokenRef);
@@ -470,3 +240,5 @@ export async function saveMemberDataFromUpdate({ token, updatedData }: { token: 
         return { success: false, error: "No se pudieron guardar los cambios." };
     }
 }
+
+    

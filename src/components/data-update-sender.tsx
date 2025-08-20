@@ -8,7 +8,7 @@ import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
-import { Check, ChevronsUpDown, Send, UserPlus, Loader2, Settings, Eye, Lock, Edit, Wand2 } from "lucide-react";
+import { Check, ChevronsUpDown, Send, UserPlus, Loader2, Settings, Eye, Lock, Edit } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
@@ -17,17 +17,14 @@ import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
-import { Input } from "./ui/input";
-import { Textarea } from "./ui/textarea";
-import { processEmailBatchFlow } from "@/ai/flows/process-email-batch";
+import { directSendAction } from "@/lib/actions";
+
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
     { value: 'Entrenador', label: 'Entrenadores' },
     { value: 'Staff', label: 'Staff' }
 ];
-
-const BATCH_SIZE = 100;
 
 const playerFields = [
   { id: 'name', label: 'Nombre' }, { id: 'lastName', label: 'Apellidos' }, { id: 'birthDate', label: 'Fecha de Nacimiento' },
@@ -56,16 +53,12 @@ type FieldConfig = Record<string, FieldConfigState>;
 
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
-    const [clubName, setClubName] = useState<string>("");
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
     
     const [sending, setSending] = useState(false);
     const [selectedMemberIds, setSelectedMemberIds] = useState<Set<string>>(new Set());
     const [isMemberSelectOpen, setIsMemberSelectOpen] = useState(false);
-    
-    const [isPreviewModalOpen, setIsPreviewModalOpen] = useState(false);
-    const [emailPreview, setEmailPreview] = useState({ subject: "", body: "" });
 
     const [selectedTypes, setSelectedTypes] = useState<Set<string>>(new Set());
     const [isTypePopoverOpen, setIsTypePopoverOpen] = useState(false);
@@ -96,12 +89,6 @@ export function DataUpdateSender() {
     const fetchAllData = async (clubId: string) => {
         const members: ClubMember[] = [];
         try {
-            const clubDocRef = doc(db, "clubs", clubId);
-            const clubDocSnap = await getDoc(clubDocRef);
-            if(clubDocSnap.exists()) {
-                setClubName(clubDocSnap.data()?.name || "Tu Club");
-            }
-
             const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
             playersSnap.forEach(doc => {
                 const data = doc.data() as Player;
@@ -185,7 +172,6 @@ export function DataUpdateSender() {
     const handleFieldConfigChange = (fieldId: string, value: FieldConfigState) => {
         setFieldConfig(prev => ({ ...prev, [fieldId]: value }));
     };
-
     
     const handleSelectMember = (memberId: string) => {
         const newSelection = new Set(selectedMemberIds);
@@ -204,14 +190,6 @@ export function DataUpdateSender() {
             setSelectedMemberIds(new Set());
         }
     }
-
-    const handleGeneratePreview = () => {
-        const subject = `Actualización de datos para ${clubName}`;
-        const body = `Hola [Nombre del Miembro],\n\nPor favor, ayúdanos a mantener tus datos actualizados. Haz clic en el siguiente enlace para revisar y confirmar tu información.\n\nEl enlace es personal y solo será válido durante los próximos 7 días.\n\nGracias,\nEl equipo de ${clubName}`;
-
-        setEmailPreview({ subject, body });
-        setIsPreviewModalOpen(true);
-    };
     
     const handleSend = async () => {
       if (!clubId) return;
@@ -239,44 +217,27 @@ export function DataUpdateSender() {
         };
       }).filter(r => r.email);
 
-      try {
-        const totalRecipients = recipients.length;
-        const numBatches = Math.ceil(totalRecipients / BATCH_SIZE);
-        
-        for (let i = 0; i < numBatches; i++) {
-          const firestoreBatch = writeBatch(db);
-          const batchRecipients = recipients.slice(i * BATCH_SIZE, (i + 1) * BATCH_SIZE);
-          const batchRef = doc(collection(db, 'clubs', clubId, 'emailBatches'));
-          
-          firestoreBatch.set(batchRef, {
-              clubName: clubName,
-              recipients: batchRecipients,
-              fieldConfig: availableFields.length > 0 ? fieldConfig : {},
-              emailSubject: emailPreview.subject,
-              emailBody: emailPreview.body.replace(/\n/g, '<br>'),
-              status: 'pending',
-              createdAt: serverTimestamp(),
-              updatedAt: serverTimestamp(),
-          });
-          
-          await firestoreBatch.commit();
-          // Trigger the flow immediately after creating the batch
-          await processEmailBatchFlow({ batchId: batchRef.id, limit: BATCH_SIZE });
-        }
-        
-        toast({
-          title: "¡Envío Iniciado!",
-          description: `Se están enviando los correos. Consulta el estado de los envíos para ver el progreso.`,
-        });
-        setSelectedMemberIds(new Set());
-        setIsPreviewModalOpen(false);
+      const result = await directSendAction({
+          clubId,
+          recipients,
+          fieldConfig: availableFields.length > 0 ? fieldConfig : {},
+      });
 
-      } catch (error) {
-        console.error("Error creating email batch:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo crear la tarea de envío." });
-      } finally {
-        setSending(false);
+      if (result.success) {
+          toast({
+              title: result.title,
+              description: result.description,
+          });
+          setSelectedMemberIds(new Set());
+      } else {
+          toast({
+              variant: "destructive",
+              title: "Error de Envío",
+              description: result.error,
+          });
       }
+
+      setSending(false);
     }
     
     const recipientCount = membersToProcess.length;
@@ -480,49 +441,11 @@ export function DataUpdateSender() {
                  
             </CardContent>
              <CardFooter className="border-t pt-6">
-                <Button className="w-full mt-6 gap-2" onClick={handleGeneratePreview} disabled={recipientCount === 0 || sending}>
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Wand2 className="h-4 w-4 mr-2"/>}
-                    {sending ? "Enviando..." : `Configurar y Generar Email para ${recipientCount} Miembro(s)`}
+                <Button className="w-full mt-6 gap-2" onClick={handleSend} disabled={recipientCount === 0 || sending}>
+                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                    {sending ? "Enviando..." : `Enviar solicitud a ${recipientCount} Miembro(s)`}
                 </Button>
             </CardFooter>
-
-            <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
-                <DialogContent className="max-w-2xl">
-                    <DialogHeader>
-                        <DialogTitle>Previsualización del Email</DialogTitle>
-                        <DialogDescription>
-                            Así es como verán el correo tus miembros. Revisa que todo esté correcto antes de enviar.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <div className="space-y-1">
-                            <Label htmlFor="preview-subject">Asunto</Label>
-                            <Input
-                                id="preview-subject"
-                                value={emailPreview.subject}
-                                onChange={(e) => setEmailPreview({ ...emailPreview, subject: e.target.value })}
-                            />
-                        </div>
-                        <div className="space-y-1">
-                            <Label htmlFor="preview-body">Cuerpo del Mensaje</Label>
-                            <Textarea
-                                id="preview-body"
-                                value={emailPreview.body}
-                                onChange={(e) => setEmailPreview({ ...emailPreview, body: e.target.value })}
-                                className="h-48 bg-muted/50"
-                            />
-                            <p className="text-xs text-muted-foreground">La etiqueta [Nombre del Miembro] se reemplazará automáticamente.</p>
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                        <Button onClick={handleSend} disabled={sending}>
-                           {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                           {sending ? 'Enviando...' : `Enviar a ${recipientCount} Miembro(s)`}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
         </Card>
     );
 }
