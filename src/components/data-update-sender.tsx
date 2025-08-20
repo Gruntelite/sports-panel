@@ -129,12 +129,6 @@ export function DataUpdateSender() {
         }
     };
     
-    const membersToProcess = useMemo(() => {
-        return selectedMemberIds.size > 0
-          ? allMembers.filter(m => selectedMemberIds.has(m.id))
-          : filteredMembers;
-      }, [selectedMemberIds, allMembers, filteredMembers]);
-
     const filteredMembers = useMemo(() => {
         if (selectedTypes.size === 0 && selectedTeams.size === 0) {
             return allMembers;
@@ -145,6 +139,12 @@ export function DataUpdateSender() {
             return typeMatch && teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
+
+    const membersToProcess = useMemo(() => {
+        return selectedMemberIds.size > 0
+          ? allMembers.filter(m => selectedMemberIds.has(m.id))
+          : filteredMembers;
+      }, [selectedMemberIds, allMembers, filteredMembers]);
 
     const availableFieldsInfo = useMemo(() => {
         const membersToConsider = membersToProcess;
@@ -521,3 +521,5 @@ export function DataUpdateSender() {
         </Card>
     );
 }
+
+    
