@@ -116,10 +116,8 @@ export function DirectEmailSender() {
     }, [allMembers, selectedTypes, selectedTeams]);
 
     const membersToSend = useMemo(() => {
-        return selectedMemberIds.size > 0
-          ? allMembers.filter(m => selectedMemberIds.has(m.id))
-          : filteredMembers;
-      }, [selectedMemberIds, allMembers, filteredMembers]);
+        return allMembers.filter(m => selectedMemberIds.has(m.id));
+    }, [selectedMemberIds, allMembers]);
 
     const handleSelectMember = (memberId: string) => {
         const newSelection = new Set(selectedMemberIds);
@@ -143,7 +141,7 @@ export function DirectEmailSender() {
       if (!clubId) return;
 
       if (membersToSend.length === 0) {
-        toast({ variant: "destructive", title: "Error", description: "No hay destinatarios seleccionados." });
+        toast({ variant: "destructive", title: "Error", description: "Debes seleccionar al menos un destinatario." });
         return;
       }
       
@@ -189,7 +187,7 @@ export function DirectEmailSender() {
       setSending(false);
     }
     
-    const recipientCount = membersToSend.length;
+    const recipientCount = selectedMemberIds.size;
     const isAllFilteredSelected = filteredMembers.length > 0 && selectedMemberIds.size === filteredMembers.length;
 
     if (loading) {
@@ -285,7 +283,7 @@ export function DirectEmailSender() {
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Destinatarios Específicos (opcional)</Label>
+                    <Label>Destinatarios</Label>
                      <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
                         <DialogTrigger asChild>
                              <Button variant="outline" className="w-full md:w-[400px] justify-between font-normal">
@@ -297,7 +295,7 @@ export function DirectEmailSender() {
                              <DialogHeader>
                                 <DialogTitle>Seleccionar Destinatarios</DialogTitle>
                                 <DialogDescription>
-                                    Puedes seleccionar destinatarios específicos. Si no seleccionas ninguno, el correo se enviará a todos los miembros que coincidan con los filtros.
+                                    Selecciona los miembros que recibirán este correo.
                                 </DialogDescription>
                             </DialogHeader>
                             <Command>
@@ -368,4 +366,5 @@ export function DirectEmailSender() {
             </CardFooter>
         </Card>
     );
-}
+
+    
