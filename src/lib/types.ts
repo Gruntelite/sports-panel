@@ -97,3 +97,13 @@ export type User = {
     avatar?: string;
     authUid?: string; // To link to Firebase Auth user if needed
 }
+
+export type OneTimePayment = {
+    id: string;
+    concept: string;
+    description?: string;
+    amount: number;
+    status: 'pending' | 'paid';
+    issueDate: string;
+    targetTeamIds: string[];
+}
