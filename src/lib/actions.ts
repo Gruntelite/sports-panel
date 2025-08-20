@@ -3,9 +3,11 @@
 
 import { generateCommunicationTemplate, GenerateCommunicationTemplateInput } from "@/ai/flows/generate-communication-template";
 import { processEmailBatchFlow } from "@/ai/flows/process-email-batch";
-import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp, serverTimestamp, FieldValue } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, where, limit, getDocs, writeBatch, Timestamp, serverTimestamp, FieldValue, deleteDoc } from "firebase/firestore";
 import { db as clientDb } from "./firebase";
 import * as admin from 'firebase-admin';
+import type { Player, Coach, Staff } from "./types";
+
 
 // Initialize admin only if it hasn't been initialized
 if (!admin.apps.length) {
@@ -140,43 +142,72 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 
 // Server actions for email batch processing using Admin SDK
 export async function getBatchToProcess({ batchId }: { batchId?: string }) {
+    if (!db) {
+        return { success: false, error: 'Admin DB not initialized' };
+    }
     try {
         let batchQuery;
-        const batchesCollection = db.collectionGroup('emailBatches');
-
-        if (batchId) {
-            batchQuery = batchesCollection.where(admin.firestore.FieldPath.documentId(), 'ends-with', `/${batchId}`);
-        } else {
-            batchQuery = batchesCollection.where('status', '==', 'pending').orderBy('createdAt').limit(1);
-        }
-
-        const snapshot = await batchQuery.get();
-
-        if (snapshot.empty) {
-            return { success: true, batch: null, batchDocPath: null, clubId: null };
-        }
-
-        const batchDoc = snapshot.docs[0];
-        const batchData = batchDoc.data();
-        const clubId = batchDoc.ref.parent.parent?.id; 
-
-        if (!clubId) {
-            await batchDoc.ref.update({ status: 'failed', error: 'Could not determine club ID.' });
-            return { success: false, error: 'Could not determine club ID for a batch.' };
-        }
-
-        await batchDoc.ref.update({ status: 'processing' });
         
-        return { success: true, batch: batchData, clubId, batchDocPath: batchDoc.ref.path };
+        if (batchId) {
+            // This is a targeted retry/initial send, we need to find the batch across all clubs.
+            // This is inefficient but necessary with the current structure.
+            // A better structure might be a root `emailBatches` collection.
+            const clubsSnapshot = await db.collection('clubs').get();
+            let foundDoc = null;
+            for (const clubDoc of clubsSnapshot.docs) {
+                const batchDocRef = clubDoc.ref.collection('emailBatches').doc(batchId);
+                const batchDoc = await batchDocRef.get();
+                if (batchDoc.exists) {
+                    foundDoc = batchDoc;
+                    break;
+                }
+            }
+
+            if (foundDoc) {
+                 const batchData = foundDoc.data();
+                 const clubId = foundDoc.ref.parent.parent?.id; 
+                 await foundDoc.ref.update({ status: 'processing', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+                 return { success: true, batch: batchData, clubId, batchDocPath: foundDoc.ref.path };
+            } else {
+                 return { success: true, batch: null, batchDocPath: null, clubId: null, error: `Batch with ID ${batchId} not found.` };
+            }
+
+        } else {
+            // This is a scheduled run, find any pending batch.
+            batchQuery = db.collectionGroup('emailBatches').where('status', '==', 'pending').orderBy('createdAt').limit(1);
+            const snapshot = await batchQuery.get();
+
+            if (snapshot.empty) {
+                return { success: true, batch: null, batchDocPath: null, clubId: null };
+            }
+
+            const batchDoc = snapshot.docs[0];
+            const batchData = batchDoc.data();
+            const clubId = batchDoc.ref.parent.parent?.id;
+
+            if (!clubId) {
+                await batchDoc.ref.update({ status: 'failed', error: 'Could not determine club ID.' });
+                return { success: false, error: 'Could not determine club ID for a batch.' };
+            }
+
+            await batchDoc.ref.update({ status: 'processing', updatedAt: admin.firestore.FieldValue.serverTimestamp() });
+            
+            return { success: true, batch: batchData, clubId, batchDocPath: batchDoc.ref.path };
+        }
+
     } catch (error: any) {
         console.error("Error in getBatchToProcess:", error);
         return { success: false, error: error.message };
     }
 }
 
+
 const DAILY_LIMIT = 100;
 
 export async function getClubConfig({ clubId }: { clubId: string }) {
+    if (!db) {
+        return { success: false, error: 'Admin DB not initialized' };
+    }
     try {
         const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
         const clubRef = db.collection('clubs').doc(clubId);
@@ -233,6 +264,9 @@ export async function getClubConfig({ clubId }: { clubId: string }) {
 }
 
 export async function updateBatchWithResults({ batchDocPath, results, originalRecipients, emailsSentCount }: { batchDocPath: string, results: any[], originalRecipients: any[], emailsSentCount: number }) {
+    if (!db) {
+        return { success: false, error: 'Admin DB not initialized' };
+    }
     try {
         const batchRef = db.doc(batchDocPath);
         const clubId = batchRef.parent.parent?.id;
@@ -282,7 +316,10 @@ export async function updateBatchWithResults({ batchDocPath, results, originalRe
 }
 
 export async function finalizeBatch({ batchDocPath, status, error }: { batchDocPath: string, status: 'completed' | 'failed' | 'pending', error?: string }) {
-     try {
+    if (!db) {
+        return { success: false, error: 'Admin DB not initialized' };
+    }
+    try {
         const batchRef = db.doc(batchDocPath);
         const updateData: { status: string, error?: string | FieldValue, updatedAt: admin.firestore.FieldValue } = { 
             status,
@@ -310,6 +347,9 @@ type TokenData = {
 }
 
 export async function createDataUpdateTokens({ tokensToCreate }: { tokensToCreate: TokenData[] }) {
+    if (!db) {
+        return { success: false, error: 'Admin DB not initialized' };
+    }
     try {
         const tokenBatch = db.batch();
         for (const tokenData of tokensToCreate) {
@@ -340,11 +380,94 @@ export async function retryBatchAction({ clubId, batchId }: { clubId: string, ba
         });
         
         // The scheduler will pick this up, but we can also trigger it immediately
-        await processEmailBatchFlow({ batchId });
+        await processEmailBatchFlow({ batchId, limit: 100 });
         
         return { success: true };
     } catch (error: any) {
         console.error("Error retrying batch:", error);
         return { success: false, error: "No se pudo reintentar el lote." };
+    }
+}
+
+
+// New actions for the public data update form
+export async function getMemberDataForUpdate({ token }: { token: string }) {
+    try {
+        const tokenRef = doc(clientDb, "dataUpdateTokens", token);
+        const tokenSnap = await getDoc(tokenRef);
+
+        if (!tokenSnap.exists()) {
+            return { success: false, error: "El enlace no es válido o ha caducado." };
+        }
+
+        const tokenData = tokenSnap.data();
+        const now = Timestamp.now();
+        if (tokenData.expires.toMillis() < now.toMillis()) {
+             await deleteDoc(tokenRef);
+             return { success: false, error: "El enlace ha caducado. Por favor, solicita uno nuevo." };
+        }
+        
+        const { clubId, memberId, memberType, fieldConfig } = tokenData;
+
+        let collectionName = "";
+        if (memberType === 'Jugador') collectionName = 'players';
+        else if (memberType === 'Entrenador') collectionName = 'coaches';
+        else if (memberType === 'Staff') collectionName = 'staff';
+        else return { success: false, error: "Tipo de miembro no válido." };
+
+        const memberRef = doc(clientDb, "clubs", clubId, collectionName, memberId);
+        const memberSnap = await getDoc(memberRef);
+
+        if (!memberSnap.exists()) {
+            return { success: false, error: "No se encontró el registro del miembro." };
+        }
+
+        const clubDoc = await getDoc(doc(clientDb, 'clubs', clubId));
+
+        return {
+            success: true,
+            data: {
+                memberData: memberSnap.data(),
+                clubName: clubDoc.data()?.name || "Tu Club",
+                memberType,
+                fieldConfig,
+            }
+        };
+
+    } catch (error: any) {
+        console.error("Error getting member data for update:", error);
+        return { success: false, error: "Ocurrió un error al cargar los datos." };
+    }
+}
+
+export async function saveMemberDataFromUpdate({ token, updatedData }: { token: string, updatedData: Partial<Player | Coach | Staff> }) {
+    try {
+         const tokenRef = doc(clientDb, "dataUpdateTokens", token);
+        const tokenSnap = await getDoc(tokenRef);
+
+        if (!tokenSnap.exists()) {
+            return { success: false, error: "El enlace no es válido o ya ha sido utilizado." };
+        }
+        const { clubId, memberId, memberType } = tokenSnap.data();
+
+        let collectionName = "";
+        if (memberType === 'Jugador') collectionName = 'players';
+        else if (memberType === 'Entrenador') collectionName = 'coaches';
+        else if (memberType === 'Staff') collectionName = 'staff';
+        else return { success: false, error: "Tipo de miembro no válido." };
+
+        const memberRef = doc(clientDb, "clubs", clubId, collectionName, memberId);
+        
+        const batch = writeBatch(clientDb);
+        batch.update(memberRef, updatedData);
+        batch.delete(tokenRef); // Invalidate token after use
+        
+        await batch.commit();
+
+        return { success: true };
+
+    } catch(error: any) {
+        console.error("Error saving member data from update:", error);
+        return { success: false, error: "No se pudieron guardar los cambios." };
     }
 }
