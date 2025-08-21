@@ -88,6 +88,7 @@ import { format } from "date-fns";
 export default function CoachesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -221,7 +222,7 @@ export default function CoachesPage() {
         return;
     }
 
-    setLoading(true);
+    setSaving(true);
     let coachId = coachData.id;
 
     try {
@@ -259,6 +260,7 @@ export default function CoachesPage() {
       } else {
         const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
         coachId = coachDocRef.id;
+        setCoachData(prev => ({...prev, id: coachId})); // Set new ID for document upload
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
         
         if (dataToSave.email) {
@@ -276,44 +278,56 @@ export default function CoachesPage() {
         }
       }
 
-      if (documentToUpload && coachId) {
-        const file = documentToUpload;
-        const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
-        const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, file);
-        const url = await getDownloadURL(docRef);
-
-        const newDocument: Document = {
-            name: file.name,
-            url,
-            path: filePath,
-            createdAt: Timestamp.now(),
-        };
-        
-        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachId);
-        await updateDoc(coachDocRef, {
-            documents: arrayUnion(newDocument)
-        });
-
-        setCoachData(prev => ({
-            ...prev,
-            documents: [...(prev.documents || []), newDocument]
-        }));
-        
-        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
-      }
-      
       setIsModalOpen(false);
-      setCoachData({});
       fetchData(clubId);
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
+  const handleDocumentUpload = async () => {
+    if (!documentToUpload || !coachData.id || !clubId) {
+      toast({ variant: "destructive", title: "Error", description: "Selecciona un archivo para subir." });
+      return;
+    }
+    setSaving(true);
+    try {
+      const file = documentToUpload;
+      const filePath = `coach-documents/${clubId}/${coachData.id}/${uuidv4()}-${file.name}`;
+      const docRef = ref(storage, filePath);
+      await uploadBytes(docRef, file);
+      const url = await getDownloadURL(docRef);
+  
+      const newDocument: Document = {
+        name: file.name,
+        url,
+        path: filePath,
+        createdAt: Timestamp.now(),
+      };
+      
+      const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+      await updateDoc(coachDocRef, {
+        documents: arrayUnion(newDocument)
+      });
+  
+      // Update state immediately to reflect the change
+      setCoachData(prev => ({
+        ...prev,
+        documents: [...(prev.documents || []), newDocument]
+      }));
+      setDocumentToUpload(null); // Clear the input
+  
+      toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDeleteCoach = async () => {
     if (!coachToDelete || !clubId) return;
@@ -431,26 +445,27 @@ export default function CoachesPage() {
 
   const handleDocumentDelete = async (documentToDelete: Document) => {
     if (!coachData.id || !clubId) return;
-
+    setSaving(true);
     try {
-        const fileRef = ref(storage, documentToDelete.path);
-        await deleteObject(fileRef);
+      const fileRef = ref(storage, documentToDelete.path);
+      await deleteObject(fileRef);
 
-        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        
-        await updateDoc(coachDocRef, {
-            documents: arrayRemove(documentToDelete)
-        });
-        
-        setCoachData(prev => ({
-            ...prev,
-            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
-        }));
+      const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+      await updateDoc(coachDocRef, {
+        documents: arrayRemove(documentToDelete)
+      });
+      
+      setCoachData(prev => ({
+          ...prev,
+          documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+      }));
 
-        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
+      toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
     } catch (error) {
-        console.error("Error deleting document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+      console.error("Error deleting document:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -768,7 +783,12 @@ export default function CoachesPage() {
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
+                                    <div className="flex items-center gap-2">
+                                        <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
+                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || saving}>
+                                            {saving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Upload className="h-4 w-4"/>}
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <h4 className="font-medium">Documentos Guardados</h4>
@@ -776,12 +796,14 @@ export default function CoachesPage() {
                                         <div className="border rounded-md">
                                             {coachData.documents.map(doc => (
                                                 <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
-                                                    <span className="text-sm font-medium truncate pr-2">{doc.name}</span>
+                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate pr-2 hover:underline">
+                                                        {doc.name}
+                                                    </a>
                                                     <div className="flex gap-1">
                                                         <Button asChild size="icon" variant="outline" className="h-8 w-8">
                                                             <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
                                                         </Button>
-                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
+                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)} disabled={saving}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
@@ -806,8 +828,8 @@ export default function CoachesPage() {
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="button" onClick={handleSaveCoach} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                <Button type="button" onClick={handleSaveCoach} disabled={saving}>
+                    {saving ? <Loader2 className="animate-spin" /> : 'Guardar'}
                 </Button>
             </DialogFooter>
         </DialogContent>

@@ -90,6 +90,7 @@ import { format } from "date-fns";
 export default function PlayersPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [players, setPlayers] = useState<Player[]>([]);
@@ -228,7 +229,7 @@ export default function PlayersPage() {
         return;
     }
 
-    setLoading(true);
+    setSaving(true);
     let playerId = playerData.id;
 
     try {
@@ -266,6 +267,7 @@ export default function PlayersPage() {
       } else {
         const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
         playerId = playerDocRef.id;
+        setPlayerData(prev => ({...prev, id: playerId})); // Set new ID for document upload
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
         
         const contactEmail = dataToSave.tutorEmail;
@@ -285,44 +287,58 @@ export default function PlayersPage() {
             });
         }
       }
-      
-      if (documentToUpload && playerId) {
-        const file = documentToUpload;
-        const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
-        const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, file);
-        const url = await getDownloadURL(docRef);
-
-        const newDocument: Document = {
-            name: file.name,
-            url,
-            path: filePath,
-            createdAt: Timestamp.now(),
-        };
-        
-        const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
-        await updateDoc(playerDocRef, {
-            documents: arrayUnion(newDocument)
-        });
-        
-        setPlayerData(prev => ({
-            ...prev,
-            documents: [...(prev.documents || []), newDocument]
-        }));
-        
-        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
-      }
 
       setIsModalOpen(false);
-      setPlayerData({});
       fetchData(clubId);
     } catch (error) {
         console.error("Error saving player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
+
+  const handleDocumentUpload = async () => {
+    if (!documentToUpload || !playerData.id || !clubId) {
+      toast({ variant: "destructive", title: "Error", description: "Selecciona un archivo para subir." });
+      return;
+    }
+    setSaving(true);
+    try {
+      const file = documentToUpload;
+      const filePath = `player-documents/${clubId}/${playerData.id}/${uuidv4()}-${file.name}`;
+      const docRef = ref(storage, filePath);
+      await uploadBytes(docRef, file);
+      const url = await getDownloadURL(docRef);
+  
+      const newDocument: Document = {
+        name: file.name,
+        url,
+        path: filePath,
+        createdAt: Timestamp.now(),
+      };
+      
+      const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+      await updateDoc(playerDocRef, {
+        documents: arrayUnion(newDocument)
+      });
+  
+      // Update state immediately to reflect the change
+      setPlayerData(prev => ({
+        ...prev,
+        documents: [...(prev.documents || []), newDocument]
+      }));
+      setDocumentToUpload(null); // Clear the input
+  
+      toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo subir el documento." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const handleDeletePlayer = async () => {
     if (!playerToDelete || !clubId) return;
@@ -440,26 +456,27 @@ export default function PlayersPage() {
 
   const handleDocumentDelete = async (documentToDelete: Document) => {
     if (!playerData.id || !clubId) return;
-
+    setSaving(true);
     try {
-        const fileRef = ref(storage, documentToDelete.path);
-        await deleteObject(fileRef);
+      const fileRef = ref(storage, documentToDelete.path);
+      await deleteObject(fileRef);
 
-        const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
-        
-        await updateDoc(playerDocRef, {
-            documents: arrayRemove(documentToDelete)
-        });
-        
-        setPlayerData(prev => ({
-            ...prev,
-            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
-        }));
+      const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+      await updateDoc(playerDocRef, {
+        documents: arrayRemove(documentToDelete)
+      });
+      
+      setPlayerData(prev => ({
+          ...prev,
+          documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+      }));
 
-        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
+      toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
     } catch (error) {
-        console.error("Error deleting document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+      console.error("Error deleting document:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -804,7 +821,12 @@ export default function PlayersPage() {
                             <div className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
+                                    <div className="flex items-center gap-2">
+                                        <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
+                                        <Button onClick={handleDocumentUpload} disabled={!documentToUpload || saving}>
+                                            {saving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Upload className="h-4 w-4"/>}
+                                        </Button>
+                                    </div>
                                 </div>
                                 <div className="space-y-2">
                                     <h4 className="font-medium">Documentos Guardados</h4>
@@ -812,12 +834,14 @@ export default function PlayersPage() {
                                         <div className="border rounded-md">
                                             {playerData.documents.map(doc => (
                                                 <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
-                                                    <span className="text-sm font-medium truncate pr-2">{doc.name}</span>
+                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate pr-2 hover:underline">
+                                                        {doc.name}
+                                                    </a>
                                                     <div className="flex gap-1">
                                                         <Button asChild size="icon" variant="outline" className="h-8 w-8">
                                                             <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
                                                         </Button>
-                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
+                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)} disabled={saving}>
                                                             <Trash2 className="h-4 w-4" />
                                                         </Button>
                                                     </div>
@@ -842,8 +866,8 @@ export default function PlayersPage() {
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="button" onClick={handleSavePlayer} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                <Button type="button" onClick={handleSavePlayer} disabled={saving}>
+                    {saving ? <Loader2 className="animate-spin" /> : 'Guardar'}
                 </Button>
             </DialogFooter>
         </DialogContent>
