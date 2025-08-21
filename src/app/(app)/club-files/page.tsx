@@ -90,6 +90,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
+type SuperAdmin = {
+    id: string;
+    name: string;
+}
+
 export default function ClubFilesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -98,6 +103,8 @@ export default function ClubFilesPage() {
 
   const [documents, setDocuments] = useState<Document[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [superAdmin, setSuperAdmin] = useState<SuperAdmin | null>(null);
+
 
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
@@ -150,9 +157,14 @@ export default function ClubFilesPage() {
     try {
       const q = query(collection(db, "clubs", clubId, "users"), orderBy("name"));
       const querySnapshot = await getDocs(q);
-      const usersList = querySnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as User)
-      );
+      const usersList: User[] = [];
+      querySnapshot.forEach((doc) => {
+          const userData = { id: doc.id, ...doc.data() } as User;
+          usersList.push(userData);
+          if (userData.role === 'super-admin') {
+              setSuperAdmin({ id: userData.id, name: userData.name });
+          }
+      });
       setUsers(usersList);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -175,20 +187,15 @@ export default function ClubFilesPage() {
       const fileRef = ref(storage, filePath);
       await uploadBytes(fileRef, fileToUpload);
       const url = await getDownloadURL(fileRef);
-
+      
       let ownerId = selectedUserId;
-      let ownerName = users.find(u => u.id === selectedUserId)?.name;
+      let ownerName: string | undefined = users.find(u => u.id === selectedUserId)?.name;
 
-      if (!ownerId) {
-          const superAdminQuery = query(collection(db, 'clubs', clubId, 'users'), where('role', '==', 'super-admin'));
-          const superAdminSnapshot = await getDocs(superAdminQuery);
-          if (!superAdminSnapshot.empty) {
-              const superAdmin = superAdminSnapshot.docs[0];
-              ownerId = superAdmin.id;
-              ownerName = superAdmin.data().name;
-          }
+      if (!ownerId && superAdmin) {
+          ownerId = superAdmin.id;
+          ownerName = superAdmin.name;
       }
-
+      
       const newDocument: Omit<Document, "id"> = {
         name: documentNameToSave.trim(),
         url,
@@ -209,7 +216,7 @@ export default function ClubFilesPage() {
       setFileToUpload(null);
       setDocumentNameToSave("");
       setSelectedUserId(null);
-      fetchDocuments(clubId);
+      if (clubId) fetchDocuments(clubId); // Refetch documents to show the new one
     } catch (error) {
       console.error("Error uploading file:", error);
       toast({
@@ -238,7 +245,7 @@ export default function ClubFilesPage() {
       });
 
       setDocToDelete(null);
-      fetchDocuments(clubId);
+      if (clubId) fetchDocuments(clubId);
     } catch (error) {
       console.error("Error deleting document:", error);
       toast({
@@ -472,3 +479,5 @@ export default function ClubFilesPage() {
     </>
   );
 }
+
+    
