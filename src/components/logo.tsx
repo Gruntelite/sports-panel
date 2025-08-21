@@ -17,7 +17,7 @@ export function Logo() {
         {/* izquierda turquesa */}
         <path d="M0,0 L400,0 L400,290 C260,340 160,50 0,110 Z" fill="#2ECCB6"/>
         {/* derecha azul */}
-        <path d="M0,110 C160,50 260,340 400,290 L400,400 L0,400 Z" fill="hsl(var(--primary))"/>
+        <path d="M0,110 C160,50 260,340 400,290 L400,400 L0,400 Z" fill="#2563EB"/>
       </g>
     </svg>
   );
