@@ -323,12 +323,11 @@ export default function PlayersPage() {
         documents: arrayUnion(newDocument)
       });
   
-      // Update state immediately to reflect the change
       setPlayerData(prev => ({
         ...prev,
         documents: [...(prev.documents || []), newDocument]
       }));
-      setDocumentToUpload(null); // Clear the input
+      setDocumentToUpload(null); 
   
       toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
     } catch (error) {
