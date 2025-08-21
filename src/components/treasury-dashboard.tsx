@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -22,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, CalendarIcon, User, ChevronDown } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc, orderBy } from "firebase/firestore";
 import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
@@ -331,7 +332,7 @@ export function TreasuryDashboard() {
       setLocalFeeExcluded(settingsData.feeExcludedMonths || []);
       setLocalCoachFeeExcluded(settingsData.coachFeeExcludedMonths || []);
       
-      const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
+      const teamsQuery = query(collection(db, "clubs", clubId, "teams"), orderBy("order"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeams(teamsList);
@@ -724,7 +725,7 @@ export function TreasuryDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center gap-1">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2">
                         Ingresos Previstos
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -750,7 +751,7 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pagos a Entrenadores {timeRangeLabel}</CardTitle>
+                    <CardTitle className="text-sm font-medium">Pagos a Entrenadores ({timeRangeLabel})</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
@@ -760,7 +761,7 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ingresos por Patrocinios {timeRangeLabel}</CardTitle>
+                    <CardTitle className="text-sm font-medium">Ingresos por Patrocinios ({timeRangeLabel})</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
@@ -770,7 +771,7 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Gastos Totales {timeRangeLabel}</CardTitle>
+                    <CardTitle className="text-sm font-medium">Gastos Totales ({timeRangeLabel})</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>

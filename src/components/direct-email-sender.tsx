@@ -1,9 +1,10 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, orderBy } from "firebase/firestore";
 import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
@@ -89,7 +90,7 @@ export function DirectEmailSender() {
             
             setAllMembers(members);
             
-            const teamsSnap = await getDocs(collection(db, "clubs", clubId, "teams"));
+            const teamsSnap = await getDocs(query(collection(db, "clubs", clubId, "teams"), orderBy("order")));
             setTeams(teamsSnap.docs.map(doc => ({id: doc.id, ...doc.data()} as Team)));
 
         } catch (error) {
