@@ -16,7 +16,7 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
-import type { CalendarEvent } from "@/lib/types";
+import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
 
 const iconMap = {
   Users: Users,
@@ -97,26 +97,28 @@ export default function DashboardPage() {
         // --- Fetch Today's Schedule ---
         let scheduleEntries: ScheduleEntry[] = [];
         
-        // 1. Fetch from schedule templates
+        // 1. Fetch templates and settings
+        const schedulesCol = collection(db, "clubs", clubId, "schedules");
+        const schedulesSnapshot = await getDocs(schedulesCol);
+        const templates = schedulesSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScheduleTemplate));
+
         const settingsRef = doc(db, "clubs", clubId, "settings", "config");
         const settingsSnap = await getDoc(settingsRef);
         const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : null;
 
-        const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-        const currentDayName = daysOfWeek[today.getDay()];
-        
+        // 2. Determine which template to use for today
         const todayStr = today.toISOString().split('T')[0];
         const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
         const overrideSnap = await getDoc(overrideRef);
-        
         const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
 
+        // 3. Get schedule entries from the correct template
         if (templateIdToUse) {
-            const scheduleRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
-            const scheduleSnap = await getDoc(scheduleRef);
-            if (scheduleSnap.exists()) {
-                const scheduleData = scheduleSnap.data();
-                const daySchedule = scheduleData.weeklySchedule?.[currentDayName] || [];
+            const template = templates.find(t => t.id === templateIdToUse);
+            if (template) {
+                const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+                const currentDayName = daysOfWeek[today.getDay()];
+                const daySchedule = template.weeklySchedule?.[currentDayName] || [];
                 scheduleEntries = daySchedule.map((entry: any) => ({
                     id: entry.id,
                     teamName: entry.teamName,
@@ -127,10 +129,10 @@ export default function DashboardPage() {
             }
         }
         
-        // 2. Fetch custom events for today
-        const startOfDay = new Date();
+        // 4. Fetch custom events for today
+        const startOfDay = new Date(today);
         startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date();
+        const endOfDay = new Date(today);
         endOfDay.setHours(23, 59, 59, 999);
 
         const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
@@ -148,7 +150,8 @@ export default function DashboardPage() {
                 location: eventData.location,
             };
         });
-
+        
+        // 5. Combine and sort all events for today
         const allTodaysEvents = [...scheduleEntries, ...manualTodaysEvents];
         allTodaysEvents.sort((a, b) => a.time.localeCompare(b.time));
 
