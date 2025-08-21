@@ -57,6 +57,7 @@ export type Coach = {
     id: string;
     name:string;
     lastName: string;
+    role?: string;
     email: string; // Made mandatory
     phone?: string;
     teamId?: string;

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,6 +17,7 @@ import {
   Filter,
   Trash2,
   Save,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -81,7 +81,20 @@ import type { Team, Coach } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
 
+const technicalRoles = [
+    "Entrenador",
+    "Segundo Entrenador",
+    "Entrenador de Porteros",
+    "Preparador Físico",
+    "Delegado",
+    "Fisioterapeuta",
+    "Psicólogo",
+    "Nutricionista",
+    "Analista",
+    "Otro",
+];
 
 export default function CoachesPage() {
   const { toast } = useToast();
@@ -157,12 +170,19 @@ export default function CoachesPage() {
       const coachesSnapshot = await getDocs(coachesQuery);
       const coachesList = coachesSnapshot.docs.map(doc => {
           const data = doc.data();
-           const team = teamsList.find(t => t.id === data.teamId);
+           let teamName = "Sin equipo";
+           if (data.teamId === 'club') {
+                teamName = "Club (transversal)";
+           } else {
+                const team = teamsList.find(t => t.id === data.teamId);
+                if (team) teamName = team.name;
+           }
+
           return { 
               id: doc.id, 
               ...data,
               avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-              teamName: team ? team.name : "Sin equipo",
+              teamName: teamName,
               hasMissingData: hasMissingData(data)
           } as Coach
       });
@@ -234,7 +254,12 @@ export default function CoachesPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
       
-      const teamName = teams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
+      let teamName = "Sin equipo";
+      if (coachData.teamId === 'club') {
+          teamName = "Club (transversal)";
+      } else {
+          teamName = teams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
+      }
 
       const dataToSave = {
         ...coachData,
@@ -248,10 +273,10 @@ export default function CoachesPage() {
       if (modalMode === 'edit' && coachData.id) {
         const coachRef = doc(db, "clubs", clubId, "coaches", coachData.id);
         await updateDoc(coachRef, dataToSave);
-        toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
+        toast({ title: "Miembro actualizado", description: `${coachData.name} ha sido actualizado.` });
       } else {
         const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
-        toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
+        toast({ title: "Miembro añadido", description: `${coachData.name} ha sido añadido al equipo técnico.` });
         
         if (dataToSave.email) {
             const userRef = doc(collection(db, "clubs", clubId, "users"));
@@ -272,7 +297,7 @@ export default function CoachesPage() {
       setCoachData({});
     } catch (error) {
         console.error("Error saving coach: ", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el miembro." });
     } finally {
       setSaving(false);
       if(clubId) fetchData(clubId);
@@ -298,10 +323,10 @@ export default function CoachesPage() {
             await deleteDoc(doc(db, 'clubs', clubId, 'users', userDoc.id));
         }
 
-        toast({ title: "Entrenador eliminado", description: `${coachToDelete.name} ${coachToDelete.lastName} ha sido eliminado.`});
+        toast({ title: "Miembro eliminado", description: `${coachToDelete.name} ${coachToDelete.lastName} ha sido eliminado.`});
     } catch (error) {
         console.error("Error deleting coach: ", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar al entrenador." });
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar al miembro." });
     } finally {
         setIsDeleting(false);
         setCoachToDelete(null);
@@ -330,7 +355,13 @@ export default function CoachesPage() {
 
     setLoading(true);
     try {
-        const teamName = teams.find(t => t.id === teamId)?.name || "Sin equipo";
+        let teamName = "Sin equipo";
+        if (teamId === 'club') {
+            teamName = "Club (transversal)";
+        } else if (teamId !== 'unassigned') {
+            teamName = teams.find(t => t.id === teamId)?.name || "Sin equipo";
+        }
+        
         const batch = writeBatch(db);
         selectedCoaches.forEach(coachId => {
             const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
@@ -339,13 +370,13 @@ export default function CoachesPage() {
         await batch.commit();
 
         toast({
-            title: "Entrenadores actualizados",
-            description: `${selectedCoaches.length} entrenadores han sido asignados al nuevo equipo.`
+            title: "Miembros actualizados",
+            description: `${selectedCoaches.length} miembros han sido asignados al nuevo equipo.`
         });
         setSelectedCoaches([]);
     } catch (error) {
         console.error("Error assigning coaches in bulk:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo asignar los entrenadores al equipo." });
+        toast({ variant: "destructive", title: "Error", description: "No se pudo asignar los miembros al equipo." });
     } finally {
         setLoading(false);
         if(clubId) fetchData(clubId);
@@ -380,13 +411,13 @@ export default function CoachesPage() {
         await batch.commit();
 
         toast({
-            title: "Entrenadores eliminados",
-            description: `${selectedCoaches.length} entrenadores han sido eliminados.`
+            title: "Miembros eliminados",
+            description: `${selectedCoaches.length} miembros han sido eliminados.`
         });
         setSelectedCoaches([]);
     } catch (error) {
         console.error("Error deleting coaches in bulk:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar a los entrenadores." });
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar a los miembros." });
     } finally {
         setIsDeleting(false);
         setIsBulkDeleteAlertOpen(false);
@@ -411,9 +442,9 @@ export default function CoachesPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Entrenadores</CardTitle>
+              <CardTitle>Equipo Técnico</CardTitle>
               <CardDescription>
-                Gestiona los entrenadores de tu club.
+                Gestiona a todos los miembros del personal técnico de tu club.
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
@@ -431,6 +462,9 @@ export default function CoachesPage() {
                        <DropdownMenuSub>
                          <DropdownMenuSubTrigger>Asignar a Equipo</DropdownMenuSubTrigger>
                          <DropdownMenuSubContent>
+                            <DropdownMenuItem onSelect={() => handleBulkAssignTeam('club')}>Club (transversal)</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleBulkAssignTeam('unassigned')}>Sin equipo</DropdownMenuItem>
+                            <DropdownMenuSeparator/>
                            {teams.map(team => (
                              <DropdownMenuItem key={team.id} onSelect={() => handleBulkAssignTeam(team.id)}>
                                {team.name}
@@ -453,7 +487,7 @@ export default function CoachesPage() {
                   <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Añadir Entrenador
+                        Añadir Miembro
                     </span>
                   </Button>
                 </>
@@ -473,9 +507,9 @@ export default function CoachesPage() {
                   />
                 </TableHead>
                 <TableHead>Nombre</TableHead>
+                <TableHead>Cargo</TableHead>
                 <TableHead>Equipo</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Teléfono</TableHead>
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -512,9 +546,9 @@ export default function CoachesPage() {
                       </div>
                     </div>
                   </TableCell>
+                  <TableCell><Badge variant="secondary">{coach.role || 'Sin cargo'}</Badge></TableCell>
                   <TableCell>{coach.teamName}</TableCell>
                   <TableCell>{coach.email || 'N/A'}</TableCell>
-                  <TableCell>{coach.phone || 'N/A'}</TableCell>
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
@@ -540,7 +574,7 @@ export default function CoachesPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Mostrando <strong>{coaches.length}</strong> de <strong>{coaches.length}</strong> entrenadores
+            Mostrando <strong>{coaches.length}</strong> de <strong>{coaches.length}</strong> miembros
           </div>
         </CardFooter>
       </Card>
@@ -548,19 +582,19 @@ export default function CoachesPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Entrenador' : 'Editar Entrenador'}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Miembro' : 'Editar Miembro'}</DialogTitle>
                 <DialogDescription>
-                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo entrenador al club.' : 'Modifica la información del entrenador.'}
+                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo miembro al equipo técnico.' : 'Modifica la información del miembro.'}
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
                 <div className="flex flex-col items-center gap-4 pt-5">
-                    <Label>Foto del Entrenador</Label>
+                    <Label>Foto</Label>
                     <Avatar className="h-32 w-32">
                         <AvatarImage src={imagePreview || coachData.avatar} />
                         <AvatarFallback>
                             {(coachData.name || 'E').charAt(0)}
-                            {(coachData.lastName || 'N').charAt(0)}
+                            {(coachData.lastName || 'T').charAt(0)}
                         </AvatarFallback>
                     </Avatar>
                      <Button asChild variant="outline" size="sm">
@@ -576,7 +610,7 @@ export default function CoachesPage() {
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
-                        <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
+                        <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>Cargo y Equipo</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -635,7 +669,7 @@ export default function CoachesPage() {
                                 checked={coachData.isOwnTutor || false}
                                 onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
                               />
-                              <Label htmlFor="isOwnTutor" className="font-normal">El entrenador es su propio tutor (mayor de 18 años)</Label>
+                              <Label htmlFor="isOwnTutor" className="font-normal">El miembro del staff es su propio tutor (mayor de 18 años)</Label>
                           </div>
                             
                             {!(coachData.isOwnTutor) && (
@@ -674,15 +708,18 @@ export default function CoachesPage() {
                     <TabsContent value="payment" className="pt-6">
                         <div className="min-h-[280px]">
                             <div className="space-y-6">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                        <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                        <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
-                                    </div>
+                                 <div className="space-y-2">
+                                    <Label htmlFor="role">Cargo</Label>
+                                    <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un cargo" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {technicalRoles.map(role => (
+                                                <SelectItem key={role} value={role}>{role}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="teamId">Equipo Asignado</Label>
@@ -692,11 +729,23 @@ export default function CoachesPage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                            <SelectItem value="club">Club (transversal)</SelectItem>
+                                            <DropdownMenuSeparator/>
                                             {teams.map(team => (
                                                 <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                        <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                        <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -719,7 +768,7 @@ export default function CoachesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al entrenador {coachToDelete?.name} {coachToDelete?.lastName}.
+              Esta acción no se puede deshacer. Se eliminará permanentemente a {coachToDelete?.name} {coachToDelete?.lastName}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -735,13 +784,13 @@ export default function CoachesPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedCoaches.length} entrenadores.
+              Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedCoaches.length} miembros.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>Cancelar</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Entrenadores'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Miembros'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
