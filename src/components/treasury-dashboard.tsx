@@ -36,6 +36,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 export function TreasuryDashboard() {
   const { toast } = useToast();
@@ -52,8 +54,7 @@ export function TreasuryDashboard() {
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   
   const [stats, setStats] = useState({
-      pending: 0,
-      totalFees: 0,
+      expectedIncome: 0,
   });
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -109,7 +110,6 @@ export function TreasuryDashboard() {
               id: doc.id,
               ...data,
               teamName: team ? team.name : "Sin equipo",
-              paymentStatus: data.paymentStatus || 'pending'
           } as Player
       });
       setPlayers(playersList);
@@ -125,10 +125,10 @@ export function TreasuryDashboard() {
       const paymentsList = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OneTimePayment));
       setOneTimePayments(paymentsList);
 
-      const pendingCount = playersList.reduce((acc, player) => {
+      const expectedTotal = playersList.reduce((acc, player) => {
           return acc + (player.monthlyFee || 0);
       }, 0);
-      setStats({ pending: pendingCount, totalFees: 0 });
+      setStats({ expectedIncome: expectedTotal });
 
     } catch (error) {
       console.error("Error fetching treasury data:", error);
@@ -263,22 +263,12 @@ export function TreasuryDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Cuotas Pendientes</CardTitle>
-                    <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-                </CardHeader>
-                <CardContent>
-                    <div className="text-2xl font-bold">{stats.pending.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Total de cuotas por cobrar este mes.</p>
-                </CardContent>
-            </Card>
-             <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ingresos (Mes)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Ingresos Previstos (Mes)</CardTitle>
                     <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">0,00 €</div>
-                     <p className="text-xs text-muted-foreground">Total de ingresos por cuotas este mes.</p>
+                    <div className="text-2xl font-bold">{stats.expectedIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
+                    <p className="text-xs text-muted-foreground">Suma de todas las cuotas mensuales de jugadores.</p>
                 </CardContent>
             </Card>
         </div>
@@ -305,9 +295,9 @@ export function TreasuryDashboard() {
         <TabsContent value="fees" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Estado de Cuotas Mensuales</CardTitle>
+              <CardTitle>Listado de Cuotas Mensuales</CardTitle>
               <CardDescription>
-                Supervisa el estado de pago de las cuotas de todos los jugadores.
+                Consulta las cuotas asignadas a cada jugador.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -317,24 +307,15 @@ export function TreasuryDashboard() {
                     <TableHead>Jugador</TableHead>
                     <TableHead>Equipo</TableHead>
                     <TableHead>Cuota Mensual</TableHead>
-                    <TableHead>Estado</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredPlayers.map((player) => {
-                      const status = getStatusVariant(player.paymentStatus);
-                      const StatusIcon = status.icon;
                       return (
                         <TableRow key={player.id}>
                             <TableCell className="font-medium">{player.name} {player.lastName}</TableCell>
                             <TableCell>{player.teamName}</TableCell>
                             <TableCell>{player.monthlyFee ? `${player.monthlyFee.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}` : 'No definida'}</TableCell>
-                            <TableCell>
-                                <Badge variant={status.variant}>
-                                    <StatusIcon className="mr-1 h-3 w-3" />
-                                    {getStatusText(player.paymentStatus)}
-                                </Badge>
-                            </TableCell>
                         </TableRow>
                       )
                   })}
