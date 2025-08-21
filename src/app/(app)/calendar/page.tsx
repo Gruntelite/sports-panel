@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format, toDate } from "date-fns";
+import { format } from "date-fns";
 
 
 type ScheduleTemplate = {
@@ -130,12 +130,12 @@ function CalendarView() {
     if (!clubId) return;
     setLoading(true);
     try {
-      const firstDayOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-      const lastDayOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
+      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+      const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
       const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"), 
-          where('date', '>=', firstDayOfMonth.toISOString().split('T')[0]),
-          where('date', '<=', lastDayOfMonth.toISOString().split('T')[0])
+          where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
+          where('date', '<=', format(lastDayOfMonth, "yyyy-MM-dd"))
       );
       const overridesSnapshot = await getDocs(overridesQuery);
       const monthOverrides = new Map<string, string>();
@@ -147,11 +147,11 @@ function CalendarView() {
       let allEvents: CalendarEvent[] = [];
       const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       
-      const loopStartDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-      const loopEndDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
+      const loopStartDate = new Date(date.getFullYear(), date.getMonth(), 1);
+      const loopEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
 
-      for (let d = loopStartDate; d <= loopEndDate; d.setUTCDate(d.getUTCDate() + 1)) {
-          const dayStr = d.toISOString().split('T')[0];
+      for (let d = new Date(loopStartDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
+          const dayStr = format(d, "yyyy-MM-dd");
           const templateIdToUse = monthOverrides.get(dayStr) || defaultTemplateId;
 
           if (!templateIdToUse) continue;
@@ -160,7 +160,7 @@ function CalendarView() {
           if (!template) continue;
 
           const weeklySchedule = template.weeklySchedule;
-          const dayName = daysOfWeek[d.getUTCDay()];
+          const dayName = daysOfWeek[d.getDay()];
           const daySchedule = weeklySchedule?.[dayName] || [];
 
           daySchedule.forEach((training: any) => {
@@ -251,8 +251,8 @@ function CalendarView() {
   };
   
   const handleDayClick = (day: number) => {
-    const dayDate = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), day));
-    const dayStr = dayDate.toISOString().split('T')[0];
+    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dayStr = format(dayDate, "yyyy-MM-dd");
 
     const newSelectedDays = new Set(selectedDays);
     if (newSelectedDays.has(dayStr)) {
@@ -268,24 +268,14 @@ function CalendarView() {
     setIsUpdating(true);
     try {
         const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        await updateDoc(settingsRef, { defaultScheduleTemplateId: templateId });
+        await setDoc(settingsRef, { defaultScheduleTemplateId: templateId }, { merge: true });
         setDefaultTemplateId(templateId);
         toast({ title: "Plantilla por Defecto Actualizada", description: "Se ha establecido la nueva plantilla de horarios por defecto." });
     } catch(e) {
-        if ((e as any).code === 'not-found') {
-            try {
-                const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-                await setDoc(settingsRef, { defaultScheduleTemplateId: templateId });
-                setDefaultTemplateId(templateId);
-                toast({ title: "Plantilla por Defecto Guardada", description: "Se ha establecido la nueva plantilla de horarios por defecto." });
-            } catch (createError) {
-                 toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la plantilla por defecto."});
-            }
-        } else {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar la plantilla por defecto."});
-        }
+        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar la plantilla por defecto."});
     } finally {
         setIsUpdating(false);
+        fetchCalendarData(currentDate);
     }
   }
   
@@ -336,17 +326,17 @@ function CalendarView() {
     }
   }
   
-  const startOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
-  const endOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 0));
-  const daysInMonth = endOfMonth.getUTCDate();
-  const startDayRaw = startOfMonth.getUTCDay(); 
+  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  const daysInMonth = endOfMonth.getDate();
+  const startDayRaw = startOfMonth.getDay(); 
   const startDay = startDayRaw === 0 ? 6 : startDayRaw - 1;
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const placeholders = Array.from({ length: startDay }, (_, i) => i);
   
   const monthName = currentDate.toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
-  const year = currentDate.getUTCFullYear();
+  const year = currentDate.getFullYear();
   const selectedTemplateName = templates.find(t => t.id === defaultTemplateId)?.name || 'Seleccionar Plantilla';
 
   return (
@@ -440,11 +430,11 @@ function CalendarView() {
                 ))}
                 {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
                 {days.map(day => {
-                    const dayDate = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), day));
-                    const dayStr = dayDate.toISOString().split('T')[0];
+                    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                    const dayStr = format(dayDate, "yyyy-MM-dd");
                     const isSelected = selectedDays.has(dayStr);
-                    const dayStart = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 0, 0, 0, 0));
-                    const dayEnd = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 23, 59, 59, 999));
+                    const dayStart = new Date(Date.UTC(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 0, 0, 0, 0));
+                    const dayEnd = new Date(Date.UTC(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 23, 59, 59, 999));
 
                     const dayEvents = events.filter(e => {
                         const eventDate = e.start.toDate();
@@ -503,7 +493,7 @@ function CalendarView() {
                             onDateChange={(date) => {
                                 if (date && eventData.start) {
                                     const oldDate = eventData.start.toDate();
-                                    const newDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
+                                    const newDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
                                     setEventData({ ...eventData, start: Timestamp.fromDate(newDate) });
                                 }
                             }}
@@ -516,7 +506,7 @@ function CalendarView() {
                             onDateChange={(date) => {
                                 if(date && eventData.end) {
                                     const oldDate = eventData.end.toDate();
-                                    const newDate = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
+                                    const newDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
                                     setEventData({...eventData, end: Timestamp.fromDate(newDate)});
                                 }
                             }}
@@ -624,5 +614,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-
-    

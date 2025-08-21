@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -57,9 +58,9 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
 
             try {
                 const scheduleDate = selectedDate;
-                const dateStr = scheduleDate.toISOString().split('T')[0];
+                const dateStr = format(scheduleDate, "yyyy-MM-dd");
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                const dayName = daysOfWeek[scheduleDate.getUTCDay()];
+                const dayName = daysOfWeek[scheduleDate.getDay()];
 
                 // 1. Get default template ID first
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
@@ -102,8 +103,8 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                 setTrainings(todaysTrainings.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
                 // 5. Fetch Custom Events for the day
-                const dayStart = new Date(Date.UTC(scheduleDate.getUTCFullYear(), scheduleDate.getUTCMonth(), scheduleDate.getUTCDate(), 0, 0, 0, 0));
-                const dayEnd = new Date(Date.UTC(scheduleDate.getUTCFullYear(), scheduleDate.getUTCMonth(), scheduleDate.getUTCDate(), 23, 59, 59, 999));
+                const dayStart = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 0, 0, 0, 0);
+                const dayEnd = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 23, 59, 59, 999);
 
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(dayStart)),

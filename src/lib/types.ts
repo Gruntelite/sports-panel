@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -163,4 +162,21 @@ export type CalendarEvent = {
     color: string;
     isTemplateBased?: boolean;
     description?: string;
+};
+
+export type ScheduleTemplate = {
+  id: string;
+  name: string;
+  venues: {id: string, name: string}[];
+  weeklySchedule: {
+    Lunes: any[];
+    Martes: any[];
+    Miércoles: any[];
+    Jueves: any[];
+    Viernes: any[];
+    Sábado: any[];
+    Domingo: any[];
+  };
+  startTime?: string;
+  endTime?: string;
 };
