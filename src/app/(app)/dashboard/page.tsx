@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { DatePicker } from "@/components/ui/date-picker";
 
 const iconMap = {
   Users: Users,
@@ -44,37 +45,35 @@ type EventEntry = {
     type: string;
 }
 
-function TodayTrainings() {
+function DailySchedule({ selectedDate }: { selectedDate: Date }) {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
+    const [events, setEvents] = useState<EventEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchTodaysTrainings = async (clubId: string) => {
+        const fetchDailySchedule = async (clubId: string) => {
+            if (!selectedDate) return;
             setLoading(true);
             try {
-                const today = new Date();
-                const todayStr = today.toISOString().split('T')[0];
+                // Fetch Trainings from Template
+                const scheduleDate = selectedDate;
+                const dayStr = scheduleDate.toISOString().split('T')[0];
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                const dayName = daysOfWeek[today.getUTCDay()];
+                const dayName = daysOfWeek[scheduleDate.getUTCDay()];
 
-                // 1. Get default template ID from settings first.
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
 
-                // 2. Check for an override for today's date
-                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
+                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", dayStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
-                // 3. Determine which template ID to use
                 let templateIdToUse = defaultTemplateId;
                 if (overrideSnap.exists()) {
                     templateIdToUse = overrideSnap.data().templateId;
                 }
                 
                 let todaysTrainings: TrainingEntry[] = [];
-
-                // 4. If we have a valid template ID to use, fetch it
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
@@ -86,7 +85,7 @@ function TodayTrainings() {
                         if (weeklySchedule && weeklySchedule[dayName as keyof typeof weeklySchedule]) {
                             const daySchedule = weeklySchedule[dayName as keyof typeof weeklySchedule];
                             todaysTrainings = daySchedule.map((training: any) => ({
-                                id: `${training.id}-${todayStr}`,
+                                id: `${training.id}-${dayStr}`,
                                 title: training.teamName,
                                 startTime: training.startTime,
                                 endTime: training.endTime,
@@ -98,85 +97,13 @@ function TodayTrainings() {
                 }
                 setTrainings(todaysTrainings.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
-            } catch (error) {
-                console.error("Error fetching today's trainings:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        const unsubscribe = auth.onAuthStateChanged(user => {
-            if (user) {
-                getDoc(doc(db, "users", user.uid)).then(userDocSnap => {
-                    if (userDocSnap.exists()) {
-                        const clubId = userDocSnap.data().clubId;
-                        if(clubId) fetchTodaysTrainings(clubId);
-                    } else {
-                        setLoading(false);
-                    }
-                }).catch(() => setLoading(false));
-            } else {
-                setLoading(false);
-            }
-        });
-
-        return () => unsubscribe();
-    }, []);
-
-    return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Entrenamientos de Hoy</CardTitle>
-                <CardDescription>
-                    Sesiones programadas según la plantilla de horarios activa.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                {loading ? (
-                    <div className="flex justify-center items-center h-24">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                ) : trainings.length > 0 ? (
-                    <div className="space-y-3">
-                        {trainings.map(item => (
-                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
-                                <div className="flex flex-col items-center w-20">
-                                    <span className="font-bold text-base">{item.startTime}</span>
-                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
-                                </div>
-                                <div className="h-10 w-1 bg-primary rounded-full"></div>
-                                <div className="flex-1">
-                                    <p className="font-semibold">{item.title}</p>
-                                    {item.location && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <p>No hay entrenamientos programados para hoy.</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
-    );
-}
-
-function TodayEvents() {
-    const [events, setEvents] = useState<EventEntry[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const fetchTodaysEvents = async (clubId: string) => {
-            setLoading(true);
-            try {
-                const today = new Date();
-                const todayStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
-                const todayEnd = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
+                // Fetch Custom Events
+                const dayStart = new Date(Date.UTC(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 0, 0, 0, 0));
+                const dayEnd = new Date(Date.UTC(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 23, 59, 59, 999));
 
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
-                    where('start', '>=', Timestamp.fromDate(todayStart)),
-                    where('start', '<=', Timestamp.fromDate(todayEnd))
+                    where('start', '>=', Timestamp.fromDate(dayStart)),
+                    where('start', '<=', Timestamp.fromDate(dayEnd))
                 );
                 const customEventsSnapshot = await getDocs(customEventsQuery);
                 const eventEntries = customEventsSnapshot.docs.map(doc => {
@@ -192,19 +119,20 @@ function TodayEvents() {
                     };
                 });
                 setEvents(eventEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+
             } catch (error) {
-                console.error("Error fetching today's events:", error);
+                console.error("Error fetching daily schedule:", error);
             } finally {
                 setLoading(false);
             }
         };
-
+        
         const unsubscribe = auth.onAuthStateChanged(user => {
             if (user) {
                 getDoc(doc(db, "users", user.uid)).then(userDocSnap => {
                     if (userDocSnap.exists()) {
                         const clubId = userDocSnap.data().clubId;
-                        if(clubId) fetchTodaysEvents(clubId);
+                        if(clubId) fetchDailySchedule(clubId);
                     } else {
                         setLoading(false);
                     }
@@ -215,47 +143,87 @@ function TodayEvents() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [selectedDate]);
+
+    const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: es });
 
     return (
-        <Card>
-            <CardHeader>
-                <CardTitle>Otros Eventos de Hoy</CardTitle>
-                <CardDescription>
-                    Partidos, reuniones y otros eventos creados en el calendario.
-                </CardDescription>
-            </CardHeader>
-            <CardContent>
-                {loading ? (
-                    <div className="flex justify-center items-center h-24">
-                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                    </div>
-                ) : events.length > 0 ? (
-                    <div className="space-y-3">
-                        {events.map(item => (
-                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
-                                <div className="flex flex-col items-center w-20">
-                                    <span className="font-bold text-base">{item.startTime}</span>
-                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
-                                </div>
-                                <div className={cn("h-10 w-1 rounded-full")} style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
-                                <div className="flex-1">
-                                    <p className="font-semibold">{item.title}</p>
-                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {item.type}</div>
-                                        {item.location && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
+        <div className="grid gap-6 md:grid-cols-2">
+            <Card>
+                <CardHeader>
+                    <CardTitle className="capitalize">Entrenamientos del {titleDate}</CardTitle>
+                    <CardDescription>
+                        Sesiones programadas según la plantilla de horarios activa para este día.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? (
+                        <div className="flex justify-center items-center h-24">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                    ) : trainings.length > 0 ? (
+                        <div className="space-y-3">
+                            {trainings.map(item => (
+                                <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
+                                    <div className="flex flex-col items-center w-20">
+                                        <span className="font-bold text-base">{item.startTime}</span>
+                                        <span className="text-xs text-muted-foreground">{item.endTime}</span>
+                                    </div>
+                                    <div className="h-10 w-1 bg-primary rounded-full"></div>
+                                    <div className="flex-1">
+                                        <p className="font-semibold">{item.title}</p>
+                                        {item.location && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="text-center py-10 text-muted-foreground">
-                        <p>No hay otros eventos para hoy.</p>
-                    </div>
-                )}
-            </CardContent>
-        </Card>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 text-muted-foreground">
+                            <p>No hay entrenamientos programados para este día.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+
+             <Card>
+                <CardHeader>
+                    <CardTitle className="capitalize">Otros Eventos del {titleDate}</CardTitle>
+                    <CardDescription>
+                        Partidos, reuniones y otros eventos creados en el calendario.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    {loading ? (
+                        <div className="flex justify-center items-center h-24">
+                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                        </div>
+                    ) : events.length > 0 ? (
+                        <div className="space-y-3">
+                            {events.map(item => (
+                                <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
+                                    <div className="flex flex-col items-center w-20">
+                                        <span className="font-bold text-base">{item.startTime}</span>
+                                        <span className="text-xs text-muted-foreground">{item.endTime}</span>
+                                    </div>
+                                    <div className={cn("h-10 w-1 rounded-full")} style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
+                                    <div className="flex-1">
+                                        <p className="font-semibold">{item.title}</p>
+                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                            <div className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {item.type}</div>
+                                            {item.location && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-10 text-muted-foreground">
+                            <p>No hay otros eventos para este día.</p>
+                        </div>
+                    )}
+                </CardContent>
+            </Card>
+        </div>
     );
 }
 
@@ -267,6 +235,7 @@ export default function DashboardPage() {
     { id: "users", title: "Total de Usuarios", value: "0", change: "", icon: 'Users' },
     { id: "fees", title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
   ]);
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
   useEffect(() => {
     const fetchStats = async (clubId: string) => {
@@ -367,10 +336,18 @@ export default function DashboardPage() {
             })
         )}
       </div>
-      <div className="grid gap-6 md:grid-cols-2">
-          <TodayTrainings />
-          <TodayEvents />
-      </div>
+      
+       <Card>
+        <CardHeader className="flex-row items-center gap-4 space-y-0">
+          <CardTitle>Agenda del Día</CardTitle>
+          <div className="flex items-center gap-2">
+            <DatePicker date={selectedDate} onDateChange={(date) => date && setSelectedDate(date)} />
+            <Button variant="outline" onClick={() => setSelectedDate(new Date())}>Hoy</Button>
+          </div>
+        </CardHeader>
+      </Card>
+
+      <DailySchedule selectedDate={selectedDate} />
     </div>
   );
 }
