@@ -144,7 +144,7 @@ export default function AccountPage() {
   const isPlayer = role === 'player';
   const isCoach = role === 'coach';
   
-  const birthDate = memberData.birthDate ? toZonedTime(new Date(memberData.birthDate), 'UTC') : undefined;
+  const birthDate = memberData.birthDate ? new Date(memberData.birthDate + 'T00:00:00Z') : undefined;
 
   return (
     <div className="flex flex-col gap-6">

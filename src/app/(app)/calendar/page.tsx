@@ -199,7 +199,7 @@ function CalendarView() {
     setModalMode(mode);
     if(mode === 'add' && selectedDays.size > 0) {
         const firstDay = Array.from(selectedDays)[0];
-        // Ensure the date is created in UTC to avoid timezone shifts on instantiation
+        // IMPORTANT: Create date in UTC to avoid timezone shifts
         const date = new Date(firstDay + 'T12:00:00Z'); 
         setEventData({ start: Timestamp.fromDate(date), end: Timestamp.fromDate(date), color: EVENT_COLORS[0].value, type: "Evento" });
     } else {
@@ -505,7 +505,7 @@ function CalendarView() {
                                 if(date) {
                                     const oldDate = eventData.start?.toDate() || new Date();
                                     const newDate = fromZonedTime(date, 'UTC');
-                                    newDate.setHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
+                                    newDate.setUTCHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
                                     setEventData({...eventData, start: Timestamp.fromDate(newDate)})
                                 }
                             }}
@@ -519,7 +519,7 @@ function CalendarView() {
                                 if(date) {
                                     const oldDate = eventData.end?.toDate() || new Date();
                                     const newDate = fromZonedTime(date, 'UTC');
-                                    newDate.setHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
+                                    newDate.setUTCHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
                                     setEventData({...eventData, end: Timestamp.fromDate(newDate)})
                                 }
                             }}
@@ -529,22 +529,22 @@ function CalendarView() {
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label htmlFor="event-start-time">Hora de Inicio</Label>
-                        <Input id="event-start-time" type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => {
+                        <Input id="event-start-time" type="time" value={eventData.start ? format(toZonedTime(eventData.start.toDate(), 'UTC'), 'HH:mm') : ''} onChange={(e) => {
                              if(eventData.start) {
                                 const [h, m] = e.target.value.split(':');
                                 const newDate = eventData.start.toDate();
-                                newDate.setHours(Number(h), Number(m));
+                                newDate.setUTCHours(Number(h), Number(m));
                                 setEventData({...eventData, start: Timestamp.fromDate(newDate)})
                             }
                         }}/>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="event-end-time">Hora de Fin</Label>
-                        <Input id="event-end-time" type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => {
+                        <Input id="event-end-time" type="time" value={eventData.end ? format(toZonedTime(eventData.end.toDate(), 'UTC'), 'HH:mm') : ''} onChange={(e) => {
                              if(eventData.end) {
                                 const [h, m] = e.target.value.split(':');
                                 const newDate = eventData.end.toDate();
-                                newDate.setHours(Number(h), Number(m));
+                                newDate.setUTCHours(Number(h), Number(m));
                                 setEventData({...eventData, end: Timestamp.fromDate(newDate)})
                             }
                         }}/>
@@ -627,5 +627,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-
-    

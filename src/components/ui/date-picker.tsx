@@ -5,8 +5,6 @@ import * as React from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Calendar as CalendarIcon } from "lucide-react"
-import { toZonedTime } from 'date-fns-tz';
-
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -24,7 +22,6 @@ type DatePickerProps = {
 
 export function DatePicker({ date, onDateChange }: DatePickerProps) {
   const currentYear = new Date().getFullYear();
-  const displayDate = date ? toZonedTime(date, 'UTC') : undefined;
 
   return (
     <Popover>
@@ -44,7 +41,7 @@ export function DatePicker({ date, onDateChange }: DatePickerProps) {
         <Calendar
           mode="single"
           locale={es}
-          selected={displayDate}
+          selected={date}
           onSelect={onDateChange}
           captionLayout="dropdown-buttons"
           fromYear={1950}
