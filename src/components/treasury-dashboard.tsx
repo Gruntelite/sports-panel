@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -176,11 +175,25 @@ export function TreasuryDashboard() {
       setOneOffExpenses(oneOffExpensesList);
 
 
-      const expectedTotal = playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
+      const monthlyFeesTotal = playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
       const coachPaymentsTotal = coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
       const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly').reduce((acc, s) => acc + s.amount, 0);
 
       const currentMonthIndex = getMonth(new Date()); // 0-indexed
+      const oneTimePaymentsThisMonth = paymentsList
+        .filter(payment => getMonth(new Date(payment.issueDate)) === currentMonthIndex)
+        .reduce((acc, payment) => {
+            const amount = typeof payment.amount === 'number' ? payment.amount : parseFloat(payment.amount);
+            if (isNaN(amount)) return acc;
+            
+            const teamMemberCount = playersList.filter(p => payment.targetTeamIds?.includes(p.teamId || '')).length;
+            const userCount = payment.targetUserIds?.length || 0;
+
+            return acc + (amount * (teamMemberCount + userCount));
+        }, 0);
+
+      const expectedTotal = monthlyFeesTotal + oneTimePaymentsThisMonth;
+
       const recurringMonthlyExpenses = recurringExpensesList.reduce((acc, expense) => {
         if ((currentMonthIndex % expense.recurrenceInMonths) === 0) {
             return acc + expense.amount;
@@ -508,7 +521,7 @@ export function TreasuryDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.expectedIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de todas las cuotas mensuales de jugadores.</p>
+                    <p className="text-xs text-muted-foreground">Suma de cuotas mensuales y pagos puntuales del mes.</p>
                 </CardContent>
             </Card>
              <Card>
