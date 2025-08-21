@@ -211,7 +211,7 @@ export default function DashboardPage() {
               <CardTitle>Horarios de Hoy</CardTitle>
               <CardDescription>
                 {currentDateTime ? (
-                    `Eventos para el ${currentDateTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - ${currentDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
+                    `Horarios para el ${currentDateTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`
                 ) : (
                     'Entrenamientos y eventos programados para hoy.'
                 )}
