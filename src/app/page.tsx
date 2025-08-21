@@ -221,7 +221,8 @@ export default function SignUpPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="club-name">Nombre del Club</Label>
-                <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
+                <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} />
+                <p className="text-xs text-muted-foreground">Se recomienda un nombre corto para que quepa bien en la app.</p>
               </div>
             </div>
              <div className="space-y-2">
