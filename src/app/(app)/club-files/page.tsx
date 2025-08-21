@@ -181,7 +181,7 @@ export default function ClubFilesPage() {
       
       const url = await getDownloadURL(fileRef);
       
-      const newDocument: Omit<Document, "id"> = {
+      const newDocumentData: Omit<Document, "id"> = {
         name: documentNameToSave.trim(),
         url,
         path: filePath,
@@ -190,7 +190,7 @@ export default function ClubFilesPage() {
         ownerName: owner.name,
       };
 
-      await addDoc(collection(db, "clubs", clubId, "documents"), newDocument);
+      await addDoc(collection(db, "clubs", clubId, "documents"), newDocumentData);
 
       toast({
         title: "¡Archivo Subido!",
@@ -320,14 +320,14 @@ export default function ClubFilesPage() {
                                     key={owner.id}
                                     value={owner.name}
                                     onSelect={() => {
-                                        setSelectedOwner(owner);
+                                        setSelectedOwner(owner.id === 'club' ? null : owner);
                                         setIsOwnerPopoverOpen(false);
                                     }}
                                     >
                                     <Check
                                         className={cn(
                                         "mr-2 h-4 w-4",
-                                        selectedOwner?.id === owner.id ? "opacity-100" : "opacity-0"
+                                        (selectedOwner?.id === owner.id || (!selectedOwner && owner.id === 'club')) ? "opacity-100" : "opacity-0"
                                         )}
                                     />
                                     {owner.name}
