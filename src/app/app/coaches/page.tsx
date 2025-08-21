@@ -437,15 +437,14 @@ export default function CoachesPage() {
         await deleteObject(fileRef);
 
         const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        const updatedDocuments = coachData.documents?.filter(d => d.path !== documentToDelete.path);
         
         await updateDoc(coachDocRef, {
-            documents: updatedDocuments || []
+            documents: arrayRemove(documentToDelete)
         });
         
         setCoachData(prev => ({
             ...prev,
-            documents: updatedDocuments
+            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
         }));
 
         toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
