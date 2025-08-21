@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, MoreHorizontal, Check, ChevronsUpDown, Trash2, Edit, MapPin } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, MoreHorizontal, Check, ChevronsUpDown, Trash2, Edit, MapPin, Clock } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -466,15 +466,17 @@ function CalendarView() {
                         <div className="flex-grow space-y-1 overflow-y-auto">
                             {dayEvents.map(event => {
                                 const startTime = format(event.start.toDate(), 'HH:mm');
+                                const endTime = format(event.end.toDate(), 'HH:mm');
                                 return (
                                 <div 
                                     key={event.id} 
-                                    className={cn('text-xs p-1.5 rounded-md transition-shadow', event.color, event.isTemplateBased ? 'cursor-default' : 'cursor-pointer hover:shadow-md')} 
+                                    className={cn('text-xs p-1.5 rounded-md transition-shadow space-y-1', event.color, event.isTemplateBased ? 'cursor-default' : 'cursor-pointer hover:shadow-md')} 
                                     onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}
                                 >
                                     <p className="font-semibold truncate">
-                                        {startTime} - {event.title}
+                                        {event.title}
                                     </p>
+                                    <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-90"><Clock className="h-3 w-3" />{startTime} - {endTime}</div>
                                     {event.location && <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-90"><MapPin className="h-3 w-3" />{event.location}</div>}
                                 </div>
                                 )
@@ -630,5 +632,6 @@ export default function CalendarPage() {
     </div>
   )
 }
+
 
     
