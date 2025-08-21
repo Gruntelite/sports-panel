@@ -46,40 +46,31 @@ function TodaySchedule() {
                 const today = new Date();
                 const todayStart = new Date(today.setHours(0, 0, 0, 0));
                 const todayEnd = new Date(today.setHours(23, 59, 59, 999));
-                const todayStr = todayStart.toISOString().split('T')[0];
+                const todayStr = today.toISOString().split('T')[0];
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[today.getDay()];
                 
                 let allEntries: ScheduleEntry[] = [];
                 
-                // 1. Fetch all templates
-                const schedulesCol = collection(db, "clubs", clubId, "schedules");
-                const schedulesSnapshot = await getDocs(schedulesCol);
-                const templates: ScheduleTemplate[] = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
-
-                if (templates.length > 0) {
-                    // 2. Fetch config to get the default template ID
-                    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-                    const settingsSnap = await getDoc(settingsRef);
-                    const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
-
-                    // 3. Determine which template to use for today (override or default)
-                    const overridesRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
-                    const overrideSnap = await getDoc(overridesRef);
-                    let templateIdToUse = defaultTemplateId;
-
-                    if (overrideSnap.exists()) {
-                        const overrideTemplateId = overrideSnap.data().templateId;
-                        // Ensure the override template actually exists before using it
-                        if (templates.some(t => t.id === overrideTemplateId)) {
-                            templateIdToUse = overrideTemplateId;
-                        }
-                    }
-
-                    // 4. Get events from the determined template
-                    if (templateIdToUse) {
-                        const template = templates.find(t => t.id === templateIdToUse);
-                        if (template && template.weeklySchedule && template.weeklySchedule[dayName]) {
+                // 1. Fetch settings to get default template ID
+                const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                const settingsSnap = await getDoc(settingsRef);
+                let templateIdToUse = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
+                
+                // 2. Check for an override for today
+                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
+                const overrideSnap = await getDoc(overrideRef);
+                if (overrideSnap.exists()) {
+                    templateIdToUse = overrideSnap.data().templateId;
+                }
+                
+                // 3. If we have a template ID, fetch it and process its events for today
+                if (templateIdToUse) {
+                    const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
+                    const templateSnap = await getDoc(templateRef);
+                    if (templateSnap.exists()) {
+                        const template = templateSnap.data() as ScheduleTemplate;
+                        if (template.weeklySchedule && template.weeklySchedule[dayName]) {
                             const daySchedule = template.weeklySchedule[dayName];
                             daySchedule.forEach((training: any) => {
                                 allEntries.push({
@@ -95,8 +86,8 @@ function TodaySchedule() {
                         }
                     }
                 }
-                
-                // 5. Get custom events from the calendar
+
+                // 4. Get custom events from the calendar
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(todayStart)),
                     where('start', '<=', Timestamp.fromDate(todayEnd))
@@ -115,7 +106,7 @@ function TodaySchedule() {
                     });
                 });
 
-                // 6. Sort all entries by start time
+                // 5. Sort all entries by start time
                 allEntries.sort((a, b) => a.startTime.localeCompare(b.startTime));
                 setSchedule(allEntries);
 
@@ -132,9 +123,11 @@ function TodaySchedule() {
                 getDoc(userDocRef).then(userDocSnap => {
                     if (userDocSnap.exists()) {
                         const clubId = userDocSnap.data().clubId;
-                        fetchTodaysSchedule(clubId);
+                        if(clubId) fetchTodaysSchedule(clubId);
+                    } else {
+                        setLoading(false);
                     }
-                });
+                }).catch(() => setLoading(false));
             } else {
                 setLoading(false);
             }
@@ -168,12 +161,12 @@ function TodaySchedule() {
                 ) : schedule.length > 0 ? (
                     <div className="space-y-4">
                         {schedule.map(item => (
-                            <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border bg-muted/50">
+                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color.startsWith('bg-') ? item.color : 'bg-muted/50')}>
                                 <div className="flex flex-col items-center w-20">
                                     <span className="font-bold text-lg">{item.startTime}</span>
                                     <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                 </div>
-                                <div className="h-12 w-1.5 rounded-full" style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
+                                <div className={cn("h-12 w-1.5 rounded-full", item.color.startsWith('bg-') ? 'bg-primary' : '')} style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.title}</p>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -311,3 +304,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
