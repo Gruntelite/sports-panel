@@ -45,8 +45,8 @@ function TodaySchedule() {
             setLoading(true);
             try {
                 const today = new Date();
-                const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
-                const todayEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999));
+                const todayStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
+                const todayEnd = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
                 const todayStr = todayStart.toISOString().split('T')[0];
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[today.getUTCDay()];
@@ -100,8 +100,8 @@ function TodaySchedule() {
                         id: doc.id,
                         title: event.title,
                         type: event.type,
-                        startTime: event.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-                        endTime: event.end.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                        startTime: toDate(event.start.toDate()).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                        endTime: toDate(event.end.toDate()).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
                         location: event.location,
                         color: event.color
                     });
@@ -305,5 +305,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
