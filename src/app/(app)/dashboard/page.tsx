@@ -224,9 +224,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                                     <div className={cn("h-10 w-1 rounded-full", separatorColor)}></div>
                                     <div className="flex-1">
                                         <p className="font-semibold">{item.title}</p>
-                                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                            {item.location && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
-                                        </div>
+                                        {item.location && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
                                     </div>
                                 </div>
                                 );
