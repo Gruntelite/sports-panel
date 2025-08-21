@@ -3,10 +3,13 @@
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
+    id?: string;
     name: string;
     url: string;
     path: string;
     createdAt: Timestamp;
+    userId?: string;
+    userName?: string;
 }
 
 export type Team = {
