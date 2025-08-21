@@ -57,7 +57,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import type { Document } from "@/lib/types";
+import type { Document, Player, Coach, Staff } from "@/lib/types";
 import {
   PlusCircle,
   Loader2,
@@ -66,12 +66,22 @@ import {
   Upload,
   File,
   User as UserIcon,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+
+type Owner = {
+    id: string;
+    name: string;
+}
 
 export default function ClubFilesPage() {
   const { toast } = useToast();
@@ -80,11 +90,13 @@ export default function ClubFilesPage() {
   const [clubId, setClubId] = useState<string | null>(null);
 
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [owners, setOwners] = useState<Owner[]>([]);
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [documentNameToSave, setDocumentNameToSave] = useState("");
-  const [ownerNameToSave, setOwnerNameToSave] = useState("");
+  const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
+  const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
 
   useEffect(() => {
@@ -96,7 +108,7 @@ export default function ClubFilesPage() {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
           if (currentClubId) {
-            fetchDocuments(currentClubId);
+            fetchData(currentClubId);
           }
         }
       } else {
@@ -106,7 +118,7 @@ export default function ClubFilesPage() {
     return () => unsubscribe();
   }, []);
 
-  const fetchDocuments = async (clubId: string) => {
+  const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
       const q = query(collection(db, "clubs", clubId, "documents"), orderBy("createdAt", "desc"));
@@ -115,12 +127,35 @@ export default function ClubFilesPage() {
         (doc) => ({ id: doc.id, ...doc.data() } as Document)
       );
       setDocuments(docsList);
+
+      const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
+
+      const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
+      playersSnap.forEach(doc => {
+          const data = doc.data() as Player;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      });
+
+      const coachesSnap = await getDocs(collection(db, "clubs", clubId, "coaches"));
+      coachesSnap.forEach(doc => {
+          const data = doc.data() as Coach;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      });
+
+      const staffSnap = await getDocs(collection(db, "clubs", clubId, "staff"));
+      staffSnap.forEach(doc => {
+          const data = doc.data() as Staff;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      });
+
+      setOwners(allOwners);
+
     } catch (error) {
-      console.error("Error fetching documents:", error);
+      console.error("Error fetching data:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudieron cargar los documentos.",
+        description: "No se pudieron cargar los datos.",
       });
     }
     setLoading(false);
@@ -138,7 +173,8 @@ export default function ClubFilesPage() {
 
     setSaving(true);
     try {
-      const filePath = `club-documents/${clubId}/${uuidv4()}-${fileToUpload.name}`;
+      const owner = selectedOwner || { id: 'club', name: 'Club' };
+      const filePath = `club-documents/${clubId}/${owner.id}/${uuidv4()}-${fileToUpload.name}`;
       const fileRef = ref(storage, filePath);
       await uploadBytes(fileRef, fileToUpload);
       const url = await getDownloadURL(fileRef);
@@ -148,7 +184,8 @@ export default function ClubFilesPage() {
         url,
         path: filePath,
         createdAt: Timestamp.now(),
-        userName: ownerNameToSave.trim() || 'Club',
+        ownerId: owner.id,
+        ownerName: owner.name,
       };
 
       await addDoc(collection(db, "clubs", clubId, "documents"), newDocument);
@@ -161,8 +198,8 @@ export default function ClubFilesPage() {
       setIsUploadModalOpen(false);
       setFileToUpload(null);
       setDocumentNameToSave("");
-      setOwnerNameToSave("");
-      if (clubId) fetchDocuments(clubId); // Refetch documents to show the new one
+      setSelectedOwner(null);
+      if (clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error uploading file:", error);
       toast({
@@ -191,7 +228,7 @@ export default function ClubFilesPage() {
       });
 
       setDocToDelete(null);
-      if (clubId) fetchDocuments(clubId);
+      if (clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error deleting document:", error);
       toast({
@@ -254,13 +291,50 @@ export default function ClubFilesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="owner-name">Propietario del Documento (Opcional)</Label>
-                    <Input
-                      id="owner-name"
-                      placeholder="p.ej., Alex García (si se deja vacío, será 'Club')"
-                      value={ownerNameToSave}
-                      onChange={(e) => setOwnerNameToSave(e.target.value)}
-                    />
+                    <Label>Asignar a Usuario (Opcional)</Label>
+                    <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
+                        <PopoverTrigger asChild>
+                        <Button
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={isOwnerPopoverOpen}
+                            className="w-full justify-between"
+                        >
+                            {selectedOwner
+                            ? owners.find((owner) => owner.id === selectedOwner.id)?.name
+                            : "Seleccionar propietario..."}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Buscar propietario..." />
+                             <CommandList>
+                                <CommandEmpty>No se encontró ningún propietario.</CommandEmpty>
+                                <CommandGroup>
+                                {owners.map((owner) => (
+                                    <CommandItem
+                                    key={owner.id}
+                                    value={owner.name}
+                                    onSelect={() => {
+                                        setSelectedOwner(owner);
+                                        setIsOwnerPopoverOpen(false);
+                                    }}
+                                    >
+                                    <Check
+                                        className={cn(
+                                        "mr-2 h-4 w-4",
+                                        selectedOwner?.id === owner.id ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                    {owner.name}
+                                    </CommandItem>
+                                ))}
+                                </CommandGroup>
+                            </CommandList>
+                        </Command>
+                        </PopoverContent>
+                    </Popover>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="doc-file">Archivo</Label>
@@ -314,7 +388,7 @@ export default function ClubFilesPage() {
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <UserIcon className="h-4 w-4 text-muted-foreground" />
-                            {doc.userName || "Club"}
+                            {doc.ownerName || "Club"}
                           </div>
                         </TableCell>
                         <TableCell>

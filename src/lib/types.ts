@@ -8,8 +8,8 @@ export type Document = {
     url: string;
     path: string;
     createdAt: Timestamp;
-    userId?: string;
-    userName?: string;
+    ownerId?: string;
+    ownerName?: string;
 }
 
 export type Team = {
