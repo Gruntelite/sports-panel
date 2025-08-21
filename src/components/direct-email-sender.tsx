@@ -309,7 +309,7 @@ export function DirectEmailSender() {
                                                 checked={isAllFilteredSelected}
                                                 onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                             />
-                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los ${filteredMembers.length} miembros</label>
                                         </CommandItem>
                                         <ScrollArea className="h-64">
                                             {filteredMembers.map((member) => (
@@ -366,5 +366,4 @@ export function DirectEmailSender() {
             </CardFooter>
         </Card>
     );
-
-    
+}
