@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format } from "date-fns";
+import { format, getDay } from "date-fns";
 
 
 const EVENT_COLORS = [
@@ -160,7 +160,8 @@ function CalendarView() {
           if (!template) continue;
 
           const weeklySchedule = template.weeklySchedule;
-          const dayName = daysOfWeek[d.getUTCDay()];
+          const dayIndex = getDay(d); // 0 for Sunday, 1 for Monday, etc.
+          const dayName = daysOfWeek[dayIndex];
           const daySchedule = weeklySchedule?.[dayName as keyof typeof weeklySchedule] || [];
 
           daySchedule.forEach((training: any) => {
@@ -462,12 +463,17 @@ function CalendarView() {
                     >
                         <span className="font-bold self-end text-sm pr-1">{day}</span>
                         <div className="flex-grow space-y-1 overflow-y-auto">
-                            {dayEvents.map(event => (
-                            <div key={event.id} className={cn('text-xs p-1.5 rounded-md cursor-default', event.color)} onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}>
-                                <p className="font-semibold truncate">{event.title}</p>
-                                {event.location && <p className="truncate text-muted-foreground opacity-80">{event.location}</p>}
-                            </div>
-                            ))}
+                            {dayEvents.map(event => {
+                                const startTime = format(event.start.toDate(), 'HH:mm');
+                                return (
+                                <div key={event.id} className={cn('text-xs p-1.5 rounded-md cursor-default', event.color)} onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}>
+                                    <p className="font-semibold truncate">
+                                        {!event.isTemplateBased && `${startTime} - `}{event.title}
+                                    </p>
+                                    {event.location && <p className="truncate text-muted-foreground opacity-80">{event.location}</p>}
+                                </div>
+                                )
+                            })}
                         </div>
                     </div>
                     )
@@ -619,5 +625,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-
-    
