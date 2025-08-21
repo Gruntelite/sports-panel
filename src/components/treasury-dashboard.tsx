@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Card,
   CardContent,
@@ -20,10 +20,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, CalendarIcon } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, CalendarIcon, User } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import type { Player, Team, OneTimePayment, User, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -40,6 +40,15 @@ import { format, getMonth, getYear, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+
+type FeeMember = {
+    id: string;
+    name: string;
+    teamName?: string;
+    role: 'Jugador' | 'Entrenador';
+    fee?: number;
+    payment?: number;
+};
 
 function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths }: { 
     players: Player[], 
@@ -208,7 +217,7 @@ export function TreasuryDashboard() {
   
   const [players, setPlayers] = useState<Player[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
+  const [users, setUsers] = useState<AppUser[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [oneTimePayments, setOneTimePayments] = useState<OneTimePayment[]>([]);
   const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
@@ -216,8 +225,9 @@ export function TreasuryDashboard() {
   const [oneOffExpenses, setOneOffExpenses] = useState<OneOffExpense[]>([]);
   const [clubSettings, setClubSettings] = useState<ClubSettings>({});
 
-  const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
+  const [filteredMembers, setFilteredMembers] = useState<FeeMember[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("fees");
   
   const [stats, setStats] = useState({
@@ -273,12 +283,32 @@ export function TreasuryDashboard() {
   }, []);
 
   useEffect(() => {
-    let currentPlayers = [...players];
+    let combinedMembers: FeeMember[] = [];
+    players.forEach(p => combinedMembers.push({
+        id: p.id,
+        name: `${p.name} ${p.lastName}`,
+        teamName: p.teamName,
+        role: 'Jugador',
+        fee: p.monthlyFee,
+    }));
+    coaches.forEach(c => combinedMembers.push({
+        id: c.id,
+        name: `${c.name} ${c.lastName}`,
+        teamName: c.teamName,
+        role: 'Entrenador',
+        payment: c.monthlyPayment,
+    }));
+    
+    let currentMembers = [...combinedMembers];
     if (selectedTeam !== "all") {
-        currentPlayers = players.filter(p => p.teamId === selectedTeam);
+        currentMembers = currentMembers.filter(m => m.teamName === teams.find(t => t.id === selectedTeam)?.name);
     }
-    setFilteredPlayers(currentPlayers);
-  }, [selectedTeam, players]);
+    if (selectedRole !== "all") {
+        currentMembers = currentMembers.filter(m => m.role === selectedRole);
+    }
+
+    setFilteredMembers(currentMembers);
+  }, [selectedTeam, selectedRole, players, coaches, teams]);
 
   useEffect(() => {
     const originalFee = clubSettings.feeExcludedMonths || [];
@@ -307,7 +337,7 @@ export function TreasuryDashboard() {
       
       const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
       const coachesSnapshot = await getDocs(coachesQuery);
-      const coachesList = coachesSnapshot.docs.map(doc => doc.data() as Coach);
+      const coachesList = coachesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data()} as Coach));
       setCoaches(coachesList);
 
       const playersQuery = query(collection(db, "clubs", clubId, "players"));
@@ -322,15 +352,10 @@ export function TreasuryDashboard() {
           } as Player
       });
       setPlayers(playersList);
-      if (selectedTeam === "all") {
-        setFilteredPlayers(playersList);
-      } else {
-        setFilteredPlayers(playersList.filter(p => p.teamId === selectedTeam));
-      }
 
       const usersQuery = query(collection(db, "clubs", clubId, "users"));
       const usersSnapshot = await getDocs(usersQuery);
-      const usersList = usersSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as User));
+      const usersList = usersSnapshot.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() } as AppUser));
       setUsers(usersList);
       
       const paymentsQuery = query(collection(db, "clubs", clubId, "oneTimePayments"));
@@ -837,7 +862,17 @@ export function TreasuryDashboard() {
                     </div>
                  )}
                 {activeTab === 'fees' && (
-                    <div className="flex justify-end mb-4">
+                    <div className="flex justify-end mb-4 gap-2">
+                        <Select value={selectedRole} onValueChange={setSelectedRole}>
+                            <SelectTrigger className="w-[180px]">
+                                <SelectValue placeholder="Filtrar por rol" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los roles</SelectItem>
+                                <SelectItem value="Jugador">Jugadores</SelectItem>
+                                <SelectItem value="Entrenador">Entrenadores</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                             <SelectTrigger className="w-[220px]">
                                 <SelectValue placeholder="Filtrar por equipo" />
@@ -854,18 +889,31 @@ export function TreasuryDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Jugador</TableHead>
+                    <TableHead>Miembro</TableHead>
                     <TableHead>Equipo</TableHead>
-                    <TableHead>Cuota Mensual</TableHead>
+                    <TableHead>Rol</TableHead>
+                    <TableHead>Cuota (Ingreso)</TableHead>
+                    <TableHead>Pago (Gasto)</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredPlayers.map((player) => {
+                  {filteredMembers.map((member) => {
                       return (
-                        <TableRow key={player.id}>
-                            <TableCell className="font-medium">{player.name} {player.lastName}</TableCell>
-                            <TableCell>{player.teamName}</TableCell>
-                            <TableCell>{player.monthlyFee ? `${player.monthlyFee.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}` : 'No definida'}</TableCell>
+                        <TableRow key={member.id}>
+                            <TableCell className="font-medium">{member.name}</TableCell>
+                            <TableCell>{member.teamName || 'N/A'}</TableCell>
+                            <TableCell>
+                                <Badge variant={member.role === 'Jugador' ? 'outline' : 'secondary'}>
+                                    <User className="mr-1 h-3 w-3"/>
+                                    {member.role}
+                                </Badge>
+                            </TableCell>
+                            <TableCell className="text-green-600">
+                                {member.fee ? `${member.fee.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}` : '-'}
+                            </TableCell>
+                            <TableCell className="text-red-600">
+                                {member.payment ? `${member.payment.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}` : '-'}
+                            </TableCell>
                         </TableRow>
                       )
                   })}
