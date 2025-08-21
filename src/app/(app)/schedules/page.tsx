@@ -6,7 +6,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download, RefreshCw } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download, RefreshCw, Palette } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem } from "@/components/ui/dropdown-menu";
@@ -69,11 +69,22 @@ type ScheduleTemplate = {
     weeklySchedule: WeeklySchedule;
     startTime?: string;
     endTime?: string;
+    color?: string;
 }
 
 const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
 type DayOfWeek = typeof daysOfWeek[number];
 
+const TEMPLATE_COLORS = [
+    { name: "Default", value: "hsl(210 40% 96.1%)", css: "bg-muted/50"}, // muted
+    { name: "Green", value: "#dcfce7", css: "bg-green-100/60"},
+    { name: "Blue", value: "#dbeafe", css: "bg-blue-100/60"},
+    { name: "Yellow", value: "#fef9c3", css: "bg-yellow-100/60"},
+    { name: "Orange", value: "#ffedd5", css: "bg-orange-100/60"},
+    { name: "Red", value: "#fee2e2", css: "bg-red-100/60"},
+    { name: "Purple", value: "#f3e8ff", css: "bg-purple-100/60"},
+    { name: "Pink", value: "#fce7f3", css: "bg-pink-100/60"},
+];
 
 const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate | undefined, innerRef: React.Ref<HTMLDivElement> }) => {
     if (!template) {
@@ -84,7 +95,9 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
         );
     }
     
-    const { venues, weeklySchedule, startTime = "16:00", endTime = "23:00" } = template;
+    const { venues, weeklySchedule, startTime = "16:00", endTime = "23:00", color } = template;
+    const templateBg = TEMPLATE_COLORS.find(c => c.value === color)?.css || 'bg-card';
+
 
     const timeToMinutes = (time: string) => {
         if (!time) return 0;
@@ -177,7 +190,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
     };
 
     return (
-        <div ref={innerRef} className="bg-background p-4">
+        <div ref={innerRef} className={cn("p-4", templateBg)}>
           <div className="space-y-8">
             {venues.map(venue => (
                 <div key={venue.id}>
@@ -187,7 +200,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                         </CardHeader>
                         <CardContent className="overflow-x-auto p-0">
                             <div className="flex" style={{ minWidth: `${60 + daysOfWeek.length * 220}px` }}>
-                                <div className="w-[60px] flex-shrink-0">
+                                <div className="w-[60px] flex-shrink-0 bg-card">
                                     <div className="h-[41px] border-b">&nbsp;</div> {/* Spacer for day headers */}
                                     {timeSlots.map(time => (
                                         <div key={time} className="h-[80px] relative text-right pr-2 border-r">
@@ -199,7 +212,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                                     {daysOfWeek.map(day => {
                                         const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
                                         return (
-                                            <div key={day} className="w-[220px] flex-shrink-0 border-r relative">
+                                            <div key={day} className="w-[220px] flex-shrink-0 border-r relative bg-card">
                                                 <div className="text-center font-medium p-2 h-[41px] border-b">{day}</div>
                                                 <div className="relative h-full">
                                                     {timeSlots.map((_, index) => (
@@ -266,6 +279,7 @@ export default function SchedulesPage() {
 
   const [startTime, setStartTime] = useState("16:00");
   const [endTime, setEndTime] = useState("23:00");
+  const [templateColor, setTemplateColor] = useState<string>(TEMPLATE_COLORS[0].value);
 
   const [teams, setTeams] = useState<Team[]>([]);
   
@@ -282,6 +296,7 @@ export default function SchedulesPage() {
     setWeeklySchedule(template.weeklySchedule || {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []});
     setStartTime(template.startTime || "16:00");
     setEndTime(template.endTime || "23:00");
+    setTemplateColor(template.color || TEMPLATE_COLORS[0].value);
     setCurrentDayIndex(0); // Reset to Monday on template change
     setCurrentVenueIndex(0);
   }, []);
@@ -310,6 +325,7 @@ export default function SchedulesPage() {
                 weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []},
                 startTime: "16:00",
                 endTime: "23:00",
+                color: TEMPLATE_COLORS[0].value,
             };
             await setDoc(newTemplateRef, initialTemplateData);
             setScheduleTemplates([{ id: newTemplateId, ...initialTemplateData }]);
@@ -407,6 +423,7 @@ export default function SchedulesPage() {
               weeklySchedule: updatedWeeklySchedule,
               startTime: startTime,
               endTime: endTime,
+              color: templateColor,
             });
             setWeeklySchedule(updatedWeeklySchedule);
             toast({ title: "Plantilla Guardada", description: `Los horarios para el ${currentDay} se han guardado.` });
@@ -430,6 +447,7 @@ export default function SchedulesPage() {
             weeklySchedule: {Lunes: [], Martes: [], Miércoles: [], Jueves: [], Viernes: [], Sábado: [], Domingo: []},
             startTime: "16:00",
             endTime: "23:00",
+            color: TEMPLATE_COLORS[0].value,
         });
         toast({ title: "Plantilla creada", description: `La plantilla "${newTemplateName}" ha sido creada.` });
         setIsNewTemplateModalOpen(false);
@@ -824,6 +842,19 @@ export default function SchedulesPage() {
                             </div>
                           </AccordionTrigger>
                           <AccordionContent className="pt-4 space-y-4">
+                            <div className="space-y-2">
+                                <Label>Color de la Plantilla</Label>
+                                <div className="flex flex-wrap gap-2">
+                                    {TEMPLATE_COLORS.map(color => (
+                                        <button
+                                            key={color.name}
+                                            onClick={() => setTemplateColor(color.value)}
+                                            className={cn("h-8 w-8 rounded-full border-2 transition-transform", templateColor === color.value ? 'border-ring scale-110' : 'border-transparent')}
+                                            style={{backgroundColor: color.value}}
+                                        />
+                                    ))}
+                                </div>
+                            </div>
                             <div className="space-y-2">
                               <Label>Recintos/Pistas de Entrenamiento</Label>
                               <div className="flex items-center gap-2">

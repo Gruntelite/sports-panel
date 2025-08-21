@@ -179,4 +179,5 @@ export type ScheduleTemplate = {
   };
   startTime?: string;
   endTime?: string;
+  color?: string;
 };

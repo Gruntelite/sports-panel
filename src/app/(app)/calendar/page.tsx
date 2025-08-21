@@ -13,25 +13,13 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc, collection, getDocs, query, updateDoc, writeBatch, setDoc, where, deleteDoc, addDoc, Timestamp } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import type { Team, CalendarEvent } from "@/lib/types";
+import type { Team, CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 
-
-type ScheduleTemplate = {
-  id: string;
-  name: string;
-  weeklySchedule: any;
-};
-
-type DayOverride = {
-  date: string; // YYYY-MM-DD
-  templateId: string;
-  templateName: string;
-};
 
 const EVENT_COLORS = [
     { name: 'Primary', value: 'bg-primary/20 text-primary border border-primary/50', hex: 'hsl(var(--primary))' },
@@ -41,6 +29,16 @@ const EVENT_COLORS = [
     { name: 'Red', value: 'bg-red-500/20 text-red-700 border border-red-500/50', hex: '#ef4444' },
     { name: 'Purple', value: 'bg-purple-500/20 text-purple-700 border border-purple-500/50', hex: '#a855f7' },
 ];
+
+const TEMPLATE_BG_COLORS: {[key: string]: string} = {
+    "#dcfce7": "bg-green-100/60",
+    "#dbeafe": "bg-blue-100/60",
+    "#fef9c3": "bg-yellow-100/60",
+    "#ffedd5": "bg-orange-100/60",
+    "#fee2e2": "bg-red-100/60",
+    "#f3e8ff": "bg-purple-100/60",
+    "#fce7f3": "bg-pink-100/60",
+};
 
 
 function CalendarView() {
@@ -53,7 +51,7 @@ function CalendarView() {
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [defaultTemplateId, setDefaultTemplateId] = useState<string | null>(null);
-  const [overrides, setOverrides] = useState<Map<string, string>>(new Map());
+  const [overrides, setOverrides] = useState<Map<string, {templateId: string, color?: string}>>(new Map());
 
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
@@ -89,6 +87,7 @@ function CalendarView() {
     if (clubId && templates.length > 0) {
       fetchCalendarData(currentDate);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clubId, currentDate, defaultTemplateId, templates]);
 
   const fetchTemplatesAndConfig = async (clubId: string) => {
@@ -130,17 +129,17 @@ function CalendarView() {
     if (!clubId || !defaultTemplateId) return;
     setLoading(true);
     try {
-      const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
-      const lastDayOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const firstDayOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
+      const lastDayOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
 
       const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"), 
           where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
           where('date', '<=', format(lastDayOfMonth, "yyyy-MM-dd"))
       );
       const overridesSnapshot = await getDocs(overridesQuery);
-      const monthOverrides = new Map<string, string>();
+      const monthOverrides = new Map<string, {templateId: string, color?: string}>();
       overridesSnapshot.forEach(doc => {
-          monthOverrides.set(doc.data().date, doc.data().templateId);
+          monthOverrides.set(doc.data().date, { templateId: doc.data().templateId, color: doc.data().color });
       });
       setOverrides(monthOverrides);
 
@@ -152,7 +151,8 @@ function CalendarView() {
 
       for (let d = new Date(loopStartDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
           const dayStr = format(d, "yyyy-MM-dd");
-          const templateIdToUse = monthOverrides.get(dayStr) || defaultTemplateId;
+          const override = monthOverrides.get(dayStr);
+          const templateIdToUse = override?.templateId || defaultTemplateId;
 
           if (!templateIdToUse) continue;
           
@@ -161,7 +161,7 @@ function CalendarView() {
 
           const weeklySchedule = template.weeklySchedule;
           const dayName = daysOfWeek[d.getUTCDay()];
-          const daySchedule = weeklySchedule?.[dayName] || [];
+          const daySchedule = weeklySchedule?.[dayName as keyof typeof weeklySchedule] || [];
 
           daySchedule.forEach((training: any) => {
               const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
@@ -294,7 +294,8 @@ function CalendarView() {
             batch.set(overrideRef, {
                 date: dayStr,
                 templateId: templateId,
-                templateName: template.name
+                templateName: template.name,
+                color: template.color,
             });
         });
         await batch.commit();
@@ -443,10 +444,16 @@ function CalendarView() {
                         return eventDate >= dayStart && eventDate <= dayEnd;
                     }).sort((a,b) => a.start.toMillis() - b.start.toMillis());
                     
+                    const override = overrides.get(dayStr);
+                    const defaultTemplateColor = templates.find(t => t.id === defaultTemplateId)?.color;
+                    const dayColor = override?.color || defaultTemplateColor;
+                    const dayBgClass = dayColor ? (TEMPLATE_BG_COLORS[dayColor] || 'bg-card') : 'bg-card';
+
+
                     return (
                     <div 
                         key={day} 
-                        className={cn("p-1 bg-card min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors", { "bg-primary/10": isSelected, "hover:bg-muted/50": !isSelected })}
+                        className={cn("p-1 min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors", dayBgClass, { "ring-2 ring-primary ring-inset": isSelected, "hover:bg-muted/50": !isSelected })}
                         onClick={() => handleDayClick(day)}
                     >
                         <span className="font-bold self-end text-sm pr-1">{day}</span>
