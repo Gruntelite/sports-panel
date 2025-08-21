@@ -21,7 +21,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from 'date-fns';
-import { toZonedTime } from "date-fns-tz";
 
 
 type MemberData = Partial<Player & Coach & Staff>;
@@ -144,7 +143,7 @@ export default function AccountPage() {
   const isPlayer = role === 'player';
   const isCoach = role === 'coach';
   
-  const birthDate = memberData.birthDate ? new Date(memberData.birthDate + 'T00:00:00Z') : undefined;
+  const birthDate = memberData.birthDate ? new Date(memberData.birthDate) : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -233,3 +232,5 @@ export default function AccountPage() {
     </div>
   );
 }
+
+    
