@@ -249,7 +249,7 @@ export default function DashboardPage() {
     { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
     { id: "teams", title: "Equipos", value: "0", change: "", icon: 'Shield' },
     { id: "users", title: "Total de Usuarios", value: "0", change: "", icon: 'Users' },
-    { id: "fees", title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
+    { id: "fees", title: "Ingresos por Cuotas", value: "0 €", change: "", icon: 'CircleDollarSign' },
   ]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
@@ -272,19 +272,21 @@ export default function DashboardPage() {
             const playersCount = playersCountSnap.data().count;
             const usersCount = usersCountSnap.data().count;
 
-            const pendingFees = playersSnapshot.docs.reduce((acc, doc) => {
+            const paidFees = playersSnapshot.docs.reduce((acc, doc) => {
                 const player = doc.data();
-                if (player.paymentStatus !== 'paid' && player.monthlyFee) {
+                if (player.paymentStatus === 'paid' && player.monthlyFee) {
                     return acc + player.monthlyFee;
                 }
                 return acc;
             }, 0);
 
+            const monthName = format(new Date(), "LLLL 'de' yyyy", { locale: es });
+
             setStats(prevStats => prevStats.map(stat => {
                 if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
                 if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
                 if (stat.id === 'users') return { ...stat, value: usersCount.toString() };
-                if (stat.id === 'fees') return { ...stat, value: `${pendingFees.toLocaleString('es-ES')} €` };
+                if (stat.id === 'fees') return { ...stat, value: `${paidFees.toLocaleString('es-ES')} €`, change: `Total de ingresos en ${monthName}` };
                 return stat;
             }));
 
@@ -345,7 +347,7 @@ export default function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stat.value}</div>
-                    <p className="text-xs text-muted-foreground">{stat.change}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{stat.change}</p>
                 </CardContent>
                 </Card>
             );
@@ -367,4 +369,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
