@@ -724,69 +724,63 @@ export default function SchedulesPage() {
         </div>
 
        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col">
-         <div className="flex items-center justify-between border-b">
-            <TabsList>
-                <TabsTrigger value="editor"><Edit className="mr-2 h-4 w-4" /> Editor de Plantilla</TabsTrigger>
-                <TabsTrigger value="preview"><Eye className="mr-2 h-4 w-4" /> Vista Semanal</TabsTrigger>
-            </TabsList>
-         </div>
-          {currentTab === 'preview' && (
-            <div className="flex items-center gap-2 py-4 px-1 border-b">
-                 <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
-                  <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
-                      <DropdownMenu>
+         <div className="flex items-center justify-between border-b pb-3">
+             <div className="flex items-center gap-2">
+                <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
+                <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+                    <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="outline">
-                              {displayTemplate?.name || "Seleccionar Plantilla"}
-                              <MoreVertical className="ml-2 h-4 w-4" />
-                          </Button>
+                        <Button variant="outline">
+                            {displayTemplate?.name || "Seleccionar Plantilla"}
+                            <MoreVertical className="ml-2 h-4 w-4" />
+                        </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                          <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
-                              {scheduleTemplates.map(template => (
-                                  <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
-                              ))}
-                          </DropdownMenuRadioGroup>
-                          <DropdownMenuSeparator />
+                        <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                            {scheduleTemplates.map(template => (
+                                <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                            ))}
+                        </DropdownMenuRadioGroup>
+                        <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={(e) => {
-                                  e.preventDefault();
-                                  setIsNewTemplateModalOpen(true);
-                              }}>
-                                  <PlusCircle className="mr-2 h-4 w-4"/>
-                                  Crear Plantilla
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onSelect={(e) => {
-                                  e.preventDefault();
-                                  setEditedTemplateName(displayTemplate?.name || "");
-                                  setIsEditTemplateModalOpen(true);
-                                }} disabled={!currentTemplateId}>
-                                  <Edit className="mr-2 h-4 w-4"/>
-                                  Renombrar
-                              </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
-                              <Trash2 className="mr-2 h-4 w-4"/>
-                              Eliminar
-                          </DropdownMenuItem>
+                                e.preventDefault();
+                                setIsNewTemplateModalOpen(true);
+                            }}>
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Crear Plantilla
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={(e) => {
+                                e.preventDefault();
+                                setEditedTemplateName(displayTemplate?.name || "");
+                                setIsEditTemplateModalOpen(true);
+                            }} disabled={!currentTemplateId}>
+                                <Edit className="mr-2 h-4 w-4"/>
+                                Renombrar
+                            </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
+                            <Trash2 className="mr-2 h-4 w-4"/>
+                            Eliminar
+                        </DropdownMenuItem>
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                    </DropdownMenu>
 
-                      <DialogContent>
-                          <DialogHeader>
-                              <DialogTitle>Renombrar Plantilla</DialogTitle>
-                              <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
-                          </DialogHeader>
-                          <div className="py-4">
-                              <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-                              <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
-                          </div>
-                          <DialogFooter>
-                              <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                              <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
-                          </DialogFooter>
-                      </DialogContent>
-                  </Dialog>
-                  
-                  <DialogContent>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Renombrar Plantilla</DialogTitle>
+                            <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
+                        </DialogHeader>
+                        <div className="py-4">
+                            <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                            <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+                        </div>
+                        <DialogFooter>
+                            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                            <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+                
+                <DialogContent>
                     <DialogHeader>
                         <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
                         <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
@@ -799,7 +793,7 @@ export default function SchedulesPage() {
                         <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
                         <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
                     </DialogFooter>
-                  </DialogContent>
+                </DialogContent>
                 </Dialog>
                 <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
                     {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
@@ -808,7 +802,11 @@ export default function SchedulesPage() {
                     {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
                 </Button>
             </div>
-         )}
+            <TabsList>
+                <TabsTrigger value="editor"><Edit className="mr-2 h-4 w-4" /> Editor de Plantilla</TabsTrigger>
+                <TabsTrigger value="preview"><Eye className="mr-2 h-4 w-4" /> Vista Semanal</TabsTrigger>
+            </TabsList>
+         </div>
         <TabsContent value="editor" className="pt-4">
           <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[420px_1fr] gap-6">
               <Card>
