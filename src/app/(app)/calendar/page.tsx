@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, toDate } from "date-fns";
-import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 
 
 type ScheduleTemplate = {
@@ -500,11 +500,11 @@ function CalendarView() {
                     <div className="space-y-2">
                         <Label>Fecha de Inicio</Label>
                         <DatePicker 
-                            date={eventData.start ? utcToZonedTime(eventData.start.toDate(), 'UTC') : undefined}
+                            date={eventData.start ? toZonedTime(eventData.start.toDate(), 'UTC') : undefined}
                             onDateChange={(date) => {
                                 if(date) {
                                     const oldDate = eventData.start?.toDate() || new Date();
-                                    const newDate = zonedTimeToUtc(date, 'UTC');
+                                    const newDate = fromZonedTime(date, 'UTC');
                                     newDate.setHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
                                     setEventData({...eventData, start: Timestamp.fromDate(newDate)})
                                 }
@@ -514,11 +514,11 @@ function CalendarView() {
                     <div className="space-y-2">
                         <Label>Fecha de Fin</Label>
                         <DatePicker 
-                            date={eventData.end ? utcToZonedTime(eventData.end.toDate(), 'UTC') : undefined}
+                            date={eventData.end ? toZonedTime(eventData.end.toDate(), 'UTC') : undefined}
                             onDateChange={(date) => {
                                 if(date) {
                                     const oldDate = eventData.end?.toDate() || new Date();
-                                    const newDate = zonedTimeToUtc(date, 'UTC');
+                                    const newDate = fromZonedTime(date, 'UTC');
                                     newDate.setHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
                                     setEventData({...eventData, end: Timestamp.fromDate(newDate)})
                                 }

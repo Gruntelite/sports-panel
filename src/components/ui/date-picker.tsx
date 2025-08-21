@@ -5,7 +5,7 @@ import * as React from "react"
 import { format } from "date-fns"
 import { es } from "date-fns/locale"
 import { Calendar as CalendarIcon } from "lucide-react"
-import { utcToZonedTime } from 'date-fns-tz';
+import { toZonedTime } from 'date-fns-tz';
 
 
 import { cn } from "@/lib/utils"
@@ -24,7 +24,7 @@ type DatePickerProps = {
 
 export function DatePicker({ date, onDateChange }: DatePickerProps) {
   const currentYear = new Date().getFullYear();
-  const displayDate = date ? utcToZonedTime(date, 'UTC') : undefined;
+  const displayDate = date ? toZonedTime(date, 'UTC') : undefined;
 
   return (
     <Popover>
