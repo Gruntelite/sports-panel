@@ -57,7 +57,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import type { Document, Player, Coach, Staff } from "@/lib/types";
+import type { Document, User } from "@/lib/types";
 import {
   PlusCircle,
   Loader2,
@@ -106,38 +106,26 @@ export default function ClubFilesPage() {
   const fetchData = async (currentClubId: string) => {
     setLoading(true);
     try {
-      const q = query(collection(db, "clubs", currentClubId, "documents"), orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const docsList = querySnapshot.docs.map(
+      const docsQuery = query(collection(db, "clubs", currentClubId, "documents"), orderBy("createdAt", "desc"));
+      const docsSnapshot = await getDocs(docsQuery);
+      const docsList = docsSnapshot.docs.map(
         (doc) => ({ id: doc.id, ...doc.data() } as Document)
       );
       setDocuments(docsList);
       setFilteredDocuments(docsList);
 
+      const usersQuery = query(collection(db, "clubs", currentClubId, "users"));
+      const usersSnapshot = await getDocs(usersQuery);
       const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
 
-      const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
-      playersSnap.forEach(doc => {
-          const data = doc.data() as Player;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      usersSnapshot.forEach(doc => {
+          const data = doc.data() as User;
+          allOwners.push({ id: doc.id, name: data.name });
       });
 
-      const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
-      coachesSnap.forEach(doc => {
-          const data = doc.data() as Coach;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
-      });
-
-      const staffSnap = await getDocs(collection(db, "clubs", currentClubId, "staff"));
-      staffSnap.forEach(doc => {
-          const data = doc.data() as Staff;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
-      });
-
-      // Sort owners alphabetically, keeping "Club" at the top
       const sortedOwners = allOwners.sort((a, b) => {
-          if(a.id === 'club') return -1;
-          if(b.id === 'club') return 1;
+          if (a.id === 'club') return -1;
+          if (b.id === 'club') return 1;
           return a.name.localeCompare(b.name);
       });
 
@@ -328,7 +316,7 @@ export default function ClubFilesPage() {
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Asignar a (Opcional)</Label>
+                        <Label>Asignar a Usuario (Opcional)</Label>
                         <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
                             <PopoverTrigger asChild>
                             <Button
@@ -345,9 +333,9 @@ export default function ClubFilesPage() {
                             </PopoverTrigger>
                             <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
-                                <CommandInput placeholder="Buscar propietario..." />
+                                <CommandInput placeholder="Buscar usuario..." />
                                  <CommandList>
-                                    <CommandEmpty>No se encontró ningún propietario.</CommandEmpty>
+                                    <CommandEmpty>No se encontró ningún usuario.</CommandEmpty>
                                     <CommandGroup>
                                     {owners.map((owner) => (
                                         <CommandItem
