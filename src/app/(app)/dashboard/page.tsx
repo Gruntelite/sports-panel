@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,12 +11,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { initialStats } from "@/lib/data";
-import { Users, Shield, Calendar, CircleDollarSign, Loader2, Clock, MapPin, Star, Hourglass } from "lucide-react";
-import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { Users, Shield, Calendar, CircleDollarSign, Loader2 } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
-import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
+import { collection, query, getDocs, doc, getDoc, getCountFromServer } from "firebase/firestore";
 
 const iconMap = {
   Users: Users,
@@ -24,190 +21,6 @@ const iconMap = {
   Calendar: Calendar,
   CircleDollarSign: CircleDollarSign,
 };
-
-type ScheduleEntry = {
-    id: string;
-    title: string;
-    type: 'Entrenamiento' | 'Partido' | 'Evento' | 'Otro';
-    startTime: string;
-    endTime: string;
-    location?: string;
-    color: string;
-};
-
-const timeToMinutes = (time: string): number => {
-    if (!time) return 0;
-    const [hours, minutes] = time.split(':').map(Number);
-    return hours * 60 + minutes;
-};
-
-const TodaySchedule = () => {
-    const [loading, setLoading] = useState(true);
-    const [clubId, setClubId] = useState<string | null>(null);
-    const [todaysSchedule, setTodaysSchedule] = useState<ScheduleEntry[]>([]);
-    
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged(async (user) => {
-            if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                const userDocSnap = await getDoc(userDocRef);
-                if (userDocSnap.exists()) {
-                    const currentClubId = userDocSnap.data().clubId;
-                    setClubId(currentClubId);
-                    if (currentClubId) {
-                        fetchTodaysSchedule(currentClubId);
-                    } else {
-                        setLoading(false);
-                    }
-                } else {
-                    setLoading(false);
-                }
-            } else {
-                setLoading(false);
-            }
-        });
-        return () => unsubscribe();
-    }, []);
-
-    const fetchTodaysSchedule = async (clubId: string) => {
-        setLoading(true);
-        try {
-            let scheduleEntries: ScheduleEntry[] = [];
-            const today = new Date();
-            const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-            const todayStr = today.toISOString().split('T')[0];
-
-            // 1. Fetch all necessary data first
-            const schedulesCol = collection(db, "clubs", clubId, "schedules");
-            const schedulesSnapshot = await getDocs(schedulesCol);
-            const templates = schedulesSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScheduleTemplate));
-
-            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-            const settingsSnap = await getDoc(settingsRef);
-            const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : null;
-            
-            // 2. Determine which template to use for today
-            const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
-            const overrideSnap = await getDoc(overrideRef);
-            const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
-            
-            // 3. Process template-based events
-            if (templateIdToUse) {
-                const template = templates.find(t => t.id === templateIdToUse);
-                if (template) {
-                    const currentDayName = daysOfWeek[today.getDay()];
-                    const daySchedule = template.weeklySchedule?.[currentDayName] || [];
-                    
-                    daySchedule.forEach((training: any) => {
-                        scheduleEntries.push({
-                            id: `${training.id}-${todayStr}`,
-                            title: training.teamName,
-                            type: 'Entrenamiento',
-                            startTime: training.startTime,
-                            endTime: training.endTime,
-                            location: training.venueName,
-                            color: 'bg-primary/20 text-primary border border-primary/50',
-                        });
-                    });
-                }
-            }
-            
-            // 4. Fetch and process custom events for today
-            const startOfDay = new Date(todayStr);
-            startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date(todayStr);
-            endOfDay.setHours(23, 59, 59, 999);
-
-            const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
-                where('start', '>=', Timestamp.fromDate(startOfDay)),
-                where('start', '<=', Timestamp.fromDate(endOfDay))
-            );
-            const customEventsSnapshot = await getDocs(customEventsQuery);
-            customEventsSnapshot.forEach(doc => {
-                const eventData = doc.data() as CalendarEvent;
-                scheduleEntries.push({
-                    id: doc.id,
-                    title: eventData.title,
-                    type: eventData.type,
-                    startTime: eventData.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-                    endTime: eventData.end.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-                    location: eventData.location,
-                    color: eventData.color || 'bg-secondary text-secondary-foreground border',
-                });
-            });
-
-            // 5. Sort and set final schedule
-            scheduleEntries.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
-            setTodaysSchedule(scheduleEntries);
-
-        } catch (error) {
-            console.error("Error fetching today's schedule:", error);
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    if (loading) {
-        return <div className="flex items-center justify-center h-96"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
-    }
-    
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center">
-                <div className="grid gap-2">
-                    <CardTitle>Agenda de Hoy</CardTitle>
-                    <CardDescription>
-                        Horarios para el {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
-                    </CardDescription>
-                </div>
-                <Button asChild size="sm" className="ml-auto gap-1">
-                    <Link href="/calendar">
-                        Ver Calendario Completo
-                        <Calendar className="h-4 w-4" />
-                    </Link>
-                </Button>
-            </CardHeader>
-            <CardContent>
-                <div className="space-y-4">
-                    {todaysSchedule.length > 0 ? (
-                        todaysSchedule.map((item) => (
-                            <div key={item.id} className="grid grid-cols-[120px_1fr_auto] items-center gap-4 p-3 rounded-lg bg-muted/50">
-                                <div className="font-semibold text-sm flex items-center gap-2">
-                                    <Hourglass className="h-4 w-4 text-muted-foreground"/>
-                                    {item.startTime} - {item.endTime}
-                                </div>
-                                <div>
-                                    <div className="font-medium">{item.title}</div>
-                                    {item.location && (
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
-                                        <MapPin className="h-3 w-3"/>
-                                        {item.location}
-                                    </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <Badge style={{
-                                        backgroundColor: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[0].substring(3).replace('/20', '')}))` : item.color,
-                                        color: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[1].substring(5)}))` : 'hsl(var(--primary-foreground))'
-                                    }} className="border">
-                                      {item.type === 'Evento' && <Star className="h-3 w-3 mr-1"/>}
-                                      {item.type}
-                                    </Badge>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="text-center text-muted-foreground py-10">
-                            <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium">No hay nada programado</h3>
-                            <p className="mt-1 text-sm text-gray-500">No hay entrenamientos ni eventos para el día de hoy.</p>
-                        </div>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-    );
-}
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -309,10 +122,6 @@ export default function DashboardPage() {
             );
             })
         )}
-      </div>
-
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
-        <TodaySchedule />
       </div>
     </div>
   );
