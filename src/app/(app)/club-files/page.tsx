@@ -181,9 +181,9 @@ export default function ClubFilesPage() {
       return;
     }
 
-    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     if (fileToUpload.size > MAX_FILE_SIZE) {
-        toast({ variant: "destructive", title: "Archivo demasiado grande", description: "El tamaño máximo del archivo es 5 MB."});
+        toast({ variant: "destructive", title: "Archivo demasiado grande", description: "El tamaño máximo del archivo es 10 MB. Por favor, comprime el archivo si es más pesado."});
         return;
     }
 
@@ -378,7 +378,7 @@ export default function ClubFilesPage() {
                             setFileToUpload(e.target.files?.[0] || null)
                           }
                         />
-                        <p className="text-xs text-muted-foreground">Tamaño máximo: 5 MB.</p>
+                        <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
                       </div>
                     </div>
                     <DialogFooter>
