@@ -137,7 +137,7 @@ export function Sidebar() {
                             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem asChild>
-                                <Link href="/account" className="w-full">
+                                <Link href="/club-settings" className="w-full">
                                     <Settings className="mr-2 h-4 w-4"/>
                                     Mi Perfil
                                 </Link>
