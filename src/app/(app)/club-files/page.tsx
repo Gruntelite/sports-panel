@@ -68,6 +68,7 @@ import {
   User as UserIcon,
   Check,
   ChevronsUpDown,
+  Tag,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
@@ -78,12 +79,21 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
 
 type Owner = {
     id: string;
     name: string;
     role?: string;
 }
+
+const docCategories = [
+    { value: 'medico', label: 'Médico' },
+    { value: 'identificacion', label: 'Identificación' },
+    { value: 'autorizacion', label: 'Autorización' },
+    { value: 'factura', label: 'Factura' },
+    { value: 'otro', label: 'Otro' },
+];
 
 export default function ClubFilesPage() {
   const { toast } = useToast();
@@ -99,10 +109,12 @@ export default function ClubFilesPage() {
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [documentNameToSave, setDocumentNameToSave] = useState("");
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState("");
   const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
 
   const [filterOwnerId, setFilterOwnerId] = useState("all");
+  const [filterCategory, setFilterCategory] = useState("all");
 
   const fetchData = async (currentClubId: string) => {
     setLoading(true);
@@ -113,8 +125,7 @@ export default function ClubFilesPage() {
         (doc) => ({ id: doc.id, ...doc.data() } as Document)
       );
       setDocuments(docsList);
-      setFilteredDocuments(docsList);
-
+      
       const usersQuery = query(collection(db, "clubs", currentClubId, "users"));
       const usersSnapshot = await getDocs(usersQuery);
       const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
@@ -163,12 +174,15 @@ export default function ClubFilesPage() {
   }, []);
 
   useEffect(() => {
-    if (filterOwnerId === "all") {
-        setFilteredDocuments(documents);
-    } else {
-        setFilteredDocuments(documents.filter(doc => doc.ownerId === filterOwnerId));
+    let filtered = documents;
+    if (filterOwnerId !== "all") {
+        filtered = filtered.filter(doc => doc.ownerId === filterOwnerId);
     }
-  }, [filterOwnerId, documents]);
+    if (filterCategory !== "all") {
+        filtered = filtered.filter(doc => doc.category === filterCategory);
+    }
+    setFilteredDocuments(filtered);
+  }, [filterOwnerId, filterCategory, documents]);
 
 
   const handleFileUpload = async () => {
@@ -176,8 +190,8 @@ export default function ClubFilesPage() {
         toast({ variant: "destructive", title: "Error de Autenticación", description: "Debes estar autenticado para subir archivos."});
         return;
     }
-    if (!fileToUpload || !documentNameToSave.trim()) {
-      toast({ variant: "destructive", title: "Faltan datos", description: "Debes seleccionar un archivo y darle un nombre."});
+    if (!fileToUpload || !documentNameToSave.trim() || !selectedCategory) {
+      toast({ variant: "destructive", title: "Faltan datos", description: "Debes seleccionar un archivo, darle un nombre y una categoría."});
       return;
     }
 
@@ -205,6 +219,7 @@ export default function ClubFilesPage() {
         createdAt: Timestamp.now(),
         ownerId: owner.id,
         ownerName: owner.name,
+        category: selectedCategory,
       };
       await addDoc(collection(db, "clubs", clubId, "documents"), newDocumentData);
 
@@ -217,6 +232,7 @@ export default function ClubFilesPage() {
       setFileToUpload(null);
       setDocumentNameToSave("");
       setSelectedOwner(null);
+      setSelectedCategory("");
       
       if(clubId) fetchData(clubId);
 
@@ -283,6 +299,17 @@ export default function ClubFilesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+                 <Select value={filterCategory} onValueChange={setFilterCategory}>
+                    <SelectTrigger className="w-[180px]">
+                        <SelectValue placeholder="Filtrar por categoría" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todas las categorías</SelectItem>
+                        {docCategories.map(cat => (
+                            <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
                  <Select value={filterOwnerId} onValueChange={setFilterOwnerId}>
                     <SelectTrigger className="w-[200px]">
                         <SelectValue placeholder="Filtrar por propietario" />
@@ -322,6 +349,19 @@ export default function ClubFilesPage() {
                           onChange={(e) => setDocumentNameToSave(e.target.value)}
                         />
                       </div>
+                       <div className="space-y-2">
+                          <Label htmlFor="doc-category">Categoría</Label>
+                          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                            <SelectTrigger id="doc-category">
+                              <SelectValue placeholder="Selecciona una categoría" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {docCategories.map(cat => (
+                                <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       <div className="space-y-2">
                         <Label>Asignar a Usuario (Opcional)</Label>
                         <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
@@ -407,6 +447,7 @@ export default function ClubFilesPage() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Nombre del Archivo</TableHead>
+                    <TableHead>Categoría</TableHead>
                     <TableHead>Propietario</TableHead>
                     <TableHead>Fecha de Subida</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
@@ -419,6 +460,9 @@ export default function ClubFilesPage() {
                         <TableCell className="font-medium flex items-center gap-2">
                            <FileIcon className="h-4 w-4 text-muted-foreground"/>
                            {doc.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || 'Sin Categoría'}</Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
@@ -444,7 +488,7 @@ export default function ClubFilesPage() {
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={4}
+                        colSpan={5}
                         className="h-24 text-center text-muted-foreground"
                       >
                         No hay documentos que coincidan con el filtro actual.

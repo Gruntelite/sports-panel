@@ -10,6 +10,7 @@ export type Document = {
     createdAt: Timestamp;
     ownerId?: string;
     ownerName?: string;
+    category?: string;
 }
 
 export type Team = {
