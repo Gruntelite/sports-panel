@@ -86,7 +86,7 @@ function CalendarView() {
   }, [clubId]);
 
   useEffect(() => {
-    if (clubId) {
+    if (clubId && templates.length > 0) {
       fetchCalendarData(currentDate);
     }
   }, [clubId, currentDate, defaultTemplateId, templates]);
@@ -127,7 +127,7 @@ function CalendarView() {
   }
 
   const fetchCalendarData = async (date: Date) => {
-    if (!clubId) return;
+    if (!clubId || !defaultTemplateId) return;
     setLoading(true);
     try {
       const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
@@ -160,15 +160,17 @@ function CalendarView() {
           if (!template) continue;
 
           const weeklySchedule = template.weeklySchedule;
-          const dayName = daysOfWeek[d.getDay()];
+          const dayName = daysOfWeek[d.getUTCDay()];
           const daySchedule = weeklySchedule?.[dayName] || [];
 
           daySchedule.forEach((training: any) => {
+              const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
+              const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
               allEvents.push({
                   id: `${training.id}-${dayStr}`,
                   title: `${training.startTime} - ${training.teamName}`,
-                  start: Timestamp.fromDate(new Date(`${dayStr}T${training.startTime}:00Z`)),
-                  end: Timestamp.fromDate(new Date(`${dayStr}T${training.endTime}:00Z`)),
+                  start: Timestamp.fromDate(startDateTime),
+                  end: Timestamp.fromDate(endDateTime),
                   type: 'Entrenamiento',
                   location: training.venueName,
                   color: 'bg-primary/20 text-primary border border-primary/50',
@@ -251,7 +253,7 @@ function CalendarView() {
   };
   
   const handleDayClick = (day: number) => {
-    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dayDate = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), day));
     const dayStr = format(dayDate, "yyyy-MM-dd");
 
     const newSelectedDays = new Set(selectedDays);
@@ -326,17 +328,17 @@ function CalendarView() {
     }
   }
   
-  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
-  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
-  const daysInMonth = endOfMonth.getDate();
-  const startDayRaw = startOfMonth.getDay(); 
+  const startOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
+  const endOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 0));
+  const daysInMonth = endOfMonth.getUTCDate();
+  const startDayRaw = startOfMonth.getUTCDay(); 
   const startDay = startDayRaw === 0 ? 6 : startDayRaw - 1;
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const placeholders = Array.from({ length: startDay }, (_, i) => i);
   
-  const monthName = currentDate.toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
-  const year = currentDate.getFullYear();
+  const monthName = startOfMonth.toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
+  const year = startOfMonth.getUTCFullYear();
   const selectedTemplateName = templates.find(t => t.id === defaultTemplateId)?.name || 'Seleccionar Plantilla';
 
   return (
@@ -430,20 +432,17 @@ function CalendarView() {
                 ))}
                 {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
                 {days.map(day => {
-                    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+                    const dayDate = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), day));
                     const dayStr = format(dayDate, "yyyy-MM-dd");
                     const isSelected = selectedDays.has(dayStr);
-                    const dayStart = new Date(Date.UTC(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 0, 0, 0, 0));
-                    const dayEnd = new Date(Date.UTC(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 23, 59, 59, 999));
+                    const dayStart = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 0, 0, 0, 0));
+                    const dayEnd = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 23, 59, 59, 999));
 
                     const dayEvents = events.filter(e => {
                         const eventDate = e.start.toDate();
                         return eventDate >= dayStart && eventDate <= dayEnd;
                     }).sort((a,b) => a.start.toMillis() - b.start.toMillis());
                     
-                    const overrideTemplateId = overrides.get(dayStr);
-                    const overrideTemplate = overrideTemplateId ? templates.find(t => t.id === overrideTemplateId) : null;
-
                     return (
                     <div 
                         key={day} 
@@ -451,11 +450,6 @@ function CalendarView() {
                         onClick={() => handleDayClick(day)}
                     >
                         <span className="font-bold self-end text-sm pr-1">{day}</span>
-                         {overrideTemplate && (
-                            <div className="text-xs font-semibold p-1 bg-accent/50 text-accent-foreground rounded-sm truncate text-center">
-                                {overrideTemplate.name}
-                            </div>
-                         )}
                         <div className="flex-grow space-y-1 overflow-y-auto">
                             {dayEvents.map(event => (
                             <div key={event.id} className={cn('text-xs p-1.5 rounded-md cursor-default', event.color)} onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}>
@@ -614,3 +608,5 @@ export default function CalendarPage() {
     </div>
   )
 }
+
+    
