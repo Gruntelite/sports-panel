@@ -20,10 +20,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import type { Player, Team, OneTimePayment, User, Sponsorship } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User, Sponsorship, Coach, RecurringExpense, OneOffExpense } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -36,7 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, getMonth } from "date-fns";
 import { es } from "date-fns/locale";
 
 export function TreasuryDashboard() {
@@ -46,16 +46,22 @@ export function TreasuryDashboard() {
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [players, setPlayers] = useState<Player[]>([]);
+  const [coaches, setCoaches] = useState<Coach[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [oneTimePayments, setOneTimePayments] = useState<OneTimePayment[]>([]);
   const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
+  const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
+  const [oneOffExpenses, setOneOffExpenses] = useState<OneOffExpense[]>([]);
 
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   
   const [stats, setStats] = useState({
       expectedIncome: 0,
+      coachPayments: 0,
+      sponsorshipIncome: 0,
+      monthlyExpenses: 0,
   });
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -72,6 +78,16 @@ export function TreasuryDashboard() {
   const [sponsorshipModalMode, setSponsorshipModalMode] = useState<'add' | 'edit'>('add');
   const [sponsorshipData, setSponsorshipData] = useState<Partial<Sponsorship>>({});
   const [sponsorshipToDelete, setSponsorshipToDelete] = useState<Sponsorship | null>(null);
+  
+  const [isRecurringExpenseModalOpen, setIsRecurringExpenseModalOpen] = useState(false);
+  const [recurringExpenseModalMode, setRecurringExpenseModalMode] = useState<'add' | 'edit'>('add');
+  const [recurringExpenseData, setRecurringExpenseData] = useState<Partial<RecurringExpense>>({});
+  const [recurringExpenseToDelete, setRecurringExpenseToDelete] = useState<RecurringExpense | null>(null);
+  
+  const [isOneOffExpenseModalOpen, setIsOneOffExpenseModalOpen] = useState(false);
+  const [oneOffExpenseModalMode, setOneOffExpenseModalMode] = useState<'add' | 'edit'>('add');
+  const [oneOffExpenseData, setOneOffExpenseData] = useState<Partial<OneOffExpense>>({});
+  const [oneOffExpenseToDelete, setOneOffExpenseToDelete] = useState<OneOffExpense | null>(null);
 
 
   useEffect(() => {
@@ -114,6 +130,11 @@ export function TreasuryDashboard() {
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeams(teamsList);
+      
+      const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
+      const coachesSnapshot = await getDocs(coachesQuery);
+      const coachesList = coachesSnapshot.docs.map(doc => doc.data() as Coach);
+      setCoaches(coachesList);
 
       const playersQuery = query(collection(db, "clubs", clubId, "players"));
       const playersSnapshot = await getDocs(playersQuery);
@@ -143,12 +164,38 @@ export function TreasuryDashboard() {
       const sponsorshipsSnapshot = await getDocs(sponsorshipsQuery);
       const sponsorshipsList = sponsorshipsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sponsorship));
       setSponsorships(sponsorshipsList);
+      
+      const recurringExpensesQuery = query(collection(db, "clubs", clubId, "recurringExpenses"));
+      const recurringExpensesSnapshot = await getDocs(recurringExpensesQuery);
+      const recurringExpensesList = recurringExpensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as RecurringExpense));
+      setRecurringExpenses(recurringExpensesList);
+      
+      const oneOffExpensesQuery = query(collection(db, "clubs", clubId, "oneOffExpenses"));
+      const oneOffExpensesSnapshot = await getDocs(oneOffExpensesQuery);
+      const oneOffExpensesList = oneOffExpensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OneOffExpense));
+      setOneOffExpenses(oneOffExpensesList);
 
 
-      const expectedTotal = playersList.reduce((acc, player) => {
-          return acc + (player.monthlyFee || 0);
+      const expectedTotal = playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
+      const coachPaymentsTotal = coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
+      const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly').reduce((acc, s) => acc + s.amount, 0);
+
+      const currentMonthIndex = getMonth(new Date()); // 0-indexed
+      const recurringMonthlyExpenses = recurringExpensesList.reduce((acc, expense) => {
+        if ((currentMonthIndex % expense.recurrenceInMonths) === 0) {
+            return acc + expense.amount;
+        }
+        return acc;
       }, 0);
-      setStats({ expectedIncome: expectedTotal });
+      const oneOffCurrentMonthExpenses = oneOffExpensesList.filter(e => getMonth(new Date(e.date)) === currentMonthIndex).reduce((acc, e) => acc + e.amount, 0);
+      const totalMonthlyExpenses = recurringMonthlyExpenses + oneOffCurrentMonthExpenses;
+
+      setStats({ 
+        expectedIncome: expectedTotal,
+        coachPayments: coachPaymentsTotal,
+        sponsorshipIncome: sponsorshipIncomeTotal,
+        monthlyExpenses: totalMonthlyExpenses
+      });
 
     } catch (error) {
       console.error("Error fetching treasury data:", error);
@@ -301,6 +348,104 @@ export function TreasuryDashboard() {
     }
   };
 
+  const handleOpenRecurringExpenseModal = (mode: 'add' | 'edit', expense?: RecurringExpense) => {
+    setRecurringExpenseModalMode(mode);
+    setRecurringExpenseData(expense || { title: "", amount: "", recurrenceInMonths: 1 });
+    setIsRecurringExpenseModalOpen(true);
+  };
+  
+  const handleSaveRecurringExpense = async () => {
+    if (!clubId || !recurringExpenseData.title || !recurringExpenseData.amount) {
+      toast({ variant: "destructive", title: "Error", description: "El título y la cantidad son obligatorios." });
+      return;
+    }
+    setSaving(true);
+    
+    const dataToSave = { ...recurringExpenseData, amount: Number(recurringExpenseData.amount) };
+    
+    try {
+      if (recurringExpenseModalMode === 'edit' && recurringExpenseData.id) {
+        await updateDoc(doc(db, "clubs", clubId, "recurringExpenses", recurringExpenseData.id), dataToSave);
+        toast({ title: "Gasto recurrente actualizado" });
+      } else {
+        await addDoc(collection(db, "clubs", clubId, "recurringExpenses"), dataToSave);
+        toast({ title: "Gasto recurrente añadido" });
+      }
+      setIsRecurringExpenseModalOpen(false);
+      fetchData(clubId);
+    } catch (error) {
+      console.error("Error saving recurring expense:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el gasto recurrente." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteRecurringExpense = async () => {
+    if (!clubId || !recurringExpenseToDelete) return;
+    setSaving(true);
+    try {
+      await deleteDoc(doc(db, "clubs", clubId, "recurringExpenses", recurringExpenseToDelete.id));
+      toast({ title: "Gasto recurrente eliminado" });
+      setRecurringExpenseToDelete(null);
+      fetchData(clubId);
+    } catch (error) {
+      console.error("Error deleting recurring expense:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el gasto." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleOpenOneOffExpenseModal = (mode: 'add' | 'edit', expense?: OneOffExpense) => {
+    setOneOffExpenseModalMode(mode);
+    setOneOffExpenseData(expense || { title: "", amount: "", date: new Date().toISOString().split('T')[0] });
+    setIsOneOffExpenseModalOpen(true);
+  };
+
+  const handleSaveOneOffExpense = async () => {
+    if (!clubId || !oneOffExpenseData.title || !oneOffExpenseData.amount) {
+      toast({ variant: "destructive", title: "Error", description: "El título y la cantidad son obligatorios." });
+      return;
+    }
+    setSaving(true);
+
+    const dataToSave = { ...oneOffExpenseData, amount: Number(oneOffExpenseData.amount) };
+
+    try {
+      if (oneOffExpenseModalMode === 'edit' && oneOffExpenseData.id) {
+        await updateDoc(doc(db, "clubs", clubId, "oneOffExpenses", oneOffExpenseData.id), dataToSave);
+        toast({ title: "Gasto actualizado" });
+      } else {
+        await addDoc(collection(db, "clubs", clubId, "oneOffExpenses"), dataToSave);
+        toast({ title: "Gasto añadido" });
+      }
+      setIsOneOffExpenseModalOpen(false);
+      fetchData(clubId);
+    } catch (error) {
+      console.error("Error saving one-off expense:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el gasto." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteOneOffExpense = async () => {
+    if (!clubId || !oneOffExpenseToDelete) return;
+    setSaving(true);
+    try {
+      await deleteDoc(doc(db, "clubs", clubId, "oneOffExpenses", oneOffExpenseToDelete.id));
+      toast({ title: "Gasto eliminado" });
+      setOneOffExpenseToDelete(null);
+      fetchData(clubId);
+    } catch (error) {
+      console.error("Error deleting one-off expense:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el gasto." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
       switch (status) {
@@ -359,11 +504,41 @@ export function TreasuryDashboard() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium">Ingresos Previstos (Mes)</CardTitle>
-                    <CircleDollarSign className="h-4 w-4 text-muted-foreground" />
+                    <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.expectedIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
                     <p className="text-xs text-muted-foreground">Suma de todas las cuotas mensuales de jugadores.</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Pagos a Entrenadores (Mes)</CardTitle>
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{stats.coachPayments.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
+                    <p className="text-xs text-muted-foreground">Suma de todos los pagos a entrenadores.</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Ingresos por Patrocinios (Mes)</CardTitle>
+                    <TrendingUp className="h-4 w-4 text-green-500" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{stats.sponsorshipIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
+                    <p className="text-xs text-muted-foreground">Suma de todos los patrocinios mensuales.</p>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Gastos Mensuales</CardTitle>
+                    <TrendingDown className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                    <div className="text-2xl font-bold">{stats.monthlyExpenses.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
+                    <p className="text-xs text-muted-foreground">Suma de gastos recurrentes y puntuales este mes.</p>
                 </CardContent>
             </Card>
         </div>
@@ -393,6 +568,7 @@ export function TreasuryDashboard() {
             <TabsList>
                 <TabsTrigger value="fees">Cuotas de Jugadores</TabsTrigger>
                 <TabsTrigger value="sponsorships">Patrocinios</TabsTrigger>
+                <TabsTrigger value="expenses">Gastos</TabsTrigger>
                 <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
@@ -504,6 +680,65 @@ export function TreasuryDashboard() {
                     )}
                     </TableBody>
                 </Table>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="expenses" className="mt-4 grid gap-6 md:grid-cols-2">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Gastos Recurrentes</CardTitle>
+                        <CardDescription>Gastos fijos como alquileres o suministros.</CardDescription>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => handleOpenRecurringExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Concepto</TableHead><TableHead>Importe</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                            {recurringExpenses.map(expense => (
+                                <TableRow key={expense.id}>
+                                    <TableCell>{expense.title} <span className="text-xs text-muted-foreground">(cada {expense.recurrenceInMonths} mes/es)</span></TableCell>
+                                    <TableCell>{expense.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent><DropdownMenuItem onSelect={() => handleOpenRecurringExpenseModal('edit', expense)}>Editar</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setRecurringExpenseToDelete(expense)}>Eliminar</DropdownMenuItem></DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+            </Card>
+             <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Gastos Puntuales</CardTitle>
+                        <CardDescription>Gastos únicos para material, eventos, etc.</CardDescription>
+                    </div>
+                    <Button size="sm" variant="outline" onClick={() => handleOpenOneOffExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
+                </CardHeader>
+                <CardContent>
+                    <Table>
+                        <TableHeader><TableRow><TableHead>Concepto</TableHead><TableHead>Importe</TableHead><TableHead>Fecha</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader>
+                        <TableBody>
+                             {oneOffExpenses.map(expense => (
+                                <TableRow key={expense.id}>
+                                    <TableCell>{expense.title}</TableCell>
+                                    <TableCell>{expense.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
+                                    <TableCell>{format(new Date(expense.date), "LLL yyyy", { locale: es })}</TableCell>
+                                    <TableCell>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                            <DropdownMenuContent><DropdownMenuItem onSelect={() => handleOpenOneOffExpenseModal('edit', expense)}>Editar</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setOneOffExpenseToDelete(expense)}>Eliminar</DropdownMenuItem></DropdownMenuContent>
+                                        </DropdownMenu>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </CardContent>
             </Card>
         </TabsContent>
@@ -784,7 +1019,6 @@ export function TreasuryDashboard() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
       <AlertDialog open={!!sponsorshipToDelete} onOpenChange={(open) => !open && setSponsorshipToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -801,7 +1035,39 @@ export function TreasuryDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+    <Dialog open={isRecurringExpenseModalOpen} onOpenChange={setIsRecurringExpenseModalOpen}>
+        <DialogContent><DialogHeader><DialogTitle>{recurringExpenseModalMode === 'add' ? 'Añadir Gasto Recurrente' : 'Editar Gasto Recurrente'}</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2"><Label htmlFor="re-title">Concepto</Label><Input id="re-title" placeholder="p.ej., Alquiler de campos" value={recurringExpenseData.title || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="re-amount">Importe (€)</Label><Input id="re-amount" type="number" value={recurringExpenseData.amount || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
+                    <div className="space-y-2"><Label htmlFor="re-recurrence">Se repite cada (meses)</Label><Input id="re-recurrence" type="number" value={recurringExpenseData.recurrenceInMonths || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, recurrenceInMonths: Number(e.target.value)}))} /></div>
+                </div>
+            </div>
+            <DialogFooter><DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose><Button onClick={handleSaveRecurringExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Guardar</Button></DialogFooter>
+        </DialogContent>
+    </Dialog>
+    <AlertDialog open={!!recurringExpenseToDelete} onOpenChange={(open) => !open && setRecurringExpenseToDelete(null)}>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Estás seguro?</AlertDialogTitle><AlertDialogDescription>Se eliminará permanentemente el gasto recurrente "{recurringExpenseToDelete?.title}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDeleteRecurringExpense} disabled={saving}>Eliminar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+    </AlertDialog>
+
+    <Dialog open={isOneOffExpenseModalOpen} onOpenChange={setIsOneOffExpenseModalOpen}>
+        <DialogContent><DialogHeader><DialogTitle>{oneOffExpenseModalMode === 'add' ? 'Añadir Gasto Puntual' : 'Editar Gasto Puntual'}</DialogTitle></DialogHeader>
+            <div className="space-y-4 py-4">
+                <div className="space-y-2"><Label htmlFor="oe-title">Concepto</Label><Input id="oe-title" placeholder="p.ej., Compra de balones" value={oneOffExpenseData.title || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
+                <div className="space-y-2"><Label htmlFor="oe-desc">Descripción (Opcional)</Label><Textarea id="oe-desc" value={oneOffExpenseData.description || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, description: e.target.value}))} /></div>
+                <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label htmlFor="oe-amount">Importe (€)</Label><Input id="oe-amount" type="number" value={oneOffExpenseData.amount || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
+                    <div className="space-y-2"><Label htmlFor="oe-date">Fecha</Label><Input id="oe-date" type="date" value={oneOffExpenseData.date?.split('T')[0] || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, date: e.target.value}))} /></div>
+                </div>
+            </div>
+            <DialogFooter><DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose><Button onClick={handleSaveOneOffExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Guardar</Button></DialogFooter>
+        </DialogContent>
+    </Dialog>
+    <AlertDialog open={!!oneOffExpenseToDelete} onOpenChange={(open) => !open && setOneOffExpenseToDelete(null)}>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Estás seguro?</AlertDialogTitle><AlertDialogDescription>Se eliminará permanentemente el gasto "{oneOffExpenseToDelete?.title}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDeleteOneOffExpense} disabled={saving}>Eliminar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+    </AlertDialog>
     </>
   );
 }
-

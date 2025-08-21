@@ -192,3 +192,18 @@ export type Sponsorship = {
     teamName?: string;
     description?: string;
 }
+
+export type RecurringExpense = {
+    id: string;
+    title: string;
+    amount: number;
+    recurrenceInMonths: number;
+}
+
+export type OneOffExpense = {
+    id: string;
+    title: string;
+    description?: string;
+    amount: number;
+    date: string;
+}
