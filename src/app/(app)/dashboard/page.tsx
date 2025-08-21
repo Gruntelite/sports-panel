@@ -67,7 +67,7 @@ export default function DashboardPage() {
         // Fetch counts for stats
         const teamsCol = collection(db, "clubs", clubId, "teams");
         const playersCol = collection(db, "clubs", clubId, "players");
-        const usersCol = collection(db, "clubs", clubId, "users");
+        const usersCol = query(collection(db, "clubs", clubId, "users"));
 
         const teamsCountSnap = await getCountFromServer(teamsCol);
         const playersCountSnap = await getCountFromServer(playersCol);
@@ -119,21 +119,22 @@ export default function DashboardPage() {
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const currentDayName = daysOfWeek[today.getDay()];
                 const daySchedule = template.weeklySchedule?.[currentDayName] || [];
-                scheduleEntries = daySchedule.map((entry: any) => ({
-                    id: entry.id,
-                    teamName: entry.teamName,
-                    type: 'Entrenamiento',
-                    time: entry.startTime,
-                    location: entry.venueName,
-                }));
+                
+                daySchedule.forEach((training: any) => {
+                    scheduleEntries.push({
+                        id: `${training.id}-${todayStr}`,
+                        teamName: training.teamName,
+                        type: 'Entrenamiento',
+                        time: training.startTime,
+                        location: training.venueName,
+                    });
+                });
             }
         }
         
         // 4. Fetch custom events for today
-        const startOfDay = new Date(today);
-        startOfDay.setHours(0, 0, 0, 0);
-        const endOfDay = new Date(today);
-        endOfDay.setHours(23, 59, 59, 999);
+        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
+        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
 
         const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
             where('start', '>=', Timestamp.fromDate(startOfDay)),
