@@ -54,25 +54,29 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
         const fetchDailySchedule = async (clubId: string) => {
             if (!selectedDate) return;
             setLoading(true);
+
             try {
-                // Fetch Trainings from Template
                 const scheduleDate = selectedDate;
-                const dayStr = scheduleDate.toISOString().split('T')[0];
+                const dateStr = scheduleDate.toISOString().split('T')[0];
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[scheduleDate.getUTCDay()];
 
+                // 1. Get default template ID first
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
 
-                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", dayStr);
+                // 2. Check for an override for the selected date
+                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", dateStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
+                // 3. Determine which template ID to use
                 let templateIdToUse = defaultTemplateId;
                 if (overrideSnap.exists()) {
                     templateIdToUse = overrideSnap.data().templateId;
                 }
                 
+                // 4. Fetch trainings from the determined template
                 let todaysTrainings: TrainingEntry[] = [];
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
@@ -85,7 +89,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         if (weeklySchedule && weeklySchedule[dayName as keyof typeof weeklySchedule]) {
                             const daySchedule = weeklySchedule[dayName as keyof typeof weeklySchedule];
                             todaysTrainings = daySchedule.map((training: any) => ({
-                                id: `${training.id}-${dayStr}`,
+                                id: `${training.id}-${dateStr}`,
                                 title: training.teamName,
                                 startTime: training.startTime,
                                 endTime: training.endTime,
@@ -97,9 +101,9 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                 }
                 setTrainings(todaysTrainings.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
-                // Fetch Custom Events
-                const dayStart = new Date(Date.UTC(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 0, 0, 0, 0));
-                const dayEnd = new Date(Date.UTC(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 23, 59, 59, 999));
+                // 5. Fetch Custom Events for the day
+                const dayStart = new Date(Date.UTC(scheduleDate.getUTCFullYear(), scheduleDate.getUTCMonth(), scheduleDate.getUTCDate(), 0, 0, 0, 0));
+                const dayEnd = new Date(Date.UTC(scheduleDate.getUTCFullYear(), scheduleDate.getUTCMonth(), scheduleDate.getUTCDate(), 23, 59, 59, 999));
 
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(dayStart)),
@@ -112,8 +116,8 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         id: doc.id,
                         title: event.title,
                         type: event.type,
-                        startTime: format(event.start.toDate(), 'HH:mm', { timeZone: 'UTC' }),
-                        endTime: format(event.end.toDate(), 'HH:mm', { timeZone: 'UTC' }),
+                        startTime: format(event.start.toDate(), 'HH:mm'),
+                        endTime: format(event.end.toDate(), 'HH:mm'),
                         location: event.location,
                         color: event.color
                     };
