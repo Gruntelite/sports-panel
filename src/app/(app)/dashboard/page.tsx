@@ -77,6 +77,7 @@ const TodaySchedule = () => {
             const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
             const todayStr = today.toISOString().split('T')[0];
 
+            // 1. Fetch all necessary data first
             const schedulesCol = collection(db, "clubs", clubId, "schedules");
             const schedulesSnapshot = await getDocs(schedulesCol);
             const templates = schedulesSnapshot.docs.map(d => ({ id: d.id, ...d.data() } as ScheduleTemplate));
@@ -85,10 +86,12 @@ const TodaySchedule = () => {
             const settingsSnap = await getDoc(settingsRef);
             const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : null;
             
+            // 2. Determine which template to use for today
             const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
             const overrideSnap = await getDoc(overrideRef);
             const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
 
+            // 3. Process template-based events
             if (templateIdToUse) {
                 const template = templates.find(t => t.id === templateIdToUse);
                 if (template) {
@@ -109,6 +112,7 @@ const TodaySchedule = () => {
                 }
             }
             
+            // 4. Fetch and process custom events for today
             const startOfDay = new Date();
             startOfDay.setHours(0, 0, 0, 0);
             const endOfDay = new Date();
@@ -132,6 +136,7 @@ const TodaySchedule = () => {
                 });
             });
 
+            // 5. Sort and set final schedule
             scheduleEntries.sort((a, b) => timeToMinutes(a.startTime) - timeToMinutes(b.startTime));
             setTodaysSchedule(scheduleEntries);
 
@@ -182,10 +187,9 @@ const TodaySchedule = () => {
                                 </div>
                                 <div>
                                     <Badge style={{
-                                        backgroundColor: item.color.split(' ')[0].replace('bg-', 'var(--') + ')',
-                                        color: item.color.split(' ')[1].replace('text-', 'var(--') + ')',
-                                        borderColor: item.color.split(' ')[2]?.replace('border-', 'var(--') + ')'
-                                    }}>
+                                        backgroundColor: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[0].substring(3).split('/')[0]}))` : item.color,
+                                        color: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[1].substring(5)}))` : 'white'
+                                    }} className="border">
                                       {item.type === 'Evento' && <Star className="h-3 w-3 mr-1"/>}
                                       {item.type}
                                     </Badge>
@@ -195,7 +199,7 @@ const TodaySchedule = () => {
                     ) : (
                         <div className="text-center text-muted-foreground py-10">
                             <Calendar className="mx-auto h-12 w-12 text-gray-400" />
-                            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay nada programado</h3>
+                            <h3 className="mt-2 text-sm font-medium">No hay nada programado</h3>
                             <p className="mt-1 text-sm text-gray-500">No hay entrenamientos ni eventos para el día de hoy.</p>
                         </div>
                     )}
@@ -313,3 +317,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
