@@ -178,13 +178,10 @@ export default function ClubFilesPage() {
       const filePath = `club-documents/${clubId}/${owner.id}/${uuidv4()}-${fileToUpload.name}`;
       const fileRef = ref(storage, filePath);
       
-      // 1. Upload the file to Firebase Storage
       await uploadBytes(fileRef, fileToUpload);
       
-      // 2. Get the download URL
       const url = await getDownloadURL(fileRef);
       
-      // 3. Create the document metadata in Firestore
       const newDocumentData: Omit<Document, "id"> = {
         name: documentNameToSave.trim(),
         url,
@@ -200,13 +197,11 @@ export default function ClubFilesPage() {
         description: `${documentNameToSave} se ha guardado correctamente.`,
       });
       
-      // Reset form and close modal
       setIsUploadModalOpen(false);
       setFileToUpload(null);
       setDocumentNameToSave("");
       setSelectedOwner(null);
       
-      // Refresh data
       fetchData(clubId);
 
     } catch (error: any) {
@@ -462,5 +457,5 @@ export default function ClubFilesPage() {
       </AlertDialog>
     </>
   );
-}
 
+    
