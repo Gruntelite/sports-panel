@@ -176,7 +176,9 @@ export default function ClubFilesPage() {
       const owner = selectedOwner || { id: 'club', name: 'Club' };
       const filePath = `club-documents/${clubId}/${owner.id}/${uuidv4()}-${fileToUpload.name}`;
       const fileRef = ref(storage, filePath);
+      
       await uploadBytes(fileRef, fileToUpload);
+      
       const url = await getDownloadURL(fileRef);
       
       const newDocument: Omit<Document, "id"> = {
@@ -200,12 +202,13 @@ export default function ClubFilesPage() {
       setDocumentNameToSave("");
       setSelectedOwner(null);
       if (clubId) fetchData(clubId);
+
     } catch (error) {
       console.error("Error uploading file:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "No se pudo subir el archivo.",
+        title: "Error de Subida",
+        description: "No se pudo subir el archivo. Revisa los permisos de Firebase Storage.",
       });
     } finally {
       setSaving(false);
