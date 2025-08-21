@@ -69,6 +69,7 @@ import {
   Check,
   ChevronsUpDown,
   Tag,
+  Search,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
@@ -113,6 +114,7 @@ export default function ClubFilesPage() {
   const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
 
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterOwnerId, setFilterOwnerId] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
@@ -175,6 +177,10 @@ export default function ClubFilesPage() {
 
   useEffect(() => {
     let filtered = documents;
+    
+    if (searchTerm) {
+        filtered = filtered.filter(doc => doc.name.toLowerCase().includes(searchTerm.toLowerCase()));
+    }
     if (filterOwnerId !== "all") {
         filtered = filtered.filter(doc => doc.ownerId === filterOwnerId);
     }
@@ -182,7 +188,7 @@ export default function ClubFilesPage() {
         filtered = filtered.filter(doc => doc.category === filterCategory);
     }
     setFilteredDocuments(filtered);
-  }, [filterOwnerId, filterCategory, documents]);
+  }, [searchTerm, filterOwnerId, filterCategory, documents]);
 
 
   const handleFileUpload = async () => {
@@ -190,8 +196,8 @@ export default function ClubFilesPage() {
         toast({ variant: "destructive", title: "Error de Autenticación", description: "Debes estar autenticado para subir archivos."});
         return;
     }
-    if (!fileToUpload || !documentNameToSave.trim() || !selectedCategory) {
-      toast({ variant: "destructive", title: "Faltan datos", description: "Debes seleccionar un archivo, darle un nombre y una categoría."});
+    if (!fileToUpload || !documentNameToSave.trim() || !selectedCategory || !selectedOwner) {
+      toast({ variant: "destructive", title: "Faltan datos", description: "Todos los campos (nombre, categoría, propietario y archivo) son obligatorios."});
       return;
     }
 
@@ -202,7 +208,7 @@ export default function ClubFilesPage() {
     }
 
     setSaving(true);
-    const owner = selectedOwner || { id: 'club', name: 'Club' };
+    const owner = selectedOwner;
 
     try {
       const filePath = `club-documents/${clubId}/${owner.id}/${uuidv4()}-${fileToUpload.name}`;
@@ -299,6 +305,16 @@ export default function ClubFilesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+                <div className="relative">
+                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        type="search"
+                        placeholder="Buscar por nombre..."
+                        className="pl-8 sm:w-[300px]"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
                  <Select value={filterCategory} onValueChange={setFilterCategory}>
                     <SelectTrigger className="w-[180px]">
                         <SelectValue placeholder="Filtrar por categoría" />
@@ -341,7 +357,7 @@ export default function ClubFilesPage() {
                     </DialogHeader>
                     <div className="space-y-4 py-4">
                       <div className="space-y-2">
-                        <Label htmlFor="doc-name">Nombre del Documento</Label>
+                        <Label htmlFor="doc-name">Nombre del Documento *</Label>
                         <Input
                           id="doc-name"
                           placeholder="p.ej., Normativa Interna 2024"
@@ -350,7 +366,7 @@ export default function ClubFilesPage() {
                         />
                       </div>
                        <div className="space-y-2">
-                          <Label htmlFor="doc-category">Categoría</Label>
+                          <Label htmlFor="doc-category">Categoría *</Label>
                           <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                             <SelectTrigger id="doc-category">
                               <SelectValue placeholder="Selecciona una categoría" />
@@ -363,7 +379,7 @@ export default function ClubFilesPage() {
                           </Select>
                         </div>
                       <div className="space-y-2">
-                        <Label>Asignar a Usuario (Opcional)</Label>
+                        <Label>Asignar a Usuario *</Label>
                         <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
                             <PopoverTrigger asChild>
                             <Button
@@ -373,8 +389,8 @@ export default function ClubFilesPage() {
                                 className="w-full justify-between"
                             >
                                 {selectedOwner
-                                ? owners.find((owner) => owner.id === selectedOwner.id)?.name
-                                : "Club"}
+                                ? selectedOwner.name
+                                : "Selecciona un propietario..."}
                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                             </PopoverTrigger>
@@ -389,14 +405,14 @@ export default function ClubFilesPage() {
                                         key={owner.id}
                                         value={owner.name}
                                         onSelect={() => {
-                                            setSelectedOwner(owner.id === 'club' ? null : owner);
+                                            setSelectedOwner(owner);
                                             setIsOwnerPopoverOpen(false);
                                         }}
                                         >
                                         <Check
                                             className={cn(
                                             "mr-2 h-4 w-4",
-                                            (selectedOwner?.id === owner.id || (!selectedOwner && owner.id === 'club')) ? "opacity-100" : "opacity-0"
+                                            selectedOwner?.id === owner.id ? "opacity-100" : "opacity-0"
                                             )}
                                         />
                                         {owner.name}
@@ -410,7 +426,7 @@ export default function ClubFilesPage() {
                         </Popover>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="doc-file">Archivo</Label>
+                        <Label htmlFor="doc-file">Archivo *</Label>
                         <Input
                           id="doc-file"
                           type="file"
