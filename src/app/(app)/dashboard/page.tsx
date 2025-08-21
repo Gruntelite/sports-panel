@@ -57,24 +57,33 @@ function TodayTrainings() {
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[today.getUTCDay()];
 
+                // 1. Get default template ID from settings
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
 
+                // 2. Check for an override for today's date
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
+                // 3. Determine which template ID to use
                 const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
 
+                let todaysTrainings: TrainingEntry[] = [];
+
+                // 4. If we have a template to use, fetch it
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
 
+                    // 5. If template exists, get the schedule for today's day of the week
                     if (templateSnap.exists()) {
-                        const template = templateSnap.data() as ScheduleTemplate;
-                        if (template.weeklySchedule && template.weeklySchedule[dayName as keyof typeof template.weeklySchedule]) {
-                            const daySchedule = template.weeklySchedule[dayName as keyof typeof template.weeklySchedule];
-                            const trainingEntries = daySchedule.map((training: any) => ({
+                        const templateData = templateSnap.data() as ScheduleTemplate;
+                        const weeklySchedule = templateData.weeklySchedule;
+                        
+                        if (weeklySchedule && weeklySchedule[dayName as keyof typeof weeklySchedule]) {
+                            const daySchedule = weeklySchedule[dayName as keyof typeof weeklySchedule];
+                            todaysTrainings = daySchedule.map((training: any) => ({
                                 id: `${training.id}-${todayStr}`,
                                 title: training.teamName,
                                 startTime: training.startTime,
@@ -82,10 +91,11 @@ function TodayTrainings() {
                                 location: training.venueName,
                                 color: 'bg-primary/20 text-primary border border-primary/50'
                             }));
-                            setTrainings(trainingEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
                         }
                     }
                 }
+                setTrainings(todaysTrainings.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+
             } catch (error) {
                 console.error("Error fetching today's trainings:", error);
             } finally {
