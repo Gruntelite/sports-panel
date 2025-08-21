@@ -8,17 +8,8 @@ export function Logo() {
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <defs>
-        <clipPath id="rounded-corners">
-          <rect width="100" height="100" rx="20" ry="20" />
-        </clipPath>
-      </defs>
-      <g clipPath="url(#rounded-corners)">
-        <rect width="100" height="100" fill="#34d399" />
-        <path
-          d="M 0,50 C 20,40 50,85 100,70 L 100,100 L 0,100 Z"
-          fill="#3b82f6"
-        />
+      <g transform="rotate(90 50 50)">
+        <path d="M 0 35 C 17 82 51 9 99 65 L 100 100 L 0 100 Z" fill="currentColor" />
       </g>
     </svg>
   );
