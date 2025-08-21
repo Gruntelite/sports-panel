@@ -18,7 +18,6 @@ import {
   ChevronDown,
   FileText,
   Trash2,
-  Download,
   Save,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -257,7 +256,6 @@ export default function PlayersPage() {
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
       
-      // Remove id from data to save to avoid storing it in Firestore document
       delete (dataToSave as Partial<Player>).id;
 
       if (modalMode === 'edit' && playerId) {
@@ -269,7 +267,6 @@ export default function PlayersPage() {
         playerId = playerDocRef.id;
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
         
-        // Automatic user record creation
         const contactEmail = dataToSave.tutorEmail;
         const contactName = `${dataToSave.name} ${dataToSave.lastName}`;
         
@@ -288,7 +285,6 @@ export default function PlayersPage() {
         }
       }
       
-      // Handle document upload if a file is selected
       if (documentToUpload && playerId) {
         const file = documentToUpload;
         const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
@@ -403,17 +399,14 @@ export default function PlayersPage() {
         for (const playerId of selectedPlayers) {
             const player = players.find(p => p.id === playerId);
             if (player) {
-                // Delete avatar from storage
                 if (player.avatar && !player.avatar.includes('placehold.co')) {
                     const imageRef = ref(storage, player.avatar);
                     await deleteObject(imageRef).catch(e => console.warn("Could not delete old image:", e));
                 }
                 
-                // Delete player document
                 const playerRef = doc(db, "clubs", clubId, "players", playerId);
                 batch.delete(playerRef);
 
-                // Find and delete corresponding user document
                 const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('playerId', '==', playerId));
                 const usersSnapshot = await getDocs(usersQuery);
                 if (!usersSnapshot.empty) {
@@ -447,8 +440,7 @@ export default function PlayersPage() {
         await deleteObject(fileRef);
 
         const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
-        const currentPlayer = players.find(p => p.id === playerData.id);
-        const updatedDocuments = currentPlayer?.documents?.filter(d => d.path !== documentToDelete.path);
+        const updatedDocuments = playerData.documents?.filter(d => d.path !== documentToDelete.path);
         
         await updateDoc(playerDocRef, {
             documents: updatedDocuments || []
@@ -885,4 +877,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-

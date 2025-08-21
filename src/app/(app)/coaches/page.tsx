@@ -250,7 +250,6 @@ export default function CoachesPage() {
         monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
       
-      // Remove id from data to save to avoid storing it in Firestore document
       delete (dataToSave as Partial<Coach>).id;
 
       if (modalMode === 'edit' && coachId) {
@@ -262,7 +261,6 @@ export default function CoachesPage() {
         coachId = coachDocRef.id;
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
         
-        // Automatic user record creation
         if (dataToSave.email) {
             const userRef = doc(collection(db, "clubs", clubId, "users"));
             await setDoc(userRef, {
@@ -278,7 +276,6 @@ export default function CoachesPage() {
         }
       }
 
-      // Handle document upload if a file is selected
       if (documentToUpload && coachId) {
         const file = documentToUpload;
         const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
@@ -394,17 +391,14 @@ export default function CoachesPage() {
         for (const coachId of selectedCoaches) {
             const coach = coaches.find(p => p.id === coachId);
             if (coach) {
-                // Delete avatar from storage
                 if (coach.avatar && !coach.avatar.includes('placehold.co')) {
                     const imageRef = ref(storage, coach.avatar);
                     await deleteObject(imageRef).catch(e => console.warn("Could not delete old image:", e));
                 }
                 
-                // Delete coach document
                 const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
                 batch.delete(coachRef);
 
-                // Find and delete corresponding user document
                 const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('coachId', '==', coachId));
                 const usersSnapshot = await getDocs(usersQuery);
                 if (!usersSnapshot.empty) {
@@ -438,8 +432,7 @@ export default function CoachesPage() {
         await deleteObject(fileRef);
 
         const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        const currentCoach = coaches.find(c => c.id === coachData.id);
-        const updatedDocuments = currentCoach?.documents?.filter(d => d.path !== documentToDelete.path);
+        const updatedDocuments = coachData.documents?.filter(d => d.path !== documentToDelete.path);
         
         await updateDoc(coachDocRef, {
             documents: updatedDocuments || []
@@ -850,4 +843,3 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
-
