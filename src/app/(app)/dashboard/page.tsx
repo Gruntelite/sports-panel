@@ -35,7 +35,7 @@ type ScheduleEntry = {
     color: string;
 };
 
-const timeToMinutes = (time: string) => {
+const timeToMinutes = (time: string): number => {
     if (!time) return 0;
     const [hours, minutes] = time.split(':').map(Number);
     return hours * 60 + minutes;
@@ -90,7 +90,7 @@ const TodaySchedule = () => {
             const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
             const overrideSnap = await getDoc(overrideRef);
             const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
-
+            
             // 3. Process template-based events
             if (templateIdToUse) {
                 const template = templates.find(t => t.id === templateIdToUse);
@@ -113,9 +113,9 @@ const TodaySchedule = () => {
             }
             
             // 4. Fetch and process custom events for today
-            const startOfDay = new Date();
+            const startOfDay = new Date(todayStr);
             startOfDay.setHours(0, 0, 0, 0);
-            const endOfDay = new Date();
+            const endOfDay = new Date(todayStr);
             endOfDay.setHours(23, 59, 59, 999);
 
             const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
@@ -187,8 +187,8 @@ const TodaySchedule = () => {
                                 </div>
                                 <div>
                                     <Badge style={{
-                                        backgroundColor: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[0].substring(3).split('/')[0]}))` : item.color,
-                                        color: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[1].substring(5)}))` : 'white'
+                                        backgroundColor: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[0].substring(3).replace('/20', '')}))` : item.color,
+                                        color: item.color.startsWith('bg-') ? `hsl(var(--${item.color.split(' ')[1].substring(5)}))` : 'hsl(var(--primary-foreground))'
                                     }} className="border">
                                       {item.type === 'Evento' && <Star className="h-3 w-3 mr-1"/>}
                                       {item.type}
