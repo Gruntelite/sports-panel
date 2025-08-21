@@ -1,10 +1,10 @@
 import * as React from 'react';
 
-export function Logo() {
+export function Logo({ width = 42, height = 42 }: { width?: number, height?: number }) {
   return (
     <svg
-      width="42"
-      height="42"
+      width={width}
+      height={height}
       viewBox="0 0 400 400"
       xmlns="http://www.w3.org/2000/svg"
     >
