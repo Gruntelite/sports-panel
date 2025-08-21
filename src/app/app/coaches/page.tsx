@@ -104,9 +104,6 @@ export default function CoachesPage() {
   const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
 
-  const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
-
-
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
     const today = new Date();
@@ -213,7 +210,6 @@ export default function CoachesPage() {
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
-    setDocumentToUpload(null);
   }
 
   const handleSaveCoach = async () => {
@@ -266,38 +262,15 @@ export default function CoachesPage() {
             });
         }
         
-        if (documentToUpload && coachId) {
-            const file = documentToUpload;
-            const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
-            const docRef = ref(storage, filePath);
-            await uploadBytes(docRef, file);
-            const url = await getDownloadURL(docRef);
-
-            const newDocument: Document = {
-                name: file.name,
-                url,
-                path: filePath,
-                createdAt: Timestamp.now(),
-            };
-            
-            await updateDoc(doc(db, "clubs", clubId, "coaches", coachId), {
-                documents: arrayUnion(newDocument)
-            });
-            
-            toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
-        }
-
         setIsModalOpen(false);
-        if (clubId) fetchData(clubId);
-
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
     } finally {
         setSaving(false);
+        if (clubId) fetchData(clubId);
     }
   };
-
 
   const handleDeleteCoach = async () => {
     if (!coachToDelete || !clubId) return;
@@ -410,34 +383,6 @@ export default function CoachesPage() {
     } finally {
         setIsDeleting(false);
         setIsBulkDeleteAlertOpen(false);
-    }
-  };
-
-  const handleDocumentDelete = async (documentToDelete: Document) => {
-    if (!coachData.id || !clubId) return;
-
-    setSaving(true);
-    try {
-        const fileRef = ref(storage, documentToDelete.path);
-        await deleteObject(fileRef);
-
-        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        
-        await updateDoc(coachDocRef, {
-            documents: arrayRemove(documentToDelete)
-        });
-        
-        setCoachData(prev => ({
-            ...prev,
-            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
-        }));
-
-        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
-    } catch (error) {
-        console.error("Error deleting document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -620,11 +565,10 @@ export default function CoachesPage() {
                 </div>
                 
                  <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
                         <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
-                        <TabsTrigger value="docs"><FileText className="mr-2 h-4 w-4"/>Documentación</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -749,40 +693,6 @@ export default function CoachesPage() {
                             </div>
                         </div>
                     </TabsContent>
-                    <TabsContent value="docs" className="pt-6">
-                        <div className="min-h-[280px]">
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <h4 className="font-medium">Documentos Guardados</h4>
-                                    {(coachData.documents && coachData.documents.length > 0) ? (
-                                        <div className="border rounded-md">
-                                            {coachData.documents.map((doc, index) => (
-                                                <div key={index} className="flex items-center justify-between p-2 border-b last:border-b-0">
-                                                    <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate pr-2 hover:underline">
-                                                        {doc.name}
-                                                    </a>
-                                                    <div className="flex gap-1">
-                                                        <Button asChild size="icon" variant="outline" className="h-8 w-8">
-                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
-                                                        </Button>
-                                                        <Button disabled={saving} size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
-                                                            {saving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground text-center py-4">No hay documentos para este entrenador.</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </TabsContent>
                 </Tabs>
             </div>
             <DialogFooter>
@@ -831,4 +741,3 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
-
