@@ -64,7 +64,7 @@ import {
   Trash2,
   Download,
   Upload,
-  File,
+  File as FileIcon,
   User as UserIcon,
   Check,
   ChevronsUpDown,
@@ -99,6 +99,49 @@ export default function ClubFilesPage() {
   const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
 
+  const fetchData = async (currentClubId: string) => {
+    setLoading(true);
+    try {
+      const q = query(collection(db, "clubs", currentClubId, "documents"), orderBy("createdAt", "desc"));
+      const querySnapshot = await getDocs(q);
+      const docsList = querySnapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Document)
+      );
+      setDocuments(docsList);
+
+      const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
+
+      const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
+      playersSnap.forEach(doc => {
+          const data = doc.data() as Player;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      });
+
+      const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
+      coachesSnap.forEach(doc => {
+          const data = doc.data() as Coach;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      });
+
+      const staffSnap = await getDocs(collection(db, "clubs", currentClubId, "staff"));
+      staffSnap.forEach(doc => {
+          const data = doc.data() as Staff;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
+      });
+
+      setOwners(allOwners);
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudieron cargar los datos.",
+      });
+    }
+    setLoading(false);
+  };
+  
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -118,69 +161,30 @@ export default function ClubFilesPage() {
     return () => unsubscribe();
   }, []);
 
-  const fetchData = async (clubId: string) => {
-    setLoading(true);
-    try {
-      const q = query(collection(db, "clubs", clubId, "documents"), orderBy("createdAt", "desc"));
-      const querySnapshot = await getDocs(q);
-      const docsList = querySnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Document)
-      );
-      setDocuments(docsList);
-
-      const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
-
-      const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
-      playersSnap.forEach(doc => {
-          const data = doc.data() as Player;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
-      });
-
-      const coachesSnap = await getDocs(collection(db, "clubs", clubId, "coaches"));
-      coachesSnap.forEach(doc => {
-          const data = doc.data() as Coach;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
-      });
-
-      const staffSnap = await getDocs(collection(db, "clubs", clubId, "staff"));
-      staffSnap.forEach(doc => {
-          const data = doc.data() as Staff;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
-      });
-
-      setOwners(allOwners);
-
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudieron cargar los datos.",
-      });
-    }
-    setLoading(false);
-  };
-  
   const handleFileUpload = async () => {
-    if (!clubId || !fileToUpload || !documentNameToSave.trim()) {
-      toast({
-        variant: "destructive",
-        title: "Faltan datos",
-        description: "Debes seleccionar un archivo y darle un nombre.",
-      });
+    if (!clubId || !auth.currentUser) {
+        toast({ variant: "destructive", title: "Error de Autenticación", description: "Debes estar autenticado para subir archivos."});
+        return;
+    }
+    if (!fileToUpload || !documentNameToSave.trim()) {
+      toast({ variant: "destructive", title: "Faltan datos", description: "Debes seleccionar un archivo y darle un nombre."});
       return;
     }
 
     setSaving(true);
+    const owner = selectedOwner || { id: 'club', name: 'Club' };
+
     try {
-      const owner = selectedOwner || { id: 'club', name: 'Club' };
       const filePath = `club-documents/${clubId}/${owner.id}/${uuidv4()}-${fileToUpload.name}`;
       const fileRef = ref(storage, filePath);
       
+      // 1. Upload the file to Firebase Storage
       await uploadBytes(fileRef, fileToUpload);
       
+      // 2. Get the download URL
       const url = await getDownloadURL(fileRef);
       
+      // 3. Create the document metadata in Firestore
       const newDocumentData: Omit<Document, "id"> = {
         name: documentNameToSave.trim(),
         url,
@@ -189,7 +193,6 @@ export default function ClubFilesPage() {
         ownerId: owner.id,
         ownerName: owner.name,
       };
-
       await addDoc(collection(db, "clubs", clubId, "documents"), newDocumentData);
 
       toast({
@@ -197,19 +200,22 @@ export default function ClubFilesPage() {
         description: `${documentNameToSave} se ha guardado correctamente.`,
       });
       
+      // Reset form and close modal
       setIsUploadModalOpen(false);
       setFileToUpload(null);
       setDocumentNameToSave("");
       setSelectedOwner(null);
-      if (clubId) fetchData(clubId);
+      
+      // Refresh data
+      fetchData(clubId);
 
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error uploading file:", error);
-      toast({
-        variant: "destructive",
-        title: "Error de Subida",
-        description: "No se pudo subir el archivo. Revisa los permisos de Firebase Storage.",
-      });
+      let errorMessage = "No se pudo subir el archivo. Revisa tu conexión y los permisos de Firebase Storage.";
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = "Error de permisos. No estás autorizado para subir archivos a esta ubicación.";
+      }
+      toast({ variant: "destructive", title: "Error de Subida", description: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -294,7 +300,7 @@ export default function ClubFilesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Asignar a Usuario (Opcional)</Label>
+                    <Label>Asignar a (Opcional)</Label>
                     <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
                         <PopoverTrigger asChild>
                         <Button
@@ -385,7 +391,7 @@ export default function ClubFilesPage() {
                     documents.map((doc) => (
                       <TableRow key={doc.id}>
                         <TableCell className="font-medium flex items-center gap-2">
-                           <File className="h-4 w-4 text-muted-foreground"/>
+                           <FileIcon className="h-4 w-4 text-muted-foreground"/>
                            {doc.name}
                         </TableCell>
                         <TableCell>
@@ -458,4 +464,3 @@ export default function ClubFilesPage() {
   );
 }
 
-    
