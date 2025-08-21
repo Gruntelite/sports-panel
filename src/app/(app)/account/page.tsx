@@ -90,7 +90,8 @@ export default function AccountPage() {
 
   const handleDateChange = (date: Date | undefined) => {
     if (date) {
-        setMemberData(prev => ({ ...prev, birthDate: format(date, "yyyy-MM-dd") }));
+        const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        setMemberData(prev => ({ ...prev, birthDate: format(utcDate, "yyyy-MM-dd") }));
     }
   };
 
@@ -143,7 +144,7 @@ export default function AccountPage() {
   const isPlayer = role === 'player';
   const isCoach = role === 'coach';
   
-  const birthDate = memberData.birthDate ? new Date(memberData.birthDate) : undefined;
+  const birthDate = memberData.birthDate ? new Date(memberData.birthDate + 'T00:00:00Z') : undefined;
 
   return (
     <div className="flex flex-col gap-6">

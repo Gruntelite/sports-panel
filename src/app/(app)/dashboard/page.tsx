@@ -45,24 +45,28 @@ function TodaySchedule() {
             setLoading(true);
             try {
                 const today = new Date();
-                const todayStart = toDate(today.setHours(0, 0, 0, 0));
-                const todayEnd = toDate(today.setHours(23, 59, 59, 999));
-                const todayStr = today.toISOString().split('T')[0];
+                const todayStart = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 0, 0, 0, 0));
+                const todayEnd = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), today.getUTCDate(), 23, 59, 59, 999));
+                const todayStr = todayStart.toISOString().split('T')[0];
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                const dayName = daysOfWeek[today.getDay()];
+                const dayName = daysOfWeek[today.getUTCDay()];
                 
                 let allEntries: ScheduleEntry[] = [];
                 
-                // 1. Determine which template to use
+                let templateIdToUse: string | null = null;
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
-                let defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
-
+                const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
+        
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
                 const overrideSnap = await getDoc(overrideRef);
-                let templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
+                
+                if (overrideSnap.exists()) {
+                    templateIdToUse = overrideSnap.data().templateId;
+                } else {
+                    templateIdToUse = defaultTemplateId;
+                }
 
-                // 2. If we have a template ID, fetch it and process its events for today
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
@@ -85,7 +89,6 @@ function TodaySchedule() {
                     }
                 }
 
-                // 3. Get custom events from the calendar
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(todayStart)),
                     where('start', '<=', Timestamp.fromDate(todayEnd))
@@ -97,14 +100,13 @@ function TodaySchedule() {
                         id: doc.id,
                         title: event.title,
                         type: event.type,
-                        startTime: event.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
-                        endTime: event.end.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                        startTime: event.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                        endTime: event.end.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
                         location: event.location,
                         color: event.color
                     });
                 });
 
-                // 4. Sort all entries by start time
                 allEntries.sort((a, b) => a.startTime.localeCompare(b.startTime));
                 setSchedule(allEntries);
 
@@ -303,3 +305,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    
