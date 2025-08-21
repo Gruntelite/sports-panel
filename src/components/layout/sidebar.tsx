@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, Shield } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, Shield, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -144,6 +144,12 @@ export function Sidebar() {
                         <DropdownMenuContent align="end" className="w-56 mb-2">
                             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
+                             <DropdownMenuItem asChild>
+                                <Link href="/account" className="w-full">
+                                    <User className="mr-2 h-4 w-4" />
+                                    Mi Perfil
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                                 <Link href="/club-settings" className="w-full">
                                     <Settings className="mr-2 h-4 w-4"/>
@@ -156,9 +162,9 @@ export function Sidebar() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                     <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                     <div className="flex items-center justify-start gap-2 text-muted-foreground pl-3">
                         <Logo />
-                        <span>SportsPanel</span>
+                        <span className="text-sm font-semibold">SportsPanel</span>
                     </div>
                 </div>
             </div>
