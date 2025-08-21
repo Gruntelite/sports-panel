@@ -5,7 +5,7 @@ import type { Team } from "./types";
 export const initialStats = [
     { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
     { id: "teams", title: "Equipos", value: "0", change: "", icon: 'Shield' },
-    { id: "events", title: "Próximos Eventos", value: "0", change: "", icon: 'Calendar' },
+    { id: "users", title: "Total de Usuarios", value: "0", change: "", icon: 'Users' },
     { id: "fees", title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
 ];
 

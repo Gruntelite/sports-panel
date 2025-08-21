@@ -10,12 +10,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { initialStats, events as manualEvents } from "@/lib/data";
-import { ArrowUpRight, Users, Shield, Calendar, CircleDollarSign, Loader2, Clock, MapPin, Star } from "lucide-react";
+import { initialStats } from "@/lib/data";
+import { Users, Shield, Calendar, CircleDollarSign, Loader2, Clock, MapPin, Star } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
+import type { CalendarEvent } from "@/lib/types";
 
 const iconMap = {
   Users: Users,
@@ -28,9 +29,9 @@ type ScheduleEntry = {
     id: string;
     teamName?: string;
     title?: string;
-    type: 'Entrenamiento' | 'Partido' | 'Evento';
+    type: 'Entrenamiento' | 'Partido' | 'Evento' | 'Otro';
     time: string;
-    location: string;
+    location?: string;
 };
 
 
@@ -41,7 +42,6 @@ export default function DashboardPage() {
   const [todaysSchedule, setTodaysSchedule] = useState<ScheduleEntry[]>([]);
   
   const today = new Date();
-  const upcomingEvents = manualEvents.filter(event => event.date >= today).slice(0, 5);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -67,78 +67,92 @@ export default function DashboardPage() {
         // Fetch counts for stats
         const teamsCol = collection(db, "clubs", clubId, "teams");
         const playersCol = collection(db, "clubs", clubId, "players");
+        const usersCol = collection(db, "clubs", clubId, "users");
 
         const teamsCountSnap = await getCountFromServer(teamsCol);
         const playersCountSnap = await getCountFromServer(playersCol);
+        const usersCountSnap = await getCountFromServer(usersCol);
         
         const teamsCount = teamsCountSnap.data().count;
         const playersCount = playersCountSnap.data().count;
+        const usersCount = usersCountSnap.data().count;
+
+        const playersSnapshot = await getDocs(playersCol);
+        const pendingFees = playersSnapshot.docs.reduce((acc, doc) => {
+          const player = doc.data();
+          if (player.paymentStatus !== 'paid' && player.monthlyFee) {
+            return acc + player.monthlyFee;
+          }
+          return acc;
+        }, 0);
 
         setStats(prevStats => prevStats.map(stat => {
             if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
             if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
+            if (stat.id === 'users') return { ...stat, value: usersCount.toString() };
+            if (stat.id === 'fees') return { ...stat, value: `${pendingFees.toLocaleString('es-ES')} €` };
             return stat;
         }));
         
-        // Fetch Today's Schedule from the default template
+        // --- Fetch Today's Schedule ---
+        let scheduleEntries: ScheduleEntry[] = [];
+        
+        // 1. Fetch from schedule templates
         const settingsRef = doc(db, "clubs", clubId, "settings", "config");
         const settingsSnap = await getDoc(settingsRef);
-        const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : 'general';
-
-        if (!defaultTemplateId) {
-            setLoading(false);
-            return;
-        }
+        const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : null;
 
         const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
         const currentDayName = daysOfWeek[today.getDay()];
         
-        // Check for an override for today's date
         const todayStr = today.toISOString().split('T')[0];
         const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
         const overrideSnap = await getDoc(overrideRef);
         
         const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
 
-        const scheduleRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
-        const scheduleSnap = await getDoc(scheduleRef);
-
-        let scheduleEntries: ScheduleEntry[] = [];
-
-        if (scheduleSnap.exists()) {
-            const scheduleData = scheduleSnap.data();
-            const daySchedule = scheduleData.weeklySchedule?.[currentDayName] || [];
-            scheduleEntries = daySchedule.map((entry: any) => ({
-                id: entry.id,
-                teamName: entry.teamName,
-                type: 'Entrenamiento',
-                time: entry.startTime,
-                location: entry.venueName,
-            }));
+        if (templateIdToUse) {
+            const scheduleRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
+            const scheduleSnap = await getDoc(scheduleRef);
+            if (scheduleSnap.exists()) {
+                const scheduleData = scheduleSnap.data();
+                const daySchedule = scheduleData.weeklySchedule?.[currentDayName] || [];
+                scheduleEntries = daySchedule.map((entry: any) => ({
+                    id: entry.id,
+                    teamName: entry.teamName,
+                    type: 'Entrenamiento',
+                    time: entry.startTime,
+                    location: entry.venueName,
+                }));
+            }
         }
-
-        // Fetch today's manual events from the calendar
-        const startOfDay = new Date(today.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(today.setHours(23, 59, 59, 999));
         
-        const manualTodaysEvents = manualEvents
-            .filter(e => {
-                const eventDate = e.date;
-                return eventDate >= startOfDay && eventDate <= endOfDay;
-            })
-            .map(e => ({
-                id: e.id,
-                title: e.team, 
-                type: e.type,
-                time: e.time,
-                location: e.location,
-            }));
+        // 2. Fetch custom events for today
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
 
-        const allTodaysEvents = [...scheduleEntries, ...manualTodaysEvents].filter(e => e.time);
+        const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
+            where('start', '>=', Timestamp.fromDate(startOfDay)),
+            where('start', '<=', Timestamp.fromDate(endOfDay))
+        );
+        const customEventsSnapshot = await getDocs(customEventsQuery);
+        const manualTodaysEvents = customEventsSnapshot.docs.map(doc => {
+            const eventData = doc.data() as CalendarEvent;
+            return {
+                id: doc.id,
+                title: eventData.title, 
+                type: eventData.type,
+                time: eventData.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                location: eventData.location,
+            };
+        });
+
+        const allTodaysEvents = [...scheduleEntries, ...manualTodaysEvents];
         allTodaysEvents.sort((a, b) => a.time.localeCompare(b.time));
 
         setTodaysSchedule(allTodaysEvents);
-
 
     } catch (error) {
         console.error("Error fetching dashboard data:", error)
@@ -178,8 +192,8 @@ export default function DashboardPage() {
         })}
       </div>
 
-      <div className="grid gap-4 md:gap-8 lg:grid-cols-2 xl:grid-cols-3">
-        <Card className="xl:col-span-2">
+      <div className="grid gap-4 md:gap-8 lg:grid-cols-1">
+        <Card>
           <CardHeader className="flex flex-row items-center">
             <div className="grid gap-2">
               <CardTitle>Horarios de Hoy</CardTitle>
@@ -187,6 +201,12 @@ export default function DashboardPage() {
                 Entrenamientos y eventos programados para hoy.
               </CardDescription>
             </div>
+             <Button asChild size="sm" className="ml-auto gap-1">
+              <Link href="/calendar">
+                Ver Calendario Completo
+                <Calendar className="h-4 w-4" />
+              </Link>
+            </Button>
           </CardHeader>
           <CardContent>
              <div className="space-y-4">
@@ -199,10 +219,12 @@ export default function DashboardPage() {
                             </div>
                             <div>
                                 <div className="font-medium">{item.teamName || item.title}</div>
+                                {item.location && (
                                 <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-1">
                                     <MapPin className="h-3 w-3"/>
                                     {item.location}
                                 </div>
+                                )}
                             </div>
                             <div>
                                 <Badge variant={item.type === 'Partido' ? 'destructive' : item.type === 'Entrenamiento' ? 'secondary' : 'default'}>
@@ -218,41 +240,6 @@ export default function DashboardPage() {
                     </div>
                 )}
             </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Próximos Eventos</CardTitle>
-            <CardDescription>
-              Partidos y eventos especiales para los próximos días.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4">
-            {upcomingEvents.length > 0 ? upcomingEvents.map((event) => (
-              <div key={event.id} className="flex items-center gap-4">
-                <div className="flex flex-col items-center justify-center bg-muted p-2 rounded-md w-14">
-                   <span className="text-sm font-bold">{event.date.toLocaleString('es-ES', { month: 'short' })}</span>
-                   <span className="text-xl font-bold">{event.date.getDate()}</span>
-                </div>
-                <div className="grid gap-1">
-                  <div className="text-sm font-medium leading-none flex items-center gap-2">
-                    {event.type === 'Partido' ? 
-                      <Badge variant="destructive">{event.type}</Badge> : 
-                      <Badge variant="secondary">{event.type}</Badge>
-                    }
-                    <span>{event.team}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground">{event.location}</p>
-                </div>
-                <div className="ml-auto font-medium">{event.time}</div>
-              </div>
-            )) : <p className="text-sm text-muted-foreground text-center py-4">No hay próximos eventos.</p>}
-             <Button asChild size="sm" className="w-full mt-2">
-              <Link href="/calendar">
-                Ver Calendario Completo
-              </Link>
-            </Button>
           </CardContent>
         </Card>
       </div>
