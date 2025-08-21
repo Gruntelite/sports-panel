@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -75,7 +76,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Coach } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -161,7 +162,7 @@ export default function CoachesPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
-      const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
+      const teamsQuery = query(collection(db, "clubs", clubId, "teams"), orderBy("order"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setTeams(teamsList);

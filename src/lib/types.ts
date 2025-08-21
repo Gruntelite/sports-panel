@@ -23,6 +23,7 @@ export type Team = {
     players: number;
     coaches: number;
     defaultMonthlyFee?: number;
+    order?: number;
 };
 
 export type Player = {

@@ -14,7 +14,7 @@ import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, Dialog
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, collection, getDocs, deleteDoc, query, orderBy } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -40,6 +40,7 @@ type Assignment = {
 type Team = {
   id: string;
   name: string;
+  order?: number;
 }
 
 type DailyScheduleEntry = {
@@ -308,7 +309,7 @@ export default function SchedulesPage() {
         setLoading(true);
     }
     try {
-        const teamsCol = collection(db, "clubs", currentClubId, "teams");
+        const teamsCol = query(collection(db, "clubs", currentClubId, "teams"), orderBy("order"));
         const teamsSnapshot = await getDocs(teamsCol);
         const fetchedTeams = teamsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name } as Team));
         setTeams(fetchedTeams);

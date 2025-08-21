@@ -33,14 +33,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Users, Shield, MoreVertical, Loader2, Trash2, Filter } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuLabel, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { PlusCircle, Users, Shield, MoreVertical, Loader2, Trash2, ArrowUp, ArrowDown, Save } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, query, deleteDoc, where } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, query, deleteDoc, where, writeBatch } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -59,7 +59,10 @@ export default function TeamsPage() {
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [teamToDelete, setTeamToDelete] = useState<Team | null>(null);
-  const [sortOrder, setSortOrder] = useState("alphabetical");
+  
+  const [isOrdering, setIsOrdering] = useState(false);
+  const [orderedTeams, setOrderedTeams] = useState<Team[]>([]);
+  const [hasOrderChanged, setHasOrderChanged] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -78,6 +81,10 @@ export default function TeamsPage() {
     });
     return () => unsubscribe();
   }, []);
+  
+  useEffect(() => {
+    setOrderedTeams(teams.sort((a,b) => (a.order || 0) - (b.order || 0)));
+  }, [teams]);
 
   const fetchTeams = async (clubId: string) => {
     setLoading(true);
@@ -93,19 +100,33 @@ export default function TeamsPage() {
     
     const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
     const teamsSnapshot = await getDocs(teamsQuery);
-    const teamsList = teamsSnapshot.docs.map(doc => {
+    let needsUpdate = false;
+    const batch = writeBatch(db);
+
+    const teamsList = teamsSnapshot.docs.map((doc, index) => {
       const data = doc.data();
+      if(data.order === undefined || data.order === null){
+        needsUpdate = true;
+        const teamRef = doc.ref;
+        batch.update(teamRef, { order: index });
+      }
       return {
         id: doc.id,
         name: data.name,
         minAge: data.minAge,
         maxAge: data.maxAge,
+        order: data.order ?? index,
         image: data.image || "https://placehold.co/600x400.png",
         hint: "equipo deportivo",
         players: playersCountByTeam[doc.id] || 0,
         coaches: 0, // Placeholder
       };
     });
+    
+    if (needsUpdate) {
+        await batch.commit();
+    }
+    
     setTeams(teamsList);
     setLoading(false);
   };
@@ -127,11 +148,13 @@ export default function TeamsPage() {
             imageUrl = await getDownloadURL(imageRef);
         }
 
+        const maxOrder = teams.reduce((max, team) => Math.max(max, team.order || 0), 0);
         await addDoc(collection(db, "clubs", clubId, "teams"), {
             name: newTeamName,
             minAge: newTeamMinAge ? Number(newTeamMinAge) : null,
             maxAge: newTeamMaxAge ? Number(newTeamMaxAge) : null,
             image: imageUrl,
+            order: maxOrder + 1,
         });
 
         toast({ title: "Equipo creado", description: `El equipo ${newTeamName} ha sido creado.` });
@@ -154,13 +177,11 @@ export default function TeamsPage() {
 
     setIsDeleting(true);
     try {
-      // Delete image from storage if it's not the placeholder
       if (teamToDelete.image && !teamToDelete.image.includes('placehold.co')) {
         const imageRef = ref(storage, teamToDelete.image);
         await deleteObject(imageRef);
       }
       
-      // Delete team document from firestore
       await deleteDoc(doc(db, "clubs", clubId, "teams", teamToDelete.id));
 
       toast({ title: "Equipo eliminado", description: `El equipo ${teamToDelete.name} ha sido eliminado.` });
@@ -174,24 +195,42 @@ export default function TeamsPage() {
     }
   };
   
-  const sortedTeams = useMemo(() => {
-    return [...teams].sort((a, b) => {
-      if (sortOrder === "alphabetical") {
-        return a.name.localeCompare(b.name);
-      }
-      if (sortOrder === "age-asc") {
-        const aAge = a.minAge ?? a.maxAge ?? 99;
-        const bAge = b.minAge ?? b.maxAge ?? 99;
-        return aAge - bAge;
-      }
-      if (sortOrder === "age-desc") {
-        const aAge = a.maxAge ?? a.minAge ?? 0;
-        const bAge = b.maxAge ?? b.minAge ?? 0;
-        return bAge - aAge;
-      }
-      return 0;
-    });
-  }, [teams, sortOrder]);
+  const handleMoveTeam = (index: number, direction: 'up' | 'down') => {
+    const newOrderedTeams = [...orderedTeams];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+
+    if (targetIndex >= 0 && targetIndex < newOrderedTeams.length) {
+        const temp = newOrderedTeams[index];
+        newOrderedTeams[index] = newOrderedTeams[targetIndex];
+        newOrderedTeams[targetIndex] = temp;
+        setOrderedTeams(newOrderedTeams);
+        setHasOrderChanged(true);
+    }
+  };
+  
+  const handleSaveOrder = async () => {
+    if (!clubId) return;
+    setLoading(true);
+    try {
+      const batch = writeBatch(db);
+      orderedTeams.forEach((team, index) => {
+        const teamRef = doc(db, "clubs", clubId, "teams", team.id);
+        batch.update(teamRef, { order: index });
+      });
+      await batch.commit();
+      
+      toast({ title: "Orden guardado", description: "El nuevo orden de los equipos ha sido guardado." });
+      setHasOrderChanged(false);
+      setIsOrdering(false);
+      fetchTeams(clubId);
+
+    } catch (error) {
+      console.error("Error saving order: ", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el orden." });
+    } finally {
+      setLoading(false);
+    }
+  };
 
 
   if (loading && !teams.length) {
@@ -213,25 +252,26 @@ export default function TeamsPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-9 gap-1">
-                  <Filter className="h-3.5 w-3.5" />
-                  <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Ordenar por
-                  </span>
+             <Button 
+                variant={isOrdering ? "default" : "outline"} 
+                size="sm" 
+                className="h-9 gap-1"
+                onClick={() => {
+                    setIsOrdering(!isOrdering);
+                    setHasOrderChanged(false);
+                    if (isOrdering) {
+                        setOrderedTeams(teams.sort((a,b) => (a.order || 0) - (b.order || 0)));
+                    }
+                }}
+            >
+              {isOrdering ? "Cancelar Ordenación" : "Activar ordenación manual"}
+            </Button>
+            {isOrdering && hasOrderChanged && (
+                 <Button size="sm" className="h-9 gap-1" onClick={handleSaveOrder} disabled={loading}>
+                    {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Save className="h-4 w-4"/>}
+                    Guardar Orden
                 </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Ordenar equipos por</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuRadioGroup value={sortOrder} onValueChange={setSortOrder}>
-                    <DropdownMenuRadioItem value="alphabetical">Alfabéticamente (A-Z)</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="age-asc">Edad (Menor a Mayor)</DropdownMenuRadioItem>
-                    <DropdownMenuRadioItem value="age-desc">Edad (Mayor a Menor)</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            )}
             <Dialog open={isAddTeamOpen} onOpenChange={setIsAddTeamOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-1">
@@ -278,8 +318,18 @@ export default function TeamsPage() {
         </div>
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {sortedTeams.map(team => (
-            <Card key={team.id} className="overflow-hidden">
+          {orderedTeams.map((team, index) => (
+            <Card key={team.id} className="overflow-hidden relative">
+             {isOrdering && (
+                <div className="absolute top-2 right-2 z-10 flex flex-col gap-1">
+                    <Button size="icon" className="h-8 w-8" onClick={() => handleMoveTeam(index, 'up')} disabled={index === 0}>
+                        <ArrowUp className="h-4 w-4"/>
+                    </Button>
+                     <Button size="icon" className="h-8 w-8" onClick={() => handleMoveTeam(index, 'down')} disabled={index === orderedTeams.length -1}>
+                        <ArrowDown className="h-4 w-4"/>
+                    </Button>
+                </div>
+             )}
               <CardHeader className="p-0">
                 <Link href={`/teams/${team.id}`}>
                   <Image
@@ -355,6 +405,3 @@ export default function TeamsPage() {
     </>
   )
 }
-    
-
-    
