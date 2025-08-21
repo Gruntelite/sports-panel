@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -16,7 +15,7 @@ import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Tim
 import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { format, toDate } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
 const iconMap = {
@@ -26,92 +25,69 @@ const iconMap = {
   CircleDollarSign: CircleDollarSign,
 };
 
-type ScheduleEntry = {
+type TrainingEntry = {
     id: string;
     title: string;
-    type: 'Entrenamiento' | 'Partido' | 'Evento' | 'Otro';
     startTime: string;
     endTime: string;
     location?: string;
     color: string;
 }
 
-function TodaySchedule() {
-    const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [currentDate, setCurrentDate] = useState(new Date());
+type EventEntry = {
+    id: string;
+    title: string;
+    startTime: string;
+    endTime: string;
+    location?: string;
+    color: string;
+    type: string;
+}
 
-     useEffect(() => {
-        const fetchTodaysSchedule = async (clubId: string) => {
+function TodayTrainings() {
+    const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTodaysTrainings = async (clubId: string) => {
             setLoading(true);
             try {
                 const today = new Date();
-                const todayStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
-                const todayEnd = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
-                const todayStr = todayStart.toISOString().split('T')[0];
-                const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-                const dayName = daysOfWeek[today.getUTCDay() === 0 ? 6 : today.getUTCDay() - 1];
-                
-                let allEntries: ScheduleEntry[] = [];
-                
-                // 1. Get default template and override
+                const todayStr = today.toISOString().split('T')[0];
+                const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+                const dayName = daysOfWeek[today.getUTCDay()];
+
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
-        
+
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
-                let templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
+                const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
 
-                // 2. Fetch and process template events
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
 
                     if (templateSnap.exists()) {
                         const template = templateSnap.data() as ScheduleTemplate;
-                        if (template.weeklySchedule && template.weeklySchedule[dayName]) {
-                            const daySchedule = template.weeklySchedule[dayName];
-                            daySchedule.forEach((training: any) => {
-                                allEntries.push({
-                                    id: `${training.id}-${todayStr}`,
-                                    title: training.teamName,
-                                    type: 'Entrenamiento',
-                                    startTime: training.startTime,
-                                    endTime: training.endTime,
-                                    location: training.venueName,
-                                    color: 'bg-primary/20 text-primary border border-primary/50'
-                                });
-                            });
+                        if (template.weeklySchedule && template.weeklySchedule[dayName as keyof typeof template.weeklySchedule]) {
+                            const daySchedule = template.weeklySchedule[dayName as keyof typeof template.weeklySchedule];
+                            const trainingEntries = daySchedule.map((training: any) => ({
+                                id: `${training.id}-${todayStr}`,
+                                title: training.teamName,
+                                startTime: training.startTime,
+                                endTime: training.endTime,
+                                location: training.venueName,
+                                color: 'bg-primary/20 text-primary border border-primary/50'
+                            }));
+                            setTrainings(trainingEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
                         }
                     }
                 }
-
-                // 3. Fetch custom events
-                const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
-                    where('start', '>=', Timestamp.fromDate(todayStart)),
-                    where('start', '<=', Timestamp.fromDate(todayEnd))
-                );
-                const customEventsSnapshot = await getDocs(customEventsQuery);
-                customEventsSnapshot.forEach(doc => {
-                    const event = doc.data() as CalendarEvent;
-                    allEntries.push({
-                        id: doc.id,
-                        title: event.title,
-                        type: event.type,
-                        startTime: format(event.start.toDate(), 'HH:mm', { timeZone: 'UTC' }),
-                        endTime: format(event.end.toDate(), 'HH:mm', { timeZone: 'UTC' }),
-                        location: event.location,
-                        color: event.color
-                    });
-                });
-
-                allEntries.sort((a, b) => a.startTime.localeCompare(b.startTime));
-                setSchedule(allEntries);
-
             } catch (error) {
-                console.error("Error fetching today's schedule:", error);
+                console.error("Error fetching today's trainings:", error);
             } finally {
                 setLoading(false);
             }
@@ -122,7 +98,7 @@ function TodaySchedule() {
                 getDoc(doc(db, "users", user.uid)).then(userDocSnap => {
                     if (userDocSnap.exists()) {
                         const clubId = userDocSnap.data().clubId;
-                        if(clubId) fetchTodaysSchedule(clubId);
+                        if(clubId) fetchTodaysTrainings(clubId);
                     } else {
                         setLoading(false);
                     }
@@ -132,46 +108,130 @@ function TodaySchedule() {
             }
         });
 
-        const timer = setInterval(() => setCurrentDate(new Date()), 60000); 
-
-        return () => {
-            unsubscribe();
-            clearInterval(timer);
-        };
+        return () => unsubscribe();
     }, []);
 
-
-    const dateString = currentDate.toLocaleDateString('es-ES', {
-        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
-    });
-    
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Agenda de Hoy</CardTitle>
+                <CardTitle>Entrenamientos de Hoy</CardTitle>
                 <CardDescription>
-                    Horarios para el {dateString}.
+                    Sesiones programadas según la plantilla de horarios activa.
                 </CardDescription>
             </CardHeader>
             <CardContent>
                 {loading ? (
-                    <div className="flex justify-center items-center h-40">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <div className="flex justify-center items-center h-24">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
                     </div>
-                ) : schedule.length > 0 ? (
-                    <div className="space-y-4">
-                        {schedule.map(item => (
-                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color.startsWith('bg-') ? item.color : 'bg-muted/50')}>
+                ) : trainings.length > 0 ? (
+                    <div className="space-y-3">
+                        {trainings.map(item => (
+                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
                                 <div className="flex flex-col items-center w-20">
-                                    <span className="font-bold text-lg">{item.startTime}</span>
+                                    <span className="font-bold text-base">{item.startTime}</span>
                                     <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                 </div>
-                                <div className={cn("h-12 w-1.5 rounded-full", item.color.startsWith('bg-') ? 'bg-primary' : '')} style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
+                                <div className="h-10 w-1 bg-primary rounded-full"></div>
+                                <div className="flex-1">
+                                    <p className="font-semibold">{item.title}</p>
+                                    {item.location && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 text-muted-foreground">
+                        <p>No hay entrenamientos programados para hoy.</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function TodayEvents() {
+    const [events, setEvents] = useState<EventEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchTodaysEvents = async (clubId: string) => {
+            setLoading(true);
+            try {
+                const today = new Date();
+                const todayStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
+                const todayEnd = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
+
+                const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
+                    where('start', '>=', Timestamp.fromDate(todayStart)),
+                    where('start', '<=', Timestamp.fromDate(todayEnd))
+                );
+                const customEventsSnapshot = await getDocs(customEventsQuery);
+                const eventEntries = customEventsSnapshot.docs.map(doc => {
+                    const event = doc.data() as CalendarEvent;
+                    return {
+                        id: doc.id,
+                        title: event.title,
+                        type: event.type,
+                        startTime: format(event.start.toDate(), 'HH:mm', { timeZone: 'UTC' }),
+                        endTime: format(event.end.toDate(), 'HH:mm', { timeZone: 'UTC' }),
+                        location: event.location,
+                        color: event.color
+                    };
+                });
+                setEvents(eventEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+            } catch (error) {
+                console.error("Error fetching today's events:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                getDoc(doc(db, "users", user.uid)).then(userDocSnap => {
+                    if (userDocSnap.exists()) {
+                        const clubId = userDocSnap.data().clubId;
+                        if(clubId) fetchTodaysEvents(clubId);
+                    } else {
+                        setLoading(false);
+                    }
+                }).catch(() => setLoading(false));
+            } else {
+                setLoading(false);
+            }
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Otros Eventos de Hoy</CardTitle>
+                <CardDescription>
+                    Partidos, reuniones y otros eventos creados en el calendario.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="flex justify-center items-center h-24">
+                        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                    </div>
+                ) : events.length > 0 ? (
+                    <div className="space-y-3">
+                        {events.map(item => (
+                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
+                                <div className="flex flex-col items-center w-20">
+                                    <span className="font-bold text-base">{item.startTime}</span>
+                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
+                                </div>
+                                <div className={cn("h-10 w-1 rounded-full")} style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
                                 <div className="flex-1">
                                     <p className="font-semibold">{item.title}</p>
                                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                        <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> {item.type}</div>
-                                        {item.location && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {item.location}</div>}
+                                        <div className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {item.type}</div>
+                                        {item.location && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
                                     </div>
                                 </div>
                             </div>
@@ -179,12 +239,7 @@ function TodaySchedule() {
                     </div>
                 ) : (
                     <div className="text-center py-10 text-muted-foreground">
-                        <Calendar className="mx-auto h-12 w-12 mb-4" />
-                        <h3 className="text-lg font-semibold">No hay nada programado</h3>
-                        <p className="text-sm">No tienes entrenamientos ni eventos para el día de hoy.</p>
-                        <Button variant="outline" className="mt-4" asChild>
-                            <Link href="/calendar">Ir al Calendario</Link>
-                        </Button>
+                        <p>No hay otros eventos para hoy.</p>
                     </div>
                 )}
             </CardContent>
@@ -300,7 +355,10 @@ export default function DashboardPage() {
             })
         )}
       </div>
-      <TodaySchedule />
+      <div className="grid gap-6 md:grid-cols-2">
+          <TodayTrainings />
+          <TodayEvents />
+      </div>
     </div>
   );
 }
