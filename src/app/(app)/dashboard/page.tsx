@@ -157,7 +157,7 @@ const TodaySchedule = () => {
                 <div className="grid gap-2">
                     <CardTitle>Agenda de Hoy</CardTitle>
                     <CardDescription>
-                        {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                        Horarios para el {new Date().toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </CardDescription>
                 </div>
                 <Button asChild size="sm" className="ml-auto gap-1">
@@ -317,5 +317,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
