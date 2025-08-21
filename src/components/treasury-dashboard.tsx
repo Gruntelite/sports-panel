@@ -20,7 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2 } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import type { Player, Team, OneTimePayment, User } from "@/lib/types";
@@ -60,6 +60,8 @@ export function TreasuryDashboard() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [paymentData, setPaymentData] = useState<Partial<OneTimePayment>>({});
+  const [billingDay, setBillingDay] = useState(1);
+  const [isSavingBillingDay, setIsSavingBillingDay] = useState(false);
 
   const [isTeamSelectOpen, setIsTeamSelectOpen] = useState(false);
   const [isUserSelectOpen, setIsUserSelectOpen] = useState(false);
@@ -96,6 +98,12 @@ export function TreasuryDashboard() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
+      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+          setBillingDay(settingsSnap.data().billingDay || 1);
+      }
+
       const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -207,6 +215,22 @@ export function TreasuryDashboard() {
 
   }
 
+  const handleSaveBillingDay = async (day: number) => {
+    if(!clubId) return;
+    setIsSavingBillingDay(true);
+    try {
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        await updateDoc(settingsRef, { billingDay: day });
+        setBillingDay(day);
+        toast({ title: "Día de Cobro Guardado", description: `Las cuotas se procesarán el día ${day} de cada mes.`});
+    } catch (e) {
+        console.error("Error saving billing day", e);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el día de cobro." });
+    } finally {
+        setIsSavingBillingDay(false);
+    }
+  }
+
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
       switch (status) {
           case 'paid': return { variant: 'secondary', icon: CheckCircle2 };
@@ -272,6 +296,27 @@ export function TreasuryDashboard() {
                 </CardContent>
             </Card>
         </div>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5"/>Configuración de Cobros</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-4">
+                    <Label htmlFor="billing-day">Día de cobro de cuotas mensuales:</Label>
+                    <Select value={billingDay.toString()} onValueChange={(value) => handleSaveBillingDay(Number(value))} disabled={isSavingBillingDay}>
+                        <SelectTrigger className="w-[80px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {isSavingBillingDay && <Loader2 className="h-4 w-4 animate-spin" />}
+                </div>
+            </CardContent>
+        </Card>
       <Tabs defaultValue="fees">
         <div className="flex items-center justify-between">
             <TabsList>
