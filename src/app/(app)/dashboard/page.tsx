@@ -247,7 +247,7 @@ export default function DashboardPage() {
     { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
     { id: "teams", title: "Equipos", value: "0", change: "", icon: 'Shield' },
     { id: "users", title: "Total de Usuarios", value: "0", change: "", icon: 'Users' },
-    { id: "fees", title: "Ingresos por Cuotas", value: "0 €", change: "", icon: 'CircleDollarSign' },
+    { id: "fees", title: "Ingresos Previstos (Mes)", value: "0 €", change: "", icon: 'CircleDollarSign' },
   ]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   
@@ -270,12 +270,9 @@ export default function DashboardPage() {
             const playersCount = playersCountSnap.data().count;
             const usersCount = usersCountSnap.data().count;
 
-            const paidFees = playersSnapshot.docs.reduce((acc, doc) => {
+            const expectedIncome = playersSnapshot.docs.reduce((acc, doc) => {
                 const player = doc.data();
-                if (player.paymentStatus === 'paid' && player.monthlyFee) {
-                    return acc + player.monthlyFee;
-                }
-                return acc;
+                return acc + (player.monthlyFee || 0);
             }, 0);
 
             const monthName = format(new Date(), "LLLL 'de' yyyy", { locale: es });
@@ -284,7 +281,7 @@ export default function DashboardPage() {
                 if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
                 if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
                 if (stat.id === 'users') return { ...stat, value: usersCount.toString() };
-                if (stat.id === 'fees') return { ...stat, value: `${paidFees.toLocaleString('es-ES')} €`, change: `Total de ingresos en ${monthName}` };
+                if (stat.id === 'fees') return { ...stat, value: `${expectedIncome.toLocaleString('es-ES')} €`, change: `Total de ingresos en ${monthName}` };
                 return stat;
             }));
 
