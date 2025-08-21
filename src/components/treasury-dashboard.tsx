@@ -263,6 +263,7 @@ export function TreasuryDashboard() {
   const [localFeeExcluded, setLocalFeeExcluded] = useState<number[]>([]);
   const [localCoachFeeExcluded, setLocalCoachFeeExcluded] = useState<number[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
+  const [timeRange, setTimeRange] = useState<'monthly' | 'annual'>('monthly');
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -378,49 +379,73 @@ export function TreasuryDashboard() {
       const oneOffExpensesList = oneOffExpensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OneOffExpense));
       setOneOffExpenses(oneOffExpensesList);
       
-      const currentMonthIndex = getMonth(new Date());
-
-      const monthlyFeesTotal = settingsData.feeExcludedMonths?.includes(currentMonthIndex) 
-        ? 0 
-        : playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
-        
-      const coachPaymentsTotal = settingsData.coachFeeExcludedMonths?.includes(currentMonthIndex)
-        ? 0
-        : coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
-
-      const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly' && !s.excludedMonths?.includes(currentMonthIndex)).reduce((acc, s) => acc + s.amount, 0);
-
-      const oneTimePaymentsThisMonth = paymentsList
-        .filter(payment => getMonth(new Date(payment.issueDate)) === currentMonthIndex)
-        .reduce((acc, payment) => {
-            const amount = typeof payment.amount === 'number' ? payment.amount : parseFloat(payment.amount);
-            if (isNaN(amount)) return acc;
-            
-            const teamMemberCount = playersList.filter(p => payment.targetTeamIds?.includes(p.teamId || '')).length;
-            const userCount = payment.targetUserIds?.length || 0;
-
-            return acc + (amount * (teamMemberCount + userCount));
-        }, 0);
-
-      const expectedTotal = monthlyFeesTotal + oneTimePaymentsThisMonth;
-
-      const recurringMonthlyExpenses = recurringExpensesList.filter(e => !e.excludedMonths?.includes(currentMonthIndex)).reduce((acc, e) => acc + e.amount, 0);
-      const oneOffCurrentMonthExpenses = oneOffExpensesList.filter(e => getMonth(new Date(e.date)) === currentMonthIndex).reduce((acc, e) => acc + e.amount, 0);
-      const totalMonthlyExpenses = recurringMonthlyExpenses + oneOffCurrentMonthExpenses + coachPaymentsTotal;
-
-      setStats({ 
-        expectedIncome: expectedTotal,
-        coachPayments: coachPaymentsTotal,
-        sponsorshipIncome: sponsorshipIncomeTotal,
-        monthlyExpenses: totalMonthlyExpenses
-      });
-
     } catch (error) {
       console.error("Error fetching treasury data:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const calculateStats = () => {
+        const currentMonthIndex = getMonth(new Date());
+        const currentYear = getYear(new Date());
+
+        let totalIncome = 0;
+        let totalCoachPayments = 0;
+        let totalSponsorships = 0;
+        let totalExpenses = 0;
+
+        if (timeRange === 'monthly') {
+            // Incomes
+            const monthlyFeesTotal = clubSettings.feeExcludedMonths?.includes(currentMonthIndex) ? 0 : players.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
+            const oneTimePaymentsThisMonth = oneTimePayments.filter(p => getMonth(parseISO(p.issueDate)) === currentMonthIndex && getYear(parseISO(p.issueDate)) === currentYear).reduce((acc, p) => acc + (Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0))), 0); // Simplified calculation
+            const sponsorshipIncomeTotal = sponsorships.filter(s => s.frequency === 'monthly' && !s.excludedMonths?.includes(currentMonthIndex)).reduce((acc, s) => acc + s.amount, 0);
+            totalIncome = monthlyFeesTotal + oneTimePaymentsThisMonth + sponsorshipIncomeTotal;
+            totalSponsorships = sponsorshipIncomeTotal;
+
+            // Expenses
+            totalCoachPayments = clubSettings.coachFeeExcludedMonths?.includes(currentMonthIndex) ? 0 : coaches.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
+            const recurringMonthlyExpenses = recurringExpenses.filter(e => !e.excludedMonths?.includes(currentMonthIndex)).reduce((acc, e) => acc + e.amount, 0);
+            const oneOffCurrentMonthExpenses = oneOffExpenses.filter(e => getMonth(parseISO(e.date)) === currentMonthIndex && getYear(parseISO(e.date)) === currentYear).reduce((acc, e) => acc + e.amount, 0);
+            totalExpenses = recurringMonthlyExpenses + oneOffCurrentMonthExpenses + totalCoachPayments;
+
+        } else { // 'annual'
+            for (let i = 0; i < 12; i++) {
+                // Incomes
+                if (!clubSettings.feeExcludedMonths?.includes(i)) {
+                    totalIncome += players.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
+                }
+                if (!clubSettings.coachFeeExcludedMonths?.includes(i)) {
+                    totalCoachPayments += coaches.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
+                }
+                totalSponsorships += sponsorships.filter(s => s.frequency === 'monthly' && !s.excludedMonths?.includes(i)).reduce((acc, s) => acc + s.amount, 0);
+
+                // Expenses
+                if (!clubSettings.coachFeeExcludedMonths?.includes(i)) {
+                    totalExpenses += coaches.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
+                }
+                 totalExpenses += recurringExpenses.filter(e => !e.excludedMonths?.includes(i)).reduce((acc, e) => acc + e.amount, 0);
+            }
+            // Add year-scoped amounts
+            totalIncome += oneTimePayments.filter(p => getYear(parseISO(p.issueDate)) === currentYear).reduce((acc, p) => acc + (Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0))), 0);
+            totalSponsorships += sponsorships.filter(s => s.frequency === 'annual').reduce((acc, s) => acc + s.amount, 0);
+            totalIncome += totalSponsorships;
+            totalExpenses += oneOffExpenses.filter(e => getYear(parseISO(e.date)) === currentYear).reduce((acc, e) => acc + e.amount, 0);
+        }
+
+        setStats({ 
+            expectedIncome: totalIncome,
+            coachPayments: totalCoachPayments,
+            sponsorshipIncome: totalSponsorships,
+            monthlyExpenses: totalExpenses,
+        });
+    };
+    if (!loading) {
+        calculateStats();
+    }
+}, [timeRange, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, clubSettings, loading]);
+
 
   const handleOpenPaymentModal = (mode: 'add' | 'edit', payment?: OneTimePayment) => {
     setPaymentModalMode(mode);
@@ -712,23 +737,36 @@ export function TreasuryDashboard() {
     );
   }
 
+  const timeRangeLabel = timeRange === 'monthly' ? '(Mes)' : '(Año)';
+
   return (
     <>
     <div className="space-y-6">
+        <div className="flex justify-end">
+            <Select value={timeRange} onValueChange={(value) => setTimeRange(value as 'monthly' | 'annual')}>
+                <SelectTrigger className="w-auto">
+                    <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="monthly">Mes Actual</SelectItem>
+                    <SelectItem value="annual">Año Completo</SelectItem>
+                </SelectContent>
+            </Select>
+        </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ingresos Previstos (Mes)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Ingresos Previstos {timeRangeLabel}</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.expectedIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de cuotas mensuales y pagos puntuales del mes.</p>
+                    <p className="text-xs text-muted-foreground">Suma de cuotas, pagos puntuales y patrocinios.</p>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pagos a Entrenadores (Mes)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Pagos a Entrenadores {timeRangeLabel}</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
@@ -738,22 +776,22 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ingresos por Patrocinios (Mes)</CardTitle>
+                    <CardTitle className="text-sm font-medium">Ingresos por Patrocinios {timeRangeLabel}</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.sponsorshipIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de todos los patrocinios mensuales.</p>
+                    <p className="text-xs text-muted-foreground">Suma de todos los patrocinios.</p>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Gastos Mensuales</CardTitle>
+                    <CardTitle className="text-sm font-medium">Gastos Totales {timeRangeLabel}</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.monthlyExpenses.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de gastos recurrentes y puntuales este mes.</p>
+                    <p className="text-xs text-muted-foreground">Suma de gastos recurrentes, puntuales y de personal.</p>
                 </CardContent>
             </Card>
         </div>
@@ -1403,5 +1441,3 @@ export function TreasuryDashboard() {
     </>
   );
 }
-
-    
