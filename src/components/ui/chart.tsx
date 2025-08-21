@@ -81,8 +81,8 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
       dangerouslySetInnerHTML={{
         __html: `
 [data-chart=${id}] {
-  --color-Ingresos: 142 76% 36%;
-  --color-Gastos: 0 72% 51%;
+  --color-Ingresos: hsl(142, 76%, 36%);
+  --color-Gastos: hsl(0, 72%, 51%);
   --chart-1: 142 76% 36%;
   --chart-2: 0 72% 51%;
 }
