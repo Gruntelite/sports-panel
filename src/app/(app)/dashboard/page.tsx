@@ -104,6 +104,8 @@ export default function DashboardPage() {
         // --- Fetch Today's Schedule ---
         let scheduleEntries: ScheduleEntry[] = [];
         const today = new Date();
+        const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+        const todayStr = today.toISOString().split('T')[0];
         
         // 1. Fetch templates and settings
         const schedulesCol = collection(db, "clubs", clubId, "schedules");
@@ -115,7 +117,6 @@ export default function DashboardPage() {
         const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : null;
 
         // 2. Determine which template to use for today
-        const todayStr = today.toISOString().split('T')[0];
         const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
         const overrideSnap = await getDoc(overrideRef);
         const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
@@ -124,19 +125,17 @@ export default function DashboardPage() {
         if (templateIdToUse) {
             const template = templates.find(t => t.id === templateIdToUse);
             if (template) {
-                const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const currentDayName = daysOfWeek[today.getDay()];
                 const daySchedule = template.weeklySchedule?.[currentDayName] || [];
                 
-                daySchedule.forEach((training: any) => {
-                    scheduleEntries.push({
-                        id: `${training.id}-${todayStr}`,
-                        teamName: training.teamName,
-                        type: 'Entrenamiento',
-                        time: training.startTime,
-                        location: training.venueName,
-                    });
-                });
+                const templateEntries = daySchedule.map((training: any) => ({
+                    id: `${training.id}-${todayStr}`,
+                    teamName: training.teamName,
+                    type: 'Entrenamiento',
+                    time: training.startTime,
+                    location: training.venueName,
+                } as ScheduleEntry));
+                scheduleEntries.push(...templateEntries);
             }
         }
         
