@@ -40,8 +40,15 @@ export default function DashboardPage() {
   const [clubId, setClubId] = useState<string | null>(null);
   const [stats, setStats] = useState(initialStats);
   const [todaysSchedule, setTodaysSchedule] = useState<ScheduleEntry[]>([]);
+  const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   
-  const today = new Date();
+  useEffect(() => {
+    setCurrentDateTime(new Date());
+    const timer = setInterval(() => {
+      setCurrentDateTime(new Date());
+    }, 60000); // Update every minute
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -96,6 +103,7 @@ export default function DashboardPage() {
         
         // --- Fetch Today's Schedule ---
         let scheduleEntries: ScheduleEntry[] = [];
+        const today = new Date();
         
         // 1. Fetch templates and settings
         const schedulesCol = collection(db, "clubs", clubId, "schedules");
@@ -202,7 +210,11 @@ export default function DashboardPage() {
             <div className="grid gap-2">
               <CardTitle>Horarios de Hoy</CardTitle>
               <CardDescription>
-                Entrenamientos y eventos programados para hoy.
+                {currentDateTime ? (
+                    `Eventos para el ${currentDateTime.toLocaleDateString('es-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} - ${currentDateTime.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}`
+                ) : (
+                    'Entrenamientos y eventos programados para hoy.'
+                )}
               </CardDescription>
             </div>
              <Button asChild size="sm" className="ml-auto gap-1">
