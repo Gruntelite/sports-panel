@@ -107,10 +107,10 @@ export function Sidebar() {
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all hover:bg-primary-foreground/10 text-shadow-sm shadow-black/20 text-base",
+                                        "flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all text-base",
                                         isActive
-                                        ? "bg-primary-foreground/10"
-                                        : "hover:text-primary-foreground"
+                                        ? "bg-white text-black"
+                                        : "hover:bg-white hover:text-black"
                                     )}
                                 >
                                     <item.icon className="h-4 w-4" />
