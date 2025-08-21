@@ -181,6 +181,12 @@ export default function ClubFilesPage() {
       return;
     }
 
+    const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+    if (fileToUpload.size > MAX_FILE_SIZE) {
+        toast({ variant: "destructive", title: "Archivo demasiado grande", description: "El tamaño máximo del archivo es 5 MB."});
+        return;
+    }
+
     setSaving(true);
     const owner = selectedOwner || { id: 'club', name: 'Club' };
 
@@ -372,6 +378,7 @@ export default function ClubFilesPage() {
                             setFileToUpload(e.target.files?.[0] || null)
                           }
                         />
+                        <p className="text-xs text-muted-foreground">Tamaño máximo: 5 MB.</p>
                       </div>
                     </div>
                     <DialogFooter>
