@@ -210,11 +210,10 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                                         <span className="font-bold text-base">{item.startTime}</span>
                                         <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                     </div>
-                                    <div className={cn("h-10 w-1 rounded-full")} style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
+                                    <div className="h-10 w-px bg-border-strong"></div>
                                     <div className="flex-1">
                                         <p className="font-semibold">{item.title}</p>
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                            <div className="flex items-center gap-1.5"><Clock className="h-3.5 w-3.5" /> {item.type}</div>
                                             {item.location && <div className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
                                         </div>
                                     </div>

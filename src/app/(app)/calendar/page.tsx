@@ -555,33 +555,6 @@ function CalendarView() {
                         }}/>
                     </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label>Tipo de Evento</Label>
-                        <Select value={eventData.type || ''} onValueChange={(value) => setEventData({...eventData, type: value as any})}>
-                            <SelectTrigger><SelectValue/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Evento">Evento</SelectItem>
-                                <SelectItem value="Partido">Partido</SelectItem>
-                                <SelectItem value="Entrenamiento">Entrenamiento</SelectItem>
-                                <SelectItem value="Otro">Otro</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Equipo (Opcional)</Label>
-                        <Select 
-                            value={eventData.teamId || 'none'} 
-                            onValueChange={(value) => setEventData({...eventData, teamId: value === 'none' ? undefined : value})}
-                        >
-                            <SelectTrigger><SelectValue placeholder="Ninguno"/></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">Ninguno</SelectItem>
-                                {teams.map(team => <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
                 <div className="space-y-2">
                     <Label htmlFor="event-location">Ubicación (Opcional)</Label>
                     <Input id="event-location" value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
@@ -598,7 +571,7 @@ function CalendarView() {
             <DialogFooter className="justify-between">
                 <div>
                   {modalMode === 'edit' && (
-                     <Button variant="destructive" onClick={handleDeleteEvent} disabled={isUpdating}>
+                     <Button variant="secondary" onClick={handleDeleteEvent} disabled={isUpdating}>
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         <Trash2 className="mr-2 h-4 w-4"/>
                         Eliminar Evento
@@ -632,6 +605,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-
-
-    
