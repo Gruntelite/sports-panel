@@ -230,48 +230,43 @@ export default function PlayersPage() {
     }
 
     setSaving(true);
-    let playerId = playerData.id;
-
     try {
         let imageUrl = playerData.avatar;
-
         if (newImage) {
             if (playerData.avatar && !playerData.avatar.includes('placehold.co')) {
                 try {
-                    const oldImageRef = ref(storage, playerData.avatar);
-                    await deleteObject(oldImageRef);
-                } catch (storageError) {
-                    console.warn("Could not delete old image:", storageError);
-                }
+                    await deleteObject(ref(storage, playerData.avatar));
+                } catch (e) { console.warn("Could not delete old image, it might not exist.", e); }
             }
             const imageRef = ref(storage, `player-avatars/${clubId}/${uuidv4()}`);
             await uploadBytes(imageRef, newImage);
             imageUrl = await getDownloadURL(imageRef);
         }
-        
+
         const teamName = teams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
 
         const dataToSave = {
             ...playerData,
+            avatar: imageUrl,
             teamName,
-            avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
             monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
         };
         delete (dataToSave as Partial<Player>).id;
+        
+        let playerId = playerData.id;
 
         if (modalMode === 'edit' && playerId) {
-            const playerRef = doc(db, "clubs", clubId, "players", playerId);
-            await updateDoc(playerRef, dataToSave);
-            toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
+            await updateDoc(doc(db, "clubs", clubId, "players", playerId), dataToSave);
+            toast({ title: "Jugador actualizado", description: `${dataToSave.name} ha sido actualizado.` });
         } else {
             const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
             playerId = playerDocRef.id;
-            toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
+            toast({ title: "Jugador añadido", description: `${dataToSave.name} ha sido añadido al club.` });
             
+            // Create user record
             const contactEmail = dataToSave.tutorEmail;
             const contactName = `${dataToSave.name} ${dataToSave.lastName}`;
-            
-            if(contactEmail){
+            if (contactEmail) {
                 const userRef = doc(collection(db, "clubs", clubId, "users"));
                 await setDoc(userRef, {
                     email: contactEmail,
@@ -279,14 +274,9 @@ export default function PlayersPage() {
                     role: 'Family',
                     playerId: playerDocRef.id,
                 });
-                toast({
-                    title: "Registro de Usuario Creado",
-                    description: `Se ha creado un registro de usuario para ${contactName}.`,
-                });
             }
         }
-      
-        // Document upload logic
+        
         if (documentToUpload && playerId) {
             const file = documentToUpload;
             const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
@@ -301,22 +291,21 @@ export default function PlayersPage() {
                 createdAt: Timestamp.now(),
             };
             
-            const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
-            await updateDoc(playerDocRef, {
+            await updateDoc(doc(db, "clubs", clubId, "players", playerId), {
                 documents: arrayUnion(newDocument)
             });
             
             toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
         }
-        
+
         setIsModalOpen(false);
+        if (clubId) fetchData(clubId);
 
     } catch (error) {
         console.error("Error saving player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
     } finally {
         setSaving(false);
-        if (clubId) fetchData(clubId);
     }
   };
 
@@ -879,6 +868,4 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
-
 

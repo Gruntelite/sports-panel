@@ -223,60 +223,49 @@ export default function CoachesPage() {
     }
 
     setSaving(true);
-    let coachId = coachData.id;
-    
     try {
         let imageUrl = coachData.avatar;
-
         if (newImage) {
             if (coachData.avatar && !coachData.avatar.includes('placehold.co')) {
                 try {
-                    const oldImageRef = ref(storage, coachData.avatar);
-                    await deleteObject(oldImageRef);
-                } catch (storageError) {
-                    console.warn("Could not delete old image:", storageError);
-                }
+                    await deleteObject(ref(storage, coachData.avatar));
+                } catch (e) { console.warn("Could not delete old image, it might not exist.", e); }
             }
             const imageRef = ref(storage, `coach-avatars/${clubId}/${uuidv4()}`);
             await uploadBytes(imageRef, newImage);
             imageUrl = await getDownloadURL(imageRef);
         }
-        
+
         const teamName = teams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
 
         const dataToSave = {
             ...coachData,
+            avatar: imageUrl,
             teamName,
-            avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
             monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
         };
         delete (dataToSave as Partial<Coach>).id;
+        
+        let coachId = coachData.id;
 
         if (modalMode === 'edit' && coachId) {
-            const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
-            await updateDoc(coachRef, dataToSave);
+            await updateDoc(doc(db, "clubs", clubId, "coaches", coachId), dataToSave);
             toast({ title: "Entrenador actualizado", description: `${dataToSave.name} ha sido actualizado.` });
         } else {
             const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
             coachId = coachDocRef.id;
             toast({ title: "Entrenador añadido", description: `${dataToSave.name} ha sido añadido al club.` });
             
-            if (dataToSave.email) {
-                const userRef = doc(collection(db, "clubs", clubId, "users"));
-                await setDoc(userRef, {
-                    email: dataToSave.email,
-                    name: `${dataToSave.name} ${dataToSave.lastName}`,
-                    role: 'Entrenador',
-                    coachId: coachDocRef.id,
-                });
-                toast({
-                    title: "Registro de Usuario Creado",
-                    description: `Se ha creado un registro de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
-                });
-            }
+            // Create user record
+            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            await setDoc(userRef, {
+                email: dataToSave.email,
+                name: `${dataToSave.name} ${dataToSave.lastName}`,
+                role: 'Entrenador',
+                coachId: coachId,
+            });
         }
-      
-        // Document upload logic
+        
         if (documentToUpload && coachId) {
             const file = documentToUpload;
             const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
@@ -291,8 +280,7 @@ export default function CoachesPage() {
                 createdAt: Timestamp.now(),
             };
             
-            const coachDocRef = doc(db, "clubs", clubId, "coaches", coachId);
-            await updateDoc(coachDocRef, {
+            await updateDoc(doc(db, "clubs", clubId, "coaches", coachId), {
                 documents: arrayUnion(newDocument)
             });
             
@@ -300,13 +288,13 @@ export default function CoachesPage() {
         }
 
         setIsModalOpen(false);
+        if (clubId) fetchData(clubId);
 
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
     } finally {
         setSaving(false);
-        if (clubId) fetchData(clubId);
     }
   };
 
@@ -843,6 +831,4 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
-
-
 
