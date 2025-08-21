@@ -223,16 +223,15 @@ export default function CoachesPage() {
     }
 
     setSaving(true);
+    let coachId = coachData.id;
     
     try {
-        let currentCoachData = { ...coachData };
-        let currentId = currentCoachData.id;
+        let imageUrl = coachData.avatar;
 
-        // Handle image upload
         if (newImage) {
-            if (currentCoachData.avatar && !currentCoachData.avatar.includes('placehold.co')) {
+            if (coachData.avatar && !coachData.avatar.includes('placehold.co')) {
                 try {
-                    const oldImageRef = ref(storage, currentCoachData.avatar);
+                    const oldImageRef = ref(storage, coachData.avatar);
                     await deleteObject(oldImageRef);
                 } catch (storageError) {
                     console.warn("Could not delete old image:", storageError);
@@ -240,27 +239,26 @@ export default function CoachesPage() {
             }
             const imageRef = ref(storage, `coach-avatars/${clubId}/${uuidv4()}`);
             await uploadBytes(imageRef, newImage);
-            currentCoachData.avatar = await getDownloadURL(imageRef);
+            imageUrl = await getDownloadURL(imageRef);
         }
         
-        const teamName = teams.find(t => t.id === currentCoachData.teamId)?.name || "Sin equipo";
+        const teamName = teams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
 
         const dataToSave = {
-            ...currentCoachData,
+            ...coachData,
             teamName,
-            avatar: currentCoachData.avatar || `https://placehold.co/40x40.png?text=${(currentCoachData.name || '').charAt(0)}`,
-            monthlyPayment: (currentCoachData.monthlyPayment === '' || currentCoachData.monthlyPayment === undefined || currentCoachData.monthlyPayment === null) ? null : Number(currentCoachData.monthlyPayment),
+            avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
+            monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
         };
         delete (dataToSave as Partial<Coach>).id;
 
-        // Save or update coach data
-        if (modalMode === 'edit' && currentId) {
-            const coachRef = doc(db, "clubs", clubId, "coaches", currentId);
+        if (modalMode === 'edit' && coachId) {
+            const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
             await updateDoc(coachRef, dataToSave);
             toast({ title: "Entrenador actualizado", description: `${dataToSave.name} ha sido actualizado.` });
         } else {
             const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
-            currentId = coachDocRef.id;
+            coachId = coachDocRef.id;
             toast({ title: "Entrenador añadido", description: `${dataToSave.name} ha sido añadido al club.` });
             
             if (dataToSave.email) {
@@ -278,10 +276,9 @@ export default function CoachesPage() {
             }
         }
 
-        // Handle document upload if a file was selected
-        if (documentToUpload && currentId) {
+        if (documentToUpload && coachId) {
             const file = documentToUpload;
-            const filePath = `coach-documents/${clubId}/${currentId}/${uuidv4()}-${file.name}`;
+            const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
             const docRef = ref(storage, filePath);
             await uploadBytes(docRef, file);
             const url = await getDownloadURL(docRef);
@@ -293,7 +290,7 @@ export default function CoachesPage() {
                 createdAt: Timestamp.now(),
             };
             
-            const coachDocRef = doc(db, "clubs", clubId, "coaches", currentId);
+            const coachDocRef = doc(db, "clubs", clubId, "coaches", coachId);
             await updateDoc(coachDocRef, {
                 documents: arrayUnion(newDocument)
             });
@@ -332,7 +329,7 @@ export default function CoachesPage() {
         }
 
         toast({ title: "Entrenador eliminado", description: `${coachToDelete.name} ${coachToDelete.lastName} ha sido eliminado.`});
-        fetchData(clubId);
+        if(clubId) fetchData(clubId);
     } catch (error) {
         console.error("Error deleting coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar al entrenador." });
@@ -375,7 +372,7 @@ export default function CoachesPage() {
             title: "Entrenadores actualizados",
             description: `${selectedCoaches.length} entrenadores han sido asignados al nuevo equipo.`
         });
-        fetchData(clubId);
+        if(clubId) fetchData(clubId);
         setSelectedCoaches([]);
     } catch (error) {
         console.error("Error assigning coaches in bulk:", error);
@@ -416,7 +413,7 @@ export default function CoachesPage() {
             title: "Entrenadores eliminados",
             description: `${selectedCoaches.length} entrenadores han sido eliminados.`
         });
-        fetchData(clubId);
+        if(clubId) fetchData(clubId);
         setSelectedCoaches([]);
     } catch (error) {
         console.error("Error deleting coaches in bulk:", error);
@@ -430,26 +427,28 @@ export default function CoachesPage() {
   const handleDocumentDelete = async (documentToDelete: Document) => {
     if (!coachData.id || !clubId) return;
 
+    setSaving(true);
     try {
         const fileRef = ref(storage, documentToDelete.path);
         await deleteObject(fileRef);
 
         const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        const updatedDocuments = coachData.documents?.filter(d => d.path !== documentToDelete.path);
         
         await updateDoc(coachDocRef, {
-            documents: updatedDocuments || []
+            documents: arrayRemove(documentToDelete)
         });
         
         setCoachData(prev => ({
             ...prev,
-            documents: updatedDocuments
+            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
         }));
 
         toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
     } catch (error) {
         console.error("Error deleting document:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -773,8 +772,8 @@ export default function CoachesPage() {
                                     <h4 className="font-medium">Documentos Guardados</h4>
                                     {(coachData.documents && coachData.documents.length > 0) ? (
                                         <div className="border rounded-md">
-                                            {coachData.documents.map(doc => (
-                                                <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
+                                            {coachData.documents.map((doc, index) => (
+                                                <div key={index} className="flex items-center justify-between p-2 border-b last:border-b-0">
                                                     <a href={doc.url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium truncate pr-2 hover:underline">
                                                         {doc.name}
                                                     </a>
@@ -782,8 +781,8 @@ export default function CoachesPage() {
                                                         <Button asChild size="icon" variant="outline" className="h-8 w-8">
                                                             <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
                                                         </Button>
-                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
-                                                            <Trash2 className="h-4 w-4" />
+                                                        <Button disabled={saving} size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
+                                                            {saving ? <Loader2 className="h-4 w-4 animate-spin"/> : <Trash2 className="h-4 w-4" />}
                                                         </Button>
                                                     </div>
                                                 </div>
@@ -808,7 +807,8 @@ export default function CoachesPage() {
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
                 <Button type="button" onClick={handleSaveCoach} disabled={saving}>
-                    {saving ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                    {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4"/>}
+                    Guardar
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -848,3 +848,4 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
