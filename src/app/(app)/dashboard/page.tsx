@@ -10,10 +10,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { initialStats } from "@/lib/data";
-import { Users, Shield, Calendar, CircleDollarSign, Loader2 } from "lucide-react";
+import { Users, Shield, Calendar, CircleDollarSign, Loader2, Hourglass, MapPin, Clock } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, getCountFromServer } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
+import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const iconMap = {
   Users: Users,
@@ -22,11 +24,227 @@ const iconMap = {
   CircleDollarSign: CircleDollarSign,
 };
 
+type ScheduleEntry = {
+    id: string;
+    title: string;
+    type: 'Entrenamiento' | 'Partido' | 'Evento' | 'Otro';
+    startTime: string;
+    endTime: string;
+    location?: string;
+    color: string;
+}
+
+function TodaySchedule() {
+    const [schedule, setSchedule] = useState<ScheduleEntry[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [currentDate, setCurrentDate] = useState(new Date());
+
+    useEffect(() => {
+        const fetchTodaysSchedule = async (clubId: string) => {
+            setLoading(true);
+            try {
+                const today = new Date();
+                const todayStart = new Date(today);
+                todayStart.setHours(0, 0, 0, 0);
+                const todayEnd = new Date(today);
+                todayEnd.setHours(23, 59, 59, 999);
+
+                const todayStr = today.toISOString().split('T')[0];
+                const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+                const dayName = daysOfWeek[today.getDay()];
+
+                let allEntries: ScheduleEntry[] = [];
+                let defaultTemplateId: string | null = null;
+                
+                // 1. Fetch templates and config
+                const schedulesCol = collection(db, "clubs", clubId, "schedules");
+                const schedulesSnapshot = await getDocs(schedulesCol);
+                const templates: ScheduleTemplate[] = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
+
+                const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                const settingsSnap = await getDoc(settingsRef);
+                if (settingsSnap.exists()) {
+                    defaultTemplateId = settingsSnap.data()?.defaultScheduleTemplateId || null;
+                }
+
+                // 2. Determine which template to use for today
+                const overridesRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
+                const overrideSnap = await getDoc(overridesRef);
+                const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
+
+                // 3. Get events from the determined template
+                if (templateIdToUse) {
+                    const template = templates.find(t => t.id === templateIdToUse);
+                    if (template && template.weeklySchedule && template.weeklySchedule[dayName]) {
+                        const daySchedule = template.weeklySchedule[dayName];
+                        daySchedule.forEach((training: any) => {
+                            allEntries.push({
+                                id: training.id,
+                                title: training.teamName,
+                                type: 'Entrenamiento',
+                                startTime: training.startTime,
+                                endTime: training.endTime,
+                                location: training.venueName,
+                                color: 'bg-primary/20 text-primary border border-primary/50'
+                            });
+                        });
+                    }
+                }
+                
+                // 4. Get custom events from the calendar
+                const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
+                    where('start', '>=', todayStart),
+                    where('start', '<=', todayEnd)
+                );
+                const customEventsSnapshot = await getDocs(customEventsQuery);
+                customEventsSnapshot.forEach(doc => {
+                    const event = doc.data() as CalendarEvent;
+                    allEntries.push({
+                        id: doc.id,
+                        title: event.title,
+                        type: event.type,
+                        startTime: event.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                        endTime: event.end.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+                        location: event.location,
+                        color: event.color
+                    });
+                });
+
+                // 5. Sort all entries by start time
+                allEntries.sort((a, b) => a.startTime.localeCompare(b.startTime));
+                setSchedule(allEntries);
+
+            } catch (error) {
+                console.error("Error fetching today's schedule:", error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
+                getDoc(userDocRef).then(userDocSnap => {
+                    if (userDocSnap.exists()) {
+                        const clubId = userDocSnap.data().clubId;
+                        fetchTodaysSchedule(clubId);
+                    }
+                });
+            } else {
+                setLoading(false);
+            }
+        });
+
+        const timer = setInterval(() => setCurrentDate(new Date()), 60000); // Update date every minute
+
+        return () => {
+            unsubscribe();
+            clearInterval(timer);
+        };
+    }, []);
+
+    const dateString = currentDate.toLocaleDateString('es-ES', {
+        weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+    });
+    
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Agenda de Hoy</CardTitle>
+                <CardDescription>
+                    Horarios para el {dateString}.
+                </CardDescription>
+            </CardHeader>
+            <CardContent>
+                {loading ? (
+                    <div className="flex justify-center items-center h-40">
+                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                ) : schedule.length > 0 ? (
+                    <div className="space-y-4">
+                        {schedule.map(item => (
+                            <div key={item.id} className="flex items-center gap-4 p-3 rounded-lg border bg-muted/50">
+                                <div className="flex flex-col items-center w-20">
+                                    <span className="font-bold text-lg">{item.startTime}</span>
+                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
+                                </div>
+                                <div className="h-12 w-1.5 rounded-full" style={{ backgroundColor: item.color.startsWith('bg-') ? undefined : item.color }}></div>
+                                <div className="flex-1">
+                                    <p className="font-semibold">{item.title}</p>
+                                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                        <div className="flex items-center gap-1"><Clock className="h-3 w-3" /> {item.type}</div>
+                                        {item.location && <div className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {item.location}</div>}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 text-muted-foreground">
+                        <Calendar className="mx-auto h-12 w-12 mb-4" />
+                        <h3 className="text-lg font-semibold">No hay nada programado</h3>
+                        <p className="text-sm">No tienes entrenamientos ni eventos para el día de hoy.</p>
+                        <Button variant="outline" className="mt-4" asChild>
+                            <Link href="/calendar">Ir al Calendario</Link>
+                        </Button>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState(initialStats);
+  const [stats, setStats] = useState([
+    { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
+    { id: "teams", title: "Equipos", value: "0", change: "", icon: 'Shield' },
+    { id: "users", title: "Total de Usuarios", value: "0", change: "", icon: 'Users' },
+    { id: "fees", title: "Cuotas Pendientes", value: "0 €", change: "", icon: 'CircleDollarSign' },
+  ]);
   
   useEffect(() => {
+    const fetchStats = async (clubId: string) => {
+        setLoading(true);
+        try {
+            const teamsCol = collection(db, "clubs", clubId, "teams");
+            const playersCol = collection(db, "clubs", clubId, "players");
+            const usersCol = query(collection(db, "clubs", clubId, "users"));
+
+            const [teamsCountSnap, playersCountSnap, usersCountSnap, playersSnapshot] = await Promise.all([
+                getCountFromServer(teamsCol),
+                getCountFromServer(playersCol),
+                getCountFromServer(usersCol),
+                getDocs(playersCol)
+            ]);
+            
+            const teamsCount = teamsCountSnap.data().count;
+            const playersCount = playersCountSnap.data().count;
+            const usersCount = usersCountSnap.data().count;
+
+            const pendingFees = playersSnapshot.docs.reduce((acc, doc) => {
+                const player = doc.data();
+                if (player.paymentStatus !== 'paid' && player.monthlyFee) {
+                    return acc + player.monthlyFee;
+                }
+                return acc;
+            }, 0);
+
+            setStats(prevStats => prevStats.map(stat => {
+                if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
+                if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
+                if (stat.id === 'users') return { ...stat, value: usersCount.toString() };
+                if (stat.id === 'fees') return { ...stat, value: `${pendingFees.toLocaleString('es-ES')} €` };
+                return stat;
+            }));
+
+        } catch (error) {
+            console.error("Error fetching dashboard stats:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid);
@@ -47,45 +265,6 @@ export default function DashboardPage() {
     });
     return () => unsubscribe();
   }, []);
-
-  const fetchStats = async (clubId: string) => {
-    setLoading(true);
-    try {
-        const teamsCol = collection(db, "clubs", clubId, "teams");
-        const playersCol = collection(db, "clubs", clubId, "players");
-        const usersCol = query(collection(db, "clubs", clubId, "users"));
-
-        const teamsCountSnap = await getCountFromServer(teamsCol);
-        const playersCountSnap = await getCountFromServer(playersCol);
-        const usersCountSnap = await getCountFromServer(usersCol);
-        
-        const teamsCount = teamsCountSnap.data().count;
-        const playersCount = playersCountSnap.data().count;
-        const usersCount = usersCountSnap.data().count;
-
-        const playersSnapshot = await getDocs(playersCol);
-        const pendingFees = playersSnapshot.docs.reduce((acc, doc) => {
-          const player = doc.data();
-          if (player.paymentStatus !== 'paid' && player.monthlyFee) {
-            return acc + player.monthlyFee;
-          }
-          return acc;
-        }, 0);
-
-        setStats(prevStats => prevStats.map(stat => {
-            if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
-            if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
-            if (stat.id === 'users') return { ...stat, value: usersCount.toString() };
-            if (stat.id === 'fees') return { ...stat, value: `${pendingFees.toLocaleString('es-ES')} €` };
-            return stat;
-        }));
-
-    } catch (error) {
-        console.error("Error fetching dashboard stats:", error)
-    } finally {
-        setLoading(false);
-    }
-  }
 
   return (
     <div className="flex flex-col gap-6">
@@ -123,6 +302,7 @@ export default function DashboardPage() {
             })
         )}
       </div>
+      <TodaySchedule />
     </div>
   );
 }
