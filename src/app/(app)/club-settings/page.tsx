@@ -106,7 +106,7 @@ export default function ClubSettingsPage() {
             localStorage.setItem('clubThemeColorForeground', foregroundColor);
             window.dispatchEvent(new Event('storage')); // Notify other tabs/components
 
-            toast({ title: "Guardado!", description: "La configuración del club ha sido actualizada." });
+            toast({ title: "¡Guardado!", description: "La configuración del club ha sido actualizada. Recarga la página para ver los cambios en los colores." });
         } catch (error) {
             console.error("Error saving settings:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
