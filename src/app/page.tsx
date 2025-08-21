@@ -221,7 +221,7 @@ export default function SignUpPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2 col-span-2">
                 <Label htmlFor="club-name">Nombre del Club</Label>
-                <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} />
+                <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
               </div>
             </div>
              <div className="space-y-2">
@@ -315,3 +315,5 @@ export default function SignUpPage() {
     </div>
   );
 }
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -94,7 +95,7 @@ export function Sidebar() {
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                        <span className="font-headline text-xl font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32" />}</span>
+                        <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32" />}</span>
                     </Link>
                 </div>
                 <div className="flex-1 overflow-y-auto">
@@ -170,3 +171,5 @@ export function Sidebar() {
         </div>
     );
 }
+
+    

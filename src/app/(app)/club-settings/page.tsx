@@ -142,7 +142,7 @@ export default function ClubSettingsPage() {
                 <CardContent className="space-y-6">
                     <div className="space-y-2">
                         <Label htmlFor="clubName">Nombre del Club</Label>
-                        <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} />
+                        <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="clubColor">Color Principal del Club</Label>
@@ -232,5 +232,6 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
+    
 
     
