@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, MoreHorizontal, Check, ChevronsUpDown, Trash2, Edit } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Loader2, Calendar as CalendarIcon, MoreHorizontal, Check, ChevronsUpDown, Trash2, Edit, MapPin } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -31,6 +31,7 @@ const EVENT_COLORS = [
 ];
 
 const TEMPLATE_BG_COLORS: {[key: string]: string} = {
+    "hsl(210 40% 96.1%)": "bg-muted/50",
     "#dcfce7": "bg-green-100/60",
     "#dbeafe": "bg-blue-100/60",
     "#fef9c3": "bg-yellow-100/60",
@@ -160,7 +161,7 @@ function CalendarView() {
           if (!template) continue;
 
           const weeklySchedule = template.weeklySchedule;
-          const dayIndex = getDay(d); // 0 for Sunday, 1 for Monday, etc.
+          const dayIndex = d.getUTCDay();
           const dayName = daysOfWeek[dayIndex];
           const daySchedule = weeklySchedule?.[dayName as keyof typeof weeklySchedule] || [];
 
@@ -169,7 +170,7 @@ function CalendarView() {
               const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
               allEvents.push({
                   id: `${training.id}-${dayStr}`,
-                  title: `${training.startTime} - ${training.teamName}`,
+                  title: `${training.teamName}`,
                   start: Timestamp.fromDate(startDateTime),
                   end: Timestamp.fromDate(endDateTime),
                   type: 'Entrenamiento',
@@ -472,9 +473,9 @@ function CalendarView() {
                                     onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}
                                 >
                                     <p className="font-semibold truncate">
-                                        {startTime} - {event.isTemplateBased ? event.title.split(' - ')[1] : event.title}
+                                        {startTime} - {event.title}
                                     </p>
-                                    {event.location && <p className="truncate text-muted-foreground opacity-80">{event.location}</p>}
+                                    {event.location && <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-90"><MapPin className="h-3 w-3" />{event.location}</div>}
                                 </div>
                                 )
                             })}
@@ -629,3 +630,5 @@ export default function CalendarPage() {
     </div>
   )
 }
+
+    
