@@ -112,13 +112,13 @@ export async function checkSenderStatusAction(input: { clubId: string }) {
 
 const DAILY_LIMIT = 100;
 
-async function getClubConfig(clubId: string) {
+async function getClubConfigAndCheckLimit(clubId: string) {
     const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
     const clubRef = doc(db, 'clubs', clubId);
 
     const [settingsDoc, clubDoc] = await Promise.all([getDoc(settingsRef), getDoc(clubRef)]);
 
-    let config = {
+    const config = {
       clubName: "Tu Club",
       fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
       apiKey: null as string | null,
@@ -128,7 +128,7 @@ async function getClubConfig(clubId: string) {
     if (clubDoc.exists()) {
         config.clubName = clubDoc.data()?.name || "Tu Club";
     }
-
+    
     if (settingsDoc.exists()) {
         const data = settingsDoc.data();
         if (data?.fromEmail && data?.senderVerificationStatus === 'verified') {
@@ -141,7 +141,12 @@ async function getClubConfig(clubId: string) {
         const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
         
         let currentCount = data?.dailyEmailCount || 0;
+        
         if (lastReset < oneDayAgo) {
+            await updateDoc(settingsRef, {
+                dailyEmailCount: 0,
+                dailyEmailCountResetTimestamp: now
+            });
             currentCount = 0;
         }
 
@@ -152,7 +157,7 @@ async function getClubConfig(clubId: string) {
 
 export async function sendDirectEmailAction({ clubId, recipients, subject, body }: { clubId: string, recipients: any[], subject: string, body: string }) {
     
-    const config = await getClubConfig(clubId);
+    const config = await getClubConfigAndCheckLimit(clubId);
     const { availableToSendToday, apiKey, clubName, fromEmail } = config;
     
     if (!apiKey) {
@@ -185,10 +190,10 @@ export async function sendDirectEmailAction({ clubId, recipients, subject, body 
 
     if (result.success && result.sentCount > 0) {
         const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
-        await setDoc(settingsRef, {
+        await updateDoc(settingsRef, {
             dailyEmailCount: increment(result.sentCount),
             dailyEmailCountResetTimestamp: Timestamp.now(),
-        }, { merge: true });
+        });
     }
 
     if (result.success) {
