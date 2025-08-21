@@ -82,6 +82,7 @@ import { cn } from "@/lib/utils";
 type Owner = {
     id: string;
     name: string;
+    role?: string;
 }
 
 export default function ClubFilesPage() {
@@ -120,7 +121,7 @@ export default function ClubFilesPage() {
 
       usersSnapshot.forEach(doc => {
           const data = doc.data() as User;
-          allOwners.push({ id: doc.id, name: data.name });
+          allOwners.push({ id: doc.id, name: data.name, role: data.role });
       });
 
       const sortedOwners = allOwners.sort((a, b) => {
@@ -353,6 +354,7 @@ export default function ClubFilesPage() {
                                             )}
                                         />
                                         {owner.name}
+                                        {owner.role && <span className="ml-2 text-xs text-muted-foreground">({owner.role})</span>}
                                         </CommandItem>
                                     ))}
                                     </CommandGroup>
