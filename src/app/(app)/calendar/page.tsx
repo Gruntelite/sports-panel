@@ -466,9 +466,13 @@ function CalendarView() {
                             {dayEvents.map(event => {
                                 const startTime = format(event.start.toDate(), 'HH:mm');
                                 return (
-                                <div key={event.id} className={cn('text-xs p-1.5 rounded-md cursor-default', event.color)} onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}>
+                                <div 
+                                    key={event.id} 
+                                    className={cn('text-xs p-1.5 rounded-md transition-shadow', event.color, event.isTemplateBased ? 'cursor-default' : 'cursor-pointer hover:shadow-md')} 
+                                    onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}
+                                >
                                     <p className="font-semibold truncate">
-                                        {!event.isTemplateBased && `${startTime} - `}{event.title}
+                                        {startTime} - {event.isTemplateBased ? event.title.split(' - ')[1] : event.title}
                                     </p>
                                     {event.location && <p className="truncate text-muted-foreground opacity-80">{event.location}</p>}
                                 </div>
