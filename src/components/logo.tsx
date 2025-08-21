@@ -5,11 +5,12 @@ export function Logo() {
     <svg
       width="42"
       height="42"
-      viewBox="0 0 100 100"
+      viewBox="0 0 400 400"
       xmlns="http://www.w3.org/2000/svg"
     >
-      <g transform="rotate(90 50 50)">
-        <path d="M 0 35 C 17 82 51 9 99 65 L 100 100 L 0 100 Z" fill="currentColor" />
+      <g>
+        <path d="M0,0 L400,0 L400,290 C260,340 160,50 0,110 Z" fill="#2ECCB6"/>
+        <path d="M0,110 C160,50 260,340 400,290 L400,400 L0,400 Z" fill="hsl(var(--primary))"/>
       </g>
     </svg>
   );
