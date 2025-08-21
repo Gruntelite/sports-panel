@@ -110,7 +110,7 @@ export function Sidebar() {
                                         "flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all text-base",
                                         isActive
                                         ? "bg-white text-black"
-                                        : "hover:bg-white hover:text-black"
+                                        : "hover:bg-white/20"
                                     )}
                                 >
                                     <item.icon className="h-4 w-4" />
