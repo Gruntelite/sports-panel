@@ -1,6 +1,4 @@
 
-'use server';
-
 import { onObjectDeleted } from 'firebase-functions/v2/storage';
 import { getFirestore } from 'firebase-admin/firestore';
 import * as admin from 'firebase-admin';
