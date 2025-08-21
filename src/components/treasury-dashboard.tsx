@@ -19,7 +19,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, CalendarIcon } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
 import type { Player, Team, OneTimePayment, User, Sponsorship, Coach, RecurringExpense, OneOffExpense } from "@/lib/types";
@@ -35,8 +35,139 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, getMonth } from "date-fns";
+import { format, getMonth, getYear, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
+import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+
+function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses }: { 
+    players: Player[], 
+    oneTimePayments: OneTimePayment[], 
+    coaches: Coach[], 
+    sponsorships: Sponsorship[], 
+    recurringExpenses: RecurringExpense[], 
+    oneOffExpenses: OneOffExpense[] 
+}) {
+    const [year, setYear] = useState<number>(new Date().getFullYear());
+    const [chartData, setChartData] = useState<any[]>([]);
+    
+    useEffect(() => {
+        const processData = () => {
+            const monthlyData: { [key: number]: { Ingresos: number, Gastos: number } } = {};
+            
+            for(let i=0; i<12; i++) {
+                monthlyData[i] = { Ingresos: 0, Gastos: 0 };
+            }
+            
+            // Income
+            players.forEach(p => {
+                if(p.monthlyFee) {
+                    for(let i=0; i<12; i++) monthlyData[i].Ingresos += p.monthlyFee;
+                }
+            });
+            oneTimePayments.forEach(p => {
+                const pDate = parseISO(p.issueDate);
+                if(getYear(pDate) === year) {
+                    const pMonth = getMonth(pDate);
+                    const numTargets = (p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0);
+                    monthlyData[pMonth].Ingresos += Number(p.amount) * numTargets;
+                }
+            });
+            sponsorships.forEach(s => {
+                if(s.frequency === 'monthly') {
+                    for(let i=0; i<12; i++) monthlyData[i].Ingresos += s.amount;
+                } else { // annual
+                     monthlyData[0].Ingresos += s.amount;
+                }
+            });
+
+            // Expenses
+            coaches.forEach(c => {
+                 if(c.monthlyPayment) {
+                    for(let i=0; i<12; i++) monthlyData[i].Gastos += c.monthlyPayment;
+                }
+            });
+            recurringExpenses.forEach(e => {
+                 for(let i=0; i<12; i++) {
+                    if((i + 1) % e.recurrenceInMonths === 0) {
+                       monthlyData[i].Gastos += e.amount;
+                    }
+                 }
+            });
+            oneOffExpenses.forEach(e => {
+                const eDate = parseISO(e.date);
+                if(getYear(eDate) === year) {
+                    const eMonth = getMonth(eDate);
+                    monthlyData[eMonth].Gastos += e.amount;
+                }
+            });
+            
+            const formattedData = Object.keys(monthlyData).map(monthIndex => ({
+                name: format(new Date(year, Number(monthIndex)), "MMM", { locale: es }),
+                Ingresos: monthlyData[Number(monthIndex)].Ingresos,
+                Gastos: monthlyData[Number(monthIndex)].Gastos
+            }));
+            setChartData(formattedData);
+        };
+        processData();
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses]);
+
+    const chartConfig: ChartConfig = {
+        Ingresos: { label: "Ingresos", color: "hsl(var(--chart-1))" },
+        Gastos: { label: "Gastos", color: "hsl(var(--chart-2))" }
+    };
+
+    return (
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Análisis Financiero</CardTitle>
+                    <CardDescription>Evolución de ingresos y gastos durante el año.</CardDescription>
+                </div>
+                 <Select value={year.toString()} onValueChange={(val) => setYear(Number(val))}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Año" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value={new Date().getFullYear().toString()}>{new Date().getFullYear()}</SelectItem>
+                    </SelectContent>
+                </Select>
+            </CardHeader>
+            <CardContent>
+                <ChartContainer config={chartConfig} className="h-[250px] w-full">
+                    <AreaChart data={chartData}>
+                        <defs>
+                            <linearGradient id="fillIngresos" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-Ingresos)" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="var(--color-Ingresos)" stopOpacity={0.1} />
+                            </linearGradient>
+                            <linearGradient id="fillGastos" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="var(--color-Gastos)" stopOpacity={0.8} />
+                                <stop offset="95%" stopColor="var(--color-Gastos)" stopOpacity={0.1} />
+                            </linearGradient>
+                        </defs>
+                        <CartesianGrid vertical={false} />
+                        <XAxis
+                            dataKey="name"
+                            tickLine={false}
+                            axisLine={false}
+                            tickMargin={8}
+                        />
+                        <YAxis
+                          tickFormatter={(value) => `€${value / 1000}k`}
+                          tickLine={false}
+                          axisLine={false}
+                        />
+                        <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
+                        <Area dataKey="Ingresos" type="monotone" fill="url(#fillIngresos)" stroke="var(--color-Ingresos)" stackId="1" />
+                        <Area dataKey="Gastos" type="monotone" fill="url(#fillGastos)" stroke="var(--color-Gastos)" stackId="2" />
+                    </AreaChart>
+                </ChartContainer>
+            </CardContent>
+        </Card>
+    );
+}
+
 
 export function TreasuryDashboard() {
   const { toast } = useToast();
@@ -66,9 +197,7 @@ export function TreasuryDashboard() {
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentModalMode, setPaymentModalMode] = useState<'add' | 'edit'>('add');
   const [paymentData, setPaymentData] = useState<Partial<OneTimePayment>>({});
-  const [billingDay, setBillingDay] = useState(1);
-  const [isSavingBillingDay, setIsSavingBillingDay] = useState(false);
-
+  
   const [isTeamSelectOpen, setIsTeamSelectOpen] = useState(false);
   const [isUserSelectOpen, setIsUserSelectOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<OneTimePayment | null>(null);
@@ -119,12 +248,6 @@ export function TreasuryDashboard() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
-      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-      const settingsSnap = await getDoc(settingsRef);
-      if (settingsSnap.exists()) {
-          setBillingDay(settingsSnap.data().billingDay || 1);
-      }
-
       const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -285,22 +408,6 @@ export function TreasuryDashboard() {
       setSaving(false);
     }
 
-  }
-
-  const handleSaveBillingDay = async (day: number) => {
-    if(!clubId) return;
-    setIsSavingBillingDay(true);
-    try {
-        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        await updateDoc(settingsRef, { billingDay: day });
-        setBillingDay(day);
-        toast({ title: "Día de Cobro Guardado", description: `Las cuotas se procesarán el día ${day} de cada mes.`});
-    } catch (e) {
-        console.error("Error saving billing day", e);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el día de cobro." });
-    } finally {
-        setIsSavingBillingDay(false);
-    }
   }
 
   const handleOpenSponsorshipModal = (mode: 'add' | 'edit', sponsorship?: Sponsorship) => {
@@ -555,27 +662,16 @@ export function TreasuryDashboard() {
                 </CardContent>
             </Card>
         </div>
-        <Card>
-            <CardHeader>
-                <CardTitle className="flex items-center gap-2"><Settings className="h-5 w-5"/>Configuración de Cobros</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="flex items-center gap-4">
-                    <Label htmlFor="billing-day">Día de cobro de cuotas mensuales:</Label>
-                    <Select value={billingDay.toString()} onValueChange={(value) => handleSaveBillingDay(Number(value))} disabled={isSavingBillingDay}>
-                        <SelectTrigger className="w-[80px]">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
-                                <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    {isSavingBillingDay && <Loader2 className="h-4 w-4 animate-spin" />}
-                </div>
-            </CardContent>
-        </Card>
+        
+        <FinancialChart 
+            players={players} 
+            oneTimePayments={oneTimePayments}
+            coaches={coaches}
+            sponsorships={sponsorships}
+            recurringExpenses={recurringExpenses}
+            oneOffExpenses={oneOffExpenses}
+        />
+        
       <Tabs defaultValue="fees">
         <div className="flex items-center justify-between">
             <TabsList>

@@ -79,26 +79,19 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
   return (
     <style
       dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color
-    return color ? `  --color-${key}: ${color};` : null
-  })
-  .join("\n")}
+        __html: `
+[data-chart=${id}] {
+  --color-Ingresos: hsl(var(--primary));
+  --color-Gastos: hsl(var(--destructive));
+  --chart-1: hsl(var(--primary));
+  --chart-2: hsl(var(--destructive));
 }
-`
-          )
-          .join("\n"),
+`,
       }}
     />
-  )
-}
+  );
+};
+
 
 const ChartTooltip = RechartsPrimitive.Tooltip
 
