@@ -1,4 +1,3 @@
-
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -164,7 +163,7 @@ export function Sidebar() {
                     </DropdownMenu>
                      <div className="flex items-center justify-start gap-2 pl-3">
                         <Logo />
-                        <span className="text-sm font-semibold">SportsPanel</span>
+                        <span className="text-base font-semibold">SportsPanel</span>
                     </div>
                 </div>
             </div>
