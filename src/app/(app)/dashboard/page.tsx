@@ -149,6 +149,17 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
     }, [selectedDate]);
 
     const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: es });
+    
+    const getSeparatorColorClass = (colorClass: string) => {
+        if (!colorClass) return 'bg-primary';
+        const match = colorClass.match(/bg-([a-z]+)-(\d+)/) || colorClass.match(/bg-primary/);
+        if (match) {
+            if(match[0] === 'bg-primary') return 'bg-primary';
+            return `bg-${match[1]}-500`;
+        }
+        return 'bg-primary';
+    }
+
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
@@ -202,13 +213,15 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         </div>
                     ) : events.length > 0 ? (
                         <div className="space-y-3">
-                            {events.map(item => (
+                            {events.map(item => {
+                                const separatorColor = getSeparatorColorClass(item.color);
+                                return (
                                 <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
                                     <div className="flex flex-col items-center w-20">
                                         <span className="font-bold text-base">{item.startTime}</span>
                                         <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                     </div>
-                                    <div className="h-10 w-1 bg-primary rounded-full"></div>
+                                    <div className={cn("h-10 w-1 rounded-full", separatorColor)}></div>
                                     <div className="flex-1">
                                         <p className="font-semibold">{item.title}</p>
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
@@ -216,7 +229,8 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                                         </div>
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
@@ -353,3 +367,4 @@ export default function DashboardPage() {
     </div>
   );
 }
+
