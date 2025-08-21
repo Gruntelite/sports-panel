@@ -305,7 +305,7 @@ export default function ClubFilesPage() {
                         >
                             {selectedOwner
                             ? owners.find((owner) => owner.id === selectedOwner.id)?.name
-                            : "Seleccionar propietario..."}
+                            : "Club"}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                         </PopoverTrigger>
@@ -457,3 +457,5 @@ export default function ClubFilesPage() {
     </>
   );
 }
+
+    
