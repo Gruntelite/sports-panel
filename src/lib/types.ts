@@ -131,7 +131,6 @@ export type OneTimePayment = {
     concept: string;
     description?: string;
     amount: number | string;
-    status: 'pending' | 'paid';
     issueDate: string;
     targetTeamIds: string[];
     targetUserIds: string[];

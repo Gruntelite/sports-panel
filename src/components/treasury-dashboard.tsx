@@ -473,6 +473,7 @@ export function TreasuryDashboard() {
     const dataToSave = {
         ...paymentData,
         amount: Number(paymentData.amount),
+        issueDate: paymentData.issueDate || new Date().toISOString(),
     };
 
     try {
@@ -481,11 +482,7 @@ export function TreasuryDashboard() {
             await updateDoc(paymentRef, dataToSave);
             toast({ title: "Pago actualizado", description: "El pago puntual se ha actualizado correctamente." });
         } else {
-            await addDoc(collection(db, "clubs", clubId, "oneTimePayments"), {
-                ...dataToSave,
-                status: "pending",
-                issueDate: new Date().toISOString(),
-            });
+            await addDoc(collection(db, "clubs", clubId, "oneTimePayments"), dataToSave);
             toast({ title: "Pago creado", description: "El nuevo pago puntual se ha guardado correctamente." });
         }
         
@@ -686,25 +683,7 @@ export function TreasuryDashboard() {
         setSaving(false);
       }
   };
-
-  const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
-      switch (status) {
-          case 'paid': return { variant: 'secondary', icon: CheckCircle2 };
-          case 'pending': return { variant: 'outline', icon: AlertTriangle };
-          case 'overdue': return { variant: 'destructive', icon: AlertTriangle };
-          default: return { variant: 'outline', icon: AlertTriangle };
-      }
-  }
   
-  const getStatusText = (status?: 'paid' | 'pending' | 'overdue'): string => {
-      switch (status) {
-          case 'paid': return 'Pagado';
-          case 'pending': return 'Pendiente';
-          case 'overdue': return 'Atrasado';
-          default: return 'Pendiente';
-      }
-  }
-
   const getTargetTeamNames = (teamIds: string[]): string => {
     if (!teamIds || teamIds.length === 0) return "";
     if (teamIds.length === teams.length) return "Todos los equipos";
@@ -737,7 +716,7 @@ export function TreasuryDashboard() {
     );
   }
 
-  const timeRangeLabel = timeRange === 'monthly' ? '(Mes)' : '(Año)';
+  const timeRangeLabel = timeRange === 'monthly' ? 'Mes' : 'Año';
 
   return (
     <>
@@ -745,12 +724,12 @@ export function TreasuryDashboard() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium flex items-center">
-                        Ingresos Previstos{' '}
+                    <CardTitle className="text-sm font-medium flex items-center gap-1">
+                        Ingresos Previstos
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="p-1 h-auto text-sm font-medium -ml-1">
-                                    {timeRangeLabel}
+                                    <span className="text-muted-foreground">{timeRangeLabel}</span>
                                     <ChevronDown className="h-4 w-4 ml-0.5 text-muted-foreground"/>
                                 </Button>
                             </DropdownMenuTrigger>
@@ -1108,27 +1087,18 @@ export function TreasuryDashboard() {
                     <TableHead>Cantidad</TableHead>
                     <TableHead>Fecha de Emisión</TableHead>
                     <TableHead>Destinatarios</TableHead>
-                    <TableHead>Estado</TableHead>
                     <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {oneTimePayments.length > 0 ? (
                     oneTimePayments.map((payment) => {
-                      const status = getStatusVariant(payment.status);
-                      const StatusIcon = status.icon;
                       return (
                         <TableRow key={payment.id}>
                           <TableCell className="font-medium">{payment.concept}</TableCell>
-                          <TableCell>{payment.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
+                          <TableCell>{Number(payment.amount).toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
                           <TableCell>{new Date(payment.issueDate).toLocaleDateString('es-ES')}</TableCell>
                           <TableCell>{getCombinedTargetNames(payment)}</TableCell>
-                          <TableCell>
-                            <Badge variant={status.variant}>
-                                <StatusIcon className="mr-1 h-3 w-3" />
-                                {getStatusText(payment.status)}
-                            </Badge>
-                          </TableCell>
                           <TableCell className="text-right">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -1140,10 +1110,6 @@ export function TreasuryDashboard() {
                                   <DropdownMenuItem onSelect={() => handleOpenPaymentModal('edit', payment)}>
                                     <Edit className="mr-2 h-4 w-4" />
                                     Editar
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem disabled>
-                                    <Link className="mr-2 h-4 w-4" />
-                                    Generar Link de Pago
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onSelect={() => setPaymentToDelete(payment)}>
@@ -1158,7 +1124,7 @@ export function TreasuryDashboard() {
                     })
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center h-24 text-muted-foreground">
+                      <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                         No has creado ningún pago puntual todavía.
                       </TableCell>
                     </TableRow>
