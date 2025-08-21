@@ -344,8 +344,8 @@ function CalendarView() {
 
   return (
     <>
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="flex flex-col h-full">
+      <CardHeader className="flex flex-row items-center justify-between border-b">
         <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button>
             <CardTitle className="text-xl capitalize min-w-[150px] text-center">{monthName} {year}</CardTitle>
@@ -421,16 +421,20 @@ function CalendarView() {
           )}
         </div>
       </CardHeader>
-      <CardContent>
+      <div className="sticky top-0 z-10 bg-card">
+         <div className="grid grid-cols-7 border-b border-border">
+            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+                <div key={day} className="text-center font-semibold py-2 text-muted-foreground text-sm">{day}</div>
+            ))}
+        </div>
+      </div>
+      <CardContent className="flex-1 overflow-y-auto p-0">
         {(loading && !isUpdating) ? (
-             <div className="flex items-center justify-center h-96">
+             <div className="flex items-center justify-center h-full">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         ) : (
-            <div className="grid grid-cols-7 gap-px border-t border-l border-border bg-border">
-                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-                    <div key={day} className="text-center font-semibold py-2 bg-card text-muted-foreground text-sm">{day}</div>
-                ))}
+            <div className="grid grid-cols-7 gap-px bg-border h-full">
                 {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
                 {days.map(day => {
                     const dayDate = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), day));
@@ -453,7 +457,7 @@ function CalendarView() {
                     return (
                     <div 
                         key={day} 
-                        className={cn("p-1 min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors", dayBgClass, { "ring-2 ring-primary ring-inset": isSelected, "hover:bg-muted/50": !isSelected })}
+                        className={cn("p-1 min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors border-t border-l border-border", dayBgClass, { "ring-2 ring-primary ring-inset": isSelected, "hover:bg-muted/50": !isSelected })}
                         onClick={() => handleDayClick(day)}
                     >
                         <span className="font-bold self-end text-sm pr-1">{day}</span>
@@ -604,7 +608,7 @@ function CalendarView() {
 
 export default function CalendarPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 h-screen">
       <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight">Calendario de Eventos</h1>
         <p className="text-muted-foreground">
@@ -615,5 +619,3 @@ export default function CalendarPage() {
     </div>
   )
 }
-
-    
