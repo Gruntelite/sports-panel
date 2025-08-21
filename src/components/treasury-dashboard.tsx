@@ -41,14 +41,15 @@ import { es } from "date-fns/locale";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
-function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths }: { 
+function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths }: { 
     players: Player[], 
     oneTimePayments: OneTimePayment[], 
     coaches: Coach[], 
     sponsorships: Sponsorship[], 
     recurringExpenses: RecurringExpense[], 
     oneOffExpenses: OneOffExpense[],
-    feeExcludedMonths: number[]
+    feeExcludedMonths: number[],
+    coachFeeExcludedMonths: number[],
 }) {
     const [year, setYear] = useState<number>(new Date().getFullYear());
     const [chartData, setChartData] = useState<any[]>([]);
@@ -94,7 +95,11 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             // Expenses
             coaches.forEach(c => {
                  if(c.monthlyPayment) {
-                    for(let i=0; i<12; i++) monthlyData[i].Gastos += c.monthlyPayment;
+                    for(let i=0; i<12; i++) {
+                        if (!coachFeeExcludedMonths.includes(i)) {
+                           monthlyData[i].Gastos += c.monthlyPayment;
+                        }
+                    }
                 }
             });
             recurringExpenses.forEach(e => {
@@ -120,7 +125,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             setChartData(formattedData);
         };
         processData();
-    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths]);
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths]);
 
     const chartConfig: ChartConfig = {
         Ingresos: { label: "Ingresos", color: "hsl(var(--chart-1))" },
@@ -303,7 +308,11 @@ export function TreasuryDashboard() {
           } as Player
       });
       setPlayers(playersList);
-      setFilteredPlayers(playersList);
+      if (selectedTeam === "all") {
+        setFilteredPlayers(playersList);
+      } else {
+        setFilteredPlayers(playersList.filter(p => p.teamId === selectedTeam));
+      }
 
       const usersQuery = query(collection(db, "clubs", clubId, "users"));
       const usersSnapshot = await getDocs(usersQuery);
@@ -336,7 +345,10 @@ export function TreasuryDashboard() {
         ? 0 
         : playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
         
-      const coachPaymentsTotal = coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
+      const coachPaymentsTotal = settingsData.coachFeeExcludedMonths?.includes(currentMonthIndex)
+        ? 0
+        : coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
+
       const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly' && !s.excludedMonths?.includes(currentMonthIndex)).reduce((acc, s) => acc + s.amount, 0);
 
       const oneTimePaymentsThisMonth = paymentsList
@@ -355,7 +367,7 @@ export function TreasuryDashboard() {
 
       const recurringMonthlyExpenses = recurringExpensesList.filter(e => !e.excludedMonths?.includes(currentMonthIndex)).reduce((acc, e) => acc + e.amount, 0);
       const oneOffCurrentMonthExpenses = oneOffExpensesList.filter(e => getMonth(new Date(e.date)) === currentMonthIndex).reduce((acc, e) => acc + e.amount, 0);
-      const totalMonthlyExpenses = recurringMonthlyExpenses + oneOffCurrentMonthExpenses;
+      const totalMonthlyExpenses = recurringMonthlyExpenses + oneOffCurrentMonthExpenses + coachPaymentsTotal;
 
       setStats({ 
         expectedIncome: expectedTotal,
@@ -607,6 +619,21 @@ export function TreasuryDashboard() {
     }
   }
 
+  const handleCoachFeeExcludedMonthsChange = async (newExcludedMonths: number[]) => {
+    if (!clubId) return;
+    
+    setClubSettings(prev => ({ ...prev, coachFeeExcludedMonths: newExcludedMonths }));
+
+    try {
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        await updateDoc(settingsRef, { coachFeeExcludedMonths: newExcludedMonths });
+        toast({ title: "Meses de pago a entrenadores actualizados" });
+        if(clubId) fetchData(clubId);
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+    }
+  }
+
 
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
       switch (status) {
@@ -712,12 +739,13 @@ export function TreasuryDashboard() {
             recurringExpenses={recurringExpenses}
             oneOffExpenses={oneOffExpenses}
             feeExcludedMonths={clubSettings.feeExcludedMonths || []}
+            coachFeeExcludedMonths={clubSettings.coachFeeExcludedMonths || []}
         />
         
       <Tabs defaultValue="fees" value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between">
             <TabsList>
-                <TabsTrigger value="fees">Cuotas de Jugadores</TabsTrigger>
+                <TabsTrigger value="fees">Cuotas y Pagos</TabsTrigger>
                 <TabsTrigger value="sponsorships">Patrocinios</TabsTrigger>
                 <TabsTrigger value="expenses">Gastos</TabsTrigger>
                 <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
@@ -726,63 +754,91 @@ export function TreasuryDashboard() {
         <TabsContent value="fees" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Listado de Cuotas Mensuales</CardTitle>
+              <CardTitle>Gestión de Cuotas y Pagos</CardTitle>
               <CardDescription>
-                Consulta las cuotas asignadas a cada jugador y configura los meses en los que no se cobran.
+                Configura los meses sin cobro para cuotas y pagos a entrenadores.
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="flex items-center gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
-                    <div className="space-y-2 flex-1">
-                        <Label>Meses sin cobro de cuota</Label>
-                        <p className="text-xs text-muted-foreground">Selecciona los meses en los que el club no cobrará la cuota mensual a ningún jugador (p.ej., verano).</p>
+                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="space-y-2 flex-1">
+                            <Label>Meses sin cobro de cuota (Jugadores)</Label>
+                        </div>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {clubSettings.feeExcludedMonths?.length ? `${clubSettings.feeExcludedMonths.length} mese(s)` : 'Seleccionar...'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Command>
+                                    <CommandList>
+                                        <CommandGroup>
+                                            {MONTHS.map((month) => (
+                                                <CommandItem key={month.value} onSelect={() => handleFeeExcludedMonthsChange(
+                                                    (clubSettings.feeExcludedMonths || []).includes(month.value)
+                                                    ? (clubSettings.feeExcludedMonths || []).filter(m => m !== month.value)
+                                                    : [...(clubSettings.feeExcludedMonths || []), month.value]
+                                                )}>
+                                                    <Check className={cn("mr-2 h-4 w-4", clubSettings.feeExcludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                    {month.label}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    <Popover>
-                        <PopoverTrigger asChild>
-                            <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
-                                <CalendarIcon className="mr-2 h-4 w-4" />
-                                {clubSettings.feeExcludedMonths?.length ? `${clubSettings.feeExcludedMonths.length} mese(s) seleccionado(s)` : 'Seleccionar meses...'}
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0">
-                             <Command>
-                                <CommandList>
-                                    <CommandGroup>
-                                        {MONTHS.map((month) => (
-                                            <CommandItem
-                                                key={month.value}
-                                                value={month.label}
-                                                onSelect={() => {
-                                                    const selected = clubSettings.feeExcludedMonths || [];
-                                                    const newSelection = selected.includes(month.value)
-                                                        ? selected.filter(m => m !== month.value)
-                                                        : [...selected, month.value];
-                                                    handleFeeExcludedMonthsChange(newSelection);
-                                                }}
-                                            >
-                                                <Check className={cn("mr-2 h-4 w-4", clubSettings.feeExcludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
-                                                {month.label}
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
+                        <div className="space-y-2 flex-1">
+                            <Label>Meses sin pago a entrenadores</Label>
+                        </div>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                                    <CalendarIcon className="mr-2 h-4 w-4" />
+                                    {clubSettings.coachFeeExcludedMonths?.length ? `${clubSettings.coachFeeExcludedMonths.length} mese(s)` : 'Seleccionar...'}
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0">
+                                <Command>
+                                    <CommandList>
+                                        <CommandGroup>
+                                            {MONTHS.map((month) => (
+                                                <CommandItem key={month.value} onSelect={() => handleCoachFeeExcludedMonthsChange(
+                                                    (clubSettings.coachFeeExcludedMonths || []).includes(month.value)
+                                                    ? (clubSettings.coachFeeExcludedMonths || []).filter(m => m !== month.value)
+                                                    : [...(clubSettings.coachFeeExcludedMonths || []), month.value]
+                                                )}>
+                                                    <Check className={cn("mr-2 h-4 w-4", clubSettings.coachFeeExcludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                    {month.label}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>
-                <div className="flex justify-end mb-4">
-                    <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                        <SelectTrigger className="w-[220px]">
-                            <SelectValue placeholder="Filtrar por equipo" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">Todos los equipos</SelectItem>
-                            {teams.map(team => (
-                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                {activeTab === 'fees' && (
+                    <div className="flex justify-end mb-4">
+                        <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                            <SelectTrigger className="w-[220px]">
+                                <SelectValue placeholder="Filtrar por equipo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Todos los equipos</SelectItem>
+                                {teams.map(team => (
+                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                )}
               <Table>
                 <TableHeader>
                   <TableRow>

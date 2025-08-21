@@ -209,6 +209,7 @@ export type OneOffExpense = {
 
 export type ClubSettings = {
     feeExcludedMonths?: number[];
+    coachFeeExcludedMonths?: number[];
     fromEmail?: string;
     sendgridApiKey?: string;
     senderVerificationStatus?: 'unconfigured' | 'pending' | 'verified' | 'failed';
