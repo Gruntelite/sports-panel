@@ -13,3 +13,10 @@ runConfig:
 scheduledJobs:
 - path: /__run/processQueuedEmailsFlow
   schedule: "every 24 hours"
+
+# Defines the Cloud Functions that will be deployed with your backend.
+# The entryPoint should be the name of the exported function.
+# The cloudFunction section should be in the root of the file.
+cloudFunctions:
+  - entryPoint: onFileDelete
+    source: src/functions/index.ts
