@@ -162,7 +162,7 @@ export function Sidebar() {
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                     <div className="flex items-center justify-start gap-2 pl-3">
+                     <div className="flex items-center justify-start gap-2">
                         <Logo width={24} height={24} />
                         <span className="text-sm font-semibold">SportsPanel</span>
                     </div>
