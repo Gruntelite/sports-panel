@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -206,6 +207,7 @@ export function TreasuryDashboard() {
 
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("fees");
   
   const [stats, setStats] = useState({
       expectedIncome: 0,
@@ -682,7 +684,7 @@ export function TreasuryDashboard() {
             oneOffExpenses={oneOffExpenses}
         />
         
-      <Tabs defaultValue="fees">
+      <Tabs defaultValue="fees" value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between">
             <TabsList>
                 <TabsTrigger value="fees">Cuotas de Jugadores</TabsTrigger>
@@ -690,19 +692,21 @@ export function TreasuryDashboard() {
                 <TabsTrigger value="expenses">Gastos</TabsTrigger>
                 <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
             </TabsList>
-            <div className="flex items-center gap-2">
-                <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filtrar por equipo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos los equipos</SelectItem>
-                        {teams.map(team => (
-                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
+            {activeTab === 'fees' && (
+                <div className="flex items-center gap-2">
+                    <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                        <SelectTrigger className="w-[180px]">
+                            <SelectValue placeholder="Filtrar por equipo" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos los equipos</SelectItem>
+                            {teams.map(team => (
+                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+            )}
         </div>
         <TabsContent value="fees" className="mt-4">
           <Card>
