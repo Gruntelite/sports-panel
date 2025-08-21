@@ -188,16 +188,15 @@ export type Sponsorship = {
     sponsorName: string;
     amount: number;
     frequency: 'monthly' | 'annual';
-    teamId?: string | null;
-    teamName?: string;
     description?: string;
+    excludedMonths?: number[];
 }
 
 export type RecurringExpense = {
     id: string;
     title: string;
     amount: number;
-    recurrenceInMonths: number;
+    excludedMonths?: number[];
 }
 
 export type OneOffExpense = {

@@ -74,10 +74,14 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                 }
             });
             sponsorships.forEach(s => {
-                if(s.frequency === 'monthly') {
-                    for(let i=0; i<12; i++) monthlyData[i].Ingresos += s.amount;
+                if (s.frequency === 'monthly') {
+                    for (let i = 0; i < 12; i++) {
+                        if (!s.excludedMonths?.includes(i)) {
+                            monthlyData[i].Ingresos += s.amount;
+                        }
+                    }
                 } else { // annual
-                     monthlyData[0].Ingresos += s.amount;
+                    monthlyData[0].Ingresos += s.amount;
                 }
             });
 
@@ -88,11 +92,11 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                 }
             });
             recurringExpenses.forEach(e => {
-                 for(let i=0; i<12; i++) {
-                    if((i + 1) % e.recurrenceInMonths === 0) {
-                       monthlyData[i].Gastos += e.amount;
+                for (let i = 0; i < 12; i++) {
+                    if (!e.excludedMonths?.includes(i)) {
+                        monthlyData[i].Gastos += e.amount;
                     }
-                 }
+                }
             });
             oneOffExpenses.forEach(e => {
                 const eDate = parseISO(e.date);
@@ -176,6 +180,13 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
         </Card>
     );
 }
+
+const MONTHS = [
+    { label: "Enero", value: 0 }, { label: "Febrero", value: 1 }, { label: "Marzo", value: 2 },
+    { label: "Abril", value: 3 }, { label: "Mayo", value: 4 }, { label: "Junio", value: 5 },
+    { label: "Julio", value: 6 }, { label: "Agosto", value: 7 }, { label: "Septiembre", value: 8 },
+    { label: "Octubre", value: 9 }, { label: "Noviembre", value: 10 }, { label: "Diciembre", value: 11 }
+];
 
 
 export function TreasuryDashboard() {
@@ -305,13 +316,13 @@ export function TreasuryDashboard() {
       const oneOffExpensesSnapshot = await getDocs(oneOffExpensesQuery);
       const oneOffExpensesList = oneOffExpensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OneOffExpense));
       setOneOffExpenses(oneOffExpensesList);
-
+      
+      const currentMonthIndex = getMonth(new Date());
 
       const monthlyFeesTotal = playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
       const coachPaymentsTotal = coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
-      const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly').reduce((acc, s) => acc + s.amount, 0);
+      const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly' && !s.excludedMonths?.includes(currentMonthIndex)).reduce((acc, s) => acc + s.amount, 0);
 
-      const currentMonthIndex = getMonth(new Date()); // 0-indexed
       const oneTimePaymentsThisMonth = paymentsList
         .filter(payment => getMonth(new Date(payment.issueDate)) === currentMonthIndex)
         .reduce((acc, payment) => {
@@ -326,12 +337,7 @@ export function TreasuryDashboard() {
 
       const expectedTotal = monthlyFeesTotal + oneTimePaymentsThisMonth;
 
-      const recurringMonthlyExpenses = recurringExpensesList.reduce((acc, expense) => {
-        if ((currentMonthIndex % expense.recurrenceInMonths) === 0) {
-            return acc + expense.amount;
-        }
-        return acc;
-      }, 0);
+      const recurringMonthlyExpenses = recurringExpensesList.filter(e => !e.excludedMonths?.includes(currentMonthIndex)).reduce((acc, e) => acc + e.amount, 0);
       const oneOffCurrentMonthExpenses = oneOffExpensesList.filter(e => getMonth(new Date(e.date)) === currentMonthIndex).reduce((acc, e) => acc + e.amount, 0);
       const totalMonthlyExpenses = recurringMonthlyExpenses + oneOffCurrentMonthExpenses;
 
@@ -421,7 +427,7 @@ export function TreasuryDashboard() {
 
   const handleOpenSponsorshipModal = (mode: 'add' | 'edit', sponsorship?: Sponsorship) => {
     setSponsorshipModalMode(mode);
-    setSponsorshipData(sponsorship || { sponsorName: "", amount: "", frequency: "monthly", description: "", teamId: "all" });
+    setSponsorshipData(sponsorship || { sponsorName: "", amount: "", frequency: "monthly", description: "", excludedMonths: [] });
     setIsSponsorshipModalOpen(true);
   };
   
@@ -431,15 +437,10 @@ export function TreasuryDashboard() {
       return;
     }
     setSaving(true);
-    
-    const teamId = sponsorshipData.teamId === 'all' ? null : sponsorshipData.teamId;
-    const teamName = teamId ? teams.find(t => t.id === teamId)?.name : 'Todo el club';
 
     const dataToSave = {
       ...sponsorshipData,
       amount: Number(sponsorshipData.amount),
-      teamId,
-      teamName,
     };
     
     try {
@@ -479,7 +480,7 @@ export function TreasuryDashboard() {
 
   const handleOpenRecurringExpenseModal = (mode: 'add' | 'edit', expense?: RecurringExpense) => {
     setRecurringExpenseModalMode(mode);
-    setRecurringExpenseData(expense || { title: "", amount: "", recurrenceInMonths: 1 });
+    setRecurringExpenseData(expense || { title: "", amount: "", excludedMonths: [] });
     setIsRecurringExpenseModalOpen(true);
   };
   
@@ -755,7 +756,6 @@ export function TreasuryDashboard() {
                     <TableRow>
                         <TableHead>Patrocinador</TableHead>
                         <TableHead>Cantidad</TableHead>
-                        <TableHead>Equipo Destinatario</TableHead>
                         <TableHead className="text-right">Acciones</TableHead>
                     </TableRow>
                     </TableHeader>
@@ -765,9 +765,6 @@ export function TreasuryDashboard() {
                         <TableRow key={spon.id}>
                             <TableCell className="font-medium">{spon.sponsorName}</TableCell>
                             <TableCell>{spon.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})} ({spon.frequency === 'monthly' ? 'Mes' : 'Año'})</TableCell>
-                            <TableCell>
-                                <Badge variant="secondary">{spon.teamName || 'Todo el club'}</Badge>
-                            </TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -806,7 +803,7 @@ export function TreasuryDashboard() {
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Gastos Recurrentes</CardTitle>
-                        <CardDescription>Gastos fijos como alquileres o suministros.</CardDescription>
+                        <CardDescription>Gastos fijos que se repiten mensualmente.</CardDescription>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleOpenRecurringExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
                 </CardHeader>
@@ -816,7 +813,7 @@ export function TreasuryDashboard() {
                         <TableBody>
                             {recurringExpenses.map(expense => (
                                 <TableRow key={expense.id}>
-                                    <TableCell>{expense.title} <span className="text-xs text-muted-foreground">(cada {expense.recurrenceInMonths} mes/es)</span></TableCell>
+                                    <TableCell>{expense.title}</TableCell>
                                     <TableCell>{expense.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
@@ -1109,18 +1106,30 @@ export function TreasuryDashboard() {
                 </Select>
               </div>
             </div>
-             <div className="space-y-2">
-              <Label htmlFor="spon-team">Equipo Destinatario</Label>
-              <Select value={sponsorshipData.teamId || 'all'} onValueChange={(value) => setSponsorshipData(prev => ({...prev, teamId: value}))}>
-                  <SelectTrigger id="spon-team"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todo el club</SelectItem>
-                    {teams.map(team => (
-                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-            </div>
+            {sponsorshipData.frequency === 'monthly' && (
+                <div className="space-y-2">
+                    <Label>Meses a Excluir del Pago</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {MONTHS.map(month => (
+                            <Button
+                                key={month.value}
+                                variant={sponsorshipData.excludedMonths?.includes(month.value) ? 'primary' : 'outline'}
+                                onClick={() => {
+                                    const newSelection = new Set(sponsorshipData.excludedMonths || []);
+                                    if (newSelection.has(month.value)) {
+                                        newSelection.delete(month.value);
+                                    } else {
+                                        newSelection.add(month.value);
+                                    }
+                                    setSponsorshipData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));
+                                }}
+                            >
+                                {month.label}
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            )}
             <div className="space-y-2">
               <Label htmlFor="spon-desc">Descripción (Opcional)</Label>
               <Textarea id="spon-desc" placeholder="Detalles del acuerdo, contacto, etc." value={sponsorshipData.description || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, description: e.target.value}))} />
@@ -1158,9 +1167,28 @@ export function TreasuryDashboard() {
         <DialogContent><DialogHeader><DialogTitle>{recurringExpenseModalMode === 'add' ? 'Añadir Gasto Recurrente' : 'Editar Gasto Recurrente'}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
                 <div className="space-y-2"><Label htmlFor="re-title">Concepto</Label><Input id="re-title" placeholder="p.ej., Alquiler de campos" value={recurringExpenseData.title || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label htmlFor="re-amount">Importe (€)</Label><Input id="re-amount" type="number" value={recurringExpenseData.amount || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
-                    <div className="space-y-2"><Label htmlFor="re-recurrence">Se repite cada (meses)</Label><Input id="re-recurrence" type="number" value={recurringExpenseData.recurrenceInMonths || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, recurrenceInMonths: Number(e.target.value)}))} /></div>
+                <div className="space-y-2"><Label htmlFor="re-amount">Importe (€)</Label><Input id="re-amount" type="number" value={recurringExpenseData.amount || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
+                <div className="space-y-2">
+                    <Label>Meses a Excluir del Pago</Label>
+                    <div className="grid grid-cols-3 gap-2">
+                        {MONTHS.map(month => (
+                            <Button
+                                key={month.value}
+                                variant={recurringExpenseData.excludedMonths?.includes(month.value) ? 'primary' : 'outline'}
+                                onClick={() => {
+                                    const newSelection = new Set(recurringExpenseData.excludedMonths || []);
+                                    if (newSelection.has(month.value)) {
+                                        newSelection.delete(month.value);
+                                    } else {
+                                        newSelection.add(month.value);
+                                    }
+                                    setRecurringExpenseData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));
+                                }}
+                            >
+                                {month.label}
+                            </Button>
+                        ))}
+                    </div>
                 </div>
             </div>
             <DialogFooter><DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose><Button onClick={handleSaveRecurringExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Guardar</Button></DialogFooter>
