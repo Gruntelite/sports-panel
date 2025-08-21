@@ -99,7 +99,7 @@ export function Sidebar() {
                     </Link>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                    <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
+                    <nav className="grid items-start px-2 font-medium lg:px-4 py-4">
                         {menuItems.map((item) => {
                             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                             return (
@@ -107,7 +107,7 @@ export function Sidebar() {
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center gap-2 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10 text-shadow-sm shadow-black/20",
+                                        "flex items-center gap-2 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10 text-shadow-sm shadow-black/20 text-base",
                                         isActive
                                         ? "bg-primary-foreground/10"
                                         : "hover:text-primary-foreground"
