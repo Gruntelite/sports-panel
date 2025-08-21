@@ -76,6 +76,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 type Owner = {
@@ -90,6 +91,7 @@ export default function ClubFilesPage() {
   const [clubId, setClubId] = useState<string | null>(null);
 
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [filteredDocuments, setFilteredDocuments] = useState<Document[]>([]);
   const [owners, setOwners] = useState<Owner[]>([]);
   
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
@@ -98,6 +100,8 @@ export default function ClubFilesPage() {
   const [selectedOwner, setSelectedOwner] = useState<Owner | null>(null);
   const [isOwnerPopoverOpen, setIsOwnerPopoverOpen] = useState(false);
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
+
+  const [filterOwnerId, setFilterOwnerId] = useState("all");
 
   const fetchData = async (currentClubId: string) => {
     setLoading(true);
@@ -108,6 +112,7 @@ export default function ClubFilesPage() {
         (doc) => ({ id: doc.id, ...doc.data() } as Document)
       );
       setDocuments(docsList);
+      setFilteredDocuments(docsList);
 
       const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
 
@@ -129,7 +134,14 @@ export default function ClubFilesPage() {
           allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}` });
       });
 
-      setOwners(allOwners);
+      // Sort owners alphabetically, keeping "Club" at the top
+      const sortedOwners = allOwners.sort((a, b) => {
+          if(a.id === 'club') return -1;
+          if(b.id === 'club') return 1;
+          return a.name.localeCompare(b.name);
+      });
+
+      setOwners(sortedOwners);
 
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -160,6 +172,15 @@ export default function ClubFilesPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (filterOwnerId === "all") {
+        setFilteredDocuments(documents);
+    } else {
+        setFilteredDocuments(documents.filter(doc => doc.ownerId === filterOwnerId));
+    }
+  }, [filterOwnerId, documents]);
+
 
   const handleFileUpload = async () => {
     if (!clubId || !auth.currentUser) {
@@ -202,7 +223,7 @@ export default function ClubFilesPage() {
       setDocumentNameToSave("");
       setSelectedOwner(null);
       
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
 
     } catch (error: any) {
       console.error("Error uploading file:", error);
@@ -266,105 +287,118 @@ export default function ClubFilesPage() {
                 Archivos disponibles para todo el club.
               </CardDescription>
             </div>
-            <Dialog
-              open={isUploadModalOpen}
-              onOpenChange={setIsUploadModalOpen}
-            >
-              <DialogTrigger asChild>
-                <Button>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Subir Nuevo Archivo
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Subir Nuevo Documento</DialogTitle>
-                  <DialogDescription>
-                    Selecciona un archivo y ponle un nombre descriptivo para
-                    identificarlo fácilmente.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-4 py-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="doc-name">Nombre del Documento</Label>
-                    <Input
-                      id="doc-name"
-                      placeholder="p.ej., Normativa Interna 2024"
-                      value={documentNameToSave}
-                      onChange={(e) => setDocumentNameToSave(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Asignar a (Opcional)</Label>
-                    <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
-                        <PopoverTrigger asChild>
-                        <Button
-                            variant="outline"
-                            role="combobox"
-                            aria-expanded={isOwnerPopoverOpen}
-                            className="w-full justify-between"
-                        >
-                            {selectedOwner
-                            ? owners.find((owner) => owner.id === selectedOwner.id)?.name
-                            : "Club"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                        </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                        <Command>
-                            <CommandInput placeholder="Buscar propietario..." />
-                             <CommandList>
-                                <CommandEmpty>No se encontró ningún propietario.</CommandEmpty>
-                                <CommandGroup>
-                                {owners.map((owner) => (
-                                    <CommandItem
-                                    key={owner.id}
-                                    value={owner.name}
-                                    onSelect={() => {
-                                        setSelectedOwner(owner.id === 'club' ? null : owner);
-                                        setIsOwnerPopoverOpen(false);
-                                    }}
-                                    >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        (selectedOwner?.id === owner.id || (!selectedOwner && owner.id === 'club')) ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {owner.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                        </Command>
-                        </PopoverContent>
-                    </Popover>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="doc-file">Archivo</Label>
-                    <Input
-                      id="doc-file"
-                      type="file"
-                      onChange={(e) =>
-                        setFileToUpload(e.target.files?.[0] || null)
-                      }
-                    />
-                  </div>
-                </div>
-                <DialogFooter>
-                  <DialogClose asChild>
-                    <Button variant="secondary">Cancelar</Button>
-                  </DialogClose>
-                  <Button onClick={handleFileUpload} disabled={saving}>
-                    {saving && (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    )}
-                    <Upload className="mr-2 h-4 w-4" />
-                    Subir y Guardar
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
+            <div className="flex items-center gap-2">
+                 <Select value={filterOwnerId} onValueChange={setFilterOwnerId}>
+                    <SelectTrigger className="w-[200px]">
+                        <SelectValue placeholder="Filtrar por propietario" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos los propietarios</SelectItem>
+                        {owners.map(owner => (
+                            <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <Dialog
+                  open={isUploadModalOpen}
+                  onOpenChange={setIsUploadModalOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Subir Nuevo Archivo
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>Subir Nuevo Documento</DialogTitle>
+                      <DialogDescription>
+                        Selecciona un archivo y ponle un nombre descriptivo para
+                        identificarlo fácilmente.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="doc-name">Nombre del Documento</Label>
+                        <Input
+                          id="doc-name"
+                          placeholder="p.ej., Normativa Interna 2024"
+                          value={documentNameToSave}
+                          onChange={(e) => setDocumentNameToSave(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Asignar a (Opcional)</Label>
+                        <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
+                            <PopoverTrigger asChild>
+                            <Button
+                                variant="outline"
+                                role="combobox"
+                                aria-expanded={isOwnerPopoverOpen}
+                                className="w-full justify-between"
+                            >
+                                {selectedOwner
+                                ? owners.find((owner) => owner.id === selectedOwner.id)?.name
+                                : "Club"}
+                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Buscar propietario..." />
+                                 <CommandList>
+                                    <CommandEmpty>No se encontró ningún propietario.</CommandEmpty>
+                                    <CommandGroup>
+                                    {owners.map((owner) => (
+                                        <CommandItem
+                                        key={owner.id}
+                                        value={owner.name}
+                                        onSelect={() => {
+                                            setSelectedOwner(owner.id === 'club' ? null : owner);
+                                            setIsOwnerPopoverOpen(false);
+                                        }}
+                                        >
+                                        <Check
+                                            className={cn(
+                                            "mr-2 h-4 w-4",
+                                            (selectedOwner?.id === owner.id || (!selectedOwner && owner.id === 'club')) ? "opacity-100" : "opacity-0"
+                                            )}
+                                        />
+                                        {owner.name}
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                            </PopoverContent>
+                        </Popover>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="doc-file">Archivo</Label>
+                        <Input
+                          id="doc-file"
+                          type="file"
+                          onChange={(e) =>
+                            setFileToUpload(e.target.files?.[0] || null)
+                          }
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <DialogClose asChild>
+                        <Button variant="secondary">Cancelar</Button>
+                      </DialogClose>
+                      <Button onClick={handleFileUpload} disabled={saving}>
+                        {saving && (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        )}
+                        <Upload className="mr-2 h-4 w-4" />
+                        Subir y Guardar
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+            </div>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -382,8 +416,8 @@ export default function ClubFilesPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {documents.length > 0 ? (
-                    documents.map((doc) => (
+                  {filteredDocuments.length > 0 ? (
+                    filteredDocuments.map((doc) => (
                       <TableRow key={doc.id}>
                         <TableCell className="font-medium flex items-center gap-2">
                            <FileIcon className="h-4 w-4 text-muted-foreground"/>
@@ -416,7 +450,7 @@ export default function ClubFilesPage() {
                         colSpan={4}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        No hay documentos subidos todavía.
+                        No hay documentos que coincidan con el filtro actual.
                       </TableCell>
                     </TableRow>
                   )}
@@ -457,5 +491,4 @@ export default function ClubFilesPage() {
       </AlertDialog>
     </>
   );
-
-    
+}
