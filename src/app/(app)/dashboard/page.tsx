@@ -16,6 +16,7 @@ import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Tim
 import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { toDate } from "date-fns";
 
 const iconMap = {
   Users: Users,
@@ -39,32 +40,29 @@ function TodaySchedule() {
     const [loading, setLoading] = useState(true);
     const [currentDate, setCurrentDate] = useState(new Date());
 
-    useEffect(() => {
+     useEffect(() => {
         const fetchTodaysSchedule = async (clubId: string) => {
             setLoading(true);
             try {
                 const today = new Date();
-                const todayStart = new Date(today.setHours(0, 0, 0, 0));
-                const todayEnd = new Date(today.setHours(23, 59, 59, 999));
+                const todayStart = toDate(today.setHours(0, 0, 0, 0));
+                const todayEnd = toDate(today.setHours(23, 59, 59, 999));
                 const todayStr = today.toISOString().split('T')[0];
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[today.getDay()];
                 
                 let allEntries: ScheduleEntry[] = [];
                 
-                // 1. Fetch settings to get default template ID
+                // 1. Determine which template to use
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
-                let templateIdToUse = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
-                
-                // 2. Check for an override for today
+                let defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
+
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
                 const overrideSnap = await getDoc(overrideRef);
-                if (overrideSnap.exists()) {
-                    templateIdToUse = overrideSnap.data().templateId;
-                }
-                
-                // 3. If we have a template ID, fetch it and process its events for today
+                let templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
+
+                // 2. If we have a template ID, fetch it and process its events for today
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
@@ -87,7 +85,7 @@ function TodaySchedule() {
                     }
                 }
 
-                // 4. Get custom events from the calendar
+                // 3. Get custom events from the calendar
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(todayStart)),
                     where('start', '<=', Timestamp.fromDate(todayEnd))
@@ -106,7 +104,7 @@ function TodaySchedule() {
                     });
                 });
 
-                // 5. Sort all entries by start time
+                // 4. Sort all entries by start time
                 allEntries.sort((a, b) => a.startTime.localeCompare(b.startTime));
                 setSchedule(allEntries);
 
@@ -140,6 +138,7 @@ function TodaySchedule() {
             clearInterval(timer);
         };
     }, []);
+
 
     const dateString = currentDate.toLocaleDateString('es-ES', {
         weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
@@ -304,5 +303,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

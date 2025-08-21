@@ -18,7 +18,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format } from "date-fns";
+import { format, toDate } from "date-fns";
+import { utcToZonedTime, zonedTimeToUtc } from "date-fns-tz";
+
 
 type ScheduleTemplate = {
   id: string;
@@ -197,7 +199,8 @@ function CalendarView() {
     setModalMode(mode);
     if(mode === 'add' && selectedDays.size > 0) {
         const firstDay = Array.from(selectedDays)[0];
-        const date = new Date(firstDay + 'T12:00:00'); // Default to noon
+        // Ensure the date is created in UTC to avoid timezone shifts on instantiation
+        const date = new Date(firstDay + 'T12:00:00Z'); 
         setEventData({ start: Timestamp.fromDate(date), end: Timestamp.fromDate(date), color: EVENT_COLORS[0].value, type: "Evento" });
     } else {
         setEventData(event || { color: EVENT_COLORS[0].value, type: "Evento" });
@@ -440,9 +443,9 @@ function CalendarView() {
                     const dayStr = dayDate.toISOString().split('T')[0];
                     const isSelected = selectedDays.has(dayStr);
                     const dayStart = new Date(dayStr);
-                    dayStart.setHours(0, 0, 0, 0);
+                    dayStart.setUTCHours(0, 0, 0, 0);
                     const dayEnd = new Date(dayStr);
-                    dayEnd.setHours(23, 59, 59, 999);
+                    dayEnd.setUTCHours(23, 59, 59, 999);
 
                     const dayEvents = events.filter(e => {
                         const eventDate = e.start.toDate();
@@ -497,12 +500,13 @@ function CalendarView() {
                     <div className="space-y-2">
                         <Label>Fecha de Inicio</Label>
                         <DatePicker 
-                            date={eventData.start ? eventData.start.toDate() : undefined}
+                            date={eventData.start ? utcToZonedTime(eventData.start.toDate(), 'UTC') : undefined}
                             onDateChange={(date) => {
                                 if(date) {
                                     const oldDate = eventData.start?.toDate() || new Date();
-                                    date.setHours(oldDate.getHours(), oldDate.getMinutes());
-                                    setEventData({...eventData, start: Timestamp.fromDate(date)})
+                                    const newDate = zonedTimeToUtc(date, 'UTC');
+                                    newDate.setHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
+                                    setEventData({...eventData, start: Timestamp.fromDate(newDate)})
                                 }
                             }}
                         />
@@ -510,12 +514,13 @@ function CalendarView() {
                     <div className="space-y-2">
                         <Label>Fecha de Fin</Label>
                         <DatePicker 
-                            date={eventData.end ? eventData.end.toDate() : undefined}
+                            date={eventData.end ? utcToZonedTime(eventData.end.toDate(), 'UTC') : undefined}
                             onDateChange={(date) => {
                                 if(date) {
                                     const oldDate = eventData.end?.toDate() || new Date();
-                                    date.setHours(oldDate.getHours(), oldDate.getMinutes());
-                                    setEventData({...eventData, end: Timestamp.fromDate(date)})
+                                    const newDate = zonedTimeToUtc(date, 'UTC');
+                                    newDate.setHours(oldDate.getUTCHours(), oldDate.getUTCMinutes());
+                                    setEventData({...eventData, end: Timestamp.fromDate(newDate)})
                                 }
                             }}
                         />

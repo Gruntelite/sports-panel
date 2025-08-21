@@ -21,6 +21,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from 'date-fns';
+import { utcToZonedTime } from "date-fns-tz";
+
 
 type MemberData = Partial<Player & Coach & Staff>;
 
@@ -141,6 +143,8 @@ export default function AccountPage() {
   const role = memberCollection?.slice(0, -1); // 'player', 'coach', 'staff'
   const isPlayer = role === 'player';
   const isCoach = role === 'coach';
+  
+  const birthDate = memberData.birthDate ? utcToZonedTime(new Date(memberData.birthDate), 'UTC') : undefined;
 
   return (
     <div className="flex flex-col gap-6">
@@ -174,7 +178,7 @@ export default function AccountPage() {
                         <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" value={memberData.lastName || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2"><Label>Fecha de Nacimiento</Label><DatePicker date={memberData.birthDate ? new Date(memberData.birthDate) : undefined} onDateChange={handleDateChange} /></div>
+                        <div className="space-y-2"><Label>Fecha de Nacimiento</Label><DatePicker date={birthDate} onDateChange={handleDateChange} /></div>
                         <div className="space-y-2"><Label htmlFor="dni">DNI</Label><Input id="dni" value={memberData.dni || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
