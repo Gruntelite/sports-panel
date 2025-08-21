@@ -13,7 +13,7 @@ export function Logo() {
           <rect x="0" y="0" width="400" height="400" rx="100" ry="100"/>
         </clipPath>
       </defs>
-      <g clip-path="url(#rounded)">
+      <g clipPath="url(#rounded)">
         {/* izquierda turquesa */}
         <path d="M0,0 L400,0 L400,290 C260,340 160,50 0,110 Z" fill="#2ECCB6"/>
         {/* derecha azul */}
