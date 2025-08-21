@@ -38,19 +38,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import {
@@ -63,7 +50,6 @@ import {
   Timestamp,
   query,
   orderBy,
-  where,
 } from "firebase/firestore";
 import {
   ref,
@@ -71,7 +57,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import type { Document, User } from "@/lib/types";
+import type { Document } from "@/lib/types";
 import {
   PlusCircle,
   Loader2,
@@ -80,20 +66,12 @@ import {
   Upload,
   File,
   User as UserIcon,
-  ChevronsUpDown,
-  Check,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
-
-type SuperAdmin = {
-    id: string;
-    name: string;
-}
 
 export default function ClubFilesPage() {
   const { toast } = useToast();
@@ -102,15 +80,11 @@ export default function ClubFilesPage() {
   const [clubId, setClubId] = useState<string | null>(null);
 
   const [documents, setDocuments] = useState<Document[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [superAdmin, setSuperAdmin] = useState<SuperAdmin | null>(null);
-
-
+  
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [fileToUpload, setFileToUpload] = useState<File | null>(null);
   const [documentNameToSave, setDocumentNameToSave] = useState("");
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
-  const [isUserSelectOpen, setIsUserSelectOpen] = useState(false);
+  const [ownerNameToSave, setOwnerNameToSave] = useState("");
   const [docToDelete, setDocToDelete] = useState<Document | null>(null);
 
   useEffect(() => {
@@ -123,7 +97,6 @@ export default function ClubFilesPage() {
           setClubId(currentClubId);
           if (currentClubId) {
             fetchDocuments(currentClubId);
-            fetchUsers(currentClubId);
           }
         }
       } else {
@@ -153,24 +126,6 @@ export default function ClubFilesPage() {
     setLoading(false);
   };
   
-  const fetchUsers = async (clubId: string) => {
-    try {
-      const q = query(collection(db, "clubs", clubId, "users"), orderBy("name"));
-      const querySnapshot = await getDocs(q);
-      const usersList: User[] = [];
-      querySnapshot.forEach((doc) => {
-          const userData = { id: doc.id, ...doc.data() } as User;
-          usersList.push(userData);
-          if (userData.role === 'super-admin') {
-              setSuperAdmin({ id: userData.id, name: userData.name });
-          }
-      });
-      setUsers(usersList);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
-  
   const handleFileUpload = async () => {
     if (!clubId || !fileToUpload || !documentNameToSave.trim()) {
       toast({
@@ -188,21 +143,12 @@ export default function ClubFilesPage() {
       await uploadBytes(fileRef, fileToUpload);
       const url = await getDownloadURL(fileRef);
       
-      let ownerId = selectedUserId;
-      let ownerName: string | undefined = users.find(u => u.id === selectedUserId)?.name;
-
-      if (!ownerId && superAdmin) {
-          ownerId = superAdmin.id;
-          ownerName = superAdmin.name;
-      }
-      
       const newDocument: Omit<Document, "id"> = {
         name: documentNameToSave.trim(),
         url,
         path: filePath,
         createdAt: Timestamp.now(),
-        userId: ownerId || undefined,
-        userName: ownerName || 'Club',
+        userName: ownerNameToSave.trim() || 'Club',
       };
 
       await addDoc(collection(db, "clubs", clubId, "documents"), newDocument);
@@ -215,7 +161,7 @@ export default function ClubFilesPage() {
       setIsUploadModalOpen(false);
       setFileToUpload(null);
       setDocumentNameToSave("");
-      setSelectedUserId(null);
+      setOwnerNameToSave("");
       if (clubId) fetchDocuments(clubId); // Refetch documents to show the new one
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -257,8 +203,6 @@ export default function ClubFilesPage() {
       setSaving(false);
     }
   };
-  
-  const selectedUserName = users.find(u => u.id === selectedUserId)?.name || "Seleccionar usuario...";
 
   return (
     <>
@@ -310,56 +254,13 @@ export default function ClubFilesPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Asignar a Usuario (Opcional)</Label>
-                     <Popover open={isUserSelectOpen} onOpenChange={setIsUserSelectOpen}>
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className="w-full justify-between font-normal"
-                          >
-                            {selectedUserId ? selectedUserName : "Para todo el club (Super-Admin)"}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                          <Command>
-                            <CommandInput placeholder="Buscar usuario..." />
-                            <CommandList>
-                                <CommandEmpty>No se encontró el usuario.</CommandEmpty>
-                                <CommandGroup>
-                                    <CommandItem
-                                    value="para-todo-el-club"
-                                    onSelect={() => {
-                                        setSelectedUserId(null);
-                                        setIsUserSelectOpen(false);
-                                    }}
-                                    >
-                                    Para todo el club (Super-Admin)
-                                    </CommandItem>
-                                {users.map((user) => (
-                                    <CommandItem
-                                    key={user.id}
-                                    value={user.name}
-                                    onSelect={() => {
-                                        setSelectedUserId(user.id);
-                                        setIsUserSelectOpen(false);
-                                    }}
-                                    >
-                                    <Check
-                                        className={cn(
-                                        "mr-2 h-4 w-4",
-                                        selectedUserId === user.id ? "opacity-100" : "opacity-0"
-                                        )}
-                                    />
-                                    {user.name}
-                                    </CommandItem>
-                                ))}
-                                </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
+                    <Label htmlFor="owner-name">Propietario del Documento (Opcional)</Label>
+                    <Input
+                      id="owner-name"
+                      placeholder="p.ej., Alex García (si se deja vacío, será 'Club')"
+                      value={ownerNameToSave}
+                      onChange={(e) => setOwnerNameToSave(e.target.value)}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="doc-file">Archivo</Label>
@@ -479,5 +380,3 @@ export default function ClubFilesPage() {
     </>
   );
 }
-
-    
