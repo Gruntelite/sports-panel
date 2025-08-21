@@ -20,10 +20,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import type { Player, Team, OneTimePayment, User } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User, Sponsorship } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -49,6 +49,7 @@ export function TreasuryDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [oneTimePayments, setOneTimePayments] = useState<OneTimePayment[]>([]);
+  const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
 
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
@@ -58,7 +59,7 @@ export function TreasuryDashboard() {
   });
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [paymentModalMode, setPaymentModalMode] = useState<'add' | 'edit'>('add');
   const [paymentData, setPaymentData] = useState<Partial<OneTimePayment>>({});
   const [billingDay, setBillingDay] = useState(1);
   const [isSavingBillingDay, setIsSavingBillingDay] = useState(false);
@@ -66,6 +67,11 @@ export function TreasuryDashboard() {
   const [isTeamSelectOpen, setIsTeamSelectOpen] = useState(false);
   const [isUserSelectOpen, setIsUserSelectOpen] = useState(false);
   const [paymentToDelete, setPaymentToDelete] = useState<OneTimePayment | null>(null);
+  
+  const [isSponsorshipModalOpen, setIsSponsorshipModalOpen] = useState(false);
+  const [sponsorshipModalMode, setSponsorshipModalMode] = useState<'add' | 'edit'>('add');
+  const [sponsorshipData, setSponsorshipData] = useState<Partial<Sponsorship>>({});
+  const [sponsorshipToDelete, setSponsorshipToDelete] = useState<Sponsorship | null>(null);
 
 
   useEffect(() => {
@@ -132,6 +138,12 @@ export function TreasuryDashboard() {
       const paymentsSnapshot = await getDocs(paymentsQuery);
       const paymentsList = paymentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OneTimePayment));
       setOneTimePayments(paymentsList);
+      
+      const sponsorshipsQuery = query(collection(db, "clubs", clubId, "sponsorships"));
+      const sponsorshipsSnapshot = await getDocs(sponsorshipsQuery);
+      const sponsorshipsList = sponsorshipsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Sponsorship));
+      setSponsorships(sponsorshipsList);
+
 
       const expectedTotal = playersList.reduce((acc, player) => {
           return acc + (player.monthlyFee || 0);
@@ -146,7 +158,7 @@ export function TreasuryDashboard() {
   };
 
   const handleOpenPaymentModal = (mode: 'add' | 'edit', payment?: OneTimePayment) => {
-    setModalMode(mode);
+    setPaymentModalMode(mode);
     if (mode === 'edit' && payment) {
         setPaymentData(payment);
     } else {
@@ -174,7 +186,7 @@ export function TreasuryDashboard() {
     };
 
     try {
-        if (modalMode === 'edit' && paymentData.id) {
+        if (paymentModalMode === 'edit' && paymentData.id) {
             const paymentRef = doc(db, "clubs", clubId, "oneTimePayments", paymentData.id);
             await updateDoc(paymentRef, dataToSave);
             toast({ title: "Pago actualizado", description: "El pago puntual se ha actualizado correctamente." });
@@ -230,6 +242,65 @@ export function TreasuryDashboard() {
         setIsSavingBillingDay(false);
     }
   }
+
+  const handleOpenSponsorshipModal = (mode: 'add' | 'edit', sponsorship?: Sponsorship) => {
+    setSponsorshipModalMode(mode);
+    setSponsorshipData(sponsorship || { sponsorName: "", amount: "", frequency: "monthly", description: "", teamId: "all" });
+    setIsSponsorshipModalOpen(true);
+  };
+  
+  const handleSaveSponsorship = async () => {
+    if (!clubId || !sponsorshipData.sponsorName || !sponsorshipData.amount) {
+      toast({ variant: "destructive", title: "Error", description: "El nombre del patrocinador y la cantidad son obligatorios." });
+      return;
+    }
+    setSaving(true);
+    
+    const teamId = sponsorshipData.teamId === 'all' ? null : sponsorshipData.teamId;
+    const teamName = teamId ? teams.find(t => t.id === teamId)?.name : 'Todo el club';
+
+    const dataToSave = {
+      ...sponsorshipData,
+      amount: Number(sponsorshipData.amount),
+      teamId,
+      teamName,
+    };
+    
+    try {
+      if (sponsorshipModalMode === 'edit' && sponsorshipData.id) {
+        const sponsorshipRef = doc(db, "clubs", clubId, "sponsorships", sponsorshipData.id);
+        await updateDoc(sponsorshipRef, dataToSave);
+        toast({ title: "Patrocinio actualizado" });
+      } else {
+        await addDoc(collection(db, "clubs", clubId, "sponsorships"), dataToSave);
+        toast({ title: "Patrocinio añadido" });
+      }
+      setIsSponsorshipModalOpen(false);
+      fetchData(clubId);
+    } catch (error) {
+      console.error("Error saving sponsorship:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el patrocinio." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteSponsorship = async () => {
+    if (!clubId || !sponsorshipToDelete) return;
+    setSaving(true);
+    try {
+      await deleteDoc(doc(db, "clubs", clubId, "sponsorships", sponsorshipToDelete.id));
+      toast({ title: "Patrocinio eliminado" });
+      setSponsorshipToDelete(null);
+      fetchData(clubId);
+    } catch (error) {
+      console.error("Error deleting sponsorship:", error);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el patrocinio." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
 
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
       switch (status) {
@@ -321,6 +392,7 @@ export function TreasuryDashboard() {
         <div className="flex items-center justify-between">
             <TabsList>
                 <TabsTrigger value="fees">Cuotas de Jugadores</TabsTrigger>
+                <TabsTrigger value="sponsorships">Patrocinios</TabsTrigger>
                 <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
             </TabsList>
             <div className="flex items-center gap-2">
@@ -368,6 +440,72 @@ export function TreasuryDashboard() {
               </Table>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent value="sponsorships" className="mt-4">
+            <Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                <div>
+                    <CardTitle>Gestión de Patrocinios</CardTitle>
+                    <CardDescription>
+                    Añade, edita y gestiona los patrocinios del club.
+                    </CardDescription>
+                </div>
+                <Button onClick={() => handleOpenSponsorshipModal('add')}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Patrocinio
+                </Button>
+                </CardHeader>
+                <CardContent>
+                <Table>
+                    <TableHeader>
+                    <TableRow>
+                        <TableHead>Patrocinador</TableHead>
+                        <TableHead>Cantidad</TableHead>
+                        <TableHead>Equipo Destinatario</TableHead>
+                        <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                    {sponsorships.length > 0 ? (
+                        sponsorships.map((spon) => (
+                        <TableRow key={spon.id}>
+                            <TableCell className="font-medium">{spon.sponsorName}</TableCell>
+                            <TableCell>{spon.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})} ({spon.frequency === 'monthly' ? 'Mes' : 'Año'})</TableCell>
+                            <TableCell>
+                                <Badge variant="secondary">{spon.teamName || 'Todo el club'}</Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => handleOpenSponsorshipModal('edit', spon)}>
+                                        <Edit className="mr-2 h-4 w-4" />
+                                        Editar
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive" onSelect={() => setSponsorshipToDelete(spon)}>
+                                        <Trash2 className="mr-2 h-4 w-4" />
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow>
+                        <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                            No has añadido ningún patrocinio todavía.
+                        </TableCell>
+                        </TableRow>
+                    )}
+                    </TableBody>
+                </Table>
+                </CardContent>
+            </Card>
         </TabsContent>
         <TabsContent value="other" className="mt-4">
           <Card>
@@ -456,7 +594,7 @@ export function TreasuryDashboard() {
     <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{modalMode === 'add' ? 'Crear Nuevo Pago Puntual' : 'Editar Pago Puntual'}</DialogTitle>
+            <DialogTitle>{paymentModalMode === 'add' ? 'Crear Nuevo Pago Puntual' : 'Editar Pago Puntual'}</DialogTitle>
             <DialogDescription>
               Define los detalles del cobro único que quieres generar. Se notificará a los destinatarios seleccionados.
             </DialogDescription>
@@ -588,6 +726,82 @@ export function TreasuryDashboard() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    
+    <Dialog open={isSponsorshipModalOpen} onOpenChange={setIsSponsorshipModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{sponsorshipModalMode === 'add' ? 'Añadir Nuevo Patrocinio' : 'Editar Patrocinio'}</DialogTitle>
+            <DialogDescription>
+              Rellena la información del acuerdo de patrocinio.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="spon-name">Nombre del Patrocinador</Label>
+              <Input id="spon-name" placeholder="p.ej., Empresa S.L." value={sponsorshipData.sponsorName || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, sponsorName: e.target.value}))} />
+            </div>
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                <Label htmlFor="spon-amount">Cantidad (€)</Label>
+                <Input id="spon-amount" type="number" value={sponsorshipData.amount || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, amount: e.target.value}))} />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="spon-freq">Frecuencia</Label>
+                <Select value={sponsorshipData.frequency} onValueChange={(value: 'monthly' | 'annual') => setSponsorshipData(prev => ({...prev, frequency: value}))}>
+                  <SelectTrigger id="spon-freq"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="monthly">Mensual</SelectItem>
+                    <SelectItem value="annual">Anual</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+             <div className="space-y-2">
+              <Label htmlFor="spon-team">Equipo Destinatario</Label>
+              <Select value={sponsorshipData.teamId || 'all'} onValueChange={(value) => setSponsorshipData(prev => ({...prev, teamId: value}))}>
+                  <SelectTrigger id="spon-team"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todo el club</SelectItem>
+                    {teams.map(team => (
+                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="spon-desc">Descripción (Opcional)</Label>
+              <Textarea id="spon-desc" placeholder="Detalles del acuerdo, contacto, etc." value={sponsorshipData.description || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, description: e.target.value}))} />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button type="button" variant="secondary">Cancelar</Button>
+            </DialogClose>
+            <Button onClick={handleSaveSponsorship} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Guardar Patrocinio
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!sponsorshipToDelete} onOpenChange={(open) => !open && setSponsorshipToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el patrocinio de "{sponsorshipToDelete?.sponsorName}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteSponsorship} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
+

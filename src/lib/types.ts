@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -181,3 +182,13 @@ export type ScheduleTemplate = {
   endTime?: string;
   color?: string;
 };
+
+export type Sponsorship = {
+    id: string;
+    sponsorName: string;
+    amount: number;
+    frequency: 'monthly' | 'annual';
+    teamId?: string | null;
+    teamName?: string;
+    description?: string;
+}
