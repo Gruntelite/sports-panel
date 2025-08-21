@@ -310,7 +310,7 @@ export default function ClubFilesPage() {
                     <Input
                         type="search"
                         placeholder="Buscar por nombre..."
-                        className="pl-8 sm:w-[300px]"
+                        className="pl-8 sm:w-[200px]"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
