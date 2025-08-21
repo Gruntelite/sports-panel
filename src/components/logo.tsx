@@ -18,8 +18,12 @@ export function Logo() {
       <g clipPath="url(#rounded-corners)">
         <rect width="24" height="24" fill="#34D399" />
         <path
-          d="M0 24V11.5C0 11.5 5.5 13.5 12 11.5S24 15.5 24 15.5V24H0Z"
+          d="M0 12L12 18V24H0V12Z"
           fill="#2563eb"
+        />
+        <path
+          d="M12 18L24 12V24H12V18Z"
+          fill="#1E40AF"
         />
       </g>
     </svg>
