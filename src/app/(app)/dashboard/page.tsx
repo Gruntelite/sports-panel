@@ -43,11 +43,15 @@ export default function DashboardPage() {
   const [currentDateTime, setCurrentDateTime] = useState<Date | null>(null);
   
   useEffect(() => {
-    setCurrentDateTime(new Date());
-    const timer = setInterval(() => {
+    const now = new Date();
+    setCurrentDateTime(now);
+    
+    // Update time every minute
+    const timerId = setInterval(() => {
       setCurrentDateTime(new Date());
-    }, 60000); // Update every minute
-    return () => clearInterval(timer);
+    }, 60000); 
+
+    return () => clearInterval(timerId);
   }, []);
 
   useEffect(() => {
@@ -60,10 +64,15 @@ export default function DashboardPage() {
           setClubId(currentClubId);
           if (currentClubId) {
             fetchDashboardData(currentClubId);
+          } else {
+             setLoading(false);
           }
+        } else {
+            setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
     });
     return () => unsubscribe();
   }, []);
@@ -115,7 +124,7 @@ export default function DashboardPage() {
         const settingsRef = doc(db, "clubs", clubId, "settings", "config");
         const settingsSnap = await getDoc(settingsRef);
         const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data().defaultScheduleTemplateId : null;
-
+        
         // 2. Determine which template to use for today
         const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
         const overrideSnap = await getDoc(overrideRef);
@@ -128,42 +137,43 @@ export default function DashboardPage() {
                 const currentDayName = daysOfWeek[today.getDay()];
                 const daySchedule = template.weeklySchedule?.[currentDayName] || [];
                 
-                const templateEntries = daySchedule.map((training: any) => ({
-                    id: `${training.id}-${todayStr}`,
-                    teamName: training.teamName,
-                    type: 'Entrenamiento',
-                    time: training.startTime,
-                    location: training.venueName,
-                } as ScheduleEntry));
-                scheduleEntries.push(...templateEntries);
+                daySchedule.forEach((training: any) => {
+                    scheduleEntries.push({
+                        id: `${training.id}-${todayStr}`,
+                        teamName: training.teamName,
+                        type: 'Entrenamiento',
+                        time: training.startTime,
+                        location: training.venueName,
+                    });
+                });
             }
         }
         
         // 4. Fetch custom events for today
-        const startOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0);
-        const endOfDay = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59);
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date();
+        endOfDay.setHours(23, 59, 59, 999);
 
         const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
             where('start', '>=', Timestamp.fromDate(startOfDay)),
             where('start', '<=', Timestamp.fromDate(endOfDay))
         );
         const customEventsSnapshot = await getDocs(customEventsQuery);
-        const manualTodaysEvents = customEventsSnapshot.docs.map(doc => {
+        customEventsSnapshot.forEach(doc => {
             const eventData = doc.data() as CalendarEvent;
-            return {
+            scheduleEntries.push({
                 id: doc.id,
-                title: eventData.title, 
+                title: eventData.title,
                 type: eventData.type,
                 time: eventData.start.toDate().toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
                 location: eventData.location,
-            };
+            });
         });
-        
-        // 5. Combine and sort all events for today
-        const allTodaysEvents = [...scheduleEntries, ...manualTodaysEvents];
-        allTodaysEvents.sort((a, b) => a.time.localeCompare(b.time));
 
-        setTodaysSchedule(allTodaysEvents);
+        // 5. Combine and sort all events for today
+        scheduleEntries.sort((a, b) => a.time.localeCompare(b.time));
+        setTodaysSchedule(scheduleEntries);
 
     } catch (error) {
         console.error("Error fetching dashboard data:", error)
