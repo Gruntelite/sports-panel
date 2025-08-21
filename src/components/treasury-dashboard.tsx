@@ -250,6 +250,9 @@ export function TreasuryDashboard() {
   const [oneOffExpenseData, setOneOffExpenseData] = useState<Partial<OneOffExpense>>({});
   const [oneOffExpenseToDelete, setOneOffExpenseToDelete] = useState<OneOffExpense | null>(null);
 
+  const [localFeeExcluded, setLocalFeeExcluded] = useState<number[]>([]);
+  const [localCoachFeeExcluded, setLocalCoachFeeExcluded] = useState<number[]>([]);
+  const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -277,6 +280,15 @@ export function TreasuryDashboard() {
     setFilteredPlayers(currentPlayers);
   }, [selectedTeam, players]);
 
+  useEffect(() => {
+    const originalFee = clubSettings.feeExcludedMonths || [];
+    const originalCoachFee = clubSettings.coachFeeExcludedMonths || [];
+    
+    const feeChanged = JSON.stringify(originalFee.sort()) !== JSON.stringify(localFeeExcluded.sort());
+    const coachFeeChanged = JSON.stringify(originalCoachFee.sort()) !== JSON.stringify(localCoachFeeExcluded.sort());
+
+    setHasChanges(feeChanged || coachFeeChanged);
+  }, [localFeeExcluded, localCoachFeeExcluded, clubSettings]);
 
   const fetchData = async (clubId: string) => {
     setLoading(true);
@@ -285,6 +297,8 @@ export function TreasuryDashboard() {
       const settingsSnap = await getDoc(settingsRef);
       const settingsData = settingsSnap.exists() ? (settingsSnap.data() as ClubSettings) : {};
       setClubSettings(settingsData);
+      setLocalFeeExcluded(settingsData.feeExcludedMonths || []);
+      setLocalCoachFeeExcluded(settingsData.coachFeeExcludedMonths || []);
       
       const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
       const teamsSnapshot = await getDocs(teamsQuery);
@@ -604,36 +618,24 @@ export function TreasuryDashboard() {
     }
   };
 
-  const handleFeeExcludedMonthsChange = async (newExcludedMonths: number[]) => {
-    if (!clubId) return;
-    
-    setClubSettings(prev => ({ ...prev, feeExcludedMonths: newExcludedMonths }));
-
-    try {
+  const handleSaveFeeSettings = async () => {
+      if (!clubId) return;
+      setSaving(true);
+      try {
         const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        await updateDoc(settingsRef, { feeExcludedMonths: newExcludedMonths });
-        toast({ title: "Meses de cuotas actualizados" });
+        await updateDoc(settingsRef, { 
+            feeExcludedMonths: localFeeExcluded,
+            coachFeeExcludedMonths: localCoachFeeExcluded,
+        });
+        toast({ title: "Configuración guardada", description: "Los meses de exclusión de pagos han sido actualizados." });
+        setHasChanges(false); // Reset changes state
         if(clubId) fetchData(clubId);
-    } catch(e) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
-    }
-  }
-
-  const handleCoachFeeExcludedMonthsChange = async (newExcludedMonths: number[]) => {
-    if (!clubId) return;
-    
-    setClubSettings(prev => ({ ...prev, coachFeeExcludedMonths: newExcludedMonths }));
-
-    try {
-        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        await updateDoc(settingsRef, { coachFeeExcludedMonths: newExcludedMonths });
-        toast({ title: "Meses de pago a entrenadores actualizados" });
-        if(clubId) fetchData(clubId);
-    } catch(e) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
-    }
-  }
-
+      } catch (e) {
+          toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+      } finally {
+        setSaving(false);
+      }
+  };
 
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
       switch (status) {
@@ -760,7 +762,7 @@ export function TreasuryDashboard() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
+                <div className="grid md:grid-cols-2 gap-6 mb-4">
                     <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
                         <div className="space-y-2 flex-1">
                             <Label>Meses sin cobro de cuota (Jugadores)</Label>
@@ -769,7 +771,7 @@ export function TreasuryDashboard() {
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {clubSettings.feeExcludedMonths?.length ? `${clubSettings.feeExcludedMonths.length} mese(s)` : 'Seleccionar...'}
+                                    {localFeeExcluded.length ? `${localFeeExcluded.length} mese(s)` : 'Seleccionar...'}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -777,12 +779,13 @@ export function TreasuryDashboard() {
                                     <CommandList>
                                         <CommandGroup>
                                             {MONTHS.map((month) => (
-                                                <CommandItem key={month.value} onSelect={() => handleFeeExcludedMonthsChange(
-                                                    (clubSettings.feeExcludedMonths || []).includes(month.value)
-                                                    ? (clubSettings.feeExcludedMonths || []).filter(m => m !== month.value)
-                                                    : [...(clubSettings.feeExcludedMonths || []), month.value]
-                                                )}>
-                                                    <Check className={cn("mr-2 h-4 w-4", clubSettings.feeExcludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                <CommandItem key={month.value} onSelect={() => {
+                                                    const newSelection = new Set(localFeeExcluded);
+                                                    if(newSelection.has(month.value)) newSelection.delete(month.value);
+                                                    else newSelection.add(month.value);
+                                                    setLocalFeeExcluded(Array.from(newSelection));
+                                                }}>
+                                                    <Check className={cn("mr-2 h-4 w-4", localFeeExcluded.includes(month.value) ? "opacity-100" : "opacity-0")} />
                                                     {month.label}
                                                 </CommandItem>
                                             ))}
@@ -800,7 +803,7 @@ export function TreasuryDashboard() {
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {clubSettings.coachFeeExcludedMonths?.length ? `${clubSettings.coachFeeExcludedMonths.length} mese(s)` : 'Seleccionar...'}
+                                    {localCoachFeeExcluded.length ? `${localCoachFeeExcluded.length} mese(s)` : 'Seleccionar...'}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -808,12 +811,13 @@ export function TreasuryDashboard() {
                                     <CommandList>
                                         <CommandGroup>
                                             {MONTHS.map((month) => (
-                                                <CommandItem key={month.value} onSelect={() => handleCoachFeeExcludedMonthsChange(
-                                                    (clubSettings.coachFeeExcludedMonths || []).includes(month.value)
-                                                    ? (clubSettings.coachFeeExcludedMonths || []).filter(m => m !== month.value)
-                                                    : [...(clubSettings.coachFeeExcludedMonths || []), month.value]
-                                                )}>
-                                                    <Check className={cn("mr-2 h-4 w-4", clubSettings.coachFeeExcludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                <CommandItem key={month.value} onSelect={() => {
+                                                    const newSelection = new Set(localCoachFeeExcluded);
+                                                    if(newSelection.has(month.value)) newSelection.delete(month.value);
+                                                    else newSelection.add(month.value);
+                                                    setLocalCoachFeeExcluded(Array.from(newSelection));
+                                                }}>
+                                                    <Check className={cn("mr-2 h-4 w-4", localCoachFeeExcluded.includes(month.value) ? "opacity-100" : "opacity-0")} />
                                                     {month.label}
                                                 </CommandItem>
                                             ))}
@@ -824,6 +828,14 @@ export function TreasuryDashboard() {
                         </Popover>
                     </div>
                 </div>
+                 {hasChanges && (
+                    <div className="flex justify-end mb-4">
+                        <Button onClick={handleSaveFeeSettings} disabled={saving}>
+                            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                            Guardar Cambios
+                        </Button>
+                    </div>
+                 )}
                 {activeTab === 'fees' && (
                     <div className="flex justify-end mb-4">
                         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
@@ -1343,3 +1355,5 @@ export function TreasuryDashboard() {
     </>
   );
 }
+
+    
