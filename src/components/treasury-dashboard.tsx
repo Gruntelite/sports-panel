@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, CalendarIcon } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc } from "firebase/firestore";
-import type { Player, Team, OneTimePayment, User, Sponsorship, Coach, RecurringExpense, OneOffExpense } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -41,13 +41,14 @@ import { es } from "date-fns/locale";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
 
-function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses }: { 
+function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths }: { 
     players: Player[], 
     oneTimePayments: OneTimePayment[], 
     coaches: Coach[], 
     sponsorships: Sponsorship[], 
     recurringExpenses: RecurringExpense[], 
-    oneOffExpenses: OneOffExpense[] 
+    oneOffExpenses: OneOffExpense[],
+    feeExcludedMonths: number[]
 }) {
     const [year, setYear] = useState<number>(new Date().getFullYear());
     const [chartData, setChartData] = useState<any[]>([]);
@@ -63,7 +64,11 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             // Income
             players.forEach(p => {
                 if(p.monthlyFee) {
-                    for(let i=0; i<12; i++) monthlyData[i].Ingresos += p.monthlyFee;
+                    for(let i=0; i<12; i++) {
+                        if (!feeExcludedMonths.includes(i)) {
+                            monthlyData[i].Ingresos += p.monthlyFee;
+                        }
+                    }
                 }
             });
             oneTimePayments.forEach(p => {
@@ -115,7 +120,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             setChartData(formattedData);
         };
         processData();
-    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses]);
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths]);
 
     const chartConfig: ChartConfig = {
         Ingresos: { label: "Ingresos", color: "hsl(var(--chart-1))" },
@@ -204,6 +209,7 @@ export function TreasuryDashboard() {
   const [sponsorships, setSponsorships] = useState<Sponsorship[]>([]);
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [oneOffExpenses, setOneOffExpenses] = useState<OneOffExpense[]>([]);
+  const [clubSettings, setClubSettings] = useState<ClubSettings>({});
 
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
@@ -270,6 +276,11 @@ export function TreasuryDashboard() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
+      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      const settingsData = settingsSnap.exists() ? (settingsSnap.data() as ClubSettings) : {};
+      setClubSettings(settingsData);
+      
       const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -321,7 +332,10 @@ export function TreasuryDashboard() {
       
       const currentMonthIndex = getMonth(new Date());
 
-      const monthlyFeesTotal = playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
+      const monthlyFeesTotal = settingsData.feeExcludedMonths?.includes(currentMonthIndex) 
+        ? 0 
+        : playersList.reduce((acc, player) => acc + (player.monthlyFee || 0), 0);
+        
       const coachPaymentsTotal = coachesList.reduce((acc, coach) => acc + (coach.monthlyPayment || 0), 0);
       const sponsorshipIncomeTotal = sponsorshipsList.filter(s => s.frequency === 'monthly' && !s.excludedMonths?.includes(currentMonthIndex)).reduce((acc, s) => acc + s.amount, 0);
 
@@ -400,7 +414,7 @@ export function TreasuryDashboard() {
         }
         
         setIsPaymentModalOpen(false);
-        fetchData(clubId);
+        if(clubId) fetchData(clubId);
 
     } catch (error) {
         console.error("Error creating/updating payment:", error);
@@ -417,7 +431,7 @@ export function TreasuryDashboard() {
       await deleteDoc(doc(db, "clubs", clubId, "oneTimePayments", paymentToDelete.id));
       toast({ title: "Pago eliminado", description: "El pago ha sido eliminado." });
       setPaymentToDelete(null);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch(e) {
       console.error("Error deleting payment", e);
       toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el pago." });
@@ -455,7 +469,7 @@ export function TreasuryDashboard() {
         toast({ title: "Patrocinio añadido" });
       }
       setIsSponsorshipModalOpen(false);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error saving sponsorship:", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el patrocinio." });
@@ -471,7 +485,7 @@ export function TreasuryDashboard() {
       await deleteDoc(doc(db, "clubs", clubId, "sponsorships", sponsorshipToDelete.id));
       toast({ title: "Patrocinio eliminado" });
       setSponsorshipToDelete(null);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error deleting sponsorship:", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el patrocinio." });
@@ -504,7 +518,7 @@ export function TreasuryDashboard() {
         toast({ title: "Gasto recurrente añadido" });
       }
       setIsRecurringExpenseModalOpen(false);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error saving recurring expense:", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el gasto recurrente." });
@@ -520,7 +534,7 @@ export function TreasuryDashboard() {
       await deleteDoc(doc(db, "clubs", clubId, "recurringExpenses", recurringExpenseToDelete.id));
       toast({ title: "Gasto recurrente eliminado" });
       setRecurringExpenseToDelete(null);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error deleting recurring expense:", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el gasto." });
@@ -553,7 +567,7 @@ export function TreasuryDashboard() {
         toast({ title: "Gasto añadido" });
       }
       setIsOneOffExpenseModalOpen(false);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error saving one-off expense:", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el gasto." });
@@ -569,7 +583,7 @@ export function TreasuryDashboard() {
       await deleteDoc(doc(db, "clubs", clubId, "oneOffExpenses", oneOffExpenseToDelete.id));
       toast({ title: "Gasto eliminado" });
       setOneOffExpenseToDelete(null);
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error deleting one-off expense:", error);
       toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el gasto." });
@@ -577,6 +591,21 @@ export function TreasuryDashboard() {
       setSaving(false);
     }
   };
+
+  const handleFeeExcludedMonthsChange = async (newExcludedMonths: number[]) => {
+    if (!clubId) return;
+    
+    setClubSettings(prev => ({ ...prev, feeExcludedMonths: newExcludedMonths }));
+
+    try {
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        await updateDoc(settingsRef, { feeExcludedMonths: newExcludedMonths });
+        toast({ title: "Meses de cuotas actualizados" });
+        if(clubId) fetchData(clubId);
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+    }
+  }
 
 
   const getStatusVariant = (status?: 'paid' | 'pending' | 'overdue'): { variant: "default" | "secondary" | "destructive" | "outline" | null | undefined, icon: React.ElementType } => {
@@ -682,6 +711,7 @@ export function TreasuryDashboard() {
             sponsorships={sponsorships}
             recurringExpenses={recurringExpenses}
             oneOffExpenses={oneOffExpenses}
+            feeExcludedMonths={clubSettings.feeExcludedMonths || []}
         />
         
       <Tabs defaultValue="fees" value={activeTab} onValueChange={setActiveTab}>
@@ -692,10 +722,57 @@ export function TreasuryDashboard() {
                 <TabsTrigger value="expenses">Gastos</TabsTrigger>
                 <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
             </TabsList>
-            {activeTab === 'fees' && (
-                <div className="flex items-center gap-2">
+        </div>
+        <TabsContent value="fees" className="mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Listado de Cuotas Mensuales</CardTitle>
+              <CardDescription>
+                Consulta las cuotas asignadas a cada jugador y configura los meses en los que no se cobran.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+                <div className="flex items-center gap-4 mb-6 p-4 border rounded-lg bg-muted/50">
+                    <div className="space-y-2 flex-1">
+                        <Label>Meses sin cobro de cuota</Label>
+                        <p className="text-xs text-muted-foreground">Selecciona los meses en los que el club no cobrará la cuota mensual a ningún jugador (p.ej., verano).</p>
+                    </div>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-[280px] justify-start text-left font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {clubSettings.feeExcludedMonths?.length ? `${clubSettings.feeExcludedMonths.length} mese(s) seleccionado(s)` : 'Seleccionar meses...'}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                             <Command>
+                                <CommandList>
+                                    <CommandGroup>
+                                        {MONTHS.map((month) => (
+                                            <CommandItem
+                                                key={month.value}
+                                                value={month.label}
+                                                onSelect={() => {
+                                                    const selected = clubSettings.feeExcludedMonths || [];
+                                                    const newSelection = selected.includes(month.value)
+                                                        ? selected.filter(m => m !== month.value)
+                                                        : [...selected, month.value];
+                                                    handleFeeExcludedMonthsChange(newSelection);
+                                                }}
+                                            >
+                                                <Check className={cn("mr-2 h-4 w-4", clubSettings.feeExcludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                {month.label}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+                <div className="flex justify-end mb-4">
                     <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                        <SelectTrigger className="w-[180px]">
+                        <SelectTrigger className="w-[220px]">
                             <SelectValue placeholder="Filtrar por equipo" />
                         </SelectTrigger>
                         <SelectContent>
@@ -706,17 +783,6 @@ export function TreasuryDashboard() {
                         </SelectContent>
                     </Select>
                 </div>
-            )}
-        </div>
-        <TabsContent value="fees" className="mt-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Listado de Cuotas Mensuales</CardTitle>
-              <CardDescription>
-                Consulta las cuotas asignadas a cada jugador.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
               <Table>
                 <TableHeader>
                   <TableRow>
