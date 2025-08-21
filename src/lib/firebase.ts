@@ -8,7 +8,7 @@ import { getStorage } from "firebase/storage";
 const firebaseConfig = {
   "projectId": "sportspanel",
   "appId": "1:124500734578:web:a0dca7d8a0ac8041f5c8eb",
-  "storageBucket": "sportspanel.appspot.com",
+  "storageBucket": "sportspanel.firebasestorage.app",
   "apiKey": "AIzaSyBS7HizRalY8xUroe0zXZNaPok9KL6EAjQ",
   "authDomain": "sportspanel.firebaseapp.com",
   "measurementId": "",
