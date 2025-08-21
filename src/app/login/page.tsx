@@ -18,7 +18,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { Shield } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -61,8 +61,8 @@ export default function LoginPage() {
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="mx-auto max-w-sm w-full shadow-lg">
         <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto inline-block bg-primary text-primary-foreground p-3 rounded-full mb-4">
-            <Shield className="h-8 w-8" />
+          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
+            <Logo />
           </div>
           <CardTitle className="text-2xl font-bold font-headline">
             Iniciar Sesión

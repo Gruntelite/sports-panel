@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { sports } from "@/lib/sports";
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 
 function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -205,8 +206,8 @@ export default function SignUpPage() {
     <div className="flex items-center justify-center min-h-screen bg-muted/40">
       <Card className="mx-auto max-w-sm w-full shadow-lg">
         <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto inline-block bg-primary text-primary-foreground p-3 rounded-full mb-4">
-            <Shield className="h-8 w-8" />
+          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
+            <Logo />
           </div>
           <CardTitle className="text-2xl font-bold font-headline">
             Bienvenido a SportsPanel

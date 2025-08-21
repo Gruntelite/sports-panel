@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -12,6 +12,7 @@ import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Skeleton } from "../ui/skeleton";
+import { Logo } from "../logo";
 
 
 const menuItems = [
@@ -85,7 +86,7 @@ export function Sidebar() {
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                        <Shield className="h-6 w-6 text-primary" />
+                        <Logo />
                         <span className="font-headline text-lg">SportsPanel</span>
                     </Link>
                 </div>
