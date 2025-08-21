@@ -10,13 +10,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Shield, Calendar, CircleDollarSign, Loader2, Hourglass, MapPin, Clock } from "lucide-react";
+import { Users, Shield, Calendar, CircleDollarSign, Loader2, MapPin, Clock } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
 import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { toDate } from "date-fns";
+import { format, toDate } from "date-fns";
+import { es } from "date-fns/locale";
 
 const iconMap = {
   Users: Users,
@@ -48,12 +49,12 @@ function TodaySchedule() {
                 const todayStart = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0));
                 const todayEnd = new Date(Date.UTC(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999));
                 const todayStr = todayStart.toISOString().split('T')[0];
-                const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                const dayName = daysOfWeek[today.getUTCDay()];
+                const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+                const dayName = daysOfWeek[today.getUTCDay() === 0 ? 6 : today.getUTCDay() - 1];
                 
                 let allEntries: ScheduleEntry[] = [];
                 
-                let templateIdToUse: string | null = null;
+                // 1. Get default template and override
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
@@ -61,15 +62,13 @@ function TodaySchedule() {
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", todayStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
-                if (overrideSnap.exists()) {
-                    templateIdToUse = overrideSnap.data().templateId;
-                } else {
-                    templateIdToUse = defaultTemplateId;
-                }
+                let templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
 
+                // 2. Fetch and process template events
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
+
                     if (templateSnap.exists()) {
                         const template = templateSnap.data() as ScheduleTemplate;
                         if (template.weeklySchedule && template.weeklySchedule[dayName]) {
@@ -89,6 +88,7 @@ function TodaySchedule() {
                     }
                 }
 
+                // 3. Fetch custom events
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(todayStart)),
                     where('start', '<=', Timestamp.fromDate(todayEnd))
@@ -100,8 +100,8 @@ function TodaySchedule() {
                         id: doc.id,
                         title: event.title,
                         type: event.type,
-                        startTime: toDate(event.start.toDate()).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
-                        endTime: toDate(event.end.toDate()).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' }),
+                        startTime: format(event.start.toDate(), 'HH:mm', { timeZone: 'UTC' }),
+                        endTime: format(event.end.toDate(), 'HH:mm', { timeZone: 'UTC' }),
                         location: event.location,
                         color: event.color
                     });
@@ -119,8 +119,7 @@ function TodaySchedule() {
 
         const unsubscribe = auth.onAuthStateChanged(user => {
             if (user) {
-                const userDocRef = doc(db, "users", user.uid);
-                getDoc(userDocRef).then(userDocSnap => {
+                getDoc(doc(db, "users", user.uid)).then(userDocSnap => {
                     if (userDocSnap.exists()) {
                         const clubId = userDocSnap.data().clubId;
                         if(clubId) fetchTodaysSchedule(clubId);
