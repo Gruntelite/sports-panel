@@ -230,15 +230,16 @@ export default function PlayersPage() {
     }
 
     setSaving(true);
-    let playerId = playerData.id;
-
+    
     try {
-        let imageUrl = playerData.avatar;
-
+        let currentPlayerData = { ...playerData };
+        let currentId = currentPlayerData.id;
+        
+        // Handle image upload first
         if (newImage) {
-            if (playerData.avatar && !playerData.avatar.includes('placehold.co')) {
+            if (currentPlayerData.avatar && !currentPlayerData.avatar.includes('placehold.co')) {
                 try {
-                    const oldImageRef = ref(storage, playerData.avatar);
+                    const oldImageRef = ref(storage, currentPlayerData.avatar);
                     await deleteObject(oldImageRef);
                 } catch (storageError) {
                     console.warn("Could not delete old image:", storageError);
@@ -246,27 +247,28 @@ export default function PlayersPage() {
             }
             const imageRef = ref(storage, `player-avatars/${clubId}/${uuidv4()}`);
             await uploadBytes(imageRef, newImage);
-            imageUrl = await getDownloadURL(imageRef);
+            currentPlayerData.avatar = await getDownloadURL(imageRef);
         }
-        
-        const teamName = teams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
+
+        const teamName = teams.find(t => t.id === currentPlayerData.teamId)?.name || "Sin equipo";
 
         const dataToSave = {
-            ...playerData,
+            ...currentPlayerData,
             teamName,
-            avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
-            monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
+            avatar: currentPlayerData.avatar || `https://placehold.co/40x40.png?text=${(currentPlayerData.name || '').charAt(0)}`,
+            monthlyFee: (currentPlayerData.monthlyFee === '' || currentPlayerData.monthlyFee === undefined || currentPlayerData.monthlyFee === null) ? null : Number(currentPlayerData.monthlyFee),
         };
         delete (dataToSave as Partial<Player>).id;
 
-        if (modalMode === 'edit' && playerId) {
-            const playerRef = doc(db, "clubs", clubId, "players", playerId);
+        // Save or update player data
+        if (modalMode === 'edit' && currentId) {
+            const playerRef = doc(db, "clubs", clubId, "players", currentId);
             await updateDoc(playerRef, dataToSave);
-            toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
+            toast({ title: "Jugador actualizado", description: `${dataToSave.name} ha sido actualizado.` });
         } else {
             const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
-            playerId = playerDocRef.id;
-            toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
+            currentId = playerDocRef.id;
+            toast({ title: "Jugador añadido", description: `${dataToSave.name} ha sido añadido al club.` });
             
             const contactEmail = dataToSave.tutorEmail;
             const contactName = `${dataToSave.name} ${dataToSave.lastName}`;
@@ -285,11 +287,11 @@ export default function PlayersPage() {
                 });
             }
         }
-        
-        // --- Document Upload Logic ---
-        if (documentToUpload && playerId) {
+
+        // Handle document upload if a file was selected
+        if (documentToUpload && currentId) {
             const file = documentToUpload;
-            const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
+            const filePath = `player-documents/${clubId}/${currentId}/${uuidv4()}-${file.name}`;
             const docRef = ref(storage, filePath);
             await uploadBytes(docRef, file);
             const url = await getDownloadURL(docRef);
@@ -301,7 +303,7 @@ export default function PlayersPage() {
                 createdAt: Timestamp.now(),
             };
             
-            const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
+            const playerDocRef = doc(db, "clubs", clubId, "players", currentId);
             await updateDoc(playerDocRef, {
                 documents: arrayUnion(newDocument)
             });
@@ -310,12 +312,13 @@ export default function PlayersPage() {
         }
 
         setIsModalOpen(false);
+
     } catch (error) {
         console.error("Error saving player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
     } finally {
-      setSaving(false);
-      if (clubId) fetchData(clubId); // Always refresh data
+        setSaving(false);
+        if (clubId) fetchData(clubId);
     }
   };
 
@@ -441,14 +444,15 @@ export default function PlayersPage() {
         await deleteObject(fileRef);
 
         const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
+        const updatedDocuments = playerData.documents?.filter(d => d.path !== documentToDelete.path);
         
         await updateDoc(playerDocRef, {
-            documents: arrayRemove(documentToDelete)
+            documents: updatedDocuments || []
         });
         
         setPlayerData(prev => ({
             ...prev,
-            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+            documents: updatedDocuments
         }));
 
         toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });

@@ -223,15 +223,16 @@ export default function CoachesPage() {
     }
 
     setSaving(true);
-    let coachId = coachData.id;
-
+    
     try {
-        let imageUrl = coachData.avatar;
+        let currentCoachData = { ...coachData };
+        let currentId = currentCoachData.id;
 
+        // Handle image upload
         if (newImage) {
-            if (coachData.avatar && !coachData.avatar.includes('placehold.co')) {
+            if (currentCoachData.avatar && !currentCoachData.avatar.includes('placehold.co')) {
                 try {
-                    const oldImageRef = ref(storage, coachData.avatar);
+                    const oldImageRef = ref(storage, currentCoachData.avatar);
                     await deleteObject(oldImageRef);
                 } catch (storageError) {
                     console.warn("Could not delete old image:", storageError);
@@ -239,27 +240,28 @@ export default function CoachesPage() {
             }
             const imageRef = ref(storage, `coach-avatars/${clubId}/${uuidv4()}`);
             await uploadBytes(imageRef, newImage);
-            imageUrl = await getDownloadURL(imageRef);
+            currentCoachData.avatar = await getDownloadURL(imageRef);
         }
         
-        const teamName = teams.find(t => t.id === coachData.teamId)?.name || "Sin equipo";
+        const teamName = teams.find(t => t.id === currentCoachData.teamId)?.name || "Sin equipo";
 
         const dataToSave = {
-            ...coachData,
+            ...currentCoachData,
             teamName,
-            avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
-            monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
+            avatar: currentCoachData.avatar || `https://placehold.co/40x40.png?text=${(currentCoachData.name || '').charAt(0)}`,
+            monthlyPayment: (currentCoachData.monthlyPayment === '' || currentCoachData.monthlyPayment === undefined || currentCoachData.monthlyPayment === null) ? null : Number(currentCoachData.monthlyPayment),
         };
         delete (dataToSave as Partial<Coach>).id;
 
-        if (modalMode === 'edit' && coachId) {
-            const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
+        // Save or update coach data
+        if (modalMode === 'edit' && currentId) {
+            const coachRef = doc(db, "clubs", clubId, "coaches", currentId);
             await updateDoc(coachRef, dataToSave);
-            toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
+            toast({ title: "Entrenador actualizado", description: `${dataToSave.name} ha sido actualizado.` });
         } else {
             const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
-            coachId = coachDocRef.id;
-            toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
+            currentId = coachDocRef.id;
+            toast({ title: "Entrenador añadido", description: `${dataToSave.name} ha sido añadido al club.` });
             
             if (dataToSave.email) {
                 const userRef = doc(collection(db, "clubs", clubId, "users"));
@@ -276,9 +278,10 @@ export default function CoachesPage() {
             }
         }
 
-        if (documentToUpload && coachId) {
+        // Handle document upload if a file was selected
+        if (documentToUpload && currentId) {
             const file = documentToUpload;
-            const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
+            const filePath = `coach-documents/${clubId}/${currentId}/${uuidv4()}-${file.name}`;
             const docRef = ref(storage, filePath);
             await uploadBytes(docRef, file);
             const url = await getDownloadURL(docRef);
@@ -290,7 +293,7 @@ export default function CoachesPage() {
                 createdAt: Timestamp.now(),
             };
             
-            const coachDocRef = doc(db, "clubs", clubId, "coaches", coachId);
+            const coachDocRef = doc(db, "clubs", clubId, "coaches", currentId);
             await updateDoc(coachDocRef, {
                 documents: arrayUnion(newDocument)
             });
@@ -299,6 +302,7 @@ export default function CoachesPage() {
         }
       
         setIsModalOpen(false);
+
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
@@ -431,14 +435,15 @@ export default function CoachesPage() {
         await deleteObject(fileRef);
 
         const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
+        const updatedDocuments = coachData.documents?.filter(d => d.path !== documentToDelete.path);
         
         await updateDoc(coachDocRef, {
-            documents: arrayRemove(documentToDelete)
+            documents: updatedDocuments || []
         });
         
         setCoachData(prev => ({
             ...prev,
-            documents: prev.documents?.filter(d => d.path !== documentToDelete.path)
+            documents: updatedDocuments
         }));
 
         toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
