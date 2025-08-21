@@ -94,11 +94,11 @@ export function Sidebar() {
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
-                        <span className="font-headline text-lg">{clubName || <Skeleton className="h-6 w-32" />}</span>
+                        <span className="font-headline text-xl font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32" />}</span>
                     </Link>
                 </div>
                 <div className="flex-1 overflow-y-auto">
-                    <nav className="grid items-start px-2 text-sm font-medium lg:px-4 py-4">
+                    <nav className="grid items-start px-2 text-base font-medium lg:px-4 py-4">
                         {menuItems.map((item) => {
                             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                             return (
@@ -106,13 +106,13 @@ export function Sidebar() {
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10",
+                                        "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-all hover:bg-primary-foreground/10 text-shadow-sm shadow-black/20",
                                         isActive
                                         ? "bg-primary-foreground/10"
                                         : "hover:text-primary-foreground"
                                     )}
                                 >
-                                    <item.icon className="h-4 w-4" />
+                                    <item.icon className="h-5 w-5" />
                                     {item.label}
                                 </Link>
                             )
