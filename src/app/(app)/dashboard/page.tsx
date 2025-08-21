@@ -43,7 +43,6 @@ type EventEntry = {
     endTime: string;
     location?: string;
     color: string;
-    type: string;
 }
 
 function DailySchedule({ selectedDate }: { selectedDate: Date }) {
@@ -116,7 +115,6 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                     return {
                         id: doc.id,
                         title: event.title,
-                        type: event.type,
                         startTime: format(event.start.toDate(), 'HH:mm'),
                         endTime: format(event.end.toDate(), 'HH:mm'),
                         location: event.location,
@@ -210,7 +208,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                                         <span className="font-bold text-base">{item.startTime}</span>
                                         <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                     </div>
-                                    <div className="h-10 w-px bg-border-strong"></div>
+                                    <div className="h-10 w-1 bg-primary rounded-full"></div>
                                     <div className="flex-1">
                                         <p className="font-semibold">{item.title}</p>
                                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
