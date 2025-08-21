@@ -16,7 +16,6 @@ import {
   Shield,
   AlertCircle,
   ChevronDown,
-  FileText,
   Trash2,
   Save,
 } from "lucide-react";
@@ -78,9 +77,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, Timestamp, arrayUnion, arrayRemove } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player, Document } from "@/lib/types";
+import type { Team, Player } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -89,6 +88,7 @@ import { format } from "date-fns";
 export default function PlayersPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [players, setPlayers] = useState<Player[]>([]);
@@ -103,9 +103,6 @@ export default function PlayersPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
-
-  const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
-
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -218,7 +215,6 @@ export default function PlayersPage() {
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
-    setDocumentToUpload(null);
   }
 
   const handleSavePlayer = async () => {
@@ -227,9 +223,7 @@ export default function PlayersPage() {
         return;
     }
 
-    setLoading(true);
-    let playerId = playerData.id;
-
+    setSaving(true);
     try {
       let imageUrl = playerData.avatar;
 
@@ -258,13 +252,12 @@ export default function PlayersPage() {
       
       delete (dataToSave as Partial<Player>).id;
 
-      if (modalMode === 'edit' && playerId) {
-        const playerRef = doc(db, "clubs", clubId, "players", playerId);
+      if (modalMode === 'edit' && playerData.id) {
+        const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
         await updateDoc(playerRef, dataToSave);
         toast({ title: "Jugador actualizado", description: `${playerData.name} ha sido actualizado.` });
       } else {
         const playerDocRef = await addDoc(collection(db, "clubs", clubId, "players"), dataToSave);
-        playerId = playerDocRef.id;
         toast({ title: "Jugador añadido", description: `${playerData.name} ha sido añadido al club.` });
         
         const contactEmail = dataToSave.tutorEmail;
@@ -285,36 +278,14 @@ export default function PlayersPage() {
         }
       }
       
-      if (documentToUpload && playerId) {
-        const file = documentToUpload;
-        const filePath = `player-documents/${clubId}/${playerId}/${uuidv4()}-${file.name}`;
-        const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, file);
-        const url = await getDownloadURL(docRef);
-
-        const newDocument: Document = {
-            name: file.name,
-            url,
-            path: filePath,
-            createdAt: Timestamp.now(),
-        };
-        
-        const playerDocRef = doc(db, "clubs", clubId, "players", playerId);
-        await updateDoc(playerDocRef, {
-            documents: arrayUnion(newDocument)
-        });
-        
-        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
-      }
-
       setIsModalOpen(false);
       setPlayerData({});
-      fetchData(clubId);
     } catch (error) {
         console.error("Error saving player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el jugador." });
     } finally {
-      setLoading(false);
+      setSaving(false);
+      if(clubId) fetchData(clubId);
     }
   };
 
@@ -337,13 +308,13 @@ export default function PlayersPage() {
         }
 
         toast({ title: "Jugador eliminado", description: `${playerToDelete.name} ${playerToDelete.lastName} ha sido eliminado.`});
-        fetchData(clubId);
     } catch (error) {
         console.error("Error deleting player: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el jugador." });
     } finally {
         setIsDeleting(false);
         setPlayerToDelete(null);
+        if(clubId) fetchData(clubId);
     }
   };
 
@@ -380,13 +351,13 @@ export default function PlayersPage() {
             title: "Jugadores actualizados",
             description: `${selectedPlayers.length} jugadores han sido asignados al nuevo equipo.`
         });
-        fetchData(clubId);
         setSelectedPlayers([]);
     } catch (error) {
         console.error("Error assigning players in bulk:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo asignar los jugadores al equipo." });
     } finally {
         setLoading(false);
+        if(clubId) fetchData(clubId);
     }
   };
   
@@ -421,7 +392,6 @@ export default function PlayersPage() {
             title: "Jugadores eliminados",
             description: `${selectedPlayers.length} jugadores han sido eliminados.`
         });
-        fetchData(clubId);
         setSelectedPlayers([]);
     } catch (error) {
         console.error("Error deleting players in bulk:", error);
@@ -429,35 +399,9 @@ export default function PlayersPage() {
     } finally {
         setIsDeleting(false);
         setIsBulkDeleteAlertOpen(false);
+        if(clubId) fetchData(clubId);
     }
   };
-
-  const handleDocumentDelete = async (documentToDelete: Document) => {
-    if (!playerData.id || !clubId) return;
-
-    try {
-        const fileRef = ref(storage, documentToDelete.path);
-        await deleteObject(fileRef);
-
-        const playerDocRef = doc(db, "clubs", clubId, "players", playerData.id);
-        const updatedDocuments = playerData.documents?.filter(d => d.path !== documentToDelete.path);
-        
-        await updateDoc(playerDocRef, {
-            documents: updatedDocuments || []
-        });
-        
-        setPlayerData(prev => ({
-            ...prev,
-            documents: updatedDocuments
-        }));
-
-        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
-    } catch (error) {
-        console.error("Error deleting document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
-    }
-  };
-
 
   if (loading && !players.length) {
     return (
@@ -547,11 +491,12 @@ export default function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead padding="checkbox">
+                <TableHead>
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
                     aria-label="Seleccionar todo"
+                    className="translate-y-[2px]"
                   />
                 </TableHead>
                 <TableHead>Nombre</TableHead>
@@ -567,7 +512,7 @@ export default function PlayersPage() {
             <TableBody>
               {players.map(player => (
                 <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
-                  <TableCell padding="checkbox">
+                  <TableCell>
                     <Checkbox
                       checked={selectedPlayers.includes(player.id)}
                       onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
@@ -659,11 +604,10 @@ export default function PlayersPage() {
                 </div>
                 
                 <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
                         <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
-                        <TabsTrigger value="docs"><FileText className="mr-2 h-4 w-4"/>Documentación</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -792,52 +736,15 @@ export default function PlayersPage() {
                         </div>
                       </div>
                     </TabsContent>
-                    <TabsContent value="docs" className="pt-6">
-                        <div className="min-h-[280px]">
-                        {modalMode === 'edit' ? (
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <h4 className="font-medium">Documentos Guardados</h4>
-                                    {(playerData.documents && playerData.documents.length > 0) ? (
-                                        <div className="border rounded-md">
-                                            {playerData.documents.map(doc => (
-                                                <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
-                                                    <span className="text-sm font-medium truncate pr-2">{doc.name}</span>
-                                                    <div className="flex gap-1">
-                                                        <Button asChild size="icon" variant="outline" className="h-8 w-8">
-                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
-                                                        </Button>
-                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground text-center py-4">No hay documentos para este jugador.</p>
-                                    )}
-                                </div>
-                            </div>
-                             ) : (
-                                <div className="text-center text-muted-foreground py-10">
-                                    <p>Guarda primero al jugador para poder subir documentos.</p>
-                                </div>
-                            )}
-                        </div>
-                    </TabsContent>
                 </Tabs>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="button" onClick={handleSavePlayer} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                <Button type="button" onClick={handleSavePlayer} disabled={saving}>
+                    {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4"/>}
+                    Guardar
                 </Button>
             </DialogFooter>
         </DialogContent>

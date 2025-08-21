@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign } from "lucide-react";
+import { Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -25,6 +25,7 @@ const menuItems = [
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/staff", label: "Staff y Directiva", icon: UserCog},
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
+    { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
     { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
   ];
 

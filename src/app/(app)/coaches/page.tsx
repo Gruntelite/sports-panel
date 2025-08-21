@@ -16,9 +16,7 @@ import {
   CircleDollarSign,
   ChevronDown,
   Filter,
-  FileText,
   Trash2,
-  Download,
   Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -77,9 +75,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where, Timestamp, arrayUnion, arrayRemove } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Coach, Document } from "@/lib/types";
+import type { Team, Coach } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -88,6 +86,7 @@ import { format } from "date-fns";
 export default function CoachesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -102,9 +101,6 @@ export default function CoachesPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
-
-  const [documentToUpload, setDocumentToUpload] = useState<File | null>(null);
-
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -212,7 +208,6 @@ export default function CoachesPage() {
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
-    setDocumentToUpload(null);
   }
 
   const handleSaveCoach = async () => {
@@ -221,9 +216,7 @@ export default function CoachesPage() {
         return;
     }
 
-    setLoading(true);
-    let coachId = coachData.id;
-
+    setSaving(true);
     try {
       let imageUrl = coachData.avatar;
 
@@ -252,13 +245,12 @@ export default function CoachesPage() {
       
       delete (dataToSave as Partial<Coach>).id;
 
-      if (modalMode === 'edit' && coachId) {
-        const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
+      if (modalMode === 'edit' && coachData.id) {
+        const coachRef = doc(db, "clubs", clubId, "coaches", coachData.id);
         await updateDoc(coachRef, dataToSave);
         toast({ title: "Entrenador actualizado", description: `${coachData.name} ha sido actualizado.` });
       } else {
         const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
-        coachId = coachDocRef.id;
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al club.` });
         
         if (dataToSave.email) {
@@ -276,36 +268,14 @@ export default function CoachesPage() {
         }
       }
 
-      if (documentToUpload && coachId) {
-        const file = documentToUpload;
-        const filePath = `coach-documents/${clubId}/${coachId}/${uuidv4()}-${file.name}`;
-        const docRef = ref(storage, filePath);
-        await uploadBytes(docRef, file);
-        const url = await getDownloadURL(docRef);
-
-        const newDocument: Document = {
-            name: file.name,
-            url,
-            path: filePath,
-            createdAt: Timestamp.now(),
-        };
-        
-        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachId);
-        await updateDoc(coachDocRef, {
-            documents: arrayUnion(newDocument)
-        });
-        
-        toast({ title: "Documento subido", description: `${file.name} se ha guardado correctamente.` });
-      }
-      
       setIsModalOpen(false);
       setCoachData({});
-      fetchData(clubId);
     } catch (error) {
         console.error("Error saving coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el entrenador." });
     } finally {
-      setLoading(false);
+      setSaving(false);
+      if(clubId) fetchData(clubId);
     }
   };
 
@@ -329,13 +299,13 @@ export default function CoachesPage() {
         }
 
         toast({ title: "Entrenador eliminado", description: `${coachToDelete.name} ${coachToDelete.lastName} ha sido eliminado.`});
-        fetchData(clubId);
     } catch (error) {
         console.error("Error deleting coach: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar al entrenador." });
     } finally {
         setIsDeleting(false);
         setCoachToDelete(null);
+        if(clubId) fetchData(clubId);
     }
   };
   
@@ -372,13 +342,13 @@ export default function CoachesPage() {
             title: "Entrenadores actualizados",
             description: `${selectedCoaches.length} entrenadores han sido asignados al nuevo equipo.`
         });
-        fetchData(clubId);
         setSelectedCoaches([]);
     } catch (error) {
         console.error("Error assigning coaches in bulk:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo asignar los entrenadores al equipo." });
     } finally {
         setLoading(false);
+        if(clubId) fetchData(clubId);
     }
   };
   
@@ -413,7 +383,6 @@ export default function CoachesPage() {
             title: "Entrenadores eliminados",
             description: `${selectedCoaches.length} entrenadores han sido eliminados.`
         });
-        fetchData(clubId);
         setSelectedCoaches([]);
     } catch (error) {
         console.error("Error deleting coaches in bulk:", error);
@@ -421,32 +390,7 @@ export default function CoachesPage() {
     } finally {
         setIsDeleting(false);
         setIsBulkDeleteAlertOpen(false);
-    }
-  };
-
-  const handleDocumentDelete = async (documentToDelete: Document) => {
-    if (!coachData.id || !clubId) return;
-
-    try {
-        const fileRef = ref(storage, documentToDelete.path);
-        await deleteObject(fileRef);
-
-        const coachDocRef = doc(db, "clubs", clubId, "coaches", coachData.id);
-        const updatedDocuments = coachData.documents?.filter(d => d.path !== documentToDelete.path);
-        
-        await updateDoc(coachDocRef, {
-            documents: updatedDocuments || []
-        });
-        
-        setCoachData(prev => ({
-            ...prev,
-            documents: updatedDocuments
-        }));
-
-        toast({ title: "Documento eliminado", description: "El documento ha sido eliminado." });
-    } catch (error) {
-        console.error("Error deleting document:", error);
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el documento." });
+        if(clubId) fetchData(clubId);
     }
   };
 
@@ -629,11 +573,10 @@ export default function CoachesPage() {
                 </div>
                 
                  <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
+                    <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
                         <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
-                        <TabsTrigger value="docs"><FileText className="mr-2 h-4 w-4"/>Documentación</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -758,52 +701,15 @@ export default function CoachesPage() {
                             </div>
                         </div>
                     </TabsContent>
-                    <TabsContent value="docs" className="pt-6">
-                        <div className="min-h-[280px]">
-                          {modalMode === 'edit' ? (
-                            <div className="space-y-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="document-upload">Subir Nuevo Documento</Label>
-                                    <Input id="document-upload" type="file" onChange={(e) => setDocumentToUpload(e.target.files?.[0] || null)} />
-                                </div>
-                                <div className="space-y-2">
-                                    <h4 className="font-medium">Documentos Guardados</h4>
-                                    {(coachData.documents && coachData.documents.length > 0) ? (
-                                        <div className="border rounded-md">
-                                            {coachData.documents.map(doc => (
-                                                <div key={doc.path} className="flex items-center justify-between p-2 border-b last:border-b-0">
-                                                    <span className="text-sm font-medium truncate pr-2">{doc.name}</span>
-                                                    <div className="flex gap-1">
-                                                        <Button asChild size="icon" variant="outline" className="h-8 w-8">
-                                                            <a href={doc.url} target="_blank" rel="noopener noreferrer"><Download className="h-4 w-4" /></a>
-                                                        </Button>
-                                                        <Button size="icon" variant="destructive" className="h-8 w-8" onClick={() => handleDocumentDelete(doc)}>
-                                                            <Trash2 className="h-4 w-4" />
-                                                        </Button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <p className="text-sm text-muted-foreground text-center py-4">No hay documentos para este entrenador.</p>
-                                    )}
-                                </div>
-                            </div>
-                          ) : (
-                                <div className="text-center text-muted-foreground py-10">
-                                    <p>Guarda primero al entrenador para poder subir documentos.</p>
-                                </div>
-                          )}
-                        </div>
-                    </TabsContent>
                 </Tabs>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="button" onClick={handleSaveCoach} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                <Button type="button" onClick={handleSaveCoach} disabled={saving}>
+                    {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4"/>}
+                    Guardar
                 </Button>
             </DialogFooter>
         </DialogContent>
