@@ -147,8 +147,8 @@ function CalendarView() {
       let allEvents: CalendarEvent[] = [];
       const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       
-      const loopStartDate = new Date(date.getFullYear(), date.getMonth(), 1);
-      const loopEndDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+      const loopStartDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
+      const loopEndDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
 
       for (let d = new Date(loopStartDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
           const dayStr = format(d, "yyyy-MM-dd");
@@ -180,8 +180,8 @@ function CalendarView() {
       }
 
       const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
-          where('start', '>=', firstDayOfMonth),
-          where('start', '<=', lastDayOfMonth)
+          where('start', '>=', Timestamp.fromDate(firstDayOfMonth)),
+          where('start', '<=', Timestamp.fromDate(lastDayOfMonth))
       );
       const customEventsSnapshot = await getDocs(customEventsQuery);
       customEventsSnapshot.forEach(doc => {
