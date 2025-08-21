@@ -10,7 +10,7 @@ export default function AppLayout({
 }) {
   return (
     <ThemeProvider>
-      <div className="min-h-screen w-full bg-muted/20">
+      <div className="min-h-screen w-full">
         <Sidebar />
         <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 md:ml-[220px] lg:ml-[280px]">
           {children}

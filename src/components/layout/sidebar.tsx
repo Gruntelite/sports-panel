@@ -91,7 +91,7 @@ export function Sidebar() {
     }
 
     return (
-        <div className="hidden border-r bg-card md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
+        <div className="hidden border-r bg-muted/20 md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-2 font-semibold text-primary">
@@ -145,7 +145,7 @@ export function Sidebar() {
                             <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
                             <DropdownMenuSeparator />
                              <DropdownMenuItem asChild>
-                                <Link href="/account" className="w-full">
+                                <Link href="/club-settings" className="w-full">
                                     <User className="mr-2 h-4 w-4" />
                                     Mi Perfil
                                 </Link>
