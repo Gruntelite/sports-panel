@@ -57,7 +57,7 @@ function TodayTrainings() {
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[today.getUTCDay()];
 
-                // 1. Get default template ID from settings
+                // 1. Get default template ID from settings first.
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
@@ -67,16 +67,18 @@ function TodayTrainings() {
                 const overrideSnap = await getDoc(overrideRef);
                 
                 // 3. Determine which template ID to use
-                const templateIdToUse = overrideSnap.exists() ? overrideSnap.data().templateId : defaultTemplateId;
-
+                let templateIdToUse = defaultTemplateId;
+                if (overrideSnap.exists()) {
+                    templateIdToUse = overrideSnap.data().templateId;
+                }
+                
                 let todaysTrainings: TrainingEntry[] = [];
 
-                // 4. If we have a template to use, fetch it
+                // 4. If we have a valid template ID to use, fetch it
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
 
-                    // 5. If template exists, get the schedule for today's day of the week
                     if (templateSnap.exists()) {
                         const templateData = templateSnap.data() as ScheduleTemplate;
                         const weeklySchedule = templateData.weeklySchedule;
