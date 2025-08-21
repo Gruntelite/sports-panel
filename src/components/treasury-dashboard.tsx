@@ -154,7 +154,16 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                             tickMargin={8}
                         />
                         <YAxis
-                          tickFormatter={(value) => `€${value / 1000}k`}
+                          tickFormatter={(value) =>
+                            `€${
+                              typeof value === 'number'
+                                ? new Intl.NumberFormat('es-ES', {
+                                    notation: 'compact',
+                                    compactDisplay: 'short',
+                                  }).format(value)
+                                : ''
+                            }`
+                          }
                           tickLine={false}
                           axisLine={false}
                         />
