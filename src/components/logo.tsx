@@ -10,8 +10,14 @@ export function Logo() {
       xmlns="http://www.w3.org/2000/svg"
       className="h-6 w-6"
     >
-      <path d="M0 24 L24 0 H0 V24Z" fill="#34D399" />
-      <path d="M24 0 V24 H0 L24 0Z" fill="#2563eb" />
+      <path
+        d="M0 0 H24 V24 C12 24 12 0 0 0Z"
+        fill="#34D399"
+      />
+       <path
+        d="M0 24 H24 V0 C12 0 12 24 0 24Z"
+        fill="#2563eb"
+      />
     </svg>
   );
 }
