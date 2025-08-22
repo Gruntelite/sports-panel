@@ -59,7 +59,7 @@ const benefits = [
         points: [
             "Envía comunicados a equipos específicos o a todo el club.",
             "Notifica cambios de horario o cancelaciones al instante.",
-            "Centraliza todas las comunicaciones en una sola plataforma.",
+            "Simplifica el proceso de actualización de información.",
         ],
         image: {
             src: "https://placehold.co/500x400.png",
@@ -107,7 +107,7 @@ export default function LandingPage() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full pt-20 md:pt-32 lg:pt-40">
+        <section className="w-full pt-20 md:pt-24 lg:pt-28">
           <div className="container px-4 md:px-6">
             <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
               <div className="space-y-4">
@@ -137,7 +137,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
+        <section id="features" className="w-full py-12 md:py-16 lg:py-20 bg-muted/40">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -163,7 +163,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-12 md:py-24 lg:py-32">
+        <section id="benefits" className="w-full py-12 md:py-16 lg:py-20">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
