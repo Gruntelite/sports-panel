@@ -308,7 +308,7 @@ export default function LandingPage() {
              <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
-                    <h3 className="text-2xl font-bold font-headline">Básico</h3>
+                    <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
                     <p className="text-muted-foreground mt-1">Hasta <b>100</b> usuarios</p>
                     <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
@@ -324,21 +324,21 @@ export default function LandingPage() {
                          </>
                        )}
                     </div>
-                    <ul className="mt-6 space-y-3 flex-grow">
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
 
                 <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 text-center">
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
-                    <h3 className="text-2xl font-bold font-headline">Pro</h3>
+                    <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
                     <p className="text-muted-foreground mt-1">Hasta <b>150</b> usuarios</p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
@@ -354,20 +354,20 @@ export default function LandingPage() {
                          </>
                        )}
                     </div>
-                     <ul className="mt-6 space-y-3 flex-grow">
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                     <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button className="mt-6 w-full">Empezar ahora</Button>
                 </div>
 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
-                    <h3 className="text-2xl font-bold font-headline">Élite</h3>
+                    <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
                     <p className="text-muted-foreground mt-1">Hasta <b>300</b> usuarios</p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
@@ -383,14 +383,14 @@ export default function LandingPage() {
                          </>
                        )}
                     </div>
-                    <ul className="mt-6 space-y-3 flex-grow">
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
