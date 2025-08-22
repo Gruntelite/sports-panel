@@ -4,7 +4,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, orderBy } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
 import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
@@ -90,8 +90,8 @@ export function DirectEmailSender() {
             
             setAllMembers(members);
             
-            const teamsSnap = await getDocs(query(collection(db, "clubs", clubId, "teams"), orderBy("order")));
-            setTeams(teamsSnap.docs.map(doc => ({id: doc.id, ...doc.data()} as Team)));
+            const teamsSnap = await getDocs(query(collection(db, "clubs", clubId, "teams")));
+            setTeams(teamsSnap.docs.map(doc => ({id: doc.id, ...doc.data()} as Team)).sort((a, b) => (a.order || 0) - (b.order || 0)));
 
         } catch (error) {
             console.error("Error fetching club members:", error);
@@ -102,17 +102,10 @@ export function DirectEmailSender() {
     };
     
      const filteredMembers = useMemo(() => {
-        if (selectedTypes.size === 0 && selectedTeams.size === 0) {
-            return allMembers;
-        }
         return allMembers.filter(member => {
             const typeMatch = selectedTypes.size > 0 ? selectedTypes.has(member.type) : true;
             const teamMatch = selectedTeams.size > 0 ? (member.teamId && selectedTeams.has(member.teamId)) : true;
-            
-            if (selectedTypes.size > 0 && selectedTeams.size > 0) {
-                return typeMatch && teamMatch;
-            }
-            return typeMatch || teamMatch;
+            return typeMatch && teamMatch;
         });
     }, [allMembers, selectedTypes, selectedTeams]);
 
@@ -310,7 +303,7 @@ export function DirectEmailSender() {
                                                 checked={isAllFilteredSelected}
                                                 onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                             />
-                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los ${filteredMembers.length} miembros</label>
+                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
                                         </CommandItem>
                                         <ScrollArea className="h-64">
                                             {filteredMembers.map((member) => (
