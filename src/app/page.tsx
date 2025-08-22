@@ -45,7 +45,7 @@ const benefits = [
         points: [
             "Reduce el papeleo y los errores manuales.",
             "Accede a la información de cualquier miembro en segundos.",
-            "Simplifica el proceso de actualización de información,",
+            "Simplifica el proceso de actualización de información.",
         ],
         image: {
             src: "https://placehold.co/500x400.png",
