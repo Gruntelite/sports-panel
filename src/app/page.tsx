@@ -80,7 +80,6 @@ export default function LandingPage() {
                   alt="SportsPanel App Screenshot"
                   width={1890}
                   height={1063}
-                  className="rounded-lg shadow-2xl"
                 />
               </div>
             </div>
