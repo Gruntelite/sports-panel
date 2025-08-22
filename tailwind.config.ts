@@ -30,6 +30,7 @@ export default {
       },
       colors: {
         turquesa: '#14b8a6',
+        'turquesa-dark': '#0f766e',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

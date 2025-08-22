@@ -316,15 +316,15 @@ export default function LandingPage() {
                         {testimonials.map((testimonial, index) => (
                         <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                             <div className="p-1 h-full">
-                            <Card className="flex flex-col h-full overflow-hidden shadow-lg border-0">
+                            <Card className="flex flex-col h-full overflow-hidden border">
                                 <CardContent className="p-6 flex flex-col items-start gap-4 flex-grow">
                                 <p className="text-lg font-medium leading-relaxed flex-grow">
                                     "{testimonial.quote}"
                                 </p>
                                 <div className="w-full pt-4 mt-auto">
                                     <div className="bg-turquesa/20 p-4 rounded-md">
-                                        <p className="font-semibold text-turquesa">{testimonial.name}</p>
-                                        <p className="text-sm text-turquesa/80">{testimonial.role}</p>
+                                        <p className="font-semibold text-turquesa-dark">{testimonial.name}</p>
+                                        <p className="text-sm text-turquesa-dark/80">{testimonial.role}</p>
                                     </div>
                                 </div>
                                 </CardContent>
