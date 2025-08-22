@@ -108,7 +108,7 @@ export default function LandingPage() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full pt-12 md:pt-16 lg:pt-20">
+        <section className="w-full py-12 md:py-16 lg:py-20">
           <div className="container px-4 md:px-6">
             <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
               <div className="space-y-4">
@@ -152,8 +152,7 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden cursor-pointer">
-                  <div className="absolute inset-0 bg-accent/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"></div>
+                <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden cursor-pointer after:content-[''] after:absolute after:bottom-0 after:left-0 after:w-full after:h-0 after:bg-turquesa after:transition-all after:duration-300 after:ease-in-out hover:after:h-full">
                   <div className="relative z-10 flex flex-col items-center w-full h-full">
                     <div className="flex items-center justify-center mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
                       {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
