@@ -107,7 +107,7 @@ export default function LandingPage() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full pt-20 md:pt-24 lg:pt-28">
+        <section className="w-full pt-12 md:pt-16 lg:pt-20">
           <div className="container px-4 md:px-6">
             <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
               <div className="space-y-4">
@@ -125,7 +125,7 @@ export default function LandingPage() {
                   </Link>
                 </Button>
               </div>
-               <div className="mt-12">
+               <div className="mt-8">
                 <Image
                   src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(12).png?alt=media&token=ff0dd03b-8392-4822-a434-0760a6a776cc"
                   alt="SportsPanel App Screenshot"
