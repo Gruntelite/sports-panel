@@ -55,29 +55,46 @@ const testimonials = [
         name: "Carlos Sánchez",
         role: "Presidente, Club Deportivo Águilas",
         quote: "SportsPanel ha revolucionado nuestra gestión. Hemos reducido el tiempo administrativo a la mitad y la comunicación con las familias es ahora instantánea. ¡Imprescindible!",
-        avatar: "https://placehold.co/100x100.png?text=CS",
-        clubLogo: "https://placehold.co/40x40.png?text=CDA"
     },
     {
         name: "Laura Jiménez",
         role: "Coordinadora, Unión Deportiva Norte",
         quote: "La gestión de horarios y calendarios es increíblemente intuitiva. Tener toda la información de los equipos en un solo lugar nos ha ahorrado incontables horas de trabajo y emails.",
-        avatar: "https://placehold.co/100x100.png?text=LJ",
-        clubLogo: "https://placehold.co/40x40.png?text=UDN"
     },
     {
         name: "Miguel Ángel Roca",
         role: "Tesorero, Academia de Fútbol Central",
         quote: "La función de tesorería es fantástica. Por fin tenemos un control claro sobre las cuotas y los gastos. La planificación financiera ahora es mucho más sencilla y transparente para la directiva.",
-        avatar: "https://placehold.co/100x100.png?text=MR",
-        clubLogo: "https://placehold.co/40x40.png?text=AFC"
     },
      {
         name: "Sofía Navarro",
         role: "Entrenadora, CF Femenino Rayo",
         quote: "Como entrenadora, valoro poder comunicarme directamente con los padres de mis jugadoras a través de la plataforma. Es rápido, seguro y todo queda registrado. ¡Un gran acierto!",
-        avatar: "https://placehold.co/100x100.png?text=SN",
-        clubLogo: "https://placehold.co/40x40.png?text=CFR"
+    },
+    {
+        name: "Javier Moreno",
+        role: "Director Deportivo, Titanes Baloncesto",
+        quote: "El portal para familias ha mejorado muchísimo la relación con los padres. Ahora ellos mismos pueden actualizar los datos de sus hijos, lo que nos ahorra una cantidad de trabajo enorme al inicio de temporada."
+    },
+    {
+        name: "Isabel Torres",
+        role: "Secretaria, Club de Voleibol Fénix",
+        quote: "El almacén de documentos es una maravilla. Tenemos todas las licencias, autorizaciones y normativas centralizadas y accesibles desde cualquier lugar. Se acabaron las carpetas físicas y los papeles perdidos."
+    },
+    {
+        name: "Adrián Castillo",
+        role: "Coordinador de Cantera, Halcones Rugby Club",
+        quote: "Poder gestionar todos los equipos, desde los más pequeños hasta los juveniles, en una única plataforma no tiene precio. La visión global que nos da SportsPanel es fundamental para la planificación deportiva."
+    },
+    {
+        name: "Elena Vidal",
+        role: "Madre de jugador, Club Patinaje Artístico Piruetas",
+        quote: "La app es muy fácil de usar. Consulto el calendario de competiciones y entrenamientos de mi hija directamente desde el móvil. Recibir las notificaciones del club al instante me da mucha tranquilidad."
+    },
+    {
+        name: "Marcos Alonso",
+        role: "Delegado de equipo, Escudería Velocidad",
+        quote: "Utilizamos los formularios de inscripción para nuestros eventos y es un cambio radical. Recogemos los datos y los pagos online, de forma automática y sin errores. La organización es mucho más profesional."
     }
 ]
 
@@ -525,5 +542,3 @@ export default function LandingPage() {
     </div>
   );
 }
-
-    
