@@ -150,14 +150,14 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
 
     const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: es });
     
-    const getSeparatorColorClass = (colorClass: string) => {
-        if (!colorClass) return 'bg-primary';
-        const match = colorClass.match(/bg-([a-z]+)-(\d+)/) || colorClass.match(/bg-primary/);
-        if (match) {
-            if(match[0] === 'bg-primary') return 'bg-primary';
+    const getSeparatorColorFromBorder = (colorClass: string) => {
+      if (!colorClass) return 'bg-primary';
+      const match = colorClass.match(/border-([a-z]+)-(\d+)\/(\d+)/) || colorClass.match(/border-primary/);
+       if (match) {
+            if(match[0] === 'border-primary') return 'bg-primary';
             return `bg-${match[1]}-500`;
         }
-        return 'bg-primary';
+      return 'bg-primary';
     }
 
 
@@ -214,7 +214,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                     ) : events.length > 0 ? (
                         <div className="space-y-3">
                             {events.map(item => {
-                                const separatorColor = getSeparatorColorClass(item.color);
+                                const separatorColor = getSeparatorColorFromBorder(item.color);
                                 return (
                                 <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
                                     <div className="flex flex-col items-center w-20">
