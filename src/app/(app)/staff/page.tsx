@@ -66,11 +66,11 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Staff, Socio } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 
 
 export default function StaffPage() {
@@ -154,6 +154,12 @@ export default function StaffPage() {
     }
   };
 
+  const handleCheckboxChange = (id: keyof Socio, checked: boolean) => {
+    if (modalType === 'socio') {
+      setSocioData(prev => ({ ...prev, [id]: checked }));
+    }
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
@@ -177,7 +183,7 @@ export default function StaffPage() {
       setStaffData(mode === 'edit' && member ? (member as Staff) : {});
       setSocioData({});
     } else {
-      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0 });
+      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0, createUser: false });
       setStaffData({});
     }
     setIsModalOpen(true);
@@ -282,15 +288,19 @@ export default function StaffPage() {
         const socioDocRef = await addDoc(collection(db, "clubs", clubId, "socios"), dataToSave);
         socioId = socioDocRef.id;
 
-        const userRef = doc(collection(db, "clubs", clubId, "users"));
-        await setDoc(userRef, {
-            email: dataToSave.email,
-            name: `${dataToSave.name} ${dataToSave.lastName}`,
-            role: 'Socio',
-            socioId: socioId,
-        });
+        if (socioData.createUser) {
+            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            await setDoc(userRef, {
+                email: dataToSave.email,
+                name: `${dataToSave.name} ${dataToSave.lastName}`,
+                role: 'Socio',
+                socioId: socioId,
+            });
+             toast({ title: "Socio y Usuario Creados", description: `${socioData.name} ha sido añadido como socio y se ha creado su cuenta de usuario.` });
+        } else {
+             toast({ title: "Socio añadido", description: `${socioData.name} ha sido añadido.` });
+        }
 
-        toast({ title: "Socio añadido", description: `${socioData.name} ha sido añadido.` });
       }
       
       setIsModalOpen(false);
@@ -618,6 +628,14 @@ export default function StaffPage() {
                             <Label htmlFor="fee">Importe Cuota (€)</Label>
                             <Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} />
                         </div>
+                      </div>
+                       <div className="flex items-center space-x-2 pt-2">
+                          <Checkbox
+                            id="createUser"
+                            checked={socioData.createUser || false}
+                            onCheckedChange={(checked) => handleCheckboxChange('createUser', checked as boolean)}
+                          />
+                          <Label htmlFor="createUser" className="font-normal">Crear cuenta de usuario para este socio</Label>
                       </div>
                   </div>
                 )}
