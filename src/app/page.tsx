@@ -1,320 +1,132 @@
-
-
-"use client";
-
-import { useState, useEffect } from "react";
-import { Check, ChevronsUpDown, Palette, Shield } from "lucide-react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, getDocs, collection, query, where, writeBatch } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
-import { cn } from "@/lib/utils";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { sports } from "@/lib/sports";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive } from "lucide-react";
 import { Logo } from "@/components/logo";
 
-function hexToHsl(hex: string): { h: number, s: number, l: number } | null {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return null;
+const features = [
+  {
+    icon: <Users className="h-8 w-8 text-primary" />,
+    title: "Gestión Centralizada de Miembros",
+    description: "Administra fichas de jugadores, entrenadores y staff en un único lugar. Accede a toda la información al instante.",
+  },
+  {
+    icon: <CircleDollarSign className="h-8 w-8 text-primary" />,
+    title: "Tesorería y Cuotas",
+    description: "Lleva un control claro de los ingresos por cuotas, gastos y la salud financiera de tu club sin complicaciones.",
+  },
+   {
+    icon: <Mail className="h-8 w-8 text-primary" />,
+    title: "Comunicación Integrada",
+    description: "Envía correos electrónicos a equipos, grupos o a todo el club directamente desde la plataforma.",
+  },
+  {
+    icon: <Calendar className="h-8 w-8 text-primary" />,
+    title: "Calendario y Horarios",
+    description: "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar.",
+  },
+   {
+    icon: <Home className="h-8 w-8 text-primary" />,
+    title: "Portal para Familias y Miembros",
+    description: "Ofrece un acceso privado para que cada miembro pueda consultar y actualizar sus datos de forma segura.",
+  },
+  {
+    icon: <FolderArchive className="h-8 w-8 text-primary" />,
+    title: "Almacén de Documentos",
+    description: "Guarda y comparte documentos importantes como normativas o autorizaciones de forma segura en la nube.",
+  },
+];
 
-    let r = parseInt(result[1], 16) / 255;
-    let g = parseInt(result[2], 16) / 255;
-    let b = parseInt(result[3], 16) / 255;
-
-    let max = Math.max(r, g, b), min = Math.min(r, g, b);
-    let h = 0, s = 0, l = (max + min) / 2;
-
-    if (max !== min) {
-        let d = max - min;
-        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-        switch (max) {
-            case r: h = (g - b) / d + (g < b ? 6 : 0); break;
-            case g: h = (b - r) / d + 2; break;
-            case b: h = (r - g) / d + 4; break;
-        }
-        h /= 6;
-    }
-
-    return {
-        h: Math.round(h * 360),
-        s: Math.round(s * 100),
-        l: Math.round(l * 100),
-    };
-}
-
-function getLuminance(hex: string): number {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return 0;
-    
-    const r = parseInt(result[1], 16);
-    const g = parseInt(result[2], 16);
-    const b = parseInt(result[3], 16);
-    
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-}
-
-
-export default function SignUpPage() {
-  const router = useRouter();
-  const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
-  
-  const [clubName, setClubName] = useState('');
-  const [sport, setSport] = useState('');
-  const [clubColor, setClubColor] = useState('#2563eb');
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  
-  const [open, setOpen] = useState(false);
-
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!sport) {
-      toast({
-        variant: "destructive",
-        title: "Campo Obligatorio",
-        description: "Por favor, selecciona un deporte.",
-      });
-      return;
-    }
-    setLoading(true);
-
-    try {
-      // Check if club name already exists
-      const q = query(collection(db, "clubs"), where("name", "==", clubName));
-      const querySnapshot = await getDocs(q);
-      
-      if (!querySnapshot.empty) {
-        toast({
-          variant: "destructive",
-          title: "Fallo en el Registro",
-          description: "El nombre del club ya está en uso. Por favor, elige otro.",
-        });
-        setLoading(false);
-        return;
-      }
-
-      // Create user in Firebase Auth
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      
-      const luminance = getLuminance(clubColor);
-      const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
-
-      // Create club, user records, and settings in a batch
-      const batch = writeBatch(db);
-
-      const newClubRef = doc(collection(db, "clubs"));
-      const clubId = newClubRef.id;
-      
-      const [firstName, ...lastNameParts] = name.split(" ");
-      const lastName = lastNameParts.join(" ");
-
-      // 1. Create the main club document
-      batch.set(newClubRef, {
-        name: clubName,
-        adminId: user.uid,
-      });
-
-      // 2. Create the user's clubId link in the root users collection
-      const rootUserRef = doc(db, "users", user.uid);
-      batch.set(rootUserRef, {
-        clubId: clubId,
-      });
-
-      // 3. Create the user details in the club's specific users subcollection
-      const clubUserRef = doc(db, "clubs", clubId, "users", user.uid);
-      batch.set(clubUserRef, {
-        name: name,
-        email: email,
-        role: 'super-admin',
-      });
-      
-      // 4. Create the club settings subcollection
-      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-      batch.set(settingsRef, {
-        sport: sport,
-        themeColor: clubColor,
-        themeColorForeground: foregroundColor,
-        billingPlan: null,
-      });
-
-      // 5. Create the super-admin's entry in the staff subcollection
-      const staffRef = doc(collection(db, "clubs", clubId, "staff"));
-      batch.set(staffRef, {
-          name: firstName,
-          lastName: lastName,
-          email: email,
-          role: "Super-Admin",
-          staffId: staffRef.id,
-      });
-
-      // Commit all writes to the database
-      await batch.commit();
-
-      const primaryHsl = hexToHsl(clubColor);
-      const foregroundHsl = hexToHsl(foregroundColor);
-
-      if (primaryHsl) {
-        localStorage.setItem('clubThemeColor', clubColor);
-      }
-      if (foregroundHsl) {
-        localStorage.setItem('clubThemeColorForeground', foregroundColor);
-      }
-
-      toast({
-        title: "¡Cuenta Creada!",
-        description: "Te has registrado correctamente.",
-      });
-
-      router.push("/dashboard");
-
-    } catch (error: any) {
-        console.error("Sign-up error:", error);
-        let description = "Ocurrió un error inesperado.";
-        if (error.code === 'auth/email-already-in-use') {
-            description = "El correo electrónico ya está en uso. Por favor, utiliza otro.";
-        } else if (error.code === 'permission-denied') {
-            description = "Error de permisos. Revisa las reglas de seguridad de Firestore.";
-        }
-        toast({
-            variant: "destructive",
-            title: "Fallo en el Registro",
-            description: description,
-        });
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function LandingPage() {
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
-      <Card className="mx-auto max-w-sm w-full shadow-lg">
-        <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-            <Logo />
-          </div>
-          <CardTitle className="text-2xl font-bold font-headline">
-            Bienvenido a SportsPanel
-          </CardTitle>
-          <CardDescription>
-            Crea tu cuenta de administrador para empezar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2 col-span-2">
-                <Label htmlFor="club-name">Nombre del Club</Label>
-                <Input id="club-name" placeholder="p.ej., Dinamos del Centro" required value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
-                <p className="text-xs text-muted-foreground">Se recomienda un nombre corto para que quepa bien en la app.</p>
-              </div>
-            </div>
-             <div className="space-y-2">
-              <Label htmlFor="sport">Deporte Principal</Label>
-               <Popover open={open} onOpenChange={setOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={open}
-                    className="w-full justify-between font-normal"
-                  >
-                    {sport
-                      ? sports.find((s) => s.value.toLowerCase() === sport.toLowerCase())?.label
-                      : "Selecciona un deporte..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+    <div className="flex flex-col min-h-dvh bg-background text-foreground">
+      <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+        <Link href="#" className="flex items-center justify-center gap-2" prefetch={false}>
+          <Logo width={32} height={32}/>
+          <span className="text-xl font-bold font-headline">SportsPanel</span>
+        </Link>
+        <nav className="ml-auto flex gap-4 sm:gap-6">
+          <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Iniciar Sesión
+          </Link>
+          <Button asChild>
+            <Link href="/" prefetch={false}>Crear Cuenta</Link>
+          </Button>
+        </nav>
+      </header>
+      <main className="flex-1">
+        <section className="w-full py-20 md:py-32 lg:py-40 bg-card/50">
+          <div className="container px-4 md:px-6">
+            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
+               <div className="flex flex-col justify-center space-y-4">
+                <div className="space-y-2">
+                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
+                    La plataforma todo en uno para tu club deportivo
+                  </h1>
+                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                    Desde la gestión de miembros hasta la tesorería y las comunicaciones. SportsPanel simplifica la administración para que puedas enfocarte en lo que de verdad importa: el deporte.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 min-[400px]:flex-row">
+                  <Button asChild size="lg" className="group">
+                    <Link href="/" prefetch={false}>
+                      Crear Cuenta Gratis
+                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
+                    </Link>
                   </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                  <Command>
-                    <CommandInput placeholder="Buscar deporte..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontró el deporte.</CommandEmpty>
-                      <CommandGroup>
-                        {sports.map((s) => (
-                          <CommandItem
-                            key={s.value}
-                            value={s.value}
-                            onSelect={(currentValue) => {
-                              setSport(currentValue === sport ? "" : currentValue);
-                              setOpen(false);
-                            }}
-                          >
-                            <Check
-                              className={cn(
-                                "mr-2 h-4 w-4",
-                                sport === s.value ? "opacity-100" : "opacity-0"
-                              )}
-                            />
-                            {s.label}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
+                </div>
+              </div>
+              <img
+                src="https://placehold.co/600x400.png?text=App+Dashboard"
+                width="600"
+                height="400"
+                alt="Panel de SportsPanel"
+                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last lg:aspect-square"
+                data-ai-hint="app dashboard"
+              />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="club-color">Color del Club</Label>
-              <div className="flex items-center gap-2">
-                  <Input
-                    id="club-color"
-                    type="color"
-                    value={clubColor}
-                    onChange={(e) => setClubColor(e.target.value)}
-                    className="p-1 h-10 w-14"
-                  />
-                  <Input
-                    type="text"
-                    value={clubColor}
-                    onChange={(e) => setClubColor(e.target.value)}
-                    placeholder="#2563eb"
-                    className="w-full"
-                  />
+          </div>
+        </section>
+
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+          <div className="container px-4 md:px-6">
+            <div className="flex flex-col items-center justify-center space-y-4 text-center">
+              <div className="space-y-2">
+                <div className="inline-block rounded-lg bg-muted px-3 py-1 text-sm">
+                  Características Principales
+                </div>
+                <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                  Todo lo que tu club necesita
+                </h2>
+                <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                  Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo.
+                </p>
               </div>
             </div>
-             <div className="space-y-2">
-              <Label htmlFor="name">Tu Nombre</Label>
-              <Input id="name" placeholder="p.ej., Alex García" required value={name} onChange={(e) => setName(e.target.value)} />
+            <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
+              {features.map((feature, index) => (
+                <div key={index} className="flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm hover:shadow-md transition-shadow">
+                  <div className="p-3 rounded-full bg-primary/10 mb-4">
+                    {feature.icon}
+                  </div>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
+                </div>
+              ))}
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
-              <Input id="email" type="email" placeholder="m@ejemplo.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
-              <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Creando cuenta...' : 'Crear Cuenta'}
-            </Button>
-          </form>
-        </CardContent>
-         <CardFooter className="flex justify-center text-sm">
-            <p className="text-muted-foreground">
-                ¿Ya tienes una cuenta? <Link href="/login" className="text-primary hover:underline font-semibold">Inicia sesión</Link>
-            </p>
-        </CardFooter>
-      </Card>
+          </div>
+        </section>
+      </main>
+      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
+        <p className="text-xs text-muted-foreground">&copy; 2024 SportsPanel. Todos los derechos reservados.</p>
+        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
+          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Términos de Servicio
+          </Link>
+          <Link href="#" className="text-xs hover:underline underline-offset-4" prefetch={false}>
+            Política de Privacidad
+          </Link>
+        </nav>
+      </footer>
     </div>
   );
 }
-
-    
