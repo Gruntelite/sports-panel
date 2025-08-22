@@ -50,7 +50,7 @@ const benefits = [
             "Simplifica el proceso de actualización de información.",
         ],
         image: {
-            src: "https://placehold.co/500x400.png",
+            src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(13).png?alt=media&token=3ce9a165-0142-4bc0-97f7-8900a2245e97",
             alt: "Administración Eficiente",
             hint: "organización escritorio"
         }
@@ -64,7 +64,7 @@ const benefits = [
             "Simplifica el proceso de actualización de información.",
         ],
         image: {
-            src: "https://placehold.co/500x400.png",
+            src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(14).png?alt=media&token=dd1084fa-8dcb-479c-a014-55dad3a26415",
             alt: "Comunicación Centralizada",
             hint: "notificación móvil"
         }
@@ -78,7 +78,7 @@ const benefits = [
             "La directiva tiene una visión global de todo el club.",
         ],
         image: {
-            src: "https://placehold.co/500x400.png",
+            src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(15).png?alt=media&token=0984a6c9-c0ff-4e96-9612-72dd2726eaa4",
             alt: "Portal Unificado",
             hint: "personas conectadas"
         }
@@ -180,7 +180,7 @@ export default function LandingPage() {
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                 <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden cursor-pointer">
-                  <div className="absolute inset-0 bg-turquesa/80 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
+                   <div className="absolute inset-0 bg-accent/80 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
                   <div className="relative z-10 flex flex-col items-center w-full h-full">
                     <div className="flex items-center justify-center mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
                       {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
@@ -194,14 +194,14 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-6">
+        <section id="benefits" className="w-full py-12">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
                            Ahorra tiempo, reduce errores <br/> y mejora la comunicación
                         </h2>
-                        <p className="max-w-[900px] text-muted-foreground text-center md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                        <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                             SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.
                         </p>
                     </div>
