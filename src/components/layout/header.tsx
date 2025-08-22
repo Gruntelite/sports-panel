@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -19,6 +19,7 @@ const menuItems = [
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/staff", label: "Staff y Directiva", icon: UserCog},
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
+    { href: "/protocols", label: "Protocolos", icon: ClipboardList },
 ];
 
 export function Header() {

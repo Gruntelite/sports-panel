@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -11,6 +10,14 @@ export type Document = {
     ownerId?: string;
     ownerName?: string;
     category?: string;
+}
+
+export type Protocol = {
+    id?: string;
+    name: string;
+    url: string;
+    path: string;
+    createdAt: Timestamp;
 }
 
 export type Team = {
