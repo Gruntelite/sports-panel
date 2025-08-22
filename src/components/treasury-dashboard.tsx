@@ -751,12 +751,12 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pagos a Entrenadores ({timeRangeLabel})</CardTitle>
+                    <CardTitle className="text-sm font-medium">Gastos Totales ({timeRangeLabel})</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.coachPayments.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de todos los pagos a entrenadores.</p>
+                    <div className="text-2xl font-bold">{stats.monthlyExpenses.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
+                    <p className="text-xs text-muted-foreground">Suma de gastos recurrentes, puntuales y de personal.</p>
                 </CardContent>
             </Card>
              <Card>
@@ -771,12 +771,12 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Gastos Totales ({timeRangeLabel})</CardTitle>
+                    <CardTitle className="text-sm font-medium">Pagos a Cuerpo Técnico ({timeRangeLabel})</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
-                    <div className="text-2xl font-bold">{stats.monthlyExpenses.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de gastos recurrentes, puntuales y de personal.</p>
+                    <div className="text-2xl font-bold">{stats.coachPayments.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
+                    <p className="text-xs text-muted-foreground">Suma de todos los pagos a cuerpo técnico.</p>
                 </CardContent>
             </Card>
         </div>
