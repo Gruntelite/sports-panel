@@ -56,7 +56,7 @@ export default function LandingPage() {
         </nav>
       </header>
       <main className="flex-1">
-        <section className="w-full py-20 md:py-32 lg:py-40 bg-card/50">
+        <section className="w-full pt-20 md:pt-32 lg:pt-40">
           <div className="container px-4 md:px-6">
             <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
               <div className="space-y-4">
