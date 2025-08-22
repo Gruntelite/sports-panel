@@ -5,13 +5,14 @@ import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 
 const features = [
   {
@@ -90,6 +91,33 @@ const benefits = [
         }
     }
 ]
+
+const faqs = [
+  {
+    question: "¿Ofrecen un periodo de prueba gratuito?",
+    answer: "¡Sí! Ofrecemos una prueba gratuita de 15 días en cualquiera de nuestros planes. No necesitas introducir una tarjeta de crédito para empezar. Durante la prueba, tendrás acceso a todas las funcionalidades para que puedas ver cómo SportsPanel puede transformar la gestión de tu club."
+  },
+  {
+    question: "¿Qué ocurre cuando termina la prueba gratuita?",
+    answer: "Cuando termine tu prueba de 15 días, tus datos se guardarán, pero necesitarás suscribirte a uno de nuestros planes para continuar utilizando la plataforma. Te avisaremos antes de que termine para que puedas decidir sin presiones."
+  },
+  {
+    question: "¿Mis datos están seguros en la plataforma?",
+    answer: "La seguridad es nuestra máxima prioridad. Utilizamos la infraestructura de Google Cloud, una de las más seguras del mundo, para proteger tus datos. Todas las conexiones están encriptadas y realizamos copias de seguridad periódicas."
+  },
+  {
+    question: "¿Puedo cambiar de plan en cualquier momento?",
+    answer: "Por supuesto. Puedes cambiar a un plan superior o inferior en cualquier momento desde los ajustes de tu club. El cambio se aplicará en el siguiente ciclo de facturación."
+  },
+  {
+    question: "¿Qué tipo de soporte ofrecen?",
+    answer: "Ofrecemos soporte por correo electrónico para todos nuestros planes. Nuestro objetivo es responder a todas las consultas en menos de 24 horas. También contamos con una sección de ayuda con guías y tutoriales."
+  },
+  {
+    question: "¿SportsPanel se puede personalizar con el logo y los colores de mi club?",
+    answer: "¡Sí! Puedes personalizar la plataforma con el nombre, el logo y el color principal de tu club para que tanto los miembros del staff como las familias se sientan como en casa."
+  }
+];
 
 export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
@@ -185,7 +213,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-12">
+        <section id="features" className="w-full py-12 md:py-16">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -214,7 +242,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-12">
+        <section id="benefits" className="w-full py-12 md:py-16">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
@@ -296,14 +324,14 @@ export default function LandingPage() {
                          </>
                        )}
                     </div>
-                    <ul className="mt-6 space-y-3 flex-grow text-left">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                    <ul className="mt-6 space-y-3 flex-grow">
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
@@ -326,14 +354,14 @@ export default function LandingPage() {
                          </>
                        )}
                     </div>
-                     <ul className="mt-6 space-y-3 flex-grow text-left">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                     <ul className="mt-6 space-y-3 flex-grow">
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button className="mt-6 w-full">Empezar ahora</Button>
                 </div>
@@ -355,20 +383,48 @@ export default function LandingPage() {
                          </>
                        )}
                     </div>
-                    <ul className="mt-6 space-y-3 flex-grow text-left">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                    <ul className="mt-6 space-y-3 flex-grow">
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2 justify-center"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
             </div>
           </div>
         </section>
+        
+        <section id="faq" className="w-full py-12 md:py-16">
+            <div className="container px-4 md:px-6">
+                 <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                           Preguntas Frecuentes
+                        </h2>
+                        <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                            ¿Tienes dudas? Aquí tienes las respuestas a las preguntas más comunes.
+                        </p>
+                    </div>
+                </div>
+                <div className="mx-auto max-w-3xl">
+                    <Accordion type="single" collapsible className="w-full">
+                        {faqs.map((faq, index) => (
+                            <AccordionItem key={index} value={`item-${index}`}>
+                                <AccordionTrigger className="text-lg text-left">{faq.question}</AccordionTrigger>
+                                <AccordionContent className="text-base text-muted-foreground">
+                                    {faq.answer}
+                                </AccordionContent>
+                            </AccordionItem>
+                        ))}
+                    </Accordion>
+                </div>
+            </div>
+        </section>
+
 
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
