@@ -305,15 +305,10 @@ export default function LandingPage() {
                                     "{testimonial.quote}"
                                 </p>
                                 <div className="flex items-center gap-4 pt-4 border-t w-full">
-                                    <Avatar>
-                                    <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
-                                    <AvatarFallback>{testimonial.name.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
-                                    </Avatar>
                                     <div className="flex-1">
                                     <p className="font-semibold">{testimonial.name}</p>
                                     <p className="text-sm text-muted-foreground">{testimonial.role}</p>
                                     </div>
-                                    <Image src={testimonial.clubLogo} alt="Club Logo" width={40} height={40} className="rounded-full" />
                                 </div>
                                 </CardContent>
                             </Card>
