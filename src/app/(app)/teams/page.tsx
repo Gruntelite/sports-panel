@@ -55,6 +55,7 @@ export default function TeamsPage() {
   const [newTeamName, setNewTeamName] = useState("");
   const [newTeamMinAge, setNewTeamMinAge] = useState("");
   const [newTeamMaxAge, setNewTeamMaxAge] = useState("");
+  const [newTeamLevel, setNewTeamLevel] = useState("");
   const [newTeamImage, setNewTeamImage] = useState<File | null>(null);
 
   const [isDeleting, setIsDeleting] = useState(false);
@@ -113,6 +114,7 @@ export default function TeamsPage() {
       return {
         id: doc.id,
         name: data.name,
+        level: data.level,
         minAge: data.minAge,
         maxAge: data.maxAge,
         order: data.order ?? index,
@@ -151,6 +153,7 @@ export default function TeamsPage() {
         const maxOrder = teams.reduce((max, team) => Math.max(max, team.order || 0), 0);
         await addDoc(collection(db, "clubs", clubId, "teams"), {
             name: newTeamName,
+            level: newTeamLevel,
             minAge: newTeamMinAge ? Number(newTeamMinAge) : null,
             maxAge: newTeamMaxAge ? Number(newTeamMaxAge) : null,
             image: imageUrl,
@@ -162,6 +165,7 @@ export default function TeamsPage() {
         setNewTeamName("");
         setNewTeamMinAge("");
         setNewTeamMaxAge("");
+        setNewTeamLevel("");
         setNewTeamImage(null);
         if (clubId) fetchTeams(clubId); // Refresh data
     } catch (error) {
@@ -287,21 +291,27 @@ export default function TeamsPage() {
                       </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
-                      <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="team-name" className="text-right">Nombre</Label>
-                          <Input id="team-name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} className="col-span-3" />
+                      <div className="space-y-2">
+                          <Label htmlFor="team-name">Nombre</Label>
+                          <Input id="team-name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="team-min-age" className="text-right">Edad Mínima</Label>
-                          <Input id="team-min-age" type="number" value={newTeamMinAge} onChange={(e) => setNewTeamMinAge(e.target.value)} className="col-span-3" />
+                      <div className="space-y-2">
+                          <Label htmlFor="team-level">Nivel</Label>
+                          <Input id="team-level" placeholder="p.ej. Competición, Escuela" value={newTeamLevel} onChange={(e) => setNewTeamLevel(e.target.value)} />
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="team-max-age" className="text-right">Edad Máxima</Label>
-                          <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} className="col-span-3" />
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="team-min-age">Edad Mínima</Label>
+                            <Input id="team-min-age" type="number" value={newTeamMinAge} onChange={(e) => setNewTeamMinAge(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="team-max-age">Edad Máxima</Label>
+                            <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} />
+                        </div>
                       </div>
-                      <div className="grid grid-cols-4 items-center gap-4">
-                          <Label htmlFor="team-image" className="text-right">Imagen</Label>
-                          <Input id="team-image" type="file" accept="image/*" onChange={(e) => setNewTeamImage(e.target.files ? e.target.files[0] : null)} className="col-span-3" />
+                      <div className="space-y-2">
+                          <Label htmlFor="team-image">Imagen</Label>
+                          <Input id="team-image" type="file" accept="image/*" onChange={(e) => setNewTeamImage(e.target.files ? e.target.files[0] : null)} />
                       </div>
                   </div>
                   <DialogFooter>
@@ -349,6 +359,7 @@ export default function TeamsPage() {
                           <Link href={`/teams/${team.id}`}>
                             <CardTitle className="text-xl font-bold hover:underline">{team.name}</CardTitle>
                           </Link>
+                          {team.level && <CardDescription>{team.level}</CardDescription>}
                       </div>
                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>

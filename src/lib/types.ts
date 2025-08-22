@@ -23,6 +23,7 @@ export type Protocol = {
 export type Team = {
     id: string;
     name: string;
+    level?: string;
     minAge?: number;
     maxAge?: number;
     image: string;
@@ -38,8 +39,11 @@ export type Player = {
     name: string;
     lastName: string;
     sex?: 'masculino' | 'femenino';
+    season?: string;
     birthDate?: string;
     dni?: string;
+    nationality?: string;
+    healthCardNumber?: string;
     address?: string;
     city?: string;
     postalCode?: string;
@@ -67,6 +71,7 @@ export type Coach = {
     name:string;
     lastName: string;
     sex?: 'masculino' | 'femenino';
+    season?: string;
     role?: string;
     email: string; // Made mandatory
     phone?: string;
@@ -75,6 +80,8 @@ export type Coach = {
     avatar?: string;
     birthDate?: string;
     dni?: string;
+    nationality?: string;
+    healthCardNumber?: string;
     address?: string;
     city?: string;
     postalCode?: string;
