@@ -1,4 +1,6 @@
 
+"use client";
+
 import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
@@ -7,6 +9,9 @@ import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchiv
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Badge } from '@/components/ui/badge';
 
 const features = [
   {
@@ -87,6 +92,8 @@ const benefits = [
 ]
 
 export default function LandingPage() {
+  const [isYearly, setIsYearly] = React.useState(false);
+
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
        <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
@@ -172,7 +179,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-10 md:py-12">
+        <section id="features" className="w-full py-12 md:py-16">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -187,7 +194,7 @@ export default function LandingPage() {
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                  <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden">
-                    <div className="absolute inset-0 bg-turquesa -translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
+                    <div className="absolute inset-0 bg-primary -translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
                        <div className="mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
                          {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
@@ -201,7 +208,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-10 md:py-12">
+        <section id="benefits" className="w-full py-12 md:py-16">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
@@ -246,7 +253,7 @@ export default function LandingPage() {
             </div>
         </section>
 
-        <section id="pricing" className="w-full py-10 md:py-12 bg-muted/30">
+        <section id="pricing" className="w-full py-12 md:py-16 bg-muted/30">
           <div className="container px-4 md:px-6">
              <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                 <div className="space-y-2">
@@ -257,18 +264,26 @@ export default function LandingPage() {
                         Elige el plan que mejor se adapte a las necesidades de tu club.
                     </p>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Label htmlFor="billing-cycle">Mensual</Label>
+                  <Switch id="billing-cycle" checked={isYearly} onCheckedChange={setIsYearly} />
+                  <Label htmlFor="billing-cycle">Anual</Label>
+                  <Badge variant="secondary" className="bg-green-100 text-green-800">Ahorra 10%</Badge>
+                </div>
             </div>
              <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6">
                     <h3 className="text-2xl font-bold font-headline">Básico</h3>
                     <p className="text-muted-foreground mt-1">Ideal para clubs pequeños.</p>
                     <div className="mt-4">
-                        <span className="text-4xl font-bold">24,99€</span>
-                        <span className="text-muted-foreground">/mes</span>
+                        <span className="text-4xl font-bold">{isYearly ? "269.90€" : "24.99€"}</span>
+                        <span className="text-muted-foreground">{isYearly ? "/año" : "/mes"}</span>
                     </div>
                     <ul className="mt-6 space-y-3 flex-grow">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>80</b> jugadores</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Funcionalidades básicas</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
@@ -278,11 +293,13 @@ export default function LandingPage() {
                     <h3 className="text-2xl font-bold font-headline">Pro</h3>
                     <p className="text-muted-foreground mt-1">Perfecto para clubs en crecimiento.</p>
                      <div className="mt-4">
-                        <span className="text-4xl font-bold">34,99€</span>
-                        <span className="text-muted-foreground">/mes</span>
+                        <span className="text-4xl font-bold">{isYearly ? "377.90€" : "34.99€"}</span>
+                        <span className="text-muted-foreground">{isYearly ? "/año" : "/mes"}</span>
                     </div>
                      <ul className="mt-6 space-y-3 flex-grow">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>150</b> jugadores</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Todas las funciones del Básico</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de tesorería</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Soporte prioritario</span></li>
                     </ul>
                     <Button className="mt-6 w-full">Empezar ahora</Button>
@@ -292,12 +309,14 @@ export default function LandingPage() {
                     <h3 className="text-2xl font-bold font-headline">Élite</h3>
                     <p className="text-muted-foreground mt-1">Para clubs grandes y academias.</p>
                      <div className="mt-4">
-                        <span className="text-4xl font-bold">54,99€</span>
-                        <span className="text-muted-foreground">/mes</span>
+                        <span className="text-4xl font-bold">{isYearly ? "593.90€" : "54.99€"}</span>
+                        <span className="text-muted-foreground">{isYearly ? "/año" : "/mes"}</span>
                     </div>
                     <ul className="mt-6 space-y-3 flex-grow">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>300</b> jugadores</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Funciones avanzadas</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Todas las funciones del Pro</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Personalización avanzada</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Integraciones a medida</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
