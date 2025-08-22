@@ -213,7 +213,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-12 md:py-16">
+        <section id="features" className="w-full py-6 md:py-8">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -242,7 +242,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-12 md:py-16">
+        <section id="benefits" className="w-full py-6 md:py-8 bg-turquesa/20">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
@@ -254,32 +254,35 @@ export default function LandingPage() {
                         </p>
                     </div>
                 </div>
-                <div className="mx-auto grid max-w-6xl gap-12">
+                <div className="mx-auto grid max-w-6xl gap-8">
                     {benefits.map((benefit, index) => (
-                        <div key={index} className={`grid gap-10 lg:grid-cols-2 lg:gap-16 items-center ${index % 2 !== 0 ? "lg:grid-flow-row-dense" : ""}`}>
-                            <div className={index % 2 !== 0 ? "lg:col-start-2" : ""}>
-                                <div className="space-y-4">
-                                    <h3 className="text-2xl font-bold font-headline tracking-tight">{benefit.title}</h3>
-                                    <p className="text-muted-foreground text-lg">{benefit.subtitle}</p>
-                                </div>
+                        <div key={index} className={cn(
+                            "grid gap-10 lg:grid-cols-2 lg:gap-12 items-center p-8 rounded-2xl",
+                            index === 0 ? "bg-gray-800 text-white" : "bg-white",
+                        )}>
+                            <div className={cn("space-y-4", index % 2 !== 0 && "lg:order-last")}>
+                                <h3 className="text-2xl font-bold font-headline tracking-tight">{benefit.title}</h3>
+                                <p className={cn(index === 0 ? "text-gray-300" : "text-muted-foreground")}>{benefit.subtitle}</p>
                                 <ul className="mt-6 space-y-4">
                                     {benefit.points.map((point, pIndex) => (
                                         <li key={pIndex} className="flex items-start gap-3">
-                                            <CheckCircle className="h-6 w-6 text-green-500 mt-0.5 flex-shrink-0" />
+                                            <CheckCircle className="h-6 w-6 text-turquesa mt-0.5 flex-shrink-0" />
                                             <span>{point}</span>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
-                            <div className="flex items-center justify-center p-6 bg-muted/40 rounded-lg">
-                                <Image
-                                    src={benefit.image.src}
-                                    alt={benefit.image.alt}
-                                    width={500}
-                                    height={400}
-                                    className="rounded-lg shadow-lg"
-                                    data-ai-hint={benefit.image.hint}
-                                />
+                            <div className="flex items-center justify-center">
+                                <div className={cn("p-6 rounded-xl", index === 0 ? "bg-gray-700/50" : "bg-turquesa/10")}>
+                                    <Image
+                                        src={benefit.image.src}
+                                        alt={benefit.image.alt}
+                                        width={450}
+                                        height={350}
+                                        className="rounded-lg shadow-lg"
+                                        data-ai-hint={benefit.image.hint}
+                                    />
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -325,7 +328,7 @@ export default function LandingPage() {
                        )}
                     </div>
                     <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
