@@ -3,9 +3,10 @@ import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
 const features = [
   {
@@ -100,6 +101,9 @@ export default function LandingPage() {
            <Link href="#benefits" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Beneficios
           </Link>
+          <Link href="#pricing" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Planes
+          </Link>
           <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Iniciar Sesión
           </Link>
@@ -122,6 +126,9 @@ export default function LandingPage() {
                         </Link>
                         <Link href="#benefits" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                             Beneficios
+                        </Link>
+                        <Link href="#pricing" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Planes
                         </Link>
                         <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                             Iniciar Sesión
@@ -165,7 +172,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-6">
+        <section id="features" className="w-full py-10 md:py-12">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -179,27 +186,27 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden cursor-pointer">
-                   <div className="absolute inset-0 bg-accent/80 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
-                  <div className="relative z-10 flex flex-col items-center w-full h-full">
-                    <div className="flex items-center justify-center mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
-                      {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
+                 <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden">
+                    <div className="absolute inset-0 bg-turquesa -translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
+                       <div className="mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
+                         {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
+                       </div>
+                       <h3 className="text-xl font-bold mb-2 group-hover:text-white transition-colors duration-300 ease-in-out">{feature.title}</h3>
+                       <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 ease-in-out">{feature.description}</p>
                     </div>
-                    <h3 className="text-xl font-bold mb-2 group-hover:text-white transition-colors duration-300 ease-in-out">{feature.title}</h3>
-                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 ease-in-out">{feature.description}</p>
-                  </div>
                 </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-12">
+        <section id="benefits" className="w-full py-10 md:py-12">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                           Ahorra tiempo, reduce errores <br/> y mejora la comunicación
+                           Ahorra tiempo, reduce errores <br /> y mejora la comunicación
                         </h2>
                         <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                             SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.
@@ -237,6 +244,65 @@ export default function LandingPage() {
                     ))}
                 </div>
             </div>
+        </section>
+
+        <section id="pricing" className="w-full py-10 md:py-12 bg-muted/30">
+          <div className="container px-4 md:px-6">
+             <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                <div className="space-y-2">
+                    <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                       Planes y Precios
+                    </h2>
+                    <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                        Elige el plan que mejor se adapte a las necesidades de tu club.
+                    </p>
+                </div>
+            </div>
+             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
+                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6">
+                    <h3 className="text-2xl font-bold font-headline">Básico</h3>
+                    <p className="text-muted-foreground mt-1">Ideal para clubs pequeños.</p>
+                    <div className="mt-4">
+                        <span className="text-4xl font-bold">24,99€</span>
+                        <span className="text-muted-foreground">/mes</span>
+                    </div>
+                    <ul className="mt-6 space-y-3 flex-grow">
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>80</b> jugadores</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Funcionalidades básicas</span></li>
+                    </ul>
+                    <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
+                </div>
+
+                <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6">
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
+                    <h3 className="text-2xl font-bold font-headline">Pro</h3>
+                    <p className="text-muted-foreground mt-1">Perfecto para clubs en crecimiento.</p>
+                     <div className="mt-4">
+                        <span className="text-4xl font-bold">34,99€</span>
+                        <span className="text-muted-foreground">/mes</span>
+                    </div>
+                     <ul className="mt-6 space-y-3 flex-grow">
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>150</b> jugadores</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Soporte prioritario</span></li>
+                    </ul>
+                    <Button className="mt-6 w-full">Empezar ahora</Button>
+                </div>
+
+                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6">
+                    <h3 className="text-2xl font-bold font-headline">Élite</h3>
+                    <p className="text-muted-foreground mt-1">Para clubs grandes y academias.</p>
+                     <div className="mt-4">
+                        <span className="text-4xl font-bold">54,99€</span>
+                        <span className="text-muted-foreground">/mes</span>
+                    </div>
+                    <ul className="mt-6 space-y-3 flex-grow">
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>300</b> jugadores</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Funciones avanzadas</span></li>
+                    </ul>
+                    <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
+                </div>
+            </div>
+          </div>
         </section>
 
       </main>
