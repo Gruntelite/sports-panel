@@ -894,7 +894,7 @@ export default function EditTeamPage() {
                                    <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
@@ -907,6 +907,16 @@ export default function EditTeamPage() {
                                    <Label htmlFor="dni">DNI</Label>
                                    <Input id="dni" value={currentData.dni || ''} onChange={handleMemberInputChange} />
                                </div>
+                               <div className="space-y-2">
+                                    <Label htmlFor="sex">Sexo</Label>
+                                    <Select value={(currentData as any).sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                                        <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="masculino">Masculino</SelectItem>
+                                            <SelectItem value="femenino">Femenino</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
@@ -1088,5 +1098,4 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
-
     

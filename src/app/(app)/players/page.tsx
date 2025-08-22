@@ -610,7 +610,7 @@ export default function PlayersPage() {
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
                        <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
                                    <Input id="name" autoComplete="off" value={playerData.name || ''} onChange={handleInputChange} />
@@ -619,6 +619,8 @@ export default function PlayersPage() {
                                    <Label htmlFor="lastName">Apellidos</Label>
                                    <Input id="lastName" autoComplete="off" value={playerData.lastName || ''} onChange={handleInputChange} />
                                </div>
+                           </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
@@ -627,26 +629,34 @@ export default function PlayersPage() {
                                   />
                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
                                </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="dni">DNI</Label>
                                    <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="sex">Sexo</Label>
+                                    <Select value={playerData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                                        <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="masculino">Masculino</SelectItem>
+                                            <SelectItem value="femenino">Femenino</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="address">Dirección</Label>
                                    <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
                                </div>
-                           </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
+                               <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
                                    <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
                                </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
-                               </div>
+                           </div>
+                            <div className="space-y-2">
+                               <Label htmlFor="postalCode">Código Postal</Label>
+                               <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
                            </div>
                        </div>
                        </div>

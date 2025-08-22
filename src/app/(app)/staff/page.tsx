@@ -68,6 +68,7 @@ import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, 
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Staff } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function StaffPage() {
   const { toast } = useToast();
@@ -143,6 +144,10 @@ export default function StaffPage() {
       setNewImage(file);
       setImagePreview(URL.createObjectURL(file));
     }
+  };
+  
+  const handleSelectChange = (id: keyof Staff, value: string) => {
+    setStaffData(prev => ({ ...prev, [id]: value }));
   };
 
   const handleOpenModal = (mode: 'add' | 'edit', member?: Staff) => {
@@ -386,6 +391,16 @@ export default function StaffPage() {
                              <Label htmlFor="phone">Teléfono</Label>
                              <Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} />
                          </div>
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="sex">Sexo</Label>
+                        <Select value={staffData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="masculino">Masculino</SelectItem>
+                                <SelectItem value="femenino">Femenino</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </div>
             </div>

@@ -37,6 +37,7 @@ export type Player = {
     id: string;
     name: string;
     lastName: string;
+    sex?: 'masculino' | 'femenino';
     birthDate?: string;
     dni?: string;
     address?: string;
@@ -65,6 +66,7 @@ export type Coach = {
     id: string;
     name:string;
     lastName: string;
+    sex?: 'masculino' | 'femenino';
     role?: string;
     email: string; // Made mandatory
     phone?: string;
@@ -91,6 +93,7 @@ export type Staff = {
     id: string;
     name: string;
     lastName: string;
+    sex?: 'masculino' | 'femenino';
     role: string;
     email?: string;
     phone?: string;

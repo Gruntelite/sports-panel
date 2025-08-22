@@ -640,15 +640,21 @@ export default function CoachesPage() {
                                    <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
                                </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
+                                    <Label htmlFor="sex">Sexo</Label>
+                                    <Select value={coachData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                                        <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="masculino">Masculino</SelectItem>
+                                            <SelectItem value="femenino">Femenino</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="address">Dirección</Label>
                                 <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
                                    <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
@@ -657,6 +663,10 @@ export default function CoachesPage() {
                                    <Label htmlFor="postalCode">Código Postal</Label>
                                    <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
+                                </div>
                            </div>
                        </div>
                        </div>
