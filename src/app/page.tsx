@@ -67,20 +67,6 @@ const benefits = [
             hint: "notificación móvil"
         }
     },
-    {
-        title: "Toma el Control de tu Tesorería",
-        subtitle: "Visibilidad total sobre las finanzas de tu club.",
-        points: [
-            "Visualiza rápidamente quién ha pagado y quién no.",
-            "Genera informes de ingresos y gastos con un solo clic.",
-            "Simplifica la gestión de cuotas y otros cobros.",
-        ],
-        image: {
-            src: "https://placehold.co/500x400.png",
-            alt: "Gestión Financiera",
-            hint: "gráficos finanzas"
-        }
-    },
      {
         title: "Una App para Todos",
         subtitle: "Un portal único para directivos, entrenadores y familias.",
