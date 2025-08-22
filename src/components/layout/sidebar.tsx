@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -21,10 +21,11 @@ const menuItems = [
     { href: "/players", label: "Jugadores", icon: Users },
     { href: "/coaches", label: "Entrenadores", icon: UserSquare },
     { href: "/teams", label: "Equipos", icon: Shield },
-    { href: "/staff", label: "Staff y Directiva", icon: Briefcase},
+    { href: "/staff", label: "Socios y Directiva", icon: Briefcase},
     { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
+    { href: "/incidents", label: "Incidencias", icon: AlertTriangle },
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
     { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
     { href: "/protocols", label: "Protocolos", icon: ClipboardList },

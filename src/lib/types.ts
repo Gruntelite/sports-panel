@@ -64,6 +64,11 @@ export type Player = {
     hasMissingData?: boolean;
     kitSize?: string;
     documents?: Document[];
+    startDate?: string;
+    endDate?: string;
+    hasInterruption?: boolean;
+    interruptionYears?: number[];
+    medicalCheckCompleted?: boolean;
 }
 
 export type Coach = {
@@ -94,6 +99,10 @@ export type Coach = {
     monthlyPayment?: number;
     kitSize?: string;
     documents?: Document[];
+    startDate?: string;
+    endDate?: string;
+    hasInterruption?: boolean;
+    interruptionYears?: number[];
 }
 
 export type Staff = {
@@ -107,6 +116,18 @@ export type Staff = {
     avatar?: string;
     hasMissingData?: boolean;
     staffId?: string;
+}
+
+export type Socio = {
+    id: string;
+    name: string;
+    lastName: string;
+    email: string;
+    phone?: string;
+    dni?: string;
+    paymentType: 'monthly' | 'annual';
+    fee: number;
+    avatar?: string;
 }
 
 export type TeamMember = {
@@ -137,12 +158,13 @@ export type User = {
     id: string;
     name: string;
     email: string;
-    role: 'super-admin' | 'Admin' | 'Entrenador' | 'Family' | 'Staff';
+    role: 'super-admin' | 'Admin' | 'Entrenador' | 'Family' | 'Staff' | 'Socio';
     avatar?: string;
     authUid?: string; // To link to Firebase Auth user if needed
     playerId?: string;
     coachId?: string;
     staffId?: string;
+    socioId?: string;
 }
 
 export type OneTimePayment = {
@@ -231,4 +253,13 @@ export type ClubSettings = {
     fromEmail?: string;
     sendgridApiKey?: string;
     senderVerificationStatus?: 'unconfigured' | 'pending' | 'verified' | 'failed';
+}
+
+export type Incident = {
+    id: string;
+    date: string;
+    type: 'Lesión' | 'Comportamiento' | 'Administrativa' | 'Otro';
+    involved: string[];
+    description: string;
+    status: 'Abierta' | 'En Progreso' | 'Resuelta';
 }

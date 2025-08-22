@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -13,6 +12,8 @@ import {
   Contact,
   AlertCircle,
   Briefcase,
+  Users,
+  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -66,9 +67,11 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Staff } from "@/lib/types";
+import type { Staff, Socio } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 
 export default function StaffPage() {
   const { toast } = useToast();
@@ -76,11 +79,16 @@ export default function StaffPage() {
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [staff, setStaff] = useState<Staff[]>([]);
+  const [socios, setSocios] = useState<Socio[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [modalType, setModalType] = useState<'staff' | 'socio'>('staff');
+
   const [staffData, setStaffData] = useState<Partial<Staff>>({});
-  const [staffToDelete, setStaffToDelete] = useState<Staff | null>(null);
+  const [socioData, setSocioData] = useState<Partial<Socio>>({});
+
+  const [itemToDelete, setItemToDelete] = useState<Staff | Socio | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
@@ -103,7 +111,7 @@ export default function StaffPage() {
     return () => unsubscribe();
   }, []);
   
-  const hasMissingData = (member: any): boolean => {
+  const hasMissingStaffData = (member: any): boolean => {
     const requiredFields = ['role', 'email', 'phone'];
     return requiredFields.some(field => member[field] === undefined || member[field] === null || member[field] === '');
   };
@@ -113,18 +121,21 @@ export default function StaffPage() {
     try {
         const staffCol = collection(db, "clubs", clubId, "staff");
         const staffSnapshot = await getDocs(staffCol);
-
         const staffList = staffSnapshot.docs.map(doc => {
             const data = doc.data();
             return {
                 id: doc.id,
                 ...data,
                 avatar: data.avatar || `https://placehold.co/40x40.png?text=${(data.name || '').charAt(0)}`,
-                hasMissingData: hasMissingData(data)
+                hasMissingData: hasMissingStaffData(data)
             } as Staff;
         });
-        
         setStaff(staffList);
+
+        const sociosCol = collection(db, "clubs", clubId, "socios");
+        const sociosSnapshot = await getDocs(sociosCol);
+        const sociosList = sociosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Socio));
+        setSocios(sociosList);
 
     } catch (error) {
         console.error("Error fetching data: ", error);
@@ -134,8 +145,13 @@ export default function StaffPage() {
   };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setStaffData(prev => ({ ...prev, [id]: value }));
+    const { id, value, type } = e.target;
+    const data = type === 'number' ? (value === '' ? '' : Number(value)) : value;
+    if (modalType === 'staff') {
+      setStaffData(prev => ({ ...prev, [id]: data }));
+    } else {
+      setSocioData(prev => ({ ...prev, [id]: data }));
+    }
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,16 +162,32 @@ export default function StaffPage() {
     }
   };
   
-  const handleSelectChange = (id: keyof Staff, value: string) => {
-    setStaffData(prev => ({ ...prev, [id]: value }));
+  const handleSelectChange = (id: keyof (Staff | Socio), value: string) => {
+    if (modalType === 'staff') {
+      setStaffData(prev => ({ ...prev, [id as keyof Staff]: value }));
+    } else {
+      setSocioData(prev => ({...prev, [id as keyof Socio]: value as 'monthly' | 'annual' }));
+    }
   };
 
-  const handleOpenModal = (mode: 'add' | 'edit', member?: Staff) => {
+  const handleOpenModal = (mode: 'add' | 'edit', type: 'staff' | 'socio', member?: Staff | Socio) => {
     setModalMode(mode);
-    setStaffData(mode === 'edit' && member ? member : {});
+    setModalType(type);
+    if(type === 'staff') {
+      setStaffData(mode === 'edit' && member ? (member as Staff) : {});
+      setSocioData({});
+    } else {
+      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0 });
+      setStaffData({});
+    }
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
+  }
+
+  const handleSave = async () => {
+    if (modalType === 'staff') await handleSaveStaff();
+    else await handleSaveSocio();
   }
 
   const handleSaveStaff = async () => {
@@ -191,16 +223,14 @@ export default function StaffPage() {
         const staffDocRef = doc(db, "clubs", clubId, "staff", staffData.id);
         await updateDoc(staffDocRef, dataToSave);
         
-        // Also update the user's name if it changed
         const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffData.email));
         const userSnapshot = await getDocs(userQuery);
         if(!userSnapshot.empty){
             const userDocRef = userSnapshot.docs[0].ref;
             await updateDoc(userDocRef, { name: `${staffData.name} ${staffData.lastName}` });
         }
-
         toast({ title: "Miembro actualizado", description: `${staffData.name} ha sido actualizado.` });
-      } 
+      }
       
       setIsModalOpen(false);
       setStaffData({});
@@ -212,25 +242,87 @@ export default function StaffPage() {
       setLoading(false);
     }
   };
+  
+  const handleSaveSocio = async () => {
+    if (!socioData.name || !socioData.lastName || !socioData.email || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email son obligatorios." });
+        return;
+    }
 
-  const handleDeleteStaff = async () => {
-    if (!staffToDelete || !clubId) return;
+    setLoading(true);
+    try {
+      let imageUrl = socioData.avatar;
+
+      if (newImage) {
+        if (socioData.avatar && !socioData.avatar.includes('placehold.co')) {
+            try {
+                const oldImageRef = ref(storage, socioData.avatar);
+                await deleteObject(oldImageRef);
+            } catch (storageError) {
+                console.warn("Could not delete old image:", storageError);
+            }
+        }
+        const imageRef = ref(storage, `socio-avatars/${clubId}/${uuidv4()}`);
+        await uploadBytes(imageRef, newImage);
+        imageUrl = await getDownloadURL(imageRef);
+      }
+      
+      const dataToSave = {
+        ...socioData,
+        avatar: imageUrl || socioData.avatar || `https://placehold.co/40x40.png?text=${(socioData.name || '').charAt(0)}`,
+      };
+
+      let socioId = socioData.id;
+
+      if (modalMode === 'edit' && socioId) {
+        const socioDocRef = doc(db, "clubs", clubId, "socios", socioId);
+        await updateDoc(socioDocRef, dataToSave);
+        toast({ title: "Socio actualizado", description: `${socioData.name} ha sido actualizado.` });
+      } else {
+        const socioDocRef = await addDoc(collection(db, "clubs", clubId, "socios"), dataToSave);
+        socioId = socioDocRef.id;
+
+        const userRef = doc(collection(db, "clubs", clubId, "users"));
+        await setDoc(userRef, {
+            email: dataToSave.email,
+            name: `${dataToSave.name} ${dataToSave.lastName}`,
+            role: 'Socio',
+            socioId: socioId,
+        });
+
+        toast({ title: "Socio añadido", description: `${socioData.name} ha sido añadido.` });
+      }
+      
+      setIsModalOpen(false);
+      setSocioData({});
+      fetchData(clubId);
+    } catch (error) {
+        console.error("Error saving socio: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el socio." });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
+  const handleDelete = async () => {
+    if (!itemToDelete || !clubId) return;
 
     setIsDeleting(true);
+    const itemType = 'role' in itemToDelete ? 'staff' : 'socio';
+    const collectionName = itemType === 'staff' ? 'staff' : 'socios';
+
     try {
-        if (staffToDelete.avatar && !staffToDelete.avatar.includes('placehold.co')) {
-            const imageRef = ref(storage, staffToDelete.avatar);
+        if (itemToDelete.avatar && !itemToDelete.avatar.includes('placehold.co')) {
+            const imageRef = ref(storage, itemToDelete.avatar);
             await deleteObject(imageRef).catch(e => console.warn("Could not delete image:", e));
         }
 
         const batch = writeBatch(db);
+        const itemDocRef = doc(db, "clubs", clubId, collectionName, itemToDelete.id);
+        batch.delete(itemDocRef);
 
-        // Delete from staff collection
-        const staffDocRef = doc(db, "clubs", clubId, "staff", staffToDelete.id);
-        batch.delete(staffDocRef);
-
-        // Delete from users collection
-        const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffToDelete.email));
+        const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", itemToDelete.email));
         const userSnapshot = await getDocs(userQuery);
         if(!userSnapshot.empty) {
             batch.delete(userSnapshot.docs[0].ref);
@@ -238,18 +330,18 @@ export default function StaffPage() {
 
         await batch.commit();
 
-        toast({ title: "Miembro eliminado", description: `${staffToDelete.name} ${staffToDelete.lastName} ha sido eliminado.`});
+        toast({ title: "Miembro eliminado", description: `${itemToDelete.name} ${itemToDelete.lastName} ha sido eliminado.`});
         fetchData(clubId);
     } catch (error) {
-        console.error("Error deleting staff: ", error);
+        console.error("Error deleting item: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar al miembro." });
     } finally {
         setIsDeleting(false);
-        setStaffToDelete(null);
+        setItemToDelete(null);
     }
   };
 
-  if (loading && !staff.length) {
+  if (loading && staff.length === 0 && socios.length === 0) {
     return (
         <div className="flex items-center justify-center h-full">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -257,174 +349,300 @@ export default function StaffPage() {
     )
   }
 
+  const currentData = modalType === 'staff' ? staffData : socioData;
+
   return (
     <TooltipProvider>
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Staff y Directiva</CardTitle>
-              <CardDescription>
-                Gestiona el personal administrativo y directivo de tu club.
-              </CardDescription>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {staff.map(member => (
-                <TableRow key={member.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
-                        <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                       <div className="flex items-center gap-2">
-                        <span>{member.name} {member.lastName}</span>
-                        {member.hasMissingData && (
-                           <Tooltip>
-                              <TooltipTrigger>
-                                <AlertCircle className="h-4 w-4 text-destructive" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Faltan datos por rellenar</p>
-                              </TooltipContent>
-                           </Tooltip>
-                        )}
-                      </div>
+      <div className="flex flex-col gap-6">
+       <div>
+        <h1 className="text-2xl font-bold font-headline tracking-tight">Socios y Directiva</h1>
+        <p className="text-muted-foreground">
+          Gestiona el personal administrativo, directivo y los socios de tu club.
+        </p>
+      </div>
+
+       <Tabs defaultValue="staff" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="staff">Staff y Directiva</TabsTrigger>
+          <TabsTrigger value="socios">Socios</TabsTrigger>
+        </TabsList>
+        <TabsContent value="staff">
+            <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Staff y Directiva</CardTitle>
+                      <CardDescription>
+                        Personal administrativo y directivo del club.
+                      </CardDescription>
                     </div>
-                  </TableCell>
-                  <TableCell>{member.role}</TableCell>
-                  <TableCell>{member.email || 'N/A'}</TableCell>
-                  <TableCell>{member.phone || 'N/A'}</TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Alternar menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleOpenModal('edit', member)}>Editar</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => setStaffToDelete(member)}>
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-        <CardFooter>
-          <div className="text-xs text-muted-foreground">
-            Mostrando <strong>{staff.length}</strong> de <strong>{staff.length}</strong> miembros
-          </div>
-        </CardFooter>
-      </Card>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Cargo</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Teléfono</TableHead>
+                        <TableHead>
+                          <span className="sr-only">Acciones</span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {staff.map(member => (
+                        <TableRow key={member.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
+                                <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex items-center gap-2">
+                                <span>{member.name} {member.lastName}</span>
+                                {member.hasMissingData && (
+                                  <Tooltip>
+                                      <TooltipTrigger>
+                                        <AlertCircle className="h-4 w-4 text-destructive" />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p>Faltan datos por rellenar</p>
+                                      </TooltipContent>
+                                  </Tooltip>
+                                )}
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{member.role}</TableCell>
+                          <TableCell>{member.email || 'N/A'}</TableCell>
+                          <TableCell>{member.phone || 'N/A'}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Alternar menú</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>Editar</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(member)}>
+                                  Eliminar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+            </Card>
+        </TabsContent>
+        <TabsContent value="socios">
+          <Card>
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle>Socios</CardTitle>
+                      <CardDescription>
+                        Miembros del club que no son jugadores ni staff.
+                      </CardDescription>
+                    </div>
+                    <Button onClick={() => handleOpenModal('add', 'socio')}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Añadir Socio
+                    </Button>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nombre</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Cuota</TableHead>
+                        <TableHead>
+                          <span className="sr-only">Acciones</span>
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {socios.map(socio => (
+                        <TableRow key={socio.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="h-9 w-9">
+                                <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
+                                <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
+                              </Avatar>
+                              <span>{socio.name} {socio.lastName}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell>{socio.email}</TableCell>
+                          <TableCell>{socio.fee}€ / {socio.paymentType === 'monthly' ? 'mes' : 'año'}</TableCell>
+                          <TableCell>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button aria-haspopup="true" size="icon" variant="ghost">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                  <span className="sr-only">Alternar menú</span>
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>Editar</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
+                                  Eliminar
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+            </Card>
+        </TabsContent>
+      </Tabs>
+      </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-xl">
             <DialogHeader>
-                <DialogTitle>Editar Miembro</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo' : 'Editar'} {modalType === 'staff' ? 'Miembro de Staff' : 'Socio'}</DialogTitle>
                 <DialogDescription>
-                    Modifica la información del miembro del staff.
+                    Modifica la información del miembro.
                 </DialogDescription>
             </DialogHeader>
             <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
                 <div className="flex flex-col items-center gap-4 pt-5">
                     <Label>Foto</Label>
                     <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || staffData.avatar} />
+                        <AvatarImage src={imagePreview || currentData?.avatar} />
                         <AvatarFallback>
-                            {(staffData.name || 'S').charAt(0)}
-                            {(staffData.lastName || 'T').charAt(0)}
+                            {(currentData?.name || 'S').charAt(0)}
+                            {(currentData?.lastName || 'T').charAt(0)}
                         </AvatarFallback>
                     </Avatar>
                      <Button asChild variant="outline" size="sm">
-                        <label htmlFor="staff-image" className="cursor-pointer">
+                        <label htmlFor="member-image" className="cursor-pointer">
                             <Upload className="mr-2 h-3 w-3"/>
                             Subir
                         </label>
                     </Button>
-                    <Input id="staff-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                    <Input id="member-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                 </div>
                 
-                 <div className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {modalType === 'staff' ? (
+                   <div className="space-y-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="name">Nombre</Label>
+                              <Input id="name" autoComplete="off" value={staffData.name || ''} onChange={handleInputChange} />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="lastName">Apellidos</Label>
+                              <Input id="lastName" autoComplete="off" value={staffData.lastName || ''} onChange={handleInputChange} />
+                          </div>
+                      </div>
+                       <div className="space-y-2">
+                           <Label htmlFor="role">Cargo</Label>
+                           <Input id="role" placeholder="p.ej., Coordinador, Directivo" value={staffData.role || ''} onChange={handleInputChange} />
+                       </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                               <Label htmlFor="email">Email</Label>
+                               <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} readOnly/>
+                           </div>
+                           <div className="space-y-2">
+                               <Label htmlFor="phone">Teléfono</Label>
+                               <Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} />
+                           </div>
+                      </div>
+                       <div className="space-y-2">
+                          <Label htmlFor="sex">Sexo</Label>
+                          <Select value={staffData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                              <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                              <SelectContent>
+                                  <SelectItem value="masculino">Masculino</SelectItem>
+                                  <SelectItem value="femenino">Femenino</SelectItem>
+                              </SelectContent>
+                          </Select>
+                      </div>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="name">Nombre</Label>
+                              <Input id="name" autoComplete="off" value={socioData.name || ''} onChange={handleInputChange} />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="lastName">Apellidos</Label>
+                              <Input id="lastName" autoComplete="off" value={socioData.lastName || ''} onChange={handleInputChange} />
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="name">Nombre</Label>
-                            <Input id="name" autoComplete="off" value={staffData.name || ''} onChange={handleInputChange} />
+                            <Label htmlFor="email">Email</Label>
+                            <Input id="email" type="email" value={socioData.email || ''} onChange={handleInputChange} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="lastName">Apellidos</Label>
-                            <Input id="lastName" autoComplete="off" value={staffData.lastName || ''} onChange={handleInputChange} />
+                            <Label htmlFor="phone">Teléfono</Label>
+                            <Input id="phone" type="tel" value={socioData.phone || ''} onChange={handleInputChange} />
                         </div>
-                    </div>
-                     <div className="space-y-2">
-                         <Label htmlFor="role">Cargo</Label>
-                         <Input id="role" placeholder="p.ej., Coordinador, Directivo" value={staffData.role || ''} onChange={handleInputChange} />
-                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                             <Label htmlFor="email">Email</Label>
-                             <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} readOnly/>
-                         </div>
-                         <div className="space-y-2">
-                             <Label htmlFor="phone">Teléfono</Label>
-                             <Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} />
-                         </div>
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="sex">Sexo</Label>
-                        <Select value={staffData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="masculino">Masculino</SelectItem>
-                                <SelectItem value="femenino">Femenino</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
+                      </div>
+                      <div className="space-y-2">
+                          <Label htmlFor="dni">DNI</Label>
+                          <Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="paymentType">Tipo de Cuota</Label>
+                            <Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="monthly">Mensual</SelectItem>
+                                    <SelectItem value="annual">Anual</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="fee">Importe Cuota (€)</Label>
+                            <Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} />
+                        </div>
+                      </div>
+                  </div>
+                )}
             </div>
             <DialogFooter>
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
-                <Button type="button" onClick={handleSaveStaff} disabled={loading}>
+                <Button type="button" onClick={handleSave} disabled={loading}>
                     {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
                 </Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
-      <AlertDialog open={!!staffToDelete} onOpenChange={(open) => !open && setStaffToDelete(null)}>
+      <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {staffToDelete?.name} {staffToDelete?.lastName} (de la lista de staff y de la lista de usuarios).
+              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {itemToDelete?.name} {itemToDelete?.lastName}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteStaff} disabled={isDeleting}>
+            <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
               {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
             </AlertDialogAction>
           </AlertDialogFooter>
