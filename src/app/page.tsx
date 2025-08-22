@@ -1,3 +1,4 @@
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive } from "lucide-react";
@@ -59,16 +60,16 @@ export default function LandingPage() {
             <div className="flex flex-col items-center space-y-4 text-center">
               <div className="space-y-2">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                  All-in-One Sports Club Management SaaS
+                  La plataforma todo en uno para la gestión de tu club deportivo
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Simplify and digitize your sports club's operations with a centralized, modern, and intuitive platform.
+                  Simplifica y digitaliza las operaciones de tu club con una plataforma centralizada, moderna e intuitiva.
                 </p>
               </div>
               <div className="space-y-2">
                 <Button asChild size="lg">
                   <Link href="#" prefetch={false}>
-                    Request a Demo
+                    Solicita una Demo
                   </Link>
                 </Button>
               </div>
