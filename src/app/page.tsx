@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 const features = [
@@ -38,6 +38,65 @@ const features = [
   },
 ];
 
+const benefits = [
+    {
+        title: "Ahorra Tiempo en Administración",
+        subtitle: "Digitaliza las fichas y centraliza la información.",
+        points: [
+            "Reduce el papeleo y los errores manuales.",
+            "Accede a la información de cualquier miembro en segundos.",
+            "Simplifica el proceso de inscripción y renovación.",
+        ],
+        image: {
+            src: "https://placehold.co/500x400.png",
+            alt: "Administración Eficiente",
+            hint: "organización escritorio"
+        }
+    },
+    {
+        title: "Comunicación Directa y Eficaz",
+        subtitle: "Mantén a todos informados sin esfuerzo.",
+        points: [
+            "Envía comunicados a equipos específicos o a todo el club.",
+            "Notifica cambios de horario o cancelaciones al instante.",
+            "Centraliza todas las comunicaciones en una sola plataforma.",
+        ],
+        image: {
+            src: "https://placehold.co/500x400.png",
+            alt: "Comunicación Centralizada",
+            hint: "notificación móvil"
+        }
+    },
+    {
+        title: "Toma el Control de tu Tesorería",
+        subtitle: "Visibilidad total sobre las finanzas de tu club.",
+        points: [
+            "Visualiza rápidamente quién ha pagado y quién no.",
+            "Genera informes de ingresos y gastos con un solo clic.",
+            "Simplifica la gestión de cuotas y otros cobros.",
+        ],
+        image: {
+            src: "https://placehold.co/500x400.png",
+            alt: "Gestión Financiera",
+            hint: "gráficos finanzas"
+        }
+    },
+     {
+        title: "Una App para Todos",
+        subtitle: "Un portal único para directivos, entrenadores y familias.",
+        points: [
+            "Las familias pueden consultar horarios y actualizar sus datos.",
+            "Los entrenadores gestionan sus equipos y la asistencia.",
+            "La directiva tiene una visión global de todo el club.",
+        ],
+        image: {
+            src: "https://placehold.co/500x400.png",
+            alt: "Portal Unificado",
+            hint: "personas conectadas"
+        }
+    }
+]
+
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
@@ -49,6 +108,9 @@ export default function LandingPage() {
         <nav className="ml-auto flex items-center gap-4 sm:gap-6">
           <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Características
+          </Link>
+           <Link href="#benefits" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Beneficios
           </Link>
           <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Iniciar Sesión
@@ -89,7 +151,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-12 md:py-24 lg:py-32">
+        <section id="features" className="w-full py-12 md:py-24 lg:py-32 bg-muted/40">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -114,6 +176,52 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section id="benefits" className="w-full py-12 md:py-24 lg:py-32">
+            <div className="container px-4 md:px-6">
+                 <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                           Ahorra tiempo, reduce errores y mejora la comunicación
+                        </h2>
+                        <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                            SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.
+                        </p>
+                    </div>
+                </div>
+                <div className="mx-auto grid max-w-6xl gap-12">
+                    {benefits.map((benefit, index) => (
+                        <div key={index} className={`grid gap-10 lg:grid-cols-2 lg:gap-16 items-center ${index % 2 !== 0 ? "lg:grid-flow-row-dense" : ""}`}>
+                            <div className={index % 2 !== 0 ? "lg:col-start-2" : ""}>
+                                <div className="space-y-4">
+                                    <h3 className="text-2xl font-bold font-headline tracking-tight">{benefit.title}</h3>
+                                    <p className="text-muted-foreground text-lg">{benefit.subtitle}</p>
+                                </div>
+                                <ul className="mt-6 space-y-4">
+                                    {benefit.points.map((point, pIndex) => (
+                                        <li key={pIndex} className="flex items-start gap-3">
+                                            <CheckCircle className="h-6 w-6 text-green-500 mt-0.5 flex-shrink-0" />
+                                            <span>{point}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                            <div className="flex items-center justify-center p-6 bg-muted/40 rounded-lg">
+                                <Image
+                                    src={benefit.image.src}
+                                    alt={benefit.image.alt}
+                                    width={500}
+                                    height={400}
+                                    className="rounded-lg shadow-lg"
+                                    data-ai-hint={benefit.image.hint}
+                                />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
         <p className="text-xs text-muted-foreground">&copy; 2024 SportsPanel. Todos los derechos reservados.</p>
