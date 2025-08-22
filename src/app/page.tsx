@@ -46,7 +46,10 @@ export default function LandingPage() {
           <Logo width={32} height={32}/>
           <span className="text-xl font-bold font-headline">SportsPanel</span>
         </Link>
-        <nav className="ml-auto flex gap-4 sm:gap-6">
+        <nav className="ml-auto flex items-center gap-4 sm:gap-6">
+          <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+            Características
+          </Link>
           <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Iniciar Sesión
           </Link>
