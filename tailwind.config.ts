@@ -1,3 +1,4 @@
+
 import type {Config} from 'tailwindcss';
 import plugin from 'tailwindcss/plugin';
 
@@ -28,6 +29,7 @@ export default {
         lg: '0 8px 16px var(--tw-shadow-color)',
       },
       colors: {
+        turquesa: '#14b8a6',
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
         ring: 'hsl(var(--ring))',

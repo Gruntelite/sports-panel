@@ -7,32 +7,32 @@ import { Logo } from "@/components/logo";
 
 const features = [
   {
-    icon: <Users className="h-8 w-8 text-primary" />,
+    icon: <Users className="h-8 w-8" />,
     title: "Gestión Centralizada de Miembros",
     description: "Administra fichas de jugadores, entrenadores y staff en un único lugar. Accede a toda la información al instante.",
   },
   {
-    icon: <CircleDollarSign className="h-8 w-8 text-primary" />,
+    icon: <CircleDollarSign className="h-8 w-8" />,
     title: "Tesorería y Cuotas",
     description: "Lleva un control claro de los ingresos por cuotas, gastos y la salud financiera de tu club sin complicaciones.",
   },
    {
-    icon: <Mail className="h-8 w-8 text-primary" />,
+    icon: <Mail className="h-8 w-8" />,
     title: "Comunicación Integrada",
     description: "Envía correos electrónicos a equipos, grupos o a todo el club directamente desde la plataforma.",
   },
   {
-    icon: <Calendar className="h-8 w-8 text-primary" />,
+    icon: <Calendar className="h-8 w-8" />,
     title: "Calendario y Horarios",
     description: "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar.",
   },
    {
-    icon: <Home className="h-8 w-8 text-primary" />,
+    icon: <Home className="h-8 w-8" />,
     title: "Portal para Familias y Miembros",
     description: "Ofrece un acceso privado para que cada miembro pueda consultar y actualizar sus datos de forma segura.",
   },
   {
-    icon: <FolderArchive className="h-8 w-8 text-primary" />,
+    icon: <FolderArchive className="h-8 w-8" />,
     title: "Almacén de Documentos",
     description: "Guarda y comparte documentos importantes como normativas o autorizaciones de forma segura en la nube.",
   },
@@ -151,12 +151,15 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <div key={index} className="flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm hover:shadow-md transition-shadow">
-                  <div className="p-3 rounded-full bg-primary/10 mb-4">
-                    {feature.icon}
+                <div key={index} className="group relative flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm transition-all duration-300 overflow-hidden">
+                  <div className="absolute inset-0 bg-turquesa/80 transition-all duration-500 ease-in-out transform scale-y-0 group-hover:scale-y-100 origin-bottom"></div>
+                  <div className="relative z-10 transition-colors duration-300">
+                    <div className="p-3 rounded-full bg-primary/10 mb-4 transition-colors duration-300 group-hover:bg-white/20">
+                      <div className="text-primary group-hover:text-white transition-colors duration-300">{feature.icon}</div>
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 transition-colors duration-300 group-hover:text-white">{feature.title}</h3>
+                    <p className="text-muted-foreground transition-colors duration-300 group-hover:text-white/90">{feature.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
               ))}
             </div>
