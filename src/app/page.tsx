@@ -3,8 +3,9 @@ import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3 } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 
 const features = [
   {
@@ -87,12 +88,12 @@ const benefits = [
 export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
-      <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+       <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
         <Link href="#" className="flex items-center justify-center gap-2" prefetch={false}>
           <Logo width={32} height={32}/>
           <span className="text-xl font-bold font-headline">SportsPanel</span>
         </Link>
-        <nav className="ml-auto flex items-center gap-4 sm:gap-6">
+        <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
           <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
             Características
           </Link>
@@ -106,6 +107,32 @@ export default function LandingPage() {
             <Link href="/" prefetch={false}>Crear Cuenta</Link>
           </Button>
         </nav>
+        <div className="ml-auto md:hidden">
+            <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="outline" size="icon">
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Abrir menú</span>
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                    <div className="grid gap-4 p-4">
+                        <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Características
+                        </Link>
+                        <Link href="#benefits" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Beneficios
+                        </Link>
+                        <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Iniciar Sesión
+                        </Link>
+                        <Button asChild size="lg">
+                            <Link href="/" prefetch={false}>Crear Cuenta</Link>
+                        </Button>
+                    </div>
+                </SheetContent>
+            </Sheet>
+        </div>
       </header>
       <main className="flex-1">
         <section className="w-full py-12 md:py-16 lg:py-20">
@@ -138,7 +165,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="features" className="w-full py-12">
+        <section id="features" className="w-full py-6">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
               <div className="space-y-2">
@@ -153,7 +180,7 @@ export default function LandingPage() {
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                 <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden cursor-pointer">
-                  <div className="absolute inset-0 bg-turquesa translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
+                  <div className="absolute inset-0 bg-turquesa/80 translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
                   <div className="relative z-10 flex flex-col items-center w-full h-full">
                     <div className="flex items-center justify-center mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
                       {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
@@ -167,14 +194,14 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="benefits" className="w-full py-12">
+        <section id="benefits" className="w-full py-6">
             <div className="container px-4 md:px-6">
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
                            Ahorra tiempo, reduce errores <br/> y mejora la comunicación
                         </h2>
-                        <p className="max-w-[900px] text-muted-foreground text-center text-lg/relaxed lg:text-base/relaxed xl:text-lg/relaxed">
+                        <p className="max-w-[900px] text-muted-foreground text-center md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                             SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.
                         </p>
                     </div>
