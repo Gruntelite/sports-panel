@@ -56,33 +56,22 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="w-full py-20 md:py-32 lg:py-40 bg-card/50">
           <div className="container px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-               <div className="flex flex-col justify-center space-y-4">
-                <div className="space-y-2">
-                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    La plataforma todo en uno para tu club deportivo
-                  </h1>
-                  <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                    Desde la gestión de miembros hasta la tesorería y las comunicaciones. SportsPanel simplifica la administración para que puedas enfocarte en lo que de verdad importa: el deporte.
-                  </p>
-                </div>
-                <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <Button asChild size="lg" className="group">
-                    <Link href="/" prefetch={false}>
-                      Crear Cuenta Gratis
-                      <ArrowRight className="ml-2 h-5 w-5 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                  </Button>
-                </div>
+            <div className="flex flex-col items-center space-y-4 text-center">
+              <div className="space-y-2">
+                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
+                  All-in-One Sports Club Management SaaS
+                </h1>
+                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                  Simplify and digitize your sports club's operations with a centralized, modern, and intuitive platform.
+                </p>
               </div>
-              <img
-                src="https://placehold.co/600x400.png?text=App+Dashboard"
-                width="600"
-                height="400"
-                alt="Panel de SportsPanel"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last lg:aspect-square"
-                data-ai-hint="app dashboard"
-              />
+              <div className="space-y-2">
+                <Button asChild size="lg">
+                  <Link href="#" prefetch={false}>
+                    Request a Demo
+                  </Link>
+                </Button>
+              </div>
             </div>
           </div>
         </section>
