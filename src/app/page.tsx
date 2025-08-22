@@ -1,5 +1,6 @@
 
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive } from "lucide-react";
 import { Logo } from "@/components/logo";
@@ -72,6 +73,15 @@ export default function LandingPage() {
                     Empieza tu prueba gratuita
                   </Link>
                 </Button>
+              </div>
+               <div className="mt-12">
+                <Image
+                  src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(8).png?alt=media&token=bad8a437-33b6-447d-8a02-a545266e7ba4"
+                  alt="SportsPanel App Screenshot"
+                  width={1890}
+                  height={1063}
+                  className="rounded-lg shadow-2xl"
+                />
               </div>
             </div>
           </div>
