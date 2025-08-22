@@ -151,15 +151,12 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <div key={index} className="group relative flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm transition-all duration-300 overflow-hidden">
-                  <div className="absolute inset-0 bg-turquesa/80 transition-all duration-500 ease-in-out transform scale-y-0 group-hover:scale-y-100 origin-bottom"></div>
-                  <div className="relative z-10 transition-colors duration-300">
-                    <div className="p-3 rounded-full bg-primary/10 mb-4 transition-colors duration-300 group-hover:bg-white/20">
-                      <div className="text-primary group-hover:text-white transition-colors duration-300">{feature.icon}</div>
-                    </div>
-                    <h3 className="text-xl font-bold mb-2 transition-colors duration-300 group-hover:text-white">{feature.title}</h3>
-                    <p className="text-muted-foreground transition-colors duration-300 group-hover:text-white/90">{feature.description}</p>
+                <div key={index} className="flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm">
+                  <div className="flex items-center justify-center mb-4 text-primary">
+                    {feature.icon}
                   </div>
+                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
+                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
               ))}
             </div>
