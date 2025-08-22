@@ -895,7 +895,7 @@ export default function SchedulesPage() {
                           <AccordionContent className="pt-4 space-y-4">
                             <div className="space-y-4">
                               {pendingAssignments.map(assignment => (
-                                <div key={assignment.id} className="flex items-end gap-2 p-2 rounded-lg border bg-muted/30">
+                                <div key={assignment.id} className="flex items-end gap-2 p-3 rounded-lg border bg-card shadow-sm">
                                     <div className="grid grid-cols-1 gap-2 flex-1">
                                       <div className="space-y-1">
                                         <Label className="text-xs">Equipo</Label>
