@@ -57,10 +57,10 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="w-full py-20 md:py-32 lg:py-40 bg-card/50">
           <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
+            <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
+              <div className="space-y-4">
                 <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                  La plataforma todo en uno para la gestión de tu club deportivo
+                  La Gestión de tu Club, <br /> Simplificada al Máximo
                 </h1>
                 <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                   Simplifica y digitaliza las operaciones de tu club con una plataforma centralizada, moderna e intuitiva.
@@ -69,7 +69,7 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <Button asChild size="lg">
                   <Link href="#" prefetch={false}>
-                    Solicita una Demo
+                    Empieza tu prueba gratuita
                   </Link>
                 </Button>
               </div>
