@@ -94,6 +94,12 @@ const benefits = [
 export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
 
+  const pricing = {
+    basic: { monthly: 24.99, yearly: 269 },
+    pro: { monthly: 34.99, yearly: 377 },
+    elite: { monthly: 54.99, yearly: 593 }
+  };
+
   return (
     <div className="flex flex-col min-h-dvh bg-background text-foreground">
        <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
@@ -194,7 +200,7 @@ export default function LandingPage() {
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
                  <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden">
-                    <div className="absolute inset-0 bg-turquesa -translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
+                   <div className="absolute inset-0 bg-primary -translate-y-full group-hover:translate-y-0 transition-transform duration-700 ease-in-out"></div>
                     <div className="relative z-10 flex flex-col items-center justify-center w-full h-full">
                        <div className="mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
                          {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
@@ -272,15 +278,25 @@ export default function LandingPage() {
                 </div>
             </div>
              <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6">
+                
+                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
                     <h3 className="text-2xl font-bold font-headline">Básico</h3>
-                    <p className="text-muted-foreground mt-1">Ideal para clubs pequeños.</p>
-                    <div className="mt-4">
-                        <span className="text-4xl font-bold">{isYearly ? "269.90€" : "24.99€"}</span>
-                        <span className="text-muted-foreground">{isYearly ? "/año" : "/mes"}</span>
+                    <p className="text-muted-foreground mt-1">Hasta <b>80</b> jugadores</p>
+                    <div className="mt-4 flex items-baseline justify-center gap-2">
+                       {isYearly ? (
+                         <>
+                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.basic.monthly * 12)}€</span>
+                           <span className="text-4xl font-bold">{pricing.basic.yearly}€</span>
+                           <span className="text-muted-foreground self-end">/año</span>
+                         </>
+                       ) : (
+                         <>
+                           <span className="text-4xl font-bold">{pricing.basic.monthly}€</span>
+                           <span className="text-muted-foreground self-end">/mes</span>
+                         </>
+                       )}
                     </div>
-                    <ul className="mt-6 space-y-3 flex-grow">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>80</b> jugadores</span></li>
+                    <ul className="mt-6 space-y-3 flex-grow text-left">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
@@ -292,16 +308,25 @@ export default function LandingPage() {
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
 
-                <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6">
+                <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 text-center">
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
                     <h3 className="text-2xl font-bold font-headline">Pro</h3>
-                    <p className="text-muted-foreground mt-1">Perfecto para clubs en crecimiento.</p>
-                     <div className="mt-4">
-                        <span className="text-4xl font-bold">{isYearly ? "377.90€" : "34.99€"}</span>
-                        <span className="text-muted-foreground">{isYearly ? "/año" : "/mes"}</span>
+                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> jugadores</p>
+                     <div className="mt-4 flex items-baseline justify-center gap-2">
+                       {isYearly ? (
+                         <>
+                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
+                           <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
+                           <span className="text-muted-foreground self-end">/año</span>
+                         </>
+                       ) : (
+                         <>
+                           <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                           <span className="text-muted-foreground self-end">/mes</span>
+                         </>
+                       )}
                     </div>
-                     <ul className="mt-6 space-y-3 flex-grow">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>150</b> jugadores</span></li>
+                     <ul className="mt-6 space-y-3 flex-grow text-left">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
@@ -313,15 +338,24 @@ export default function LandingPage() {
                     <Button className="mt-6 w-full">Empezar ahora</Button>
                 </div>
 
-                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6">
+                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
                     <h3 className="text-2xl font-bold font-headline">Élite</h3>
-                    <p className="text-muted-foreground mt-1">Para clubs grandes y academias.</p>
-                     <div className="mt-4">
-                        <span className="text-4xl font-bold">{isYearly ? "593.90€" : "54.99€"}</span>
-                        <span className="text-muted-foreground">{isYearly ? "/año" : "/mes"}</span>
+                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> jugadores</p>
+                     <div className="mt-4 flex items-baseline justify-center gap-2">
+                       {isYearly ? (
+                         <>
+                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.elite.monthly * 12)}€</span>
+                           <span className="text-4xl font-bold">{pricing.elite.yearly}€</span>
+                           <span className="text-muted-foreground self-end">/año</span>
+                         </>
+                       ) : (
+                         <>
+                           <span className="text-4xl font-bold">{pricing.elite.monthly}€</span>
+                           <span className="text-muted-foreground self-end">/mes</span>
+                         </>
+                       )}
                     </div>
-                    <ul className="mt-6 space-y-3 flex-grow">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta <b>300</b> jugadores</span></li>
+                    <ul className="mt-6 space-y-3 flex-grow text-left">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
