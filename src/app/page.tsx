@@ -1,4 +1,5 @@
 
+import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -151,12 +152,15 @@ export default function LandingPage() {
             </div>
             <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 py-12 sm:grid-cols-2 lg:grid-cols-3">
               {features.map((feature, index) => (
-                <div key={index} className="flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm">
-                  <div className="flex items-center justify-center mb-4 text-primary">
-                    {feature.icon}
+                <div key={index} className="relative group flex flex-col items-center text-center p-6 rounded-lg border bg-card shadow-sm overflow-hidden cursor-pointer">
+                  <div className="absolute inset-0 bg-accent/80 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-in-out"></div>
+                  <div className="relative z-10 flex flex-col items-center w-full h-full">
+                    <div className="flex items-center justify-center mb-4 text-primary group-hover:text-white transition-colors duration-300 ease-in-out">
+                      {React.cloneElement(feature.icon, { className: "h-8 w-8" })}
+                    </div>
+                    <h3 className="text-xl font-bold mb-2 group-hover:text-white transition-colors duration-300 ease-in-out">{feature.title}</h3>
+                    <p className="text-muted-foreground group-hover:text-white/90 transition-colors duration-300 ease-in-out">{feature.description}</p>
                   </div>
-                  <h3 className="text-xl font-bold mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground">{feature.description}</p>
                 </div>
               ))}
             </div>
