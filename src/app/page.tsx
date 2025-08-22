@@ -316,15 +316,15 @@ export default function LandingPage() {
                         {testimonials.map((testimonial, index) => (
                         <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
                             <div className="p-1 h-full">
-                            <Card className="flex flex-col justify-between h-full">
-                                <CardContent className="p-6 flex flex-col items-start gap-4">
-                                <p className="text-lg font-medium leading-relaxed">
+                            <Card className="flex flex-col h-full overflow-hidden shadow-lg border-0">
+                                <CardContent className="p-6 flex flex-col items-start gap-4 flex-grow">
+                                <p className="text-lg font-medium leading-relaxed flex-grow">
                                     "{testimonial.quote}"
                                 </p>
-                                <div className="flex items-center gap-4 pt-4 border-t w-full">
-                                    <div className="flex-1">
-                                    <p className="font-semibold">{testimonial.name}</p>
-                                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                                <div className="w-full pt-4 mt-auto">
+                                    <div className="bg-turquesa/20 p-4 rounded-md">
+                                        <p className="font-semibold text-turquesa">{testimonial.name}</p>
+                                        <p className="text-sm text-turquesa/80">{testimonial.role}</p>
                                     </div>
                                 </div>
                                 </CardContent>
@@ -426,7 +426,7 @@ export default function LandingPage() {
                        )}
                     </div>
                     <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
