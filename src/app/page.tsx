@@ -219,7 +219,7 @@ export default function LandingPage() {
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                     <div className="space-y-2">
                         <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                           Ahorra tiempo, reduce errores <br/> y mejora la comunicación
+                           Ahorra tiempo, reduce errores <br /> y mejora la comunicación
                         </h2>
                         <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                             SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.
@@ -281,7 +281,7 @@ export default function LandingPage() {
                 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
                     <h3 className="text-2xl font-bold font-headline">Básico</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>80</b> jugadores</p>
+                    <p className="text-muted-foreground mt-1">Hasta <b>100</b> usuarios</p>
                     <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
@@ -303,7 +303,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Soporte estándar</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
@@ -311,7 +311,7 @@ export default function LandingPage() {
                 <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 text-center">
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
                     <h3 className="text-2xl font-bold font-headline">Pro</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> jugadores</p>
+                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> usuarios</p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
@@ -333,14 +333,14 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Soporte prioritario</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button className="mt-6 w-full">Empezar ahora</Button>
                 </div>
 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
                     <h3 className="text-2xl font-bold font-headline">Élite</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> jugadores</p>
+                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> usuarios</p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
@@ -362,7 +362,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación básica</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Soporte prioritario</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
                 </div>
