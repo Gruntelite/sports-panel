@@ -13,6 +13,9 @@ import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Carousel, CarouselContent, CarouselItem, CarouselNext, CarouselPrevious } from '@/components/ui/carousel';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 const features = [
   {
@@ -46,6 +49,37 @@ const features = [
     description: "Guarda y comparte documentos importantes como normativas o autorizaciones de forma segura en la nube.",
   },
 ];
+
+const testimonials = [
+    {
+        name: "Carlos Sánchez",
+        role: "Presidente, Club Deportivo Águilas",
+        quote: "SportsPanel ha revolucionado nuestra gestión. Hemos reducido el tiempo administrativo a la mitad y la comunicación con las familias es ahora instantánea. ¡Imprescindible!",
+        avatar: "https://placehold.co/100x100.png?text=CS",
+        clubLogo: "https://placehold.co/40x40.png?text=CDA"
+    },
+    {
+        name: "Laura Jiménez",
+        role: "Coordinadora, Unión Deportiva Norte",
+        quote: "La gestión de horarios y calendarios es increíblemente intuitiva. Tener toda la información de los equipos en un solo lugar nos ha ahorrado incontables horas de trabajo y emails.",
+        avatar: "https://placehold.co/100x100.png?text=LJ",
+        clubLogo: "https://placehold.co/40x40.png?text=UDN"
+    },
+    {
+        name: "Miguel Ángel Roca",
+        role: "Tesorero, Academia de Fútbol Central",
+        quote: "La función de tesorería es fantástica. Por fin tenemos un control claro sobre las cuotas y los gastos. La planificación financiera ahora es mucho más sencilla y transparente para la directiva.",
+        avatar: "https://placehold.co/100x100.png?text=MR",
+        clubLogo: "https://placehold.co/40x40.png?text=AFC"
+    },
+     {
+        name: "Sofía Navarro",
+        role: "Entrenadora, CF Femenino Rayo",
+        quote: "Como entrenadora, valoro poder comunicarme directamente con los padres de mis jugadoras a través de la plataforma. Es rápido, seguro y todo queda registrado. ¡Un gran acierto!",
+        avatar: "https://placehold.co/100x100.png?text=SN",
+        clubLogo: "https://placehold.co/40x40.png?text=CFR"
+    }
+]
 
 const benefits = [
     {
@@ -123,9 +157,9 @@ export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
 
   const pricing = {
-    basic: { monthly: 24.99, yearly: 269 },
-    pro: { monthly: 34.99, yearly: 377 },
-    elite: { monthly: 54.99, yearly: 593 }
+    basic: { monthly: 29.99, yearly: Math.round(29.99 * 12 * 0.9) },
+    pro: { monthly: 39.99, yearly: Math.round(39.99 * 12 * 0.9) },
+    elite: { monthly: 59.99, yearly: Math.round(59.99 * 12 * 0.9) }
   };
 
   return (
@@ -241,6 +275,58 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <section id="testimonials" className="w-full py-12 md:py-16">
+            <div className="container px-4 md:px-6">
+                <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                    <div className="space-y-2">
+                        <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                           Lo que dicen nuestros clubs
+                        </h2>
+                        <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                            Descubre por qué clubs de todos los tamaños confían en SportsPanel para su gestión diaria.
+                        </p>
+                    </div>
+                </div>
+                <Carousel
+                    opts={{
+                        align: "start",
+                        loop: true,
+                    }}
+                    className="w-full max-w-5xl mx-auto"
+                    >
+                    <CarouselContent>
+                        {testimonials.map((testimonial, index) => (
+                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                            <div className="p-1 h-full">
+                            <Card className="flex flex-col justify-between h-full">
+                                <CardContent className="p-6 flex flex-col items-start gap-4">
+                                <p className="text-lg font-medium leading-relaxed">
+                                    "{testimonial.quote}"
+                                </p>
+                                <div className="flex items-center gap-4 pt-4 border-t w-full">
+                                    <Avatar>
+                                    <AvatarImage src={testimonial.avatar} alt={testimonial.name} />
+                                    <AvatarFallback>{testimonial.name.split(" ").map(n=>n[0]).join("")}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex-1">
+                                    <p className="font-semibold">{testimonial.name}</p>
+                                    <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                                    </div>
+                                    <Image src={testimonial.clubLogo} alt="Club Logo" width={40} height={40} className="rounded-full" />
+                                </div>
+                                </CardContent>
+                            </Card>
+                            </div>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious className="-left-4 md:-left-12"/>
+                    <CarouselNext className="-right-4 md:-right-12"/>
+                </Carousel>
+            </div>
+        </section>
+
 
         <section id="benefits" className="w-full py-6 md:py-8 bg-turquesa/20">
             <div className="container px-4 md:px-6">
@@ -444,3 +530,5 @@ export default function LandingPage() {
     </div>
   );
 }
+
+    

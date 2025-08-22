@@ -31,6 +31,12 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
+const pricing = {
+    basic: { monthly: 29.99, yearly: Math.round(29.99 * 12 * 0.9) },
+    pro: { monthly: 39.99, yearly: Math.round(39.99 * 12 * 0.9) },
+    elite: { monthly: 59.99, yearly: Math.round(59.99 * 12 * 0.9) }
+};
+
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
@@ -179,60 +185,73 @@ export default function ClubSettingsPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                    <Card className={cn("flex flex-col", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
-                        <CardHeader>
-                            <CardTitle className="text-xl">Básico</CardTitle>
-                            <CardDescription>Ideal para clubs pequeños que están empezando.</CardDescription>
-                            <p className="text-3xl font-bold pt-2">24,99 €<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-3">
-                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Hasta <b>80</b> jugadores</span></div>
-                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Funcionalidades básicas</span></div>
-                        </CardContent>
-                        <CardHeader>
-                            <Button disabled={currentPlan === 'basic'}>
+                    <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
+                        <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
+                        <p className="text-muted-foreground mt-1">Hasta <b>100</b> usuarios</p>
+                        <div className="mt-4 flex items-baseline justify-center gap-2">
+                            <span className="text-4xl font-bold">{pricing.basic.monthly}€</span>
+                            <span className="text-muted-foreground self-end">/mes</span>
+                        </div>
+                        <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                        </ul>
+                         <Button variant="outline" className="mt-6 w-full" disabled={currentPlan === 'basic'}>
                                 {currentPlan === 'basic' ? 'Plan Actual' : 'Seleccionar Plan'}
-                            </Button>
-                        </CardHeader>
+                        </Button>
                     </Card>
-                    <Card className={cn("flex flex-col relative", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
-                         <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
-                        <CardHeader>
-                            <CardTitle className="text-xl">Pro</CardTitle>
-                            <CardDescription>Perfecto para clubs en crecimiento y con más equipos.</CardDescription>
-                            <p className="text-3xl font-bold pt-2">34,99 €<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-3">
-                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Hasta <b>150</b> jugadores</span></div>
-                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Soporte prioritario</span></div>
-                        </CardContent>
-                        <CardHeader>
-                           <Button disabled={currentPlan === 'pro'}>
-                                {currentPlan === 'pro' ? 'Plan Actual' : 'Seleccionar Plan'}
-                            </Button>
-                        </CardHeader>
+
+                     <Card className={cn("relative flex flex-col p-6 text-center", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
+                        <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
+                        <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
+                        <p className="text-muted-foreground mt-1">Hasta <b>150</b> usuarios</p>
+                        <div className="mt-4 flex items-baseline justify-center gap-2">
+                            <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                            <span className="text-muted-foreground self-end">/mes</span>
+                        </div>
+                         <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                        </ul>
+                         <Button className="mt-6 w-full" disabled={currentPlan === 'pro'}>
+                             {currentPlan === 'pro' ? 'Plan Actual' : 'Seleccionar Plan'}
+                         </Button>
                     </Card>
-                    <Card className={cn("flex flex-col", currentPlan === 'elite' && "border-primary ring-2 ring-primary")}>
-                        <CardHeader>
-                            <CardTitle className="text-xl">Élite</CardTitle>
-                            <CardDescription>La solución completa para clubs grandes y academias.</CardDescription>
-                             <p className="text-3xl font-bold pt-2">54,99 €<span className="text-sm font-normal text-muted-foreground">/mes</span></p>
-                        </CardHeader>
-                        <CardContent className="flex-grow space-y-3">
-                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Hasta <b>300</b> jugadores</span></div>
-                            <div className="flex items-center gap-2 text-sm"><CheckCircle className="h-4 w-4 text-green-500" /> <span>Funciones avanzadas</span></div>
-                        </CardContent>
-                        <CardHeader>
-                            <Button disabled={currentPlan === 'elite'}>
-                                {currentPlan === 'elite' ? 'Plan Actual' : 'Seleccionar Plan'}
-                            </Button>
-                        </CardHeader>
+
+                    <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'elite' && "border-primary ring-2 ring-primary")}>
+                        <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
+                        <p className="text-muted-foreground mt-1">Hasta <b>300</b> usuarios</p>
+                        <div className="mt-4 flex items-baseline justify-center gap-2">
+                            <span className="text-4xl font-bold">{pricing.elite.monthly}€</span>
+                            <span className="text-muted-foreground self-end">/mes</span>
+                        </div>
+                        <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                            <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                        </ul>
+                        <Button variant="outline" className="mt-6 w-full" disabled={currentPlan === 'elite'}>
+                            {currentPlan === 'elite' ? 'Plan Actual' : 'Seleccionar Plan'}
+                        </Button>
                     </Card>
                 </CardContent>
             </Card>
         </div>
     );
 }
-    
 
     
