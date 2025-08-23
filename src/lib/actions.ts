@@ -6,6 +6,7 @@ import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timesta
 import { db, auth } from './firebase'; // Use client SDK
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import type { ClubSettings } from "./types";
+import nodemailer from "nodemailer";
 
 
 type VerificationInput = {
@@ -81,31 +82,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
   }
 }
 
-async function getSendPulseAccessToken(apiUserId: string, apiSecret: string): Promise<string | null> {
-    try {
-        const response = await fetch('https://api.sendpulse.com/oauth/access_token', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                grant_type: 'client_credentials',
-                client_id: apiUserId,
-                client_secret: apiSecret,
-            }),
-        });
-        if (!response.ok) {
-            console.error("Failed to get SendPulse access token", await response.json());
-            return null;
-        }
-        const data = await response.json();
-        return data.access_token;
-    } catch (error) {
-        console.error("Error getting SendPulse access token:", error);
-        return null;
-    }
-}
-
-
-export async function sendEmailWithSendPulseAction({
+export async function sendEmailWithSmtpAction({
     clubId,
     recipients,
     subject,
@@ -129,50 +106,35 @@ export async function sendEmailWithSendPulseAction({
         }
         
         const settings = settingsSnap.data() as ClubSettings;
-        const apiUserId = settings.sendPulseApiUserId;
-        const apiSecret = settings.sendPulseApiSecret;
-        const senderEmail = settings.sendPulseFromEmail;
+        const { smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromEmail, clubName } = settings;
         
-        if (!apiUserId || !apiSecret || !senderEmail) {
-             return { success: false, error: "La configuración de SendPulse no está completa. Por favor, revísala." };
+        if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || !smtpFromEmail) {
+             return { success: false, error: "La configuración SMTP no está completa. Por favor, revísala en los ajustes." };
         }
 
-        const accessToken = await getSendPulseAccessToken(apiUserId, apiSecret);
-
-        if (!accessToken) {
-            return { success: false, error: "No se pudo autenticar con SendPulse. Revisa tus credenciales." };
-        }
-
-        const response = await fetch('https://api.sendpulse.com/smtp/emails', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
+        const transporter = nodemailer.createTransport({
+            host: smtpHost,
+            port: Number(smtpPort),
+            secure: Number(smtpPort) === 465, // true for 465, false for other ports
+            auth: {
+                user: smtpUser,
+                pass: smtpPassword,
             },
-            body: JSON.stringify({
-                email: {
-                    html: htmlContent,
-                    text: "Por favor, visualiza este correo en un cliente compatible con HTML.",
-                    subject: subject,
-                    from: {
-                        name: settings.clubName || "Club",
-                        email: senderEmail
-                    },
-                    to: recipients
-                }
-            })
         });
 
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("SendPulse API Error:", errorData);
-            return { success: false, error: `Error de SendPulse: ${errorData.message || 'Error desconocido'}` };
+        for (const recipient of recipients) {
+            await transporter.sendMail({
+                from: `"${clubName || 'Tu Club'}" <${smtpFromEmail}>`,
+                to: recipient.email,
+                subject: subject,
+                html: htmlContent,
+            });
         }
 
-        return { success: true };
+        return { success: true, count: recipients.length };
 
     } catch (error: any) {
-        console.error("Error sending email via SendPulse:", error);
-        return { success: false, error: "No se pudo enviar el correo a través de SendPulse." };
+        console.error("Error sending email via SMTP:", error);
+        return { success: false, error: `Error de SMTP: ${error.message}` };
     }
 }

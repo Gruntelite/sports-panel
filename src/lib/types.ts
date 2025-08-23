@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -253,9 +254,11 @@ export type ClubSettings = {
     clubName?: string;
     feeExcludedMonths?: number[];
     coachFeeExcludedMonths?: number[];
-    sendPulseApiUserId?: string;
-    sendPulseApiSecret?: string;
-    sendPulseFromEmail?: string;
+    smtpHost?: string;
+    smtpPort?: number;
+    smtpUser?: string;
+    smtpPassword?: string;
+    smtpFromEmail?: string;
 }
 
 export type Incident = {

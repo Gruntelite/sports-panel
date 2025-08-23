@@ -19,24 +19,29 @@ import { Loader2, KeyRound } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 const formSchema = z.object({
-  sendPulseApiUserId: z.string().min(1, "El User ID de la API es obligatorio."),
-  sendPulseApiSecret: z.string().min(1, "El API Secret es obligatorio."),
-  sendPulseFromEmail: z.string().email("Debe ser un correo electrónico válido."),
+  smtpHost: z.string().min(1, "El Host SMTP es obligatorio."),
+  smtpPort: z.string().min(1, "El Puerto SMTP es obligatorio."),
+  smtpUser: z.string().min(1, "El Usuario SMTP es obligatorio."),
+  smtpPassword: z.string().min(1, "La Contraseña SMTP es obligatoria."),
+  smtpFromEmail: z.string().email("Debe ser un correo electrónico válido."),
 });
 
 type FormData = z.infer<typeof formSchema>;
 
 export function EmailSettings() {
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      sendPulseApiUserId: "",
-      sendPulseApiSecret: "",
-      sendPulseFromEmail: "",
+      smtpHost: "",
+      smtpPort: "465",
+      smtpUser: "",
+      smtpPassword: "",
+      smtpFromEmail: "",
     },
   });
 
@@ -54,9 +59,11 @@ export function EmailSettings() {
                     if (settingsSnap.exists()) {
                         const settings = settingsSnap.data() as ClubSettings;
                         form.reset({
-                            sendPulseApiUserId: settings.sendPulseApiUserId || "",
-                            sendPulseApiSecret: settings.sendPulseApiSecret || "",
-                            sendPulseFromEmail: settings.sendPulseFromEmail || "",
+                            smtpHost: settings.smtpHost || "",
+                            smtpPort: settings.smtpPort?.toString() || "465",
+                            smtpUser: settings.smtpUser || "",
+                            smtpPassword: settings.smtpPassword || "",
+                            smtpFromEmail: settings.smtpFromEmail || "",
                         });
                     }
                 }
@@ -69,11 +76,14 @@ export function EmailSettings() {
 
   async function onSubmit(values: FormData) {
     if (!clubId) return;
-    setLoading(true);
+    setSaving(true);
 
     try {
         const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        await setDoc(settingsRef, values, { merge: true });
+        await setDoc(settingsRef, {
+            ...values,
+            smtpPort: Number(values.smtpPort)
+        }, { merge: true });
 
         toast({
             title: "¡Configuración Guardada!",
@@ -86,27 +96,28 @@ export function EmailSettings() {
             description: "No se pudo guardar la configuración.",
         });
     } finally {
-        setLoading(false);
+        setSaving(false);
     }
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Configuración de Correo (SendPulse)</CardTitle>
-        <CardDescription>Introduce tus credenciales API de SendPulse para habilitar el envío de correos.</CardDescription>
+        <CardTitle>Configuración de Correo (SMTP)</CardTitle>
+        <CardDescription>Introduce tus credenciales SMTP para habilitar el envío de correos desde tu propia cuenta.</CardDescription>
       </CardHeader>
       <CardContent>
         <Alert className="mb-6">
             <KeyRound className="h-4 w-4"/>
-            <AlertTitle>¿Cómo obtener tus credenciales de SendPulse?</AlertTitle>
+            <AlertTitle>Importante: Usa Contraseñas de Aplicación</AlertTitle>
             <AlertDescription>
-                <ol className="list-decimal pl-5 mt-2 space-y-1">
-                    <li>Accede a tu cuenta de SendPulse (o crea una nueva).</li>
-                    <li>Ve a "Ajustes de la cuenta" y luego a la pestaña "API".</li>
-                    <li>Activa la API REST si no lo está.</li>
-                    <li>Copia y pega tu "ID" y tu "Secreto" en los campos correspondientes.</li>
-                </ol>
+                <p className="mt-2">
+                    Por seguridad, proveedores como Gmail o Outlook requieren que crees una "Contraseña de Aplicación" para usar en servicios externos. No uses tu contraseña principal aquí.
+                </p>
+                <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
+                    <li><b>Gmail:</b> Ve a tu Cuenta de Google > Seguridad > Verificación en dos pasos > Contraseñas de aplicaciones.</li>
+                    <li><b>Outlook:</b> Ve a tu Cuenta de Microsoft > Seguridad > Opciones de seguridad avanzadas > Contraseñas de aplicación.</li>
+                </ul>
             </AlertDescription>
         </Alert>
         {loading ? (
@@ -116,14 +127,56 @@ export function EmailSettings() {
         ) : (
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <FormField
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <FormField
+                    control={form.control}
+                    name="smtpHost"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Host SMTP</FormLabel>
+                        <FormControl>
+                        <Input placeholder="p.ej., smtp.gmail.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="smtpPort"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Puerto SMTP</FormLabel>
+                        <FormControl>
+                        <Input type="number" placeholder="p.ej., 465" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
+               <FormField
                 control={form.control}
-                name="sendPulseApiUserId"
+                name="smtpFromEmail"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>API User ID</FormLabel>
+                    <FormLabel>Email Remitente</FormLabel>
                     <FormControl>
-                      <Input placeholder="Tu User ID de SendPulse" {...field} />
+                      <Input type="email" placeholder="tu-email@ejemplo.com" {...field} />
+                    </FormControl>
+                     <FormDescription>Este es el correo que aparecerá como remitente.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="smtpUser"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Usuario SMTP</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Generalmente, tu email" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -131,33 +184,19 @@ export function EmailSettings() {
               />
                <FormField
                 control={form.control}
-                name="sendPulseApiSecret"
+                name="smtpPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>API Secret</FormLabel>
+                    <FormLabel>Contraseña SMTP</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Tu API Secret de SendPulse" {...field} />
+                      <Input type="password" placeholder="Tu contraseña de aplicación" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-               <FormField
-                control={form.control}
-                name="sendPulseFromEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo Remitente</FormLabel>
-                    <FormControl>
-                      <Input placeholder="tu-email-verificado@en-sendpulse.com" {...field} />
-                    </FormControl>
-                     <FormDescription>Este es el correo que aparecerá como remitente. Debe estar verificado en tu cuenta de SendPulse.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" disabled={loading} className="w-full">
-                {loading ? (
+              <Button type="submit" disabled={saving} className="w-full">
+                {saving ? (
                   <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Guardando...</>
                 ) : (
                   'Guardar Configuración'

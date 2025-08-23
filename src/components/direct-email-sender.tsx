@@ -19,7 +19,7 @@ import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { sendEmailWithSendPulseAction } from "@/lib/actions";
+import { sendEmailWithSmtpAction } from "@/lib/actions";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -156,12 +156,12 @@ export function DirectEmailSender() {
         return { email, name: member.name };
       }).filter(item => item.email); // Filter out any empty emails
 
-      const result = await sendEmailWithSendPulseAction({ clubId, recipients, subject, htmlContent: body });
+      const result = await sendEmailWithSmtpAction({ clubId, recipients, subject, htmlContent: body });
 
       if (result.success) {
           toast({
               title: "¡Correos enviados!",
-              description: `Se han enviado ${recipients.length} correos correctamente.`,
+              description: `Se han enviado ${result.count} correos correctamente.`,
           });
           setSelectedMemberIds(new Set());
           setSubject('');
@@ -299,7 +299,7 @@ export function DirectEmailSender() {
                                                 checked={isAllFilteredSelected}
                                                 onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                             />
-                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los ${filteredMembers.length} miembros</label>
+                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
                                         </CommandItem>
                                         <ScrollArea className="h-64">
                                             {filteredMembers.map((member) => (
