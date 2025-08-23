@@ -203,7 +203,7 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
                       <SelectContent>
                         <SelectItem value="none">No requerir pago</SelectItem>
                         {payments.map(p => (
-                          <SelectItem key={p.id} value={p.id!}>{p.concept}</SelectItem>
+                          <SelectItem key={p.id!} value={p.id!}>{p.concept}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>

@@ -46,7 +46,7 @@ export default function CommunicationsPage() {
           </TabsTrigger>
            <TabsTrigger value="data-update">
             <UserCheck className="mr-2 h-4 w-4" />
-            Actualización de Datos
+            Solicitar Actualización de Datos
           </TabsTrigger>
         </TabsList>
 
@@ -113,5 +113,3 @@ export default function CommunicationsPage() {
     </div>
   );
 }
-
-    
