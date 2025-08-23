@@ -32,7 +32,9 @@ export async function sendEmailWithSmtpAction({
         
         const settings = settingsSnap.data() as ClubSettings;
         const { smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromEmail } = settings;
-        const clubName = settings.clubName || 'Tu Club';
+        const clubDocRef = doc(db, "clubs", clubId);
+        const clubDocSnap = await getDoc(clubDocRef);
+        const clubName = clubDocSnap.exists() ? clubDocSnap.data().name : 'Tu Club';
         
         if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || !smtpFromEmail) {
              return { success: false, error: "La configuración SMTP no está completa. Por favor, revísala en los ajustes." };
