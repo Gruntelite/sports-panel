@@ -16,25 +16,18 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { OneTimePayment, FormHistoryItem } from "@/lib/types";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import type { FormHistoryItem, CustomFormField } from "@/lib/types";
 
-const initialFormFields = [
-    { id: "name", label: "Nombre y Apellidos", required: true, custom: false },
-    { id: "email", label: "Correo Electrónico", required: true, custom: false },
-    { id: "phone", label: "Teléfono", required: false, custom: false },
-    { id: "teamName", label: "Nombre del Equipo (si aplica)", required: false, custom: false },
-    { id: "age", label: "Edad", required: false, custom: false },
-    { id: "notes", label: "Notas / Comentarios", required: false, custom: false },
+
+const initialFormFields: CustomFormField[] = [
+    { id: "name", label: "Nombre y Apellidos", type: 'text', required: true, custom: false },
+    { id: "email", label: "Correo Electrónico", type: 'email', required: true, custom: false },
+    { id: "phone", label: "Teléfono", type: 'tel', required: false, custom: false },
+    { id: "teamName", label: "Nombre del Equipo (si aplica)", type: 'text', required: false, custom: false },
+    { id: "age", label: "Edad", type: 'number', required: false, custom: false },
+    { id: "notes", label: "Notas / Comentarios", type: 'textarea', required: false, custom: false },
 ];
 
-type FormFieldType = {
-  id: string;
-  label: string;
-  required: boolean;
-  custom: boolean;
-};
 
 const formSchema = z.object({
   title: z.string().min(3, "El título del evento es obligatorio."),
@@ -42,7 +35,6 @@ const formSchema = z.object({
   fields: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Tienes que seleccionar al menos un campo.",
   }),
-  paymentId: z.string().optional(),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -56,33 +48,10 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
   const [generatedForm, setGeneratedForm] = useState<{ id: string, url: string } | null>(null);
   const { toast } = useToast();
   
-  const [formFields, setFormFields] = useState<FormFieldType[]>(initialFormFields);
+  const [formFields, setFormFields] = useState<CustomFormField[]>(initialFormFields);
   const [newFieldName, setNewFieldName] = useState("");
-  const [payments, setPayments] = useState<OneTimePayment[]>([]);
+  const [newFieldType, setNewFieldType] = useState<CustomFormField['type']>('text');
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        try {
-          const userDocRef = doc(db, "users", user.uid);
-          const userDocSnap = await getDoc(userDocRef);
-
-          if (userDocSnap.exists()) {
-            const clubId = userDocSnap.data().clubId;
-            if (clubId) {
-              const paymentsCol = collection(db, "clubs", clubId, "oneTimePayments");
-              const snapshot = await getDocs(paymentsCol);
-              setPayments(snapshot.docs.map(d => ({ id: d.id, ...d.data() } as OneTimePayment)));
-            }
-          }
-        } catch (error) {
-          console.error("Error fetching payments:", error);
-        }
-      }
-    });
-    
-    return () => unsubscribe();
-  }, []);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -90,7 +59,6 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
       title: "",
       description: "",
       fields: ["name", "email"],
-      paymentId: "none",
     },
   });
   
@@ -99,15 +67,17 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
         toast({ variant: "destructive", title: "El nombre del campo no puede estar vacío."});
         return;
     }
-    const fieldId = newFieldName.toLowerCase().replace(/\s+/g, '_') + `_${Date.now()}`;
-    const newField: FormFieldType = {
+    const fieldId = newFieldName.toLowerCase().replace(/[^a-z0-9]/g, '_') + `_${Date.now()}`;
+    const newField: CustomFormField = {
         id: fieldId,
         label: newFieldName.trim(),
+        type: newFieldType,
         required: false,
         custom: true,
     };
     setFormFields(prev => [...prev, newField]);
     setNewFieldName("");
+    setNewFieldType('text');
   };
   
   const handleRemoveCustomField = (idToRemove: string) => {
@@ -190,32 +160,6 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
 
               <FormField
                 control={form.control}
-                name="paymentId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="text-base">Vincular Pago (Opcional)</FormLabel>
-                     <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un pago para este formulario..." />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">No requerir pago</SelectItem>
-                        {payments.map(p => (
-                          <SelectItem key={p.id!} value={p.id!}>{p.concept}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormDescription>Si se vincula, se pedirá el pago al rellenar el formulario.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-
-              <FormField
-                control={form.control}
                 name="fields"
                 render={() => (
                   <FormItem>
@@ -242,6 +186,9 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
                                   )}
                                   <div className="space-y-0.5">
                                     <FormLabel className={!item.custom ? 'pl-10' : ''}>{item.label}</FormLabel>
+                                    <FormDescription className={!item.custom ? 'pl-10' : ''}>
+                                      Tipo: {item.type}
+                                    </FormDescription>
                                   </div>
                                </div>
                               <FormControl>
@@ -269,15 +216,33 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
                      <Separator className="my-6"/>
                      <div className="space-y-3">
                         <h4 className="font-medium">Añadir Campo Personalizado</h4>
-                         <div className="flex items-center space-x-2">
-                             <Input 
-                                placeholder="p.ej., Talla de camiseta, Alergias" 
-                                value={newFieldName} 
-                                onChange={(e) => setNewFieldName(e.target.value)} 
-                             />
-                             <Button type="button" size="sm" onClick={handleAddCustomField}>
-                                <PlusCircle className="mr-2 h-4 w-4" />
-                                Añadir
+                         <div className="flex items-end space-x-2">
+                             <div className="flex-grow space-y-1.5">
+                                <Label htmlFor="new-field-name">Nombre del Campo</Label>
+                                <Input 
+                                    id="new-field-name"
+                                    placeholder="p.ej., Talla de camiseta" 
+                                    value={newFieldName} 
+                                    onChange={(e) => setNewFieldName(e.target.value)} 
+                                />
+                             </div>
+                              <div className="space-y-1.5">
+                                <Label htmlFor="new-field-type">Tipo</Label>
+                                <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomFormField['type'])}>
+                                  <SelectTrigger id="new-field-type" className="w-[150px]">
+                                    <SelectValue placeholder="Tipo de campo" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="text">Texto Corto</SelectItem>
+                                    <SelectItem value="textarea">Texto Largo</SelectItem>
+                                    <SelectItem value="email">Email</SelectItem>
+                                    <SelectItem value="tel">Teléfono</SelectItem>
+                                    <SelectItem value="number">Número</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                             <Button type="button" size="icon" onClick={handleAddCustomField}>
+                                <PlusCircle className="h-4 w-4" />
                              </Button>
                          </div>
                      </div>

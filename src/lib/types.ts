@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -193,6 +192,15 @@ export type FormHistoryItem = {
     url: string;
     date: Date;
 }
+
+export type CustomFormField = {
+  id: string;
+  label: string;
+  type: 'text' | 'textarea' | 'email' | 'tel' | 'number' | 'select';
+  options?: string[];
+  required: boolean;
+  custom: boolean;
+};
 
 export type CalendarEvent = {
     id: string;
