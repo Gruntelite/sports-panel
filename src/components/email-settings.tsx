@@ -221,17 +221,24 @@ export function EmailSettings() {
                 
                 <Alert>
                     <KeyRound className="h-4 w-4"/>
-                    <AlertTitle>Importante: Usa una Contraseña de Aplicación</AlertTitle>
+                    <AlertTitle>Guía para obtener la Contraseña de Aplicación de Gmail</AlertTitle>
                     <AlertDescription>
-                        <p className="mt-2">
-                            Por seguridad, no debes usar tu contraseña principal aquí. En su lugar, genera una "Contraseña de Aplicación" desde los ajustes de tu cuenta de Google. Es un código de 16 letras que autoriza a esta app a enviar correos en tu nombre.
-                        </p>
-                        <Button variant="link" asChild className="px-0 h-auto mt-2">
-                           <Link href="https://support.google.com/accounts/answer/185833" target="_blank">
-                                ¿Cómo generar una Contraseña de Aplicación en Google?
-                                <ExternalLink className="ml-1.5 h-4 w-4"/>
-                           </Link>
-                        </Button>
+                        <ol className="list-decimal list-inside space-y-2 mt-2">
+                           <li>
+                              <b>Activa la Verificación en 2 Pasos:</b> Es obligatorio. Si no la tienes, actívala aquí:
+                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">Página de Seguridad de Google <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                           </li>
+                           <li>
+                              <b>Genera la contraseña:</b> Una vez activada, ve a esta página específica:
+                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">Generador de Contraseñas de Aplicación <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                           </li>
+                            <li>
+                              En "Seleccionar aplicación", elige "Otra (nombre personalizado)", escribe "SportsPanel" y haz clic en "Generar".
+                           </li>
+                           <li>
+                             Copia la contraseña de 16 letras que aparece y pégala en el campo de abajo.
+                           </li>
+                        </ol>
                     </AlertDescription>
                 </Alert>
 
