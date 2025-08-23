@@ -15,9 +15,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, KeyRound } from "lucide-react";
+import { Loader2, KeyRound, ExternalLink } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
+import Link from "next/link";
 
 const formSchema = z.object({
   smtpHost: z.string().min(1, "El Host SMTP es obligatorio."),
@@ -136,19 +137,6 @@ export function EmailSettings() {
         <CardDescription>Introduce tus credenciales SMTP para habilitar el envío de correos desde tu propia cuenta.</CardDescription>
       </CardHeader>
       <CardContent>
-        <Alert className="mb-6">
-            <KeyRound className="h-4 w-4"/>
-            <AlertTitle>Importante: Usa Contraseñas de Aplicación</AlertTitle>
-            <AlertDescription>
-                <p className="mt-2">
-                    Por seguridad, proveedores como Gmail o Outlook requieren que crees una "Contraseña de Aplicación" para usar en servicios externos. No uses tu contraseña principal aquí.
-                </p>
-                <ul className="list-disc pl-5 mt-2 space-y-1 text-xs">
-                    <li><b>Gmail:</b> Ve a tu Cuenta de Google > Seguridad > Verificación en dos pasos > Contraseñas de aplicaciones.</li>
-                    <li><b>Outlook:</b> Ve a tu Cuenta de Microsoft > Seguridad > Opciones de seguridad avanzadas > Contraseñas de aplicación.</li>
-                </ul>
-            </AlertDescription>
-        </Alert>
         {loading ? (
              <div className="flex justify-center items-center h-40">
                 <Loader2 className="h-8 w-8 animate-spin" />
@@ -230,15 +218,31 @@ export function EmailSettings() {
                     )}
                 />
               )}
+                
+                <Alert>
+                    <KeyRound className="h-4 w-4"/>
+                    <AlertTitle>Importante: Usa una Contraseña de Aplicación</AlertTitle>
+                    <AlertDescription>
+                        <p className="mt-2">
+                            Por seguridad, no debes usar tu contraseña principal aquí. En su lugar, genera una "Contraseña de Aplicación" desde los ajustes de tu cuenta de Google. Es un código de 16 letras que autoriza a esta app a enviar correos en tu nombre.
+                        </p>
+                        <Button variant="link" asChild className="px-0 h-auto mt-2">
+                           <Link href="https://support.google.com/accounts/answer/185833" target="_blank">
+                                ¿Cómo generar una Contraseña de Aplicación en Google?
+                                <ExternalLink className="ml-1.5 h-4 w-4"/>
+                           </Link>
+                        </Button>
+                    </AlertDescription>
+                </Alert>
 
                <FormField
                 control={form.control}
                 name="smtpPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña SMTP (Contraseña de Aplicación)</FormLabel>
+                    <FormLabel>Contraseña de Aplicación</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="Tu contraseña de aplicación" {...field} />
+                      <Input type="password" placeholder="xxxx xxxx xxxx xxxx" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
