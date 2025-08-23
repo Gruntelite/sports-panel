@@ -89,10 +89,10 @@ export default function AccountPage() {
     setMemberData(prev => ({ ...prev, [id]: checked }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
+  const handleDateChange = (id: keyof MemberData, date: Date | undefined) => {
     if (date) {
         const utcDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-        setMemberData(prev => ({ ...prev, birthDate: format(utcDate, "yyyy-MM-dd") }));
+        setMemberData(prev => ({ ...prev, [id]: format(utcDate, "yyyy-MM-dd") }));
     }
   };
 
@@ -179,7 +179,7 @@ export default function AccountPage() {
                         <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" value={memberData.lastName || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2"><Label>Fecha de Nacimiento</Label><DatePicker date={birthDate} onDateChange={handleDateChange} /></div>
+                        <div className="space-y-2"><Label>Fecha de Nacimiento</Label><DatePicker date={birthDate} onDateChange={(date) => handleDateChange('birthDate', date)} /></div>
                         <div className="space-y-2"><Label htmlFor="dni">NIF</Label><Input id="dni" value={memberData.dni || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -220,6 +220,12 @@ export default function AccountPage() {
                         <Label htmlFor="monthlyFee">{isPlayer ? "Cuota Mensual (€)" : "Pago Mensual (€)"}</Label>
                         <Input id={isPlayer ? "monthlyFee" : "monthlyPayment"} type="number" value={(isPlayer ? memberData.monthlyFee : memberData.monthlyPayment) ?? ''} onChange={handleInputChange} readOnly/>
                     </div>
+                    {isPlayer && (
+                        <div className="flex items-center space-x-2 pt-4">
+                           <Checkbox id="medicalCheckCompleted" checked={memberData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} disabled/>
+                           <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                         </div>
+                    )}
                  </div>
               </TabsContent>
             </Tabs>

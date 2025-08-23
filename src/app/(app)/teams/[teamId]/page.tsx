@@ -357,13 +357,13 @@ export default function EditTeamPage() {
     }
   };
 
-  const handleDateChange = (date: Date | undefined) => {
+  const handleDateChange = (id: 'birthDate' | 'startDate' | 'endDate', date: Date | undefined) => {
     if (date) {
         const formattedDate = format(date, "yyyy-MM-dd");
         if (modalType === 'player') {
-            setPlayerData(prev => ({ ...prev, birthDate: formattedDate }));
+            setPlayerData(prev => ({ ...prev, [id]: formattedDate }));
         } else {
-            setCoachData(prev => ({ ...prev, birthDate: formattedDate }));
+            setCoachData(prev => ({ ...prev, [id]: formattedDate }));
         }
     }
   };
@@ -904,7 +904,7 @@ export default function EditTeamPage() {
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
                                     date={currentData.birthDate ? new Date(currentData.birthDate) : undefined} 
-                                    onDateChange={handleDateChange} 
+                                    onDateChange={(date) => handleDateChange('birthDate', date)} 
                                   />
                                    {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
                                </div>
@@ -923,16 +923,10 @@ export default function EditTeamPage() {
                                     </Select>
                                 </div>
                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="address">Dirección</Label>
-                                   <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={(currentData as any).kitSize || ''} onChange={handleMemberInputChange} />
-                                </div>
-                           </div>
+                            <div className="space-y-2">
+                               <Label htmlFor="address">Dirección</Label>
+                               <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
+                            </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
@@ -943,6 +937,26 @@ export default function EditTeamPage() {
                                    <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="startDate">Fecha de Alta</Label>
+                                  <DatePicker 
+                                    date={currentData.startDate ? new Date(currentData.startDate) : undefined} 
+                                    onDateChange={(date) => handleDateChange('startDate', date)}
+                                  />
+                                </div>
+                                 <div className="space-y-2">
+                                  <Label htmlFor="endDate">Fecha de Baja</Label>
+                                  <DatePicker 
+                                    date={currentData.endDate ? new Date(currentData.endDate) : undefined} 
+                                    onDateChange={(date) => handleDateChange('endDate', date)}
+                                  />
+                                </div>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                              <Checkbox id="hasInterruption" checked={currentData.hasInterruption} onCheckedChange={(checked) => handleCheckboxChange('hasInterruption', checked as boolean)} />
+                              <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                            </div>
                        </div>
                        </div>
                     </TabsContent>
@@ -1021,6 +1035,18 @@ export default function EditTeamPage() {
                                                 <Label htmlFor="monthlyFee">Cuota (€)</Label>
                                                 <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
                                             </div>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                            <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleMemberInputChange} />
+                                        </div>
+                                         <div className="flex items-end pb-1">
+                                           <div className="flex items-center space-x-2">
+                                              <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
+                                              <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                                            </div>
+                                         </div>
                                     </div>
                                 </div>
                             </div>

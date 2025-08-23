@@ -217,9 +217,9 @@ export default function CoachesPage() {
     setCoachData(prev => ({ ...prev, [id]: value === 'unassigned' ? '' : value }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
+  const handleDateChange = (id: keyof Coach, date: Date | undefined) => {
     if (date) {
-        setCoachData(prev => ({ ...prev, birthDate: format(date, "yyyy-MM-dd") }));
+        setCoachData(prev => ({ ...prev, [id]: format(date, "yyyy-MM-dd") }));
     }
   };
 
@@ -631,7 +631,7 @@ export default function CoachesPage() {
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
                                     date={coachData.birthDate ? new Date(coachData.birthDate) : undefined} 
-                                    onDateChange={handleDateChange} 
+                                    onDateChange={(date) => handleDateChange('birthDate', date)}
                                   />
                                    {coachData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(coachData.birthDate)} años</p>}
                                </div>
@@ -648,6 +648,16 @@ export default function CoachesPage() {
                                             <SelectItem value="femenino">Femenino</SelectItem>
                                         </SelectContent>
                                     </Select>
+                                </div>
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="nationality">Nacionalidad</Label>
+                                    <Input id="nationality" value={coachData.nationality || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
+                                    <Input id="healthCardNumber" value={coachData.healthCardNumber || ''} onChange={handleInputChange} />
                                 </div>
                            </div>
                             <div className="space-y-2">
@@ -668,6 +678,26 @@ export default function CoachesPage() {
                                     <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
                                 </div>
                            </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="startDate">Fecha de Alta</Label>
+                                  <DatePicker 
+                                    date={coachData.startDate ? new Date(coachData.startDate) : undefined} 
+                                    onDateChange={(date) => handleDateChange('startDate', date)}
+                                  />
+                                </div>
+                                 <div className="space-y-2">
+                                  <Label htmlFor="endDate">Fecha de Baja</Label>
+                                  <DatePicker 
+                                    date={coachData.endDate ? new Date(coachData.endDate) : undefined} 
+                                    onDateChange={(date) => handleDateChange('endDate', date)}
+                                  />
+                                </div>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                              <Checkbox id="hasInterruption" checked={coachData.hasInterruption} onCheckedChange={(checked) => handleCheckboxChange('hasInterruption', checked as boolean)} />
+                              <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                            </div>
                        </div>
                        </div>
                     </TabsContent>
@@ -809,4 +839,5 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
 

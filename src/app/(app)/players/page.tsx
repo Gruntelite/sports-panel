@@ -201,9 +201,9 @@ export default function PlayersPage() {
     setPlayerData(prev => ({ ...prev, [id]: value === 'unassigned' ? '' : value }));
   };
 
-  const handleDateChange = (date: Date | undefined) => {
+  const handleDateChange = (id: keyof Player, date: Date | undefined) => {
     if (date) {
-        setPlayerData(prev => ({ ...prev, birthDate: format(date, "yyyy-MM-dd") }));
+        setPlayerData(prev => ({ ...prev, [id]: format(date, "yyyy-MM-dd") }));
     }
   };
   
@@ -625,7 +625,7 @@ export default function PlayersPage() {
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
                                     date={playerData.birthDate ? new Date(playerData.birthDate) : undefined} 
-                                    onDateChange={handleDateChange} 
+                                    onDateChange={(date) => handleDateChange('birthDate', date)}
                                   />
                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
                                </div>
@@ -645,19 +645,49 @@ export default function PlayersPage() {
                                 </div>
                            </div>
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="address">Dirección</Label>
-                                   <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
-                               </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="nationality">Nacionalidad</Label>
+                                    <Input id="nationality" value={playerData.nationality || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
+                                    <Input id="healthCardNumber" value={playerData.healthCardNumber || ''} onChange={handleInputChange} />
+                                </div>
+                           </div>
+                           <div className="space-y-2">
+                               <Label htmlFor="address">Dirección</Label>
+                               <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="city">Ciudad</Label>
                                    <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
                                </div>
+                               <div className="space-y-2">
+                                   <Label htmlFor="postalCode">Código Postal</Label>
+                                   <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                               </div>
                            </div>
-                            <div className="space-y-2">
-                               <Label htmlFor="postalCode">Código Postal</Label>
-                               <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <Label htmlFor="startDate">Fecha de Alta</Label>
+                                  <DatePicker 
+                                    date={playerData.startDate ? new Date(playerData.startDate) : undefined} 
+                                    onDateChange={(date) => handleDateChange('startDate', date)}
+                                  />
+                                </div>
+                                 <div className="space-y-2">
+                                  <Label htmlFor="endDate">Fecha de Baja</Label>
+                                  <DatePicker 
+                                    date={playerData.endDate ? new Date(playerData.endDate) : undefined} 
+                                    onDateChange={(date) => handleDateChange('endDate', date)}
+                                  />
+                                </div>
                            </div>
+                           <div className="flex items-center space-x-2">
+                              <Checkbox id="hasInterruption" checked={playerData.hasInterruption} onCheckedChange={(checked) => handleCheckboxChange('hasInterruption', checked as boolean)} />
+                              <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                            </div>
                        </div>
                        </div>
                     </TabsContent>
@@ -741,6 +771,10 @@ export default function PlayersPage() {
                                     <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
                                 </div>
                             </div>
+                            <div className="flex items-center space-x-2 pt-4">
+                               <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
+                               <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                             </div>
                         </div>
                       </div>
                     </TabsContent>
@@ -792,4 +826,5 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
 
