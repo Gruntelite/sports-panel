@@ -250,11 +250,12 @@ export type OneOffExpense = {
 }
 
 export type ClubSettings = {
+    clubName?: string;
     feeExcludedMonths?: number[];
     coachFeeExcludedMonths?: number[];
-    brevoApiKey?: string;
-    brevoFromEmail?: string;
-    brevoReplyToEmail?: string;
+    sendPulseApiUserId?: string;
+    sendPulseApiSecret?: string;
+    sendPulseFromEmail?: string;
 }
 
 export type Incident = {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -18,9 +19,9 @@ import { Loader2, KeyRound } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 
 const formSchema = z.object({
-  brevoApiKey: z.string().min(1, "La clave API de Brevo es obligatoria."),
-  brevoFromEmail: z.string().email("Debe ser un correo electrónico válido."),
-  brevoReplyToEmail: z.string().email("Debe ser un correo electrónico válido."),
+  sendPulseApiUserId: z.string().min(1, "El User ID de la API es obligatorio."),
+  sendPulseApiSecret: z.string().min(1, "El API Secret es obligatorio."),
+  sendPulseFromEmail: z.string().email("Debe ser un correo electrónico válido."),
 });
 
 type FormData = z.infer<typeof formSchema>;
@@ -33,9 +34,9 @@ export function EmailSettings() {
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      brevoApiKey: "",
-      brevoFromEmail: "",
-      brevoReplyToEmail: "",
+      sendPulseApiUserId: "",
+      sendPulseApiSecret: "",
+      sendPulseFromEmail: "",
     },
   });
 
@@ -53,9 +54,9 @@ export function EmailSettings() {
                     if (settingsSnap.exists()) {
                         const settings = settingsSnap.data() as ClubSettings;
                         form.reset({
-                            brevoApiKey: settings.brevoApiKey || "",
-                            brevoFromEmail: settings.brevoFromEmail || "",
-                            brevoReplyToEmail: settings.brevoReplyToEmail || "",
+                            sendPulseApiUserId: settings.sendPulseApiUserId || "",
+                            sendPulseApiSecret: settings.sendPulseApiSecret || "",
+                            sendPulseFromEmail: settings.sendPulseFromEmail || "",
                         });
                     }
                 }
@@ -92,19 +93,19 @@ export function EmailSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Configuración de Correo (Brevo)</CardTitle>
-        <CardDescription>Introduce tu clave API de Brevo para habilitar el envío de correos electrónicos desde la plataforma.</CardDescription>
+        <CardTitle>Configuración de Correo (SendPulse)</CardTitle>
+        <CardDescription>Introduce tus credenciales API de SendPulse para habilitar el envío de correos.</CardDescription>
       </CardHeader>
       <CardContent>
         <Alert className="mb-6">
             <KeyRound className="h-4 w-4"/>
-            <AlertTitle>¿Cómo obtener tu clave API de Brevo?</AlertTitle>
+            <AlertTitle>¿Cómo obtener tus credenciales de SendPulse?</AlertTitle>
             <AlertDescription>
                 <ol className="list-decimal pl-5 mt-2 space-y-1">
-                    <li>Accede a tu cuenta de Brevo (o crea una nueva).</li>
-                    <li>Ve a la sección "SMTP & API" en el menú de tu perfil.</li>
-                    <li>Crea una nueva clave API v3 y pégala aquí.</li>
-                    <li>Asegúrate de verificar un remitente en Brevo para poder enviar correos.</li>
+                    <li>Accede a tu cuenta de SendPulse (o crea una nueva).</li>
+                    <li>Ve a "Ajustes de la cuenta" y luego a la pestaña "API".</li>
+                    <li>Activa la API REST si no lo está.</li>
+                    <li>Copia y pega tu "ID" y tu "Secreto" en los campos correspondientes.</li>
                 </ol>
             </AlertDescription>
         </Alert>
@@ -117,12 +118,12 @@ export function EmailSettings() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
                 control={form.control}
-                name="brevoApiKey"
+                name="sendPulseApiUserId"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Clave API de Brevo</FormLabel>
+                    <FormLabel>API User ID</FormLabel>
                     <FormControl>
-                      <Input type="password" placeholder="v3.xxx..." {...field} />
+                      <Input placeholder="Tu User ID de SendPulse" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -130,28 +131,27 @@ export function EmailSettings() {
               />
                <FormField
                 control={form.control}
-                name="brevoFromEmail"
+                name="sendPulseApiSecret"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>API Secret</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Tu API Secret de SendPulse" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="sendPulseFromEmail"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Correo Remitente</FormLabel>
                     <FormControl>
-                      <Input placeholder="tu-email-verificado@en-brevo.com" {...field} />
+                      <Input placeholder="tu-email-verificado@en-sendpulse.com" {...field} />
                     </FormControl>
-                     <FormDescription>Este es el correo que aparecerá como remitente. Debe estar verificado en tu cuenta de Brevo.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="brevoReplyToEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Correo para Respuestas</FormLabel>
-                    <FormControl>
-                      <Input placeholder="tu-gmail-de-contacto@gmail.com" {...field} />
-                    </FormControl>
-                     <FormDescription>Cuando los miembros respondan, los correos llegarán a esta dirección.</FormDescription>
+                     <FormDescription>Este es el correo que aparecerá como remitente. Debe estar verificado en tu cuenta de SendPulse.</FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -170,4 +170,3 @@ export function EmailSettings() {
     </Card>
   );
 }
-

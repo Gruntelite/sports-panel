@@ -81,7 +81,31 @@ export async function createClubAction(data: { clubName: string, adminName: stri
   }
 }
 
-export async function sendEmailWithBrevoAction({
+async function getSendPulseAccessToken(apiUserId: string, apiSecret: string): Promise<string | null> {
+    try {
+        const response = await fetch('https://api.sendpulse.com/oauth/access_token', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                grant_type: 'client_credentials',
+                client_id: apiUserId,
+                client_secret: apiSecret,
+            }),
+        });
+        if (!response.ok) {
+            console.error("Failed to get SendPulse access token", await response.json());
+            return null;
+        }
+        const data = await response.json();
+        return data.access_token;
+    } catch (error) {
+        console.error("Error getting SendPulse access token:", error);
+        return null;
+    }
+}
+
+
+export async function sendEmailWithSendPulseAction({
     clubId,
     recipients,
     subject,
@@ -105,40 +129,50 @@ export async function sendEmailWithBrevoAction({
         }
         
         const settings = settingsSnap.data() as ClubSettings;
-        const apiKey = settings.brevoApiKey;
-        const senderEmail = settings.brevoFromEmail;
-        const senderReplyTo = settings.brevoReplyToEmail;
+        const apiUserId = settings.sendPulseApiUserId;
+        const apiSecret = settings.sendPulseApiSecret;
+        const senderEmail = settings.sendPulseFromEmail;
         
-        if (!apiKey || !senderEmail || !senderReplyTo) {
-             return { success: false, error: "La configuración de Brevo (API Key, Remitente y Email de Respuesta) no está completa. Por favor, revísala en la sección de Comunicaciones > Configuración." };
+        if (!apiUserId || !apiSecret || !senderEmail) {
+             return { success: false, error: "La configuración de SendPulse no está completa. Por favor, revísala." };
         }
 
-        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        const accessToken = await getSendPulseAccessToken(apiUserId, apiSecret);
+
+        if (!accessToken) {
+            return { success: false, error: "No se pudo autenticar con SendPulse. Revisa tus credenciales." };
+        }
+
+        const response = await fetch('https://api.sendpulse.com/smtp/emails', {
             method: 'POST',
             headers: {
-                'accept': 'application/json',
-                'api-key': apiKey,
-                'content-type': 'application/json'
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                sender: { email: senderEmail },
-                to: recipients,
-                replyTo: { email: senderReplyTo },
-                subject: subject,
-                htmlContent: htmlContent,
+                email: {
+                    html: htmlContent,
+                    text: "Por favor, visualiza este correo en un cliente compatible con HTML.",
+                    subject: subject,
+                    from: {
+                        name: settings.clubName || "Club",
+                        email: senderEmail
+                    },
+                    to: recipients
+                }
             })
         });
 
         if (!response.ok) {
             const errorData = await response.json();
-            console.error("Brevo API Error:", errorData);
-            return { success: false, error: `Error de Brevo: ${errorData.message}` };
+            console.error("SendPulse API Error:", errorData);
+            return { success: false, error: `Error de SendPulse: ${errorData.message || 'Error desconocido'}` };
         }
 
         return { success: true };
 
     } catch (error: any) {
-        console.error("Error sending email via Brevo:", error);
-        return { success: false, error: "No se pudo enviar el correo a través de Brevo." };
+        console.error("Error sending email via SendPulse:", error);
+        return { success: false, error: "No se pudo enviar el correo a través de SendPulse." };
     }
 }
