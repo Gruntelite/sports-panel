@@ -304,6 +304,7 @@ export default function EditTeamPage() {
 
       const teamDataToUpdate = {
         name: team.name,
+        level: team.level,
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
         defaultMonthlyFee: (team.defaultMonthlyFee === '' || team.defaultMonthlyFee === undefined || team.defaultMonthlyFee === null) ? null : Number(team.defaultMonthlyFee),
@@ -666,6 +667,10 @@ export default function EditTeamPage() {
                            <div className="space-y-2">
                               <Label htmlFor="name">Nombre del Equipo</Label>
                               <Input id="name" autoComplete="off" value={team.name || ''} onChange={handleTeamInputChange} />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="level">Nivel</Label>
+                              <Input id="level" placeholder="p.ej. Competición, Escuela" value={team.level || ''} onChange={handleTeamInputChange} />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
