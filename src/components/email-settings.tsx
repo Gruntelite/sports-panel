@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,6 +16,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Loader2, KeyRound } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
 
 const formSchema = z.object({
   smtpHost: z.string().min(1, "El Host SMTP es obligatorio."),
@@ -27,17 +27,19 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
+type Provider = "gmail" | "other";
 
 export function EmailSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   const { toast } = useToast();
+  const [provider, setProvider] = useState<Provider>("gmail");
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      smtpHost: "",
+      smtpHost: "smtp.gmail.com",
       smtpPort: "465",
       smtpUser: "",
       smtpPassword: "",
@@ -58,8 +60,15 @@ export function EmailSettings() {
                     const settingsSnap = await getDoc(settingsRef);
                     if (settingsSnap.exists()) {
                         const settings = settingsSnap.data() as ClubSettings;
+                        const host = settings.smtpHost || "";
+                        if(host === "smtp.gmail.com"){
+                           setProvider("gmail");
+                        } else if (host) {
+                           setProvider("other");
+                        }
+                        
                         form.reset({
-                            smtpHost: settings.smtpHost || "",
+                            smtpHost: settings.smtpHost || "smtp.gmail.com",
                             smtpPort: settings.smtpPort?.toString() || "465",
                             smtpUser: settings.smtpUser || "",
                             smtpPassword: settings.smtpPassword || "",
@@ -73,6 +82,25 @@ export function EmailSettings() {
     });
     return () => unsubscribe();
   }, [form]);
+
+  const handleProviderChange = (value: Provider) => {
+    setProvider(value);
+    if (value === "gmail") {
+        form.setValue("smtpHost", "smtp.gmail.com");
+        form.setValue("smtpPort", "465");
+    } else {
+        form.setValue("smtpHost", "");
+        form.setValue("smtpPort", "");
+    }
+  }
+  
+  useEffect(() => {
+    const userEmail = form.watch("smtpUser");
+    if (provider === 'gmail') {
+      form.setValue("smtpFromEmail", userEmail);
+    }
+  }, [form, provider, form.watch("smtpUser")]);
+
 
   async function onSubmit(values: FormData) {
     if (!clubId) return;
@@ -127,67 +155,87 @@ export function EmailSettings() {
         ) : (
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <FormField
-                    control={form.control}
-                    name="smtpHost"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Host SMTP</FormLabel>
-                        <FormControl>
-                        <Input placeholder="p.ej., smtp.gmail.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="smtpPort"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Puerto SMTP</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="p.ej., 465" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-              </div>
-               <FormField
-                control={form.control}
-                name="smtpFromEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Remitente</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="tu-email@ejemplo.com" {...field} />
-                    </FormControl>
-                     <FormDescription>Este es el correo que aparecerá como remitente.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
+                <div className="space-y-2">
+                    <Label>Proveedor de Correo</Label>
+                    <Select value={provider} onValueChange={handleProviderChange}>
+                        <SelectTrigger className="w-[280px]">
+                           <SelectValue placeholder="Selecciona tu proveedor" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="gmail">Gmail</SelectItem>
+                            <SelectItem value="other">Otro (SMTP Personalizado)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                
+                {provider === 'other' && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <FormField
+                            control={form.control}
+                            name="smtpHost"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Host SMTP</FormLabel>
+                                <FormControl>
+                                <Input placeholder="p.ej., smtp.miempresa.com" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="smtpPort"
+                            render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Puerto SMTP</FormLabel>
+                                <FormControl>
+                                <Input type="number" placeholder="p.ej., 465, 587" {...field} />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                            )}
+                        />
+                    </div>
                 )}
-              />
+               
                <FormField
                 control={form.control}
                 name="smtpUser"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Usuario SMTP</FormLabel>
+                    <FormLabel>Usuario SMTP (Tu correo)</FormLabel>
                     <FormControl>
-                      <Input placeholder="Generalmente, tu email" {...field} />
+                      <Input type="email" placeholder="tu-email@ejemplo.com" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
+              {provider === 'other' && (
+                <FormField
+                    control={form.control}
+                    name="smtpFromEmail"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Email Remitente</FormLabel>
+                        <FormControl>
+                        <Input type="email" placeholder="noreply@ejemplo.com" {...field} />
+                        </FormControl>
+                        <FormDescription>Este es el correo que aparecerá como remitente. A veces debe ser el mismo que el usuario.</FormDescription>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              )}
+
                <FormField
                 control={form.control}
                 name="smtpPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña SMTP</FormLabel>
+                    <FormLabel>Contraseña SMTP (Contraseña de Aplicación)</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="Tu contraseña de aplicación" {...field} />
                     </FormControl>
