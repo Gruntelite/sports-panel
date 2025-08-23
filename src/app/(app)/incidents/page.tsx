@@ -80,6 +80,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
+import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
 
 
 function IncidentsTab() {
@@ -142,12 +143,17 @@ function IncidentsTab() {
     setSaving(true);
     
     try {
+      const dataToSave = {
+        ...incidentData,
+        date: Timestamp.fromDate(new Date(incidentData.date as string))
+      }
+      
       if (modalMode === 'edit' && incidentData.id) {
         const incidentRef = doc(db, "clubs", clubId, "incidents", incidentData.id);
-        await updateDoc(incidentRef, incidentData);
+        await updateDoc(incidentRef, dataToSave);
         toast({ title: "Incidencia actualizada", description: "Los detalles de la incidencia han sido guardados." });
       } else {
-        await addDoc(collection(db, "clubs", clubId, "incidents"), incidentData);
+        await addDoc(collection(db, "clubs", clubId, "incidents"), dataToSave);
         toast({ title: "Incidencia Creada", description: "La nueva incidencia ha sido registrada." });
       }
       setIsModalOpen(false);
@@ -206,7 +212,7 @@ function IncidentsTab() {
                 {incidents.length > 0 ? (
                   incidents.map((incident) => (
                     <TableRow key={incident.id}>
-                      <TableCell>{format(new Date(incident.date), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
+                      <TableCell>{format(incident.date.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
                       <TableCell>{incident.type}</TableCell>
                       <TableCell className="max-w-xs truncate">{incident.involved.join(', ')}</TableCell>
                       <TableCell>
@@ -245,7 +251,7 @@ function IncidentsTab() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="date">Fecha de la Incidencia</Label>
-                <Input id="date" type="date" value={incidentData.date?.split('T')[0] || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, date: e.target.value }))} />
+                <Input id="date" type="date" value={typeof incidentData.date === 'string' ? incidentData.date.split('T')[0] : incidentData.date?.toDate().toISOString().split('T')[0] || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, date: e.target.value }))} />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="type">Tipo de Incidencia</Label>
@@ -410,7 +416,11 @@ function ProtocolsTab() {
 
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      toast({ variant: "destructive", title: "Error de Subida", description: "No se pudo subir el archivo." });
+      let errorMessage = "No se pudo subir el archivo. Revisa tu conexión y los permisos de Firebase Storage.";
+      if (error.code === 'storage/unauthorized') {
+        errorMessage = "Error de permisos. No estás autorizado para subir archivos a esta ubicación.";
+      }
+      toast({ variant: "destructive", title: "Error de Subida", description: errorMessage });
     } finally {
       setSaving(false);
     }
