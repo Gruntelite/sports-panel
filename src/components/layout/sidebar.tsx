@@ -23,7 +23,6 @@ const menuItems = [
     { href: "/teams", label: "Equipos", icon: Shield },
     { href: "/staff", label: "Socios y Directiva", icon: Briefcase},
     { href: "/schedules", label: "Horarios", icon: Clock },
-    { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/incidents", label: "Incidencias", icon: AlertTriangle },
     { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
@@ -173,3 +172,4 @@ export function Sidebar() {
         </div>
     );
 }
+
