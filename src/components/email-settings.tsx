@@ -127,7 +127,7 @@ export function EmailSettings() {
                             <Input 
                                 id="fromEmail" 
                                 type="email" 
-                                placeholder="p.ej., noreply@tudominio.com"
+                                placeholder="p.ej., notificaciones@tuclub.com"
                                 value={fromEmail}
                                 onChange={(e) => setFromEmail(e.target.value)}
                             />
@@ -137,7 +137,7 @@ export function EmailSettings() {
                             <Input 
                                 id="replyToEmail" 
                                 type="email" 
-                                placeholder="p.ej., contacto@tuclub.com"
+                                placeholder="p.ej., tu-email-de-gmail@gmail.com"
                                 value={replyToEmail}
                                 onChange={(e) => setReplyToEmail(e.target.value)}
                             />
