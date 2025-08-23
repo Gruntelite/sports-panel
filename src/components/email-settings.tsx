@@ -15,7 +15,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, KeyRound, ExternalLink } from "lucide-react";
+import { Loader2, KeyRound, ExternalLink, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
 import Link from "next/link";
@@ -157,6 +157,17 @@ export function EmailSettings() {
                     </Select>
                 </div>
                 
+                 <Alert variant="default">
+                    <Info className="h-4 w-4"/>
+                    <AlertTitle>Límites de Envío</AlertTitle>
+                    <AlertDescription>
+                        {provider === 'gmail' 
+                         ? "Las cuentas de Gmail estándar tienen un límite de envío de 500 correos cada 24 horas. Las cuentas de Google Workspace pueden tener límites superiores."
+                         : "Por favor, consulta con tu proveedor de correo para conocer los límites de envío diarios o por hora que aplican a tu cuenta."
+                        }
+                    </AlertDescription>
+                </Alert>
+                
                 {provider === 'other' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
@@ -225,12 +236,12 @@ export function EmailSettings() {
                     <AlertDescription>
                         <ol className="list-decimal list-inside space-y-2 mt-2">
                            <li>
-                              <b>Activa la Verificación en 2 Pasos:</b> Es obligatorio. Si no la tienes, actívala aquí:
-                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">Página de Seguridad de Google <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                              <b>Activa la Verificación en 2 Pasos:</b> Es obligatorio. Si no la tienes, actívala en la página de Seguridad de Google.
+                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">Ir a Seguridad de Google <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
                            </li>
                            <li>
-                              <b>Genera la contraseña:</b> Una vez activada, ve a esta página específica:
-                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">Generador de Contraseñas de Aplicación <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                              <b>Genera la contraseña:</b> Una vez activada la verificación, ve a la página de Contraseñas de Aplicaciones.
+                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">Ir a Contraseñas de Aplicaciones <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
                            </li>
                             <li>
                               En "Seleccionar aplicación", elige "Otra (nombre personalizado)", escribe "SportsPanel" y haz clic en "Generar".
