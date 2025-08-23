@@ -252,14 +252,14 @@ export type OneOffExpense = {
 export type ClubSettings = {
     feeExcludedMonths?: number[];
     coachFeeExcludedMonths?: number[];
-    fromEmail?: string;
-    sendgridApiKey?: string;
-    senderVerificationStatus?: 'unconfigured' | 'pending' | 'verified' | 'failed';
+    brevoApiKey?: string;
+    brevoFromEmail?: string;
+    brevoReplyToEmail?: string;
 }
 
 export type Incident = {
     id: string;
-    date: string;
+    date: Timestamp;
     type: 'Lesión' | 'Comportamiento' | 'Administrativa' | 'Otro';
     involved: string[];
     description: string;

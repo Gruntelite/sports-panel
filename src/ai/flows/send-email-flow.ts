@@ -3,6 +3,7 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
+import * as Brevo from '@getbrevo/brevo';
 
 const SendEmailInputSchema = z.object({
   recipients: z.array(z.object({
@@ -13,6 +14,7 @@ const SendEmailInputSchema = z.object({
   body: z.string(),
   apiKey: z.string(),
   fromEmail: z.string(),
+  replyToEmail: z.string().email(),
   clubName: z.string(),
 });
 
@@ -28,34 +30,36 @@ export const sendEmailFlow = ai.defineFlow(
     inputSchema: SendEmailInputSchema,
     outputSchema: SendEmailOutputSchema,
   },
-  async ({ recipients, subject, body, apiKey, fromEmail, clubName }) => {
+  async ({ recipients, subject, body, apiKey, fromEmail, replyToEmail, clubName }) => {
     
     if (!recipients || recipients.length === 0) {
         return { success: true, sentCount: 0 };
     }
 
-    const sgMail = await import('@sendgrid/mail');
-    sgMail.setApiKey(apiKey);
+    const api = new Brevo.TransactionalEmailsApi();
+    api.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, apiKey);
     
     let sentCount = 0;
     const errors = [];
 
+    // Brevo API allows sending to multiple recipients in a single call,
+    // but sending one by one gives better error handling per recipient.
     for (const recipient of recipients) {
       if (!recipient.email) continue;
       
-      const msg = {
-        to: recipient.email,
-        from: { email: fromEmail, name: clubName },
-        subject: subject,
-        html: body.replace(/\n/g, '<br>'),
-      };
-      
+      const sendSmtpEmail = new Brevo.SendSmtpEmail();
+      sendSmtpEmail.to = [{ email: recipient.email, name: recipient.name }];
+      sendSmtpEmail.sender = { email: fromEmail, name: clubName };
+      sendSmtpEmail.replyTo = { email: replyToEmail, name: clubName };
+      sendSmtpEmail.subject = subject;
+      sendSmtpEmail.htmlContent = body.replace(/\n/g, '<br>');
+
       try {
-        await sgMail.send(msg);
+        await api.sendTransacEmail(sendSmtpEmail);
         sentCount++;
       } catch (error: any) {
-        const errorMessage = error.response?.body?.errors?.[0]?.message || error.message || 'Error desconocido';
-        console.error(`Failed to send email to ${recipient.email}:`, errorMessage);
+        const errorMessage = error.response?.body?.message || error.message || 'Error desconocido';
+        console.error(`Failed to send email to ${recipient.email} via Brevo:`, errorMessage);
         errors.push(errorMessage);
       }
     }
