@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -610,7 +611,7 @@ export default function StaffPage() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="dni">DNI</Label>
+                          <Label htmlFor="dni">NIF</Label>
                           <Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
@@ -669,3 +670,4 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+

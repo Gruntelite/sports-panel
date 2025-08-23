@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -179,7 +180,7 @@ export default function AccountPage() {
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2"><Label>Fecha de Nacimiento</Label><DatePicker date={birthDate} onDateChange={handleDateChange} /></div>
-                        <div className="space-y-2"><Label htmlFor="dni">DNI</Label><Input id="dni" value={memberData.dni || ''} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="dni">NIF</Label><Input id="dni" value={memberData.dni || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2"><Label htmlFor="address">Dirección</Label><Input id="address" value={memberData.address || ''} onChange={handleInputChange} /></div>
@@ -199,7 +200,7 @@ export default function AccountPage() {
                                     <div className="space-y-2"><Label htmlFor="tutorName">Nombre del Tutor/a</Label><Input id="tutorName" value={memberData.tutorName || ''} onChange={handleInputChange}/></div>
                                     <div className="space-y-2"><Label htmlFor="tutorLastName">Apellidos del Tutor/a</Label><Input id="tutorLastName" value={memberData.tutorLastName || ''} onChange={handleInputChange}/></div>
                                 </div>
-                                <div className="space-y-2"><Label htmlFor="tutorDni">DNI del Tutor/a</Label><Input id="tutorDni" value={memberData.tutorDni || ''} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label htmlFor="tutorDni">NIF del Tutor/a</Label><Input id="tutorDni" value={memberData.tutorDni || ''} onChange={handleInputChange}/></div>
                             </CardContent>
                         </Card>
                     )}

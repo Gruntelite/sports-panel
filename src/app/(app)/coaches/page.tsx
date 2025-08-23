@@ -636,7 +636,7 @@ export default function CoachesPage() {
                                    {coachData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(coachData.birthDate)} años</p>}
                                </div>
                                <div className="space-y-2">
-                                   <Label htmlFor="dni">DNI</Label>
+                                   <Label htmlFor="dni">NIF</Label>
                                    <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
                                </div>
                                 <div className="space-y-2">
@@ -697,7 +697,7 @@ export default function CoachesPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="tutorDni">DNI del Tutor/a</Label>
+                                        <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
                                         <Input id="tutorDni" value={coachData.tutorDni || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
@@ -809,3 +809,4 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+

@@ -630,7 +630,7 @@ export default function PlayersPage() {
                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
                                </div>
                                <div className="space-y-2">
-                                   <Label htmlFor="dni">DNI</Label>
+                                   <Label htmlFor="dni">NIF</Label>
                                    <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                                </div>
                                 <div className="space-y-2">
@@ -687,7 +687,7 @@ export default function PlayersPage() {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="tutorDni">DNI del Tutor/a</Label>
+                                        <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
                                         <Input id="tutorDni" value={playerData.tutorDni || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
