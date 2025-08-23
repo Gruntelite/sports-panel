@@ -17,6 +17,7 @@ import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { FormHistoryItem, CustomFormField } from "@/lib/types";
+import { Label } from "@/components/ui/label";
 
 
 const initialFormFields: CustomFormField[] = [
