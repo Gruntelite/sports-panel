@@ -11,7 +11,18 @@ type VerificationInput = {
     clubId: string;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string}): Promise<{success: boolean, error?: string, clubId?: string}> {
+function getLuminance(hex: string): number {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    if (!result) return 0;
+    
+    const r = parseInt(result[1], 16);
+    const g = parseInt(result[2], 16);
+    const b = parseInt(result[3], 16);
+    
+    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, clubId?: string}> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
     const user = userCredential.user;
@@ -42,11 +53,14 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         createdAt: Timestamp.now(),
     });
     
+    const luminance = getLuminance(data.themeColor);
+    const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
+
     const settingsRef = doc(db, "clubs", clubId, "settings", "config");
     batch.set(settingsRef, {
         billingPlan: 'basic',
-        themeColor: '#2563eb',
-        themeColorForeground: '#ffffff'
+        themeColor: data.themeColor,
+        themeColorForeground: foregroundColor
     });
 
     await batch.commit();

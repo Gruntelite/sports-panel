@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -31,6 +30,7 @@ const registerSchema = z.object({
   clubName: z.string().min(3, { message: "El nombre del club debe tener al menos 3 caracteres." }),
   adminName: z.string().min(3, { message: "Tu nombre debe tener al menos 3 caracteres." }),
   sport: z.string().min(1, { message: "Debes seleccionar un deporte." }),
+  themeColor: z.string().regex(/^#[0-9a-f]{6}$/i, { message: "Selecciona un color válido."}),
   email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
 });
@@ -47,6 +47,7 @@ export default function RegisterPage() {
       clubName: "",
       adminName: "",
       sport: "",
+      themeColor: "#2563eb",
       email: "",
       password: "",
     },
@@ -76,7 +77,7 @@ export default function RegisterPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4">
-      <Card className="mx-auto max-w-lg w-full shadow-xl border">
+      <Card className="mx-auto max-w-md w-full shadow-xl border">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
             <Logo />
@@ -117,28 +118,46 @@ export default function RegisterPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                  control={form.control}
-                  name="sport"
-                  render={({ field }) => (
-                  <FormItem>
-                      <FormLabel>Deporte Principal</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                          <SelectTrigger>
-                              <SelectValue placeholder="Selecciona un deporte..." />
-                          </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                              {sports.map(sport => (
-                                  <SelectItem key={sport.value} value={sport.value}>{sport.label}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                      <FormMessage />
-                  </FormItem>
-                  )}
-              />
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="sport"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Deporte Principal</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona..." />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {sports.map(sport => (
+                                    <SelectItem key={sport.value} value={sport.value}>{sport.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="themeColor"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Color Principal del Club</FormLabel>
+                        <FormControl>
+                            <div className="flex items-center gap-2">
+                                <Input type="color" className="p-1 h-10 w-14" {...field} />
+                                <Input type="text" value={field.value} onChange={field.onChange} placeholder="#2563eb" />
+                            </div>
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="email"
