@@ -200,7 +200,7 @@ export default function LandingPage() {
             Iniciar Sesión
           </Link>
           <Button asChild>
-            <Link href="/" prefetch={false}>Crear Cuenta</Link>
+            <Link href="/register" prefetch={false}>Crear Cuenta</Link>
           </Button>
         </nav>
         <div className="ml-auto md:hidden">
@@ -226,7 +226,7 @@ export default function LandingPage() {
                             Iniciar Sesión
                         </Link>
                         <Button asChild size="lg">
-                            <Link href="/" prefetch={false}>Crear Cuenta</Link>
+                            <Link href="/register" prefetch={false}>Crear Cuenta</Link>
                         </Button>
                     </div>
                 </SheetContent>
@@ -247,7 +247,7 @@ export default function LandingPage() {
               </div>
               <div className="space-y-2">
                 <Button asChild size="lg">
-                  <Link href="#" prefetch={false}>
+                  <Link href="/register" prefetch={false}>
                     Empieza tu prueba gratuita
                   </Link>
                 </Button>
@@ -434,7 +434,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
-                    <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
+                    <Button variant="outline" className="mt-6 w-full" asChild><Link href="/register">Empezar ahora</Link></Button>
                 </div>
 
                 <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 text-center">
@@ -464,7 +464,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
-                    <Button className="mt-6 w-full">Empezar ahora</Button>
+                    <Button className="mt-6 w-full" asChild><Link href="/register">Empezar ahora</Link></Button>
                 </div>
 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
@@ -493,7 +493,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
-                    <Button variant="outline" className="mt-6 w-full">Empezar ahora</Button>
+                    <Button variant="outline" className="mt-6 w-full" asChild><Link href="/register">Empezar ahora</Link></Button>
                 </div>
             </div>
           </div>

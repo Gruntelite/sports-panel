@@ -88,7 +88,7 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
             <p className="text-muted-foreground">
-                ¿No tienes una cuenta? <Link href="/" className="text-primary hover:underline font-semibold">Crea una</Link>
+                ¿No tienes una cuenta? <Link href="/register" className="text-primary hover:underline font-semibold">Crea una</Link>
             </p>
         </CardFooter>
       </Card>

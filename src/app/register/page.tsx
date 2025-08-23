@@ -1,0 +1,183 @@
+
+"use client";
+
+import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import * as z from "zod";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/hooks/use-toast";
+import { Logo } from "@/components/logo";
+import { createClubAction } from "@/lib/actions";
+import { sports } from "@/lib/sports";
+import { Loader2 } from "lucide-react";
+
+
+const registerSchema = z.object({
+  clubName: z.string().min(3, { message: "El nombre del club debe tener al menos 3 caracteres." }),
+  adminName: z.string().min(3, { message: "Tu nombre debe tener al menos 3 caracteres." }),
+  sport: z.string().min(1, { message: "Debes seleccionar un deporte." }),
+  email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
+  password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
+});
+
+
+export default function RegisterPage() {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(false);
+
+  const form = useForm<z.infer<typeof registerSchema>>({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      clubName: "",
+      adminName: "",
+      sport: "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
+    setLoading(true);
+    
+    const result = await createClubAction(values);
+
+    if (result.success) {
+      toast({
+        title: "¡Registro completado!",
+        description: "Tu club ha sido creado. Ahora serás redirigido al panel de control.",
+      });
+      router.push("/dashboard");
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Fallo en el Registro",
+        description: result.error || "No se pudo completar el registro. Por favor, inténtalo de nuevo.",
+      });
+    }
+
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+      <Card className="mx-auto max-w-lg w-full shadow-xl border">
+        <CardHeader className="space-y-2 text-center">
+          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
+            <Logo />
+          </div>
+          <CardTitle className="text-2xl font-bold font-headline">
+            Crea tu Club
+          </CardTitle>
+          <CardDescription>
+            Empieza a gestionar tu club en minutos. Rellena los datos para comenzar.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="clubName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre del Club</FormLabel>
+                    <FormControl>
+                      <Input placeholder="p.ej., Club Deportivo Águilas" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+               <FormField
+                control={form.control}
+                name="adminName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tu Nombre Completo</FormLabel>
+                    <FormControl>
+                      <Input placeholder="p.ej., Carlos Sánchez" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                  control={form.control}
+                  name="sport"
+                  render={({ field }) => (
+                  <FormItem>
+                      <FormLabel>Deporte Principal</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                          <SelectTrigger>
+                              <SelectValue placeholder="Selecciona un deporte..." />
+                          </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                              {sports.map(sport => (
+                                  <SelectItem key={sport.value} value={sport.value}>{sport.label}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                      <FormMessage />
+                  </FormItem>
+                  )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tu Correo Electrónico</FormLabel>
+                    <FormControl>
+                      <Input type="email" placeholder="tu@email.com" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contraseña</FormLabel>
+                    <FormControl>
+                      <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                {loading ? 'Creando tu club...' : 'Crear Cuenta'}
+              </Button>
+            </form>
+          </Form>
+        </CardContent>
+        <CardFooter className="flex justify-center text-sm">
+          <p className="text-muted-foreground">
+            ¿Ya tienes una cuenta? <Link href="/login" className="text-primary hover:underline font-semibold">Inicia Sesión</Link>
+          </p>
+        </CardFooter>
+      </Card>
+    </div>
+  );
+}

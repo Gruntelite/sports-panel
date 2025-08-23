@@ -3,12 +3,69 @@
 
 import { sendEmailFlow } from "@/ai/flows/send-email-flow";
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment } from "firebase/firestore";
-import { db } from './firebase'; // Use client SDK
+import { db, auth } from './firebase'; // Use client SDK
+import { createUserWithEmailAndPassword } from "firebase/auth";
 
 
 type VerificationInput = {
     clubId: string;
 }
+
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string}): Promise<{success: boolean, error?: string, clubId?: string}> {
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+    const user = userCredential.user;
+
+    const clubRef = doc(collection(db, "clubs"));
+    const clubId = clubRef.id;
+
+    const batch = writeBatch(db);
+
+    batch.set(clubRef, {
+        name: data.clubName,
+        sport: data.sport,
+        createdAt: Timestamp.now(),
+        ownerId: user.uid,
+    });
+
+    const rootUserRef = doc(db, "users", user.uid);
+    batch.set(rootUserRef, {
+        clubId: clubId,
+        email: data.email,
+    });
+    
+    const clubUserRef = doc(db, "clubs", clubId, "users", user.uid);
+    batch.set(clubUserRef, {
+        name: data.adminName,
+        email: data.email,
+        role: "super-admin",
+        createdAt: Timestamp.now(),
+    });
+    
+    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+    batch.set(settingsRef, {
+        billingPlan: 'basic',
+        themeColor: '#2563eb',
+        themeColorForeground: '#ffffff'
+    });
+
+    await batch.commit();
+
+    return { success: true, clubId };
+  } catch (error: any) {
+    console.error("Error creating club and user:", error);
+    let errorMessage = "Ocurrió un error inesperado durante el registro.";
+    if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "Este correo electrónico ya está en uso por otra cuenta.";
+    } else if (error.code === 'auth/weak-password') {
+        errorMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
+    } else if (error.code === 'auth/invalid-email') {
+        errorMessage = "El formato del correo electrónico no es válido.";
+    }
+    return { success: false, error: errorMessage };
+  }
+}
+
 
 export async function initiateSenderVerificationAction(input: VerificationInput) {
     
