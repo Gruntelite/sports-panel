@@ -19,7 +19,7 @@ import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { sendEmailWithTriggerExtensionAction } from "@/lib/actions";
+import { sendEmailWithBrevoAction } from "@/lib/actions";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -31,7 +31,6 @@ export function DirectEmailSender() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
-    const [replyToEmail, setReplyToEmail] = useState("");
     
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -140,8 +139,8 @@ export function DirectEmailSender() {
         return;
       }
       
-      if (!subject.trim() || !body.trim() || !replyToEmail.trim()) {
-        toast({ variant: "destructive", title: "Error", description: "El email de respuesta, el asunto y el mensaje son obligatorios." });
+      if (!subject.trim() || !body.trim()) {
+        toast({ variant: "destructive", title: "Error", description: "El asunto y el mensaje son obligatorios." });
         return;
       }
       
@@ -154,20 +153,19 @@ export function DirectEmailSender() {
         } else {
           email = (member.data as Coach | Staff).email || '';
         }
-        return email;
-      }).filter(Boolean); // Filter out any empty emails
+        return { email, name: member.name };
+      }).filter(item => item.email); // Filter out any empty emails
 
-      const result = await sendEmailWithTriggerExtensionAction({ clubId, toUids: recipients, subject, html: body, replyTo: replyToEmail });
+      const result = await sendEmailWithBrevoAction({ clubId, recipients, subject, htmlContent: body });
 
       if (result.success) {
           toast({
-              title: "¡Correos en cola!",
-              description: `Se han puesto en cola ${recipients.length} correos para ser enviados.`,
+              title: "¡Correos enviados!",
+              description: `Se han enviado ${recipients.length} correos correctamente.`,
           });
           setSelectedMemberIds(new Set());
           setSubject('');
           setBody('');
-          setReplyToEmail('');
       } else {
           toast({
               variant: "destructive",
@@ -191,7 +189,7 @@ export function DirectEmailSender() {
             <CardHeader>
                 <CardTitle>Enviar Correo Directo</CardTitle>
                 <CardDescription>
-                    Redacta un correo y envíalo a grupos de miembros o a personas específicas. La extensión "Trigger Email" de Firebase se encargará del envío.
+                    Redacta un correo y envíalo a grupos de miembros o a personas específicas.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -340,15 +338,9 @@ export function DirectEmailSender() {
                     </p>
                 </div>
                 
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="replyTo">Tu Email de Respuesta</Label>
-                        <Input id="replyTo" value={replyToEmail} onChange={(e) => setReplyToEmail(e.target.value)} placeholder="El email donde recibirás las respuestas" />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="subject">Asunto</Label>
-                        <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del correo electrónico" />
-                    </div>
+                <div className="space-y-2">
+                    <Label htmlFor="subject">Asunto</Label>
+                    <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del correo electrónico" />
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="body">Mensaje</Label>

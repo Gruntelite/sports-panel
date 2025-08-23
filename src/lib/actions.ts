@@ -1,9 +1,11 @@
 
+
 "use client";
 
-import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment, addDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc } from "firebase/firestore";
 import { db, auth } from './firebase'; // Use client SDK
 import { createUserWithEmailAndPassword } from "firebase/auth";
+import type { ClubSettings } from "./types";
 
 
 type VerificationInput = {
@@ -79,42 +81,64 @@ export async function createClubAction(data: { clubName: string, adminName: stri
   }
 }
 
-/**
- * Creates an email document in the `mail` collection in Firestore,
- * which is then picked up by the "Trigger Email" Firebase Extension to be sent.
- */
-export async function sendEmailWithTriggerExtensionAction({ 
+export async function sendEmailWithBrevoAction({
     clubId,
-    toUids,
+    recipients,
     subject,
-    html,
-    replyTo
+    htmlContent,
 }: {
     clubId: string,
-    toUids: string[],
+    recipients: { email: string, name: string }[],
     subject: string,
-    html: string,
-    replyTo: string
+    htmlContent: string
 }) {
-    if (!clubId || toUids.length === 0 || !subject || !html) {
+    if (!clubId || recipients.length === 0 || !subject || !htmlContent) {
         return { success: false, error: "Faltan parámetros para enviar el correo." };
     }
-
+    
     try {
-        const mailRef = collection(db, "clubs", clubId, "mail");
-        await addDoc(mailRef, {
-            to: toUids,
-            message: {
-                subject: subject,
-                html: html,
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
+        
+        if (!settingsSnap.exists()) {
+            return { success: false, error: "No se ha encontrado la configuración de envío de correo para este club." };
+        }
+        
+        const settings = settingsSnap.data() as ClubSettings;
+        const apiKey = settings.brevoApiKey;
+        const senderEmail = settings.brevoFromEmail;
+        const senderReplyTo = settings.brevoReplyToEmail;
+        
+        if (!apiKey || !senderEmail || !senderReplyTo) {
+             return { success: false, error: "La configuración de Brevo (API Key, Remitente y Email de Respuesta) no está completa. Por favor, revísala en la sección de Comunicaciones > Configuración." };
+        }
+
+        const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+                'accept': 'application/json',
+                'api-key': apiKey,
+                'content-type': 'application/json'
             },
-            replyTo: replyTo,
+            body: JSON.stringify({
+                sender: { email: senderEmail },
+                to: recipients,
+                replyTo: { email: senderReplyTo },
+                subject: subject,
+                htmlContent: htmlContent,
+            })
         });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Brevo API Error:", errorData);
+            return { success: false, error: `Error de Brevo: ${errorData.message}` };
+        }
 
         return { success: true };
 
-    } catch (error) {
-        console.error("Error creating email document in Firestore:", error);
-        return { success: false, error: "No se pudo poner el correo en la cola de envío." };
+    } catch (error: any) {
+        console.error("Error sending email via Brevo:", error);
+        return { success: false, error: "No se pudo enviar el correo a través de Brevo." };
     }
 }
