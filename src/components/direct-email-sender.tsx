@@ -19,7 +19,7 @@ import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { sendDirectEmailAction } from "@/lib/actions";
+import { sendEmailWithTriggerExtensionAction } from "@/lib/actions";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -31,6 +31,7 @@ export function DirectEmailSender() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
+    const [replyToEmail, setReplyToEmail] = useState("");
     
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -139,8 +140,8 @@ export function DirectEmailSender() {
         return;
       }
       
-      if (!subject.trim() || !body.trim()) {
-        toast({ variant: "destructive", title: "Error", description: "El asunto y el mensaje son obligatorios." });
+      if (!subject.trim() || !body.trim() || !replyToEmail.trim()) {
+        toast({ variant: "destructive", title: "Error", description: "El email de respuesta, el asunto y el mensaje son obligatorios." });
         return;
       }
       
@@ -153,23 +154,20 @@ export function DirectEmailSender() {
         } else {
           email = (member.data as Coach | Staff).email || '';
         }
-        return {
-          id: member.id,
-          name: member.name,
-          email: email,
-        };
-      }).filter(r => r.email);
+        return email;
+      }).filter(Boolean); // Filter out any empty emails
 
-      const result = await sendDirectEmailAction({ clubId, recipients, subject, body });
+      const result = await sendEmailWithTriggerExtensionAction({ clubId, toUids: recipients, subject, html: body, replyTo: replyToEmail });
 
       if (result.success) {
           toast({
-              title: result.title,
-              description: result.description,
+              title: "¡Correos en cola!",
+              description: `Se han puesto en cola ${recipients.length} correos para ser enviados.`,
           });
           setSelectedMemberIds(new Set());
           setSubject('');
           setBody('');
+          setReplyToEmail('');
       } else {
           toast({
               variant: "destructive",
@@ -182,7 +180,7 @@ export function DirectEmailSender() {
     }
     
     const recipientCount = selectedMemberIds.size;
-    const isAllFilteredSelected = filteredMembers.length > 0 && selectedMemberIds.size === filteredMembers.length;
+    const isAllFilteredSelected = filteredMembers.length > 0 && recipientCount === filteredMembers.length;
 
     if (loading) {
         return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -193,7 +191,7 @@ export function DirectEmailSender() {
             <CardHeader>
                 <CardTitle>Enviar Correo Directo</CardTitle>
                 <CardDescription>
-                    Redacta un correo y envíalo a grupos de miembros o a personas específicas.
+                    Redacta un correo y envíalo a grupos de miembros o a personas específicas. La extensión "Trigger Email" de Firebase se encargará del envío.
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
@@ -342,13 +340,19 @@ export function DirectEmailSender() {
                     </p>
                 </div>
                 
-                <div className="space-y-2">
-                    <Label htmlFor="subject">Asunto</Label>
-                    <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del correo electrónico" />
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="replyTo">Tu Email de Respuesta</Label>
+                        <Input id="replyTo" value={replyToEmail} onChange={(e) => setReplyToEmail(e.target.value)} placeholder="El email donde recibirás las respuestas" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="subject">Asunto</Label>
+                        <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del correo electrónico" />
+                    </div>
                 </div>
                 <div className="space-y-2">
                     <Label htmlFor="body">Mensaje</Label>
-                    <Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escribe aquí tu mensaje..." className="min-h-[200px]" />
+                    <Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escribe aquí tu mensaje... (Puedes usar HTML)" className="min-h-[200px]" />
                 </div>
                  
             </CardContent>

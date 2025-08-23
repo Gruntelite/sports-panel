@@ -1,8 +1,7 @@
 
 "use client";
 
-import { sendEmailFlow } from "@/ai/flows/send-email-flow";
-import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, deleteDoc, increment, addDoc } from "firebase/firestore";
 import { db, auth } from './firebase'; // Use client SDK
 import { createUserWithEmailAndPassword } from "firebase/auth";
 
@@ -80,104 +79,42 @@ export async function createClubAction(data: { clubName: string, adminName: stri
   }
 }
 
-const DAILY_LIMIT = 300; // Brevo free plan limit
-
-async function getClubConfigAndCheckLimit(clubId: string) {
-    const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
-    const clubRef = doc(db, 'clubs', clubId);
-
-    const [settingsDoc, clubDoc] = await Promise.all([getDoc(settingsRef), getDoc(clubRef)]);
-
-    const config = {
-      clubName: "Tu Club",
-      fromEmail: `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`,
-      replyToEmail: "",
-      apiKey: null as string | null,
-      availableToSendToday: DAILY_LIMIT,
-    };
-
-    if (clubDoc.exists()) {
-        config.clubName = clubDoc.data()?.name || "Tu Club";
-    }
-    
-    if (settingsDoc.exists()) {
-        const data = settingsDoc.data();
-        config.apiKey = data?.brevoApiKey || null;
-        config.fromEmail = data?.brevoFromEmail || `notifications@${process.env.GCLOUD_PROJECT || 'sportspanel'}.web.app`;
-        config.replyToEmail = data?.brevoReplyToEmail || config.fromEmail;
-
-
-        const now = Timestamp.now();
-        const oneDayAgo = now.toMillis() - (24 * 60 * 60 * 1000);
-        const lastReset = data?.dailyEmailCountResetTimestamp?.toMillis() || 0;
-        
-        let currentCount = data?.dailyEmailCount || 0;
-        
-        if (lastReset < oneDayAgo) {
-            await updateDoc(settingsRef, {
-                dailyEmailCount: 0,
-                dailyEmailCountResetTimestamp: now
-            });
-            currentCount = 0;
-        }
-
-        config.availableToSendToday = DAILY_LIMIT - currentCount;
-    }
-    return config;
-}
-
-export async function sendDirectEmailAction({ clubId, recipients, subject, body }: { clubId: string, recipients: any[], subject: string, body: string }) {
-    
-    const config = await getClubConfigAndCheckLimit(clubId);
-    const { availableToSendToday, apiKey, clubName, fromEmail, replyToEmail } = config;
-    
-    if (!apiKey) {
-      const errorMsg = `No se ha configurado una clave API de Brevo para este club. El envío de correos está deshabilitado.`;
-      console.error(errorMsg);
-      return { success: false, error: errorMsg };
+/**
+ * Creates an email document in the `mail` collection in Firestore,
+ * which is then picked up by the "Trigger Email" Firebase Extension to be sent.
+ */
+export async function sendEmailWithTriggerExtensionAction({ 
+    clubId,
+    toUids,
+    subject,
+    html,
+    replyTo
+}: {
+    clubId: string,
+    toUids: string[],
+    subject: string,
+    html: string,
+    replyTo: string
+}) {
+    if (!clubId || toUids.length === 0 || !subject || !html) {
+        return { success: false, error: "Faltan parámetros para enviar el correo." };
     }
 
-    const recipientsToSend = recipients.slice(0, availableToSendToday);
-    const recipientsToQueue = recipients.slice(availableToSendToday);
-
-    const result = await sendEmailFlow({
-        recipients: recipientsToSend,
-        subject,
-        body,
-        apiKey,
-        clubName,
-        fromEmail,
-        replyToEmail,
-    });
-    
-    if (recipientsToQueue.length > 0) {
-        const queueRef = doc(collection(db, 'clubs', clubId, 'emailQueue'));
-        await setDoc(queueRef, {
-            recipients: recipientsToQueue,
-            subject,
-            body,
-            createdAt: Timestamp.now(),
+    try {
+        const mailRef = collection(db, "clubs", clubId, "mail");
+        await addDoc(mailRef, {
+            to: toUids,
+            message: {
+                subject: subject,
+                html: html,
+            },
+            replyTo: replyTo,
         });
-    }
 
-    if (result.success && result.sentCount > 0) {
-        const settingsRef = doc(db, 'clubs', clubId, 'settings', 'config');
-        await updateDoc(settingsRef, {
-            dailyEmailCount: increment(result.sentCount),
-            dailyEmailCountResetTimestamp: Timestamp.now(),
-        });
-    }
+        return { success: true };
 
-    if (result.success) {
-        return {
-            success: true,
-            title: `¡Envío completado!`,
-            description: `Se han enviado ${result.sentCount} correos. ${recipientsToQueue.length > 0 ? `Los ${recipientsToQueue.length} restantes se enviarán automáticamente.` : ''}`
-        };
-    } else {
-        return {
-            success: false,
-            error: result.error || "Ocurrió un error desconocido durante el envío.",
-        };
+    } catch (error) {
+        console.error("Error creating email document in Firestore:", error);
+        return { success: false, error: "No se pudo poner el correo en la cola de envío." };
     }
 }
