@@ -538,9 +538,11 @@ function ProtocolsTab() {
                 {protocols.length > 0 ? (
                   protocols.map((protocol) => (
                     <TableRow key={protocol.id}>
-                      <TableCell className="font-medium flex items-center gap-2">
-                         <FileText className="h-4 w-4 text-muted-foreground"/>
-                         {protocol.name}
+                      <TableCell className="font-medium">
+                        <div className="flex items-center gap-2">
+                           <FileText className="h-4 w-4 text-muted-foreground"/>
+                           {protocol.name}
+                        </div>
                       </TableCell>
                       <TableCell>
                         {format(protocol.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
