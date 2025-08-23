@@ -129,6 +129,7 @@ export type Socio = {
     fee: number;
     avatar?: string;
     createUser?: boolean;
+    socioNumber?: string;
 }
 
 export type TeamMember = {

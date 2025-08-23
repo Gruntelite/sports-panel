@@ -475,6 +475,7 @@ export default function StaffPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Nombre</TableHead>
+                        <TableHead>Nº Socio</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Cuota</TableHead>
                         <TableHead>
@@ -494,6 +495,7 @@ export default function StaffPage() {
                               <span>{socio.name} {socio.lastName}</span>
                             </div>
                           </TableCell>
+                          <TableCell>{socio.socioNumber || 'N/A'}</TableCell>
                           <TableCell>{socio.email}</TableCell>
                           <TableCell>{socio.fee}€ / {socio.paymentType === 'monthly' ? 'mes' : 'año'}</TableCell>
                           <TableCell>
@@ -600,7 +602,7 @@ export default function StaffPage() {
                               <Input id="lastName" autoComplete="off" value={socioData.lastName || ''} onChange={handleInputChange} />
                           </div>
                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="email">Email</Label>
                             <Input id="email" type="email" value={socioData.email || ''} onChange={handleInputChange} />
@@ -610,9 +612,15 @@ export default function StaffPage() {
                             <Input id="phone" type="tel" value={socioData.phone || ''} onChange={handleInputChange} />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                          <Label htmlFor="dni">NIF</Label>
-                          <Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} />
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                           <div className="space-y-2">
+                              <Label htmlFor="dni">NIF</Label>
+                              <Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} />
+                          </div>
+                          <div className="space-y-2">
+                              <Label htmlFor="socioNumber">Número de Socio</Label>
+                              <Input id="socioNumber" value={socioData.socioNumber || ''} onChange={handleInputChange} />
+                          </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
@@ -670,4 +678,3 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
-
