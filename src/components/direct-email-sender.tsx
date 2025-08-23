@@ -19,7 +19,7 @@ import { Textarea } from "./ui/textarea";
 import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { sendEmailWithSmtpAction } from "@/lib/actions";
+import { sendEmailWithSmtpAction } from "@/lib/email";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -299,7 +299,7 @@ export function DirectEmailSender() {
                                                 checked={isAllFilteredSelected}
                                                 onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                             />
-                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los ${filteredMembers.length} miembros</label>
                                         </CommandItem>
                                         <ScrollArea className="h-64">
                                             {filteredMembers.map((member) => (

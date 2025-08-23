@@ -6,7 +6,6 @@ import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timesta
 import { db, auth } from './firebase'; // Use client SDK
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import type { ClubSettings } from "./types";
-import nodemailer from "nodemailer";
 
 
 type VerificationInput = {
@@ -80,61 +79,4 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     }
     return { success: false, error: errorMessage };
   }
-}
-
-export async function sendEmailWithSmtpAction({
-    clubId,
-    recipients,
-    subject,
-    htmlContent,
-}: {
-    clubId: string,
-    recipients: { email: string, name: string }[],
-    subject: string,
-    htmlContent: string
-}) {
-    if (!clubId || recipients.length === 0 || !subject || !htmlContent) {
-        return { success: false, error: "Faltan parámetros para enviar el correo." };
-    }
-    
-    try {
-        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
-        
-        if (!settingsSnap.exists()) {
-            return { success: false, error: "No se ha encontrado la configuración de envío de correo para este club." };
-        }
-        
-        const settings = settingsSnap.data() as ClubSettings;
-        const { smtpHost, smtpPort, smtpUser, smtpPassword, smtpFromEmail, clubName } = settings;
-        
-        if (!smtpHost || !smtpPort || !smtpUser || !smtpPassword || !smtpFromEmail) {
-             return { success: false, error: "La configuración SMTP no está completa. Por favor, revísala en los ajustes." };
-        }
-
-        const transporter = nodemailer.createTransport({
-            host: smtpHost,
-            port: Number(smtpPort),
-            secure: Number(smtpPort) === 465, // true for 465, false for other ports
-            auth: {
-                user: smtpUser,
-                pass: smtpPassword,
-            },
-        });
-
-        for (const recipient of recipients) {
-            await transporter.sendMail({
-                from: `"${clubName || 'Tu Club'}" <${smtpFromEmail}>`,
-                to: recipient.email,
-                subject: subject,
-                html: htmlContent,
-            });
-        }
-
-        return { success: true, count: recipients.length };
-
-    } catch (error: any) {
-        console.error("Error sending email via SMTP:", error);
-        return { success: false, error: `Error de SMTP: ${error.message}` };
-    }
 }
