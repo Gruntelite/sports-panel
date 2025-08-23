@@ -26,6 +26,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -44,7 +45,7 @@ import {
   DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
-import { auth, db } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import {
   collection,
   getDocs,
@@ -55,14 +56,20 @@ import {
   deleteDoc,
   query,
   orderBy,
+  Timestamp,
 } from "firebase/firestore";
-import type { Incident } from "@/lib/types";
+import type { Incident, Protocol } from "@/lib/types";
 import {
   PlusCircle,
   Loader2,
   MoreHorizontal,
   Trash2,
   Edit,
+  Download,
+  Upload,
+  FileText,
+  AlertTriangle,
+  ClipboardList
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -71,8 +78,11 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { v4 as uuidv4 } from "uuid";
 
-export default function IncidentsPage() {
+
+function IncidentsTab() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -166,71 +176,65 @@ export default function IncidentsPage() {
     }
   };
 
-  return (
+   return (
     <>
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight">Registro de Incidencias</h1>
-          <p className="text-muted-foreground">Gestiona y documenta todas las incidencias del club.</p>
-        </div>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Historial de Incidencias</CardTitle>
-            <Button onClick={() => handleOpenModal('add')}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Registrar Incidencia
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex justify-center items-center h-48">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Involucrados</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {incidents.length > 0 ? (
-                    incidents.map((incident) => (
-                      <TableRow key={incident.id}>
-                        <TableCell>{format(new Date(incident.date), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
-                        <TableCell>{incident.type}</TableCell>
-                        <TableCell className="max-w-xs truncate">{incident.involved.join(', ')}</TableCell>
-                        <TableCell>
-                          <Badge variant={incident.status === 'Resuelta' ? 'secondary' : incident.status === 'En Progreso' ? 'outline' : 'destructive'}>{incident.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => handleOpenModal('edit', incident)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setIncidentToDelete(incident)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">No hay incidencias registradas.</TableCell>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Historial de Incidencias</CardTitle>
+          <Button onClick={() => handleOpenModal('add')}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Registrar Incidencia
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Fecha</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Involucrados</TableHead>
+                  <TableHead>Estado</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {incidents.length > 0 ? (
+                  incidents.map((incident) => (
+                    <TableRow key={incident.id}>
+                      <TableCell>{format(new Date(incident.date), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
+                      <TableCell>{incident.type}</TableCell>
+                      <TableCell className="max-w-xs truncate">{incident.involved.join(', ')}</TableCell>
+                      <TableCell>
+                        <Badge variant={incident.status === 'Resuelta' ? 'secondary' : incident.status === 'En Progreso' ? 'outline' : 'destructive'}>{incident.status}</Badge>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => handleOpenModal('edit', incident)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => setIncidentToDelete(incident)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="h-24 text-center">No hay incidencias registradas.</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
@@ -301,5 +305,325 @@ export default function IncidentsPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+   )
+}
+
+
+function ProtocolsTab() {
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [clubId, setClubId] = useState<string | null>(null);
+
+  const [protocols, setProtocols] = useState<Protocol[]>([]);
+  
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+  const [protocolNameToSave, setProtocolNameToSave] = useState("");
+  const [protocolToDelete, setProtocolToDelete] = useState<Protocol | null>(null);
+
+  const fetchData = async (currentClubId: string) => {
+    setLoading(true);
+    try {
+      const protocolsQuery = query(collection(db, "clubs", currentClubId, "protocols"), orderBy("createdAt", "desc"));
+      const protocolsSnapshot = await getDocs(protocolsQuery);
+      const protocolsList = protocolsSnapshot.docs.map(
+        (doc) => ({ id: doc.id, ...doc.data() } as Protocol)
+      );
+      setProtocols(protocolsList);
+
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudieron cargar los protocolos.",
+      });
+    }
+    setLoading(false);
+  };
+  
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userDocSnap = await getDoc(userDocRef);
+        if (userDocSnap.exists()) {
+          const currentClubId = userDocSnap.data().clubId;
+          setClubId(currentClubId);
+          if (currentClubId) {
+            fetchData(currentClubId);
+          }
+        }
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+
+  const handleFileUpload = async () => {
+    if (!clubId) {
+        toast({ variant: "destructive", title: "Error de Autenticación", description: "Debes estar autenticado para subir archivos."});
+        return;
+    }
+    if (!fileToUpload || !protocolNameToSave.trim()) {
+      toast({ variant: "destructive", title: "Faltan datos", description: "El nombre del protocolo y el archivo son obligatorios."});
+      return;
+    }
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+    if (fileToUpload.size > MAX_FILE_SIZE) {
+        toast({ variant: "destructive", title: "Archivo demasiado grande", description: "El tamaño máximo del archivo es 10 MB."});
+        return;
+    }
+
+    setSaving(true);
+    
+    try {
+      const filePath = `club-protocols/${clubId}/${uuidv4()}-${fileToUpload.name}`;
+      const fileRef = ref(storage, filePath);
+      
+      await uploadBytes(fileRef, fileToUpload);
+      
+      const url = await getDownloadURL(fileRef);
+      
+      const newProtocolData: Omit<Protocol, "id"> = {
+        name: protocolNameToSave.trim(),
+        url,
+        path: filePath,
+        createdAt: Timestamp.now(),
+      };
+      await addDoc(collection(db, "clubs", clubId, "protocols"), newProtocolData);
+
+      toast({
+        title: "¡Protocolo Subido!",
+        description: `${protocolNameToSave} se ha guardado correctamente.`,
+      });
+      
+      setIsUploadModalOpen(false);
+      setFileToUpload(null);
+      setProtocolNameToSave("");
+      
+      if(clubId) fetchData(clubId);
+
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      toast({ variant: "destructive", title: "Error de Subida", description: "No se pudo subir el archivo." });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteProtocol = async () => {
+    if (!clubId || !protocolToDelete) return;
+    setSaving(true);
+
+    try {
+      const fileRef = ref(storage, protocolToDelete.path);
+      await deleteObject(fileRef);
+
+      await deleteDoc(doc(db, "clubs", clubId, "protocols", protocolToDelete.id!));
+      
+      toast({
+        title: "Protocolo Eliminado",
+        description: `${protocolToDelete.name} ha sido eliminado.`,
+      });
+
+      setProtocolToDelete(null);
+      if (clubId) fetchData(clubId);
+    } catch (error) {
+      console.error("Error deleting protocol:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "No se pudo eliminar el protocolo.",
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>Todos los Protocolos</CardTitle>
+            <CardDescription>
+              Documentos de actuación para todo el club.
+            </CardDescription>
+          </div>
+          <Dialog
+            open={isUploadModalOpen}
+            onOpenChange={setIsUploadModalOpen}
+          >
+            <DialogTrigger asChild>
+              <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Subir Nuevo Protocolo
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Subir Nuevo Protocolo</DialogTitle>
+                <DialogDescription>
+                  Selecciona un archivo y ponle un nombre descriptivo para
+                  identificarlo fácilmente.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="protocol-name">Nombre del Protocolo *</Label>
+                  <Input
+                    id="protocol-name"
+                    placeholder="p.ej., Protocolo de Lesiones Graves"
+                    value={protocolNameToSave}
+                    onChange={(e) => setProtocolNameToSave(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="protocol-file">Archivo *</Label>
+                  <Input
+                    id="protocol-file"
+                    type="file"
+                    onChange={(e) =>
+                      setFileToUpload(e.target.files?.[0] || null)
+                    }
+                  />
+                  <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
+                </div>
+              </div>
+              <DialogFooter>
+                <DialogClose asChild>
+                  <Button variant="secondary">Cancelar</Button>
+                </DialogClose>
+                <Button onClick={handleFileUpload} disabled={saving}>
+                  {saving && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
+                  <Upload className="mr-2 h-4 w-4" />
+                  Subir y Guardar
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre del Archivo</TableHead>
+                  <TableHead>Fecha de Subida</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {protocols.length > 0 ? (
+                  protocols.map((protocol) => (
+                    <TableRow key={protocol.id}>
+                      <TableCell className="font-medium flex items-center gap-2">
+                         <FileText className="h-4 w-4 text-muted-foreground"/>
+                         {protocol.name}
+                      </TableCell>
+                      <TableCell>
+                        {format(protocol.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild variant="outline" size="icon" className="mr-2">
+                          <a href={protocol.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => setProtocolToDelete(protocol)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={3}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      Todavía no se ha subido ningún protocolo.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <AlertDialog
+        open={!!protocolToDelete}
+        onOpenChange={(open) => !open && setProtocolToDelete(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. El archivo se eliminará
+              permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteProtocol}
+              disabled={saving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  );
+}
+
+
+export default function IncidentsAndProtocolsPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold font-headline tracking-tight">Incidencias y Protocolos</h1>
+        <p className="text-muted-foreground">
+          Gestiona incidencias y consulta los protocolos de actuación del club.
+        </p>
+      </div>
+
+      <Tabs defaultValue="incidents" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="incidents">
+            <AlertTriangle className="mr-2 h-4 w-4" />
+            Registro de Incidencias
+          </TabsTrigger>
+          <TabsTrigger value="protocols">
+            <ClipboardList className="mr-2 h-4 w-4" />
+            Protocolos del Club
+          </TabsTrigger>
+        </TabsList>
+        <TabsContent value="incidents" className="mt-6">
+          <IncidentsTab />
+        </TabsContent>
+        <TabsContent value="protocols" className="mt-6">
+          <ProtocolsTab />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
