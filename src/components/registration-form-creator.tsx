@@ -16,8 +16,10 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { FormHistoryItem, CustomFormField } from "@/lib/types";
+import type { FormHistoryItem, CustomFormField, RegistrationForm } from "@/lib/types";
 import { Label } from "@/components/ui/label";
+import { auth, db } from "@/lib/firebase";
+import { addDoc, collection, doc, getDoc, Timestamp } from "firebase/firestore";
 
 
 const initialFormFields: CustomFormField[] = [
@@ -33,7 +35,7 @@ const initialFormFields: CustomFormField[] = [
 const formSchema = z.object({
   title: z.string().min(3, "El título del evento es obligatorio."),
   description: z.string().optional(),
-  fields: z.array(z.string()).refine((value) => value.some((item) => item), {
+  selectedFieldIds: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Tienes que seleccionar al menos un campo.",
   }),
 });
@@ -49,7 +51,7 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
   const [generatedForm, setGeneratedForm] = useState<{ id: string, url: string } | null>(null);
   const { toast } = useToast();
   
-  const [formFields, setFormFields] = useState<CustomFormField[]>(initialFormFields);
+  const [allFields, setAllFields] = useState<CustomFormField[]>(initialFormFields);
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState<CustomFormField['type']>('text');
 
@@ -59,7 +61,7 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
     defaultValues: {
       title: "",
       description: "",
-      fields: ["name", "email"],
+      selectedFieldIds: ["name", "email"],
     },
   });
   
@@ -76,41 +78,77 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
         required: false,
         custom: true,
     };
-    setFormFields(prev => [...prev, newField]);
+    setAllFields(prev => [...prev, newField]);
     setNewFieldName("");
     setNewFieldType('text');
   };
   
   const handleRemoveCustomField = (idToRemove: string) => {
-    setFormFields(prev => prev.filter(field => field.id !== idToRemove));
-    const currentSelected = form.getValues("fields");
-    form.setValue("fields", currentSelected.filter(id => id !== idToRemove));
+    setAllFields(prev => prev.filter(field => field.id !== idToRemove));
+    const currentSelected = form.getValues("selectedFieldIds");
+    form.setValue("selectedFieldIds", currentSelected.filter(id => id !== idToRemove));
   };
 
 
   async function onSubmit(values: FormData) {
     setLoading(true);
     setGeneratedForm(null);
-    
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    const formId = values.title.toLowerCase().replace(/\s+/g, '-') + '-' + Math.random().toString(36).substring(2, 6);
-    const formUrl = `/form/${formId}`;
 
-    const newForm = { id: formId, url: formUrl };
-    setGeneratedForm(newForm);
-    onFormCreated({
-      id: formId,
-      title: values.title,
-      url: formUrl,
-      date: new Date(),
-    });
+    const user = auth.currentUser;
+    if (!user) {
+        toast({ variant: "destructive", title: "Error de autenticación."});
+        setLoading(false);
+        return;
+    }
+    
+    const userDocRef = doc(db, "users", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    if (!userDocSnap.exists()) {
+        toast({ variant: "destructive", title: "No se encontró tu club."});
+        setLoading(false);
+        return;
+    }
+    const clubId = userDocSnap.data().clubId;
+
+    try {
+        const fieldsToSave = allFields.filter(f => values.selectedFieldIds.includes(f.id));
+        const newFormDoc: Omit<RegistrationForm, "id"> = {
+            title: values.title,
+            description: values.description,
+            fields: fieldsToSave,
+            createdAt: Timestamp.now(),
+            clubId: clubId,
+        };
+
+        const docRef = await addDoc(collection(db, "clubs", clubId, "registrationForms"), newFormDoc);
+        
+        const formId = docRef.id;
+        const formUrl = `/form/${formId}`;
+        const newForm = { id: formId, url: formUrl };
+
+        setGeneratedForm(newForm);
+        onFormCreated({
+            id: formId,
+            title: values.title,
+            url: formUrl,
+            date: new Date(),
+        });
+        
+        toast({
+            title: "¡Formulario Generado!",
+            description: "Tu formulario de inscripción público está listo.",
+        });
+
+    } catch (error) {
+        console.error("Error creating form:", error);
+        toast({
+            variant: "destructive",
+            title: "Fallo en la Generación",
+            description: "No se pudo guardar el formulario en la base de datos.",
+        });
+    }
 
     setLoading(false);
-    toast({
-      title: "¡Formulario Generado!",
-      description: "Tu formulario de inscripción público está listo.",
-    });
   }
 
   const handleCopy = () => {
@@ -161,7 +199,7 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
 
               <FormField
                 control={form.control}
-                name="fields"
+                name="selectedFieldIds"
                 render={() => (
                   <FormItem>
                     <div className="mb-4">
@@ -171,11 +209,11 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
                         </FormDescription>
                     </div>
                     <div className="space-y-3">
-                    {formFields.map((item) => (
+                    {allFields.map((item) => (
                       <FormField
                         key={item.id}
                         control={form.control}
-                        name="fields"
+                        name="selectedFieldIds"
                         render={({ field }) => {
                           return (
                             <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">

@@ -202,6 +202,22 @@ export type CustomFormField = {
   custom: boolean;
 };
 
+export type RegistrationForm = {
+    id: string;
+    title: string;
+    description?: string;
+    fields: CustomFormField[];
+    createdAt: Timestamp;
+    clubId: string;
+}
+
+export type FormSubmission = {
+    id?: string;
+    formId: string;
+    submittedAt: Timestamp;
+    data: Record<string, any>;
+}
+
 export type CalendarEvent = {
     id: string;
     title: string;
