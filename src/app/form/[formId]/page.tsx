@@ -87,24 +87,24 @@ export default function PublicFormPage() {
                 
                 if (foundForm) {
                     const now = new Date();
+                    
                     const startDate = foundForm.registrationStartDate ? foundForm.registrationStartDate.toDate() : null;
+                    if(startDate) startDate.setHours(0,0,0,0);
+                    
                     const endDate = foundForm.registrationDeadline ? foundForm.registrationDeadline.toDate() : null;
+                    if(endDate) endDate.setHours(23,59,59,999);
+                    
                     const maxSubmissions = foundForm.maxSubmissions;
                     const currentSubmissions = foundForm.submissionCount || 0;
 
-                    let isActive = true; // Assume active by default
+                    let isActive = true;
                     
-                    // Check start date: if it exists, we must be past it
                     if (startDate && now < startDate) {
                         isActive = false;
                     }
-
-                    // Check end date: if it exists, we must be before it
                     if (endDate && now > endDate) {
                         isActive = false;
                     }
-
-                    // Check submission limit
                     if (maxSubmissions && currentSubmissions >= maxSubmissions) {
                       isActive = false;
                     }
