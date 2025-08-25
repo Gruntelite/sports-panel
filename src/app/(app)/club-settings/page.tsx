@@ -21,6 +21,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "firebase/auth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 
 type Plan = 'basic' | 'pro' | 'elite';
 
@@ -57,6 +59,8 @@ export default function ClubSettingsPage() {
     const [newLogo, setNewLogo] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [originalLogoUrl, setOriginalLogoUrl] = useState<string | null>(null);
+    
+    const [isYearly, setIsYearly] = useState(false);
 
     // Security state
     const [currentPassword, setCurrentPassword] = useState('');
@@ -331,70 +335,108 @@ export default function ClubSettingsPage() {
                                 Selecciona el plan que mejor se ajuste al tamaño y las necesidades de tu club.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="grid gap-6 lg:grid-cols-3">
-                            <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
-                                <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
-                                <p className="text-muted-foreground mt-1">Hasta <b>150</b> fichas</p>
-                                <div className="mt-4 flex items-baseline justify-center gap-2">
-                                    <span className="text-4xl font-bold">{pricing.basic.monthly}€</span>
-                                    <span className="text-muted-foreground self-end">/mes</span>
-                                </div>
-                                <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
-                                </ul>
-                                <Button variant="outline" className="mt-6 w-full" disabled={currentPlan === 'basic'}>
-                                        {currentPlan === 'basic' ? 'Plan Actual' : 'Seleccionar Plan'}
-                                </Button>
-                            </Card>
+                        <CardContent className="space-y-6">
+                           <div className="flex items-center space-x-2 justify-center">
+                              <Label htmlFor="billing-cycle">Mensual</Label>
+                              <Switch id="billing-cycle" checked={isYearly} onCheckedChange={setIsYearly} />
+                              <Label htmlFor="billing-cycle">Anual</Label>
+                              <Badge variant="secondary" className="bg-green-100 text-green-800">Ahorra 10%</Badge>
+                            </div>
+                            <div className="grid gap-6 lg:grid-cols-3">
+                                <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
+                                    <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
+                                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> fichas</p>
+                                    <div className="mt-4 flex items-baseline justify-center gap-2">
+                                       {isYearly ? (
+                                         <>
+                                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.basic.monthly * 12)}€</span>
+                                           <span className="text-4xl font-bold">{pricing.basic.yearly}€</span>
+                                           <span className="text-muted-foreground self-end">/año</span>
+                                         </>
+                                       ) : (
+                                         <>
+                                           <span className="text-4xl font-bold">{pricing.basic.monthly}€</span>
+                                           <span className="text-muted-foreground self-end">/mes</span>
+                                         </>
+                                       )}
+                                    </div>
+                                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                                    </ul>
+                                    <Button variant="outline" className="mt-6 w-full" disabled={currentPlan === 'basic'}>
+                                            {currentPlan === 'basic' ? 'Plan Actual' : 'Seleccionar Plan'}
+                                    </Button>
+                                </Card>
 
-                            <Card className={cn("relative flex flex-col p-6 text-center", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
-                                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
-                                <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
-                                <p className="text-muted-foreground mt-1">Hasta <b>300</b> fichas</p>
-                                <div className="mt-4 flex items-baseline justify-center gap-2">
-                                    <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                                    <span className="text-muted-foreground self-end">/mes</span>
-                                </div>
-                                <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
-                                </ul>
-                                <Button className="mt-6 w-full" disabled={currentPlan === 'pro'}>
-                                    {currentPlan === 'pro' ? 'Plan Actual' : 'Seleccionar Plan'}
-                                </Button>
-                            </Card>
+                                <Card className={cn("relative flex flex-col p-6 text-center", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
+                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
+                                    <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
+                                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> fichas</p>
+                                    <div className="mt-4 flex items-baseline justify-center gap-2">
+                                       {isYearly ? (
+                                         <>
+                                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
+                                           <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
+                                           <span className="text-muted-foreground self-end">/año</span>
+                                         </>
+                                       ) : (
+                                         <>
+                                           <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                                           <span className="text-muted-foreground self-end">/mes</span>
+                                         </>
+                                       )}
+                                    </div>
+                                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                                    </ul>
+                                    <Button className="mt-6 w-full" disabled={currentPlan === 'pro'}>
+                                        {currentPlan === 'pro' ? 'Plan Actual' : 'Seleccionar Plan'}
+                                    </Button>
+                                </Card>
 
-                            <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'elite' && "border-primary ring-2 ring-primary")}>
-                                <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
-                                <p className="text-muted-foreground mt-1">Hasta <b>600</b> fichas</p>
-                                <div className="mt-4 flex items-baseline justify-center gap-2">
-                                    <span className="text-4xl font-bold">{pricing.elite.monthly}€</span>
-                                    <span className="text-muted-foreground self-end">/mes</span>
-                                </div>
-                                <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                                <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
-                                </ul>
-                                <Button variant="outline" className="mt-6 w-full" disabled={currentPlan === 'elite'}>
-                                    {currentPlan === 'elite' ? 'Plan Actual' : 'Seleccionar Plan'}
-                                </Button>
-                            </Card>
+                                <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'elite' && "border-primary ring-2 ring-primary")}>
+                                    <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
+                                    <p className="text-muted-foreground mt-1">Hasta <b>600</b> fichas</p>
+                                    <div className="mt-4 flex items-baseline justify-center gap-2">
+                                       {isYearly ? (
+                                         <>
+                                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.elite.monthly * 12)}€</span>
+                                           <span className="text-4xl font-bold">{pricing.elite.yearly}€</span>
+                                           <span className="text-muted-foreground self-end">/año</span>
+                                         </>
+                                       ) : (
+                                         <>
+                                           <span className="text-4xl font-bold">{pricing.elite.monthly}€</span>
+                                           <span className="text-muted-foreground self-end">/mes</span>
+                                         </>
+                                       )}
+                                    </div>
+                                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
+                                    <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                                    </ul>
+                                    <Button variant="outline" className="mt-6 w-full" disabled={currentPlan === 'elite'}>
+                                        {currentPlan === 'elite' ? 'Plan Actual' : 'Seleccionar Plan'}
+                                    </Button>
+                                </Card>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
@@ -402,5 +444,3 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
-
-    

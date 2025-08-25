@@ -410,7 +410,7 @@ export default function LandingPage() {
                 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
                     <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>100</b> usuarios</p>
+                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> fichas</p>
                     <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
@@ -440,7 +440,7 @@ export default function LandingPage() {
                 <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 text-center">
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
                     <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> usuarios</p>
+                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> fichas</p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
@@ -469,7 +469,7 @@ export default function LandingPage() {
 
                 <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
                     <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> usuarios</p>
+                    <p className="text-muted-foreground mt-1">Hasta <b>600</b> fichas</p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
