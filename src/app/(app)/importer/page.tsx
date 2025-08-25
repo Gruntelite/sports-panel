@@ -152,7 +152,7 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden y Nombres de las Columnas para Jugadores</CardTitle>
                     <CardDescription>
-                        Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
                         Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. Los campos como fechas deben estar en formato AAAA-MM-DD.
                     </CardDescription>
                 </CardHeader>
@@ -171,7 +171,7 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Entrenadores</CardTitle>
                      <CardDescription>
-                       Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                       Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
                         Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas.
                     </CardDescription>
                 </CardHeader>
@@ -190,7 +190,7 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Staff y Directiva</CardTitle>
                      <CardDescription>
-                        Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
                         Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas.
                     </CardDescription>
                 </CardHeader>
@@ -209,7 +209,7 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Socios</CardTitle>
                      <CardDescription>
-                        Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
                         Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. Para 'paymentType', los valores deben ser 'monthly' o 'annual'.
                     </CardDescription>
                 </CardHeader>
