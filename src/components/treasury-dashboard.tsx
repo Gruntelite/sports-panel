@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -21,7 +20,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, CalendarIcon, User, ChevronDown } from "lucide-react";
+import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, Calendar as CalendarIcon, User, ChevronDown, ChevronLeft, ChevronRight, BookUser } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc, orderBy } from "firebase/firestore";
 import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings } from "@/lib/types";
@@ -37,7 +36,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format, getMonth, getYear, parseISO } from "date-fns";
+import { format, getMonth, getYear, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
 import { es } from "date-fns/locale";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
@@ -49,6 +48,15 @@ type FeeMember = {
     role: 'Jugador' | 'Entrenador';
     fee?: number;
     payment?: number;
+};
+
+type MonthlyTransaction = {
+    id: string;
+    date: Date;
+    concept: string;
+    amount: number;
+    type: 'income' | 'expense';
+    category: string;
 };
 
 function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths }: { 
@@ -229,7 +237,7 @@ export function TreasuryDashboard() {
   const [filteredMembers, setFilteredMembers] = useState<FeeMember[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
   const [selectedRole, setSelectedRole] = useState<string>("all");
-  const [activeTab, setActiveTab] = useState("fees");
+  const [activeTab, setActiveTab] = useState("accounting");
   
   const [stats, setStats] = useState({
       expectedIncome: 0,
@@ -237,6 +245,11 @@ export function TreasuryDashboard() {
       sponsorshipIncome: 0,
       monthlyExpenses: 0,
   });
+  
+  // States for Accounting Tab
+  const [accountingDate, setAccountingDate] = useState(new Date());
+  const [monthlyTransactions, setMonthlyTransactions] = useState<MonthlyTransaction[]>([]);
+  const [monthlyTotals, setMonthlyTotals] = useState({ income: 0, expense: 0, balance: 0 });
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentModalMode, setPaymentModalMode] = useState<'add' | 'edit'>('add');
@@ -321,6 +334,74 @@ export function TreasuryDashboard() {
 
     setHasChanges(feeChanged || coachFeeChanged);
   }, [localFeeExcluded, localCoachFeeExcluded, clubSettings]);
+
+  useEffect(() => {
+    const calculateMonthlyTransactions = () => {
+        const year = getYear(accountingDate);
+        const month = getMonth(accountingDate);
+        const transactions: MonthlyTransaction[] = [];
+        let totalIncome = 0;
+        let totalExpense = 0;
+        
+        // Player Fees (Income)
+        if (!localFeeExcluded.includes(month)) {
+            players.forEach(p => {
+                if (p.monthlyFee && p.monthlyFee > 0) {
+                    transactions.push({ id: `p-${p.id}`, date: accountingDate, concept: `Cuota de ${p.name} ${p.lastName}`, amount: p.monthlyFee, type: 'income', category: 'Cuotas' });
+                    totalIncome += p.monthlyFee;
+                }
+            });
+        }
+        
+        // Coach Payments (Expense)
+        if (!localCoachFeeExcluded.includes(month)) {
+            coaches.forEach(c => {
+                if (c.monthlyPayment && c.monthlyPayment > 0) {
+                    transactions.push({ id: `c-${c.id}`, date: accountingDate, concept: `Pago a ${c.name} ${c.lastName}`, amount: c.monthlyPayment, type: 'expense', category: 'Cuerpo Técnico' });
+                    totalExpense += c.monthlyPayment;
+                }
+            });
+        }
+        
+        // Recurring Expenses (Expense)
+        recurringExpenses.forEach(e => {
+             if (!e.excludedMonths?.includes(month)) {
+                 transactions.push({ id: `re-${e.id}`, date: accountingDate, concept: e.title, amount: e.amount, type: 'expense', category: 'Gasto Recurrente' });
+                 totalExpense += e.amount;
+             }
+        });
+        
+        // Sponsorships (Income)
+        sponsorships.forEach(s => {
+            if(s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
+                transactions.push({ id: `s-${s.id}`, date: accountingDate, concept: `Patrocinio: ${s.sponsorName}`, amount: s.amount, type: 'income', category: 'Patrocinios' });
+                totalIncome += s.amount;
+            } else if (s.frequency === 'annual' && month === 0) { // Assume annual paid in January
+                transactions.push({ id: `s-${s.id}`, date: new Date(year, 0, 1), concept: `Patrocinio: ${s.sponsorName}`, amount: s.amount, type: 'income', category: 'Patrocinios' });
+                totalIncome += s.amount;
+            }
+        });
+        
+        // One-off Payments and Expenses for the month
+        oneTimePayments.filter(p => getYear(parseISO(p.issueDate)) === year && getMonth(parseISO(p.issueDate)) === month).forEach(p => {
+            const amount = Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
+            transactions.push({ id: `otp-${p.id}`, date: parseISO(p.issueDate), concept: p.concept, amount, type: 'income', category: 'Pago Puntual' });
+            totalIncome += amount;
+        });
+
+        oneOffExpenses.filter(e => getYear(parseISO(e.date)) === year && getMonth(parseISO(e.date)) === month).forEach(e => {
+            transactions.push({ id: `ooe-${e.id}`, date: parseISO(e.date), concept: e.title, amount: e.amount, type: 'expense', category: 'Gasto Puntual' });
+            totalExpense += e.amount;
+        });
+
+        setMonthlyTransactions(transactions.sort((a,b) => b.amount - a.amount));
+        setMonthlyTotals({ income: totalIncome, expense: totalExpense, balance: totalIncome - totalExpense });
+    };
+
+    if (!loading) {
+        calculateMonthlyTransactions();
+    }
+  }, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, localFeeExcluded, localCoachFeeExcluded, loading]);
 
   const fetchData = async (clubId: string) => {
     setLoading(true);
@@ -792,15 +873,75 @@ export function TreasuryDashboard() {
             coachFeeExcludedMonths={clubSettings.coachFeeExcludedMonths || []}
         />
         
-      <Tabs defaultValue="fees" value={activeTab} onValueChange={setActiveTab}>
+      <Tabs defaultValue="accounting" value={activeTab} onValueChange={setActiveTab}>
         <div className="flex items-center justify-between">
             <TabsList>
+                <TabsTrigger value="accounting">Contabilidad</TabsTrigger>
                 <TabsTrigger value="fees">Cuotas y Pagos</TabsTrigger>
                 <TabsTrigger value="sponsorships">Patrocinios</TabsTrigger>
                 <TabsTrigger value="expenses">Gastos</TabsTrigger>
                 <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
             </TabsList>
         </div>
+        <TabsContent value="accounting" className="mt-4">
+             <Card>
+                <CardHeader>
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <CardTitle>Desglose de Contabilidad Mensual</CardTitle>
+                            <CardDescription>Resumen de todos los ingresos y gastos para el mes seleccionado.</CardDescription>
+                        </div>
+                        <div className="flex items-center gap-2">
+                             <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => subMonths(prev, 1))}><ChevronLeft className="h-4 w-4"/></Button>
+                             <span className="font-semibold text-lg w-36 text-center capitalize">{format(accountingDate, "LLLL yyyy", { locale: es })}</span>
+                             <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => addMonths(prev, 1))}><ChevronRight className="h-4 w-4"/></Button>
+                        </div>
+                    </div>
+                </CardHeader>
+                 <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <Card className="bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800">
+                            <CardHeader className="pb-2"><CardTitle className="text-green-800 dark:text-green-300 text-base">Total Ingresos</CardTitle></CardHeader>
+                            <CardContent><p className="text-2xl font-bold text-green-700 dark:text-green-400">{monthlyTotals.income.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</p></CardContent>
+                        </Card>
+                        <Card className="bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800">
+                             <CardHeader className="pb-2"><CardTitle className="text-red-800 dark:text-red-300 text-base">Total Gastos</CardTitle></CardHeader>
+                             <CardContent><p className="text-2xl font-bold text-red-700 dark:text-red-400">{monthlyTotals.expense.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</p></CardContent>
+                        </Card>
+                         <Card className="bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
+                             <CardHeader className="pb-2"><CardTitle className="text-blue-800 dark:text-blue-300 text-base">Balance</CardTitle></CardHeader>
+                             <CardContent><p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{monthlyTotals.balance.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</p></CardContent>
+                        </Card>
+                    </div>
+                     <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Fecha</TableHead>
+                                <TableHead>Concepto</TableHead>
+                                <TableHead>Categoría</TableHead>
+                                <TableHead className="text-right">Importe</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {monthlyTransactions.length > 0 ? monthlyTransactions.map(t => (
+                                <TableRow key={t.id}>
+                                    <TableCell>{format(t.date, "dd/MM/yyyy")}</TableCell>
+                                    <TableCell className="font-medium">{t.concept}</TableCell>
+                                    <TableCell><Badge variant="secondary">{t.category}</Badge></TableCell>
+                                    <TableCell className={cn("text-right font-semibold", t.type === 'income' ? 'text-green-600' : 'text-red-600')}>
+                                        {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}
+                                    </TableCell>
+                                </TableRow>
+                            )) : (
+                                <TableRow>
+                                    <TableCell colSpan={4} className="text-center h-24">No hay movimientos este mes.</TableCell>
+                                </TableRow>
+                            )}
+                        </TableBody>
+                    </Table>
+                 </CardContent>
+            </Card>
+        </TabsContent>
         <TabsContent value="fees" className="mt-4">
           <Card>
             <CardHeader>
