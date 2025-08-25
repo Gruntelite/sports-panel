@@ -2,15 +2,15 @@
 "use client";
 
 import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Info, Settings, FileText } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,13 +19,15 @@ import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { addDoc, collection, doc, getDoc, Timestamp } from "firebase/firestore";
 import { DialogFooter, DialogClose } from "./ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
+import { DatePicker } from "./ui/date-picker";
+import { format, parseISO } from "date-fns";
 
 
 const initialFormFields: CustomFormField[] = [
     { id: "name", label: "Nombre y Apellidos", type: 'text', required: true, custom: false },
     { id: "email", label: "Correo Electrónico", type: 'email', required: true, custom: false },
     { id: "phone", label: "Teléfono", type: 'tel', required: false, custom: false },
-    { id: "teamName", label: "Nombre del Equipo (si aplica)", type: 'text', required: false, custom: false },
     { id: "age", label: "Edad", type: 'number', required: false, custom: false },
     { id: "notes", label: "Notas / Comentarios", type: 'textarea', required: false, custom: false },
 ];
@@ -34,6 +36,12 @@ const initialFormFields: CustomFormField[] = [
 const formSchema = z.object({
   title: z.string().min(3, "El título del evento es obligatorio."),
   description: z.string().optional(),
+  price: z.preprocess((val) => Number(val), z.number().min(0).optional()),
+  maxSubmissions: z.preprocess((val) => Number(val), z.number().min(0).optional()),
+  status: z.enum(['active', 'closed']),
+  registrationDeadline: z.date().optional(),
+  eventStartDate: z.date().optional(),
+  eventEndDate: z.date().optional(),
   selectedFieldIds: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Tienes que seleccionar al menos un campo.",
   }),
@@ -59,6 +67,9 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
     defaultValues: {
       title: "",
       description: "",
+      price: 0,
+      maxSubmissions: 0,
+      status: 'active',
       selectedFieldIds: ["name", "email"],
     },
   });
@@ -112,10 +123,15 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
         const newFormDoc: Omit<RegistrationForm, "id"> = {
             title: values.title,
             description: values.description,
+            price: values.price || 0,
+            maxSubmissions: values.maxSubmissions || null,
+            status: values.status,
+            registrationDeadline: values.registrationDeadline ? Timestamp.fromDate(values.registrationDeadline) : null,
+            eventStartDate: values.eventStartDate ? Timestamp.fromDate(values.eventStartDate) : null,
+            eventEndDate: values.eventEndDate ? Timestamp.fromDate(values.eventEndDate) : null,
             fields: fieldsToSave,
             createdAt: Timestamp.now(),
             clubId: clubId,
-            status: 'active',
             submissionCount: 0,
         };
 
@@ -142,152 +158,180 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
 
   return (
     <div className="p-1">
-        <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="grid md:grid-cols-2 gap-8">
-            <div className="space-y-6">
-                <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Título del Formulario</FormLabel>
-                        <FormControl>
-                        <Input placeholder="p.ej., Torneo de Verano 3x3, Captación 2024" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Tabs defaultValue="general" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="general"><Info className="mr-2 h-4 w-4" />Información General</TabsTrigger>
+              <TabsTrigger value="config"><Settings className="mr-2 h-4 w-4" />Configuración</TabsTrigger>
+              <TabsTrigger value="fields"><FileText className="mr-2 h-4 w-4" />Campos del Formulario</TabsTrigger>
+            </TabsList>
 
-                <FormField
-                    control={form.control}
-                    name="description"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Descripción</FormLabel>
-                        <FormControl>
-                        <Textarea placeholder="Describe brevemente el evento, las fechas, el lugar, el precio, etc." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-
-                 <div className="space-y-3 pt-2">
-                    <h4 className="font-medium">Añadir Campo Personalizado</h4>
-                        <div className="flex items-end space-x-2">
-                            <div className="flex-grow space-y-1.5">
-                            <Label htmlFor="new-field-name">Nombre del Campo</Label>
-                            <Input 
-                                id="new-field-name"
-                                placeholder="p.ej., Talla de camiseta" 
-                                value={newFieldName} 
-                                onChange={(e) => setNewFieldName(e.target.value)} 
-                            />
-                            </div>
-                            <div className="space-y-1.5">
-                            <Label htmlFor="new-field-type">Tipo</Label>
-                            <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomFormField['type'])}>
-                                <SelectTrigger id="new-field-type" className="w-[150px]">
-                                <SelectValue placeholder="Tipo de campo" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                <SelectItem value="text">Texto Corto</SelectItem>
-                                <SelectItem value="textarea">Texto Largo</SelectItem>
-                                <SelectItem value="email">Email</SelectItem>
-                                <SelectItem value="tel">Teléfono</SelectItem>
-                                <SelectItem value="number">Número</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            </div>
-                            <Button type="button" size="icon" onClick={handleAddCustomField}>
-                            <PlusCircle className="h-4 w-4" />
-                            </Button>
-                        </div>
-                    </div>
-            </div>
-
-            <FormField
-                control={form.control}
-                name="selectedFieldIds"
-                render={() => (
-                <FormItem>
-                    <div className="mb-4">
-                        <FormLabel>Campos del Formulario</FormLabel>
-                        <FormDescription>
-                        Selecciona la información que quieres solicitar a los inscritos.
-                        </FormDescription>
-                    </div>
-                    <div className="space-y-3 max-h-96 overflow-y-auto pr-4">
-                    {allFields.map((item) => (
+            <TabsContent value="general" className="mt-6">
+                <div className="space-y-6">
                     <FormField
-                        key={item.id}
                         control={form.control}
-                        name="selectedFieldIds"
-                        render={({ field }) => {
-                        return (
-                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                                <div className="flex items-center gap-4">
-                                {item.custom && (
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveCustomField(item.id)}>
-                                    <Trash2 className="h-4 w-4" />
-                                    </Button>
-                                )}
-                                <div className="space-y-0.5">
-                                    <FormLabel className={!item.custom ? 'pl-10' : ''}>{item.label}</FormLabel>
-                                    <FormDescription className={!item.custom ? 'pl-10' : ''}>
-                                    Tipo: {item.type}
-                                    </FormDescription>
-                                </div>
-                                </div>
+                        name="title"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Título del Formulario</FormLabel>
                             <FormControl>
-                                <Switch
-                                checked={field.value?.includes(item.id)}
-                                onCheckedChange={(checked) => {
-                                    if(item.required) return;
-                                    return checked
-                                    ? field.onChange([...field.value, item.id])
-                                    : field.onChange(
-                                        field.value?.filter(
-                                            (value) => value !== item.id
-                                        )
-                                        )
-                                }}
-                                disabled={item.required}
-                                />
+                            <Input placeholder="p.ej., Torneo de Verano 3x3, Captación 2024" {...field} />
                             </FormControl>
-                            </FormItem>
-                        )
-                        }}
-                    />
-                    ))}
-                    </div>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            
-            <div className="md:col-span-2">
-                <DialogFooter>
-                    <DialogClose asChild>
-                        <Button variant="secondary">Cancelar</Button>
-                    </DialogClose>
-                     <Button type="submit" disabled={loading}>
-                        {loading ? (
-                        <>
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                            Guardando...
-                        </>
-                        ) : (
-                        'Crear Formulario'
+                            <FormMessage />
+                        </FormItem>
                         )}
-                    </Button>
-                </DialogFooter>
-            </div>
-            
+                    />
+                    <FormField
+                        control={form.control}
+                        name="description"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Descripción</FormLabel>
+                            <FormControl>
+                            <Textarea placeholder="Describe brevemente el evento, las fechas, el lugar, el precio, etc." {...field} />
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="eventStartDate" render={({ field }) => (
+                            <FormItem><FormLabel>Fecha de Inicio del Evento</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={form.control} name="eventEndDate" render={({ field }) => (
+                            <FormItem><FormLabel>Fecha de Fin del Evento</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                        )}/>
+                    </div>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="config" className="mt-6">
+                <div className="space-y-6">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="price" render={({ field }) => (
+                            <FormItem><FormLabel>Precio por Inscripción (€)</FormLabel><Input type="number" placeholder="0" {...field} /><FormMessage /></FormItem>
+                        )}/>
+                        <FormField control={form.control} name="maxSubmissions" render={({ field }) => (
+                            <FormItem><FormLabel>Límite de Inscritos</FormLabel><Input type="number" placeholder="0 (sin límite)" {...field} /><FormMessage /></FormItem>
+                        )}/>
+                    </div>
+                     <FormField control={form.control} name="registrationDeadline" render={({ field }) => (
+                        <FormItem><FormLabel>Fecha Límite de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                    )}/>
+                    <FormField control={form.control} name="status" render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                            <div className="space-y-0.5">
+                                <FormLabel>Inscripciones Abiertas</FormLabel>
+                                <FormDescription>Permite que los usuarios se registren en el formulario.</FormDescription>
+                            </div>
+                            <FormControl>
+                                <Switch checked={field.value === 'active'} onCheckedChange={(checked) => field.onChange(checked ? 'active' : 'closed')} />
+                            </FormControl>
+                        </FormItem>
+                    )}/>
+                </div>
+            </TabsContent>
+
+            <TabsContent value="fields" className="mt-6">
+                 <FormField
+                    control={form.control}
+                    name="selectedFieldIds"
+                    render={() => (
+                    <FormItem>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                            <div className="space-y-4">
+                                <h4 className="font-medium">Campos del Formulario</h4>
+                                <p className="text-sm text-muted-foreground">Activa los campos que necesites. Los obligatorios no se pueden desactivar.</p>
+                                <div className="space-y-3 max-h-72 overflow-y-auto pr-4">
+                                    {allFields.map((item) => (
+                                    <FormField
+                                        key={item.id}
+                                        control={form.control}
+                                        name="selectedFieldIds"
+                                        render={({ field }) => {
+                                        return (
+                                            <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                                <div className="flex items-center gap-2">
+                                                    {item.custom && (
+                                                        <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveCustomField(item.id)}>
+                                                        <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    )}
+                                                    <FormLabel className="font-normal">{item.label}</FormLabel>
+                                                </div>
+                                            <FormControl>
+                                                <Switch
+                                                checked={field.value?.includes(item.id)}
+                                                onCheckedChange={(checked) => {
+                                                    if(item.required) return;
+                                                    return checked
+                                                    ? field.onChange([...field.value, item.id])
+                                                    : field.onChange(
+                                                        field.value?.filter(
+                                                            (value) => value !== item.id
+                                                        )
+                                                        )
+                                                }}
+                                                disabled={item.required}
+                                                />
+                                            </FormControl>
+                                            </FormItem>
+                                        )
+                                        }}
+                                    />
+                                    ))}
+                                </div>
+                            </div>
+                             <div className="space-y-4">
+                                <h4 className="font-medium">Añadir Campo Personalizado</h4>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-field-name">Nombre del Campo</Label>
+                                    <Input id="new-field-name" placeholder="p.ej., Talla de camiseta" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} />
+                                </div>
+                                 <div className="space-y-2">
+                                     <Label htmlFor="new-field-type">Tipo de Campo</Label>
+                                    <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomFormField['type'])}>
+                                        <SelectTrigger id="new-field-type"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                                        <SelectContent>
+                                        <SelectItem value="text">Texto Corto</SelectItem>
+                                        <SelectItem value="textarea">Texto Largo</SelectItem>
+                                        <SelectItem value="email">Email</SelectItem>
+                                        <SelectItem value="tel">Teléfono</SelectItem>
+                                        <SelectItem value="number">Número</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                 </div>
+                                 <Button type="button" className="w-full" variant="outline" onClick={handleAddCustomField}>
+                                    <PlusCircle className="mr-2 h-4 w-4" />
+                                    Añadir Campo
+                                </Button>
+                             </div>
+                        </div>
+                    </FormItem>
+                    )}
+                />
+            </TabsContent>
+
+          </Tabs>
+          
+          <DialogFooter>
+              <DialogClose asChild>
+                  <Button variant="secondary">Cancelar</Button>
+              </DialogClose>
+                <Button type="submit" disabled={loading}>
+                  {loading ? (
+                  <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Guardando...
+                  </>
+                  ) : (
+                  'Crear Formulario'
+                  )}
+              </Button>
+          </DialogFooter>
         </form>
-        </Form>
+      </Form>
     </div>
   );
 }
-

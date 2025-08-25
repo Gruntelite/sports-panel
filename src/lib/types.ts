@@ -1,5 +1,4 @@
 
-
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -216,6 +215,11 @@ export type RegistrationForm = {
     clubId: string;
     status: 'active' | 'closed';
     submissionCount: number;
+    price: number;
+    maxSubmissions: number | null;
+    registrationDeadline: Timestamp | null;
+    eventStartDate: Timestamp | null;
+    eventEndDate: Timestamp | null;
 }
 
 export type FormSubmission = {
@@ -300,4 +304,3 @@ export type Incident = {
     description: string;
     status: 'Abierta' | 'En Progreso' | 'Resuelta';
 }
-
