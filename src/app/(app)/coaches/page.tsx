@@ -133,6 +133,7 @@ export default function CoachesPage() {
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [filteredCoaches, setFilteredCoaches] = useState<Coach[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -150,6 +151,7 @@ export default function CoachesPage() {
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'role', 'teamName', 'email']));
+  const [filterTeamId, setFilterTeamId] = useState<string>('all');
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -180,6 +182,14 @@ export default function CoachesPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (filterTeamId === 'all') {
+      setFilteredCoaches(coaches);
+    } else {
+      setFilteredCoaches(coaches.filter(c => c.teamId === filterTeamId));
+    }
+  }, [filterTeamId, coaches]);
 
   const hasMissingData = (coach: any): boolean => {
     const requiredFields = [
@@ -380,7 +390,7 @@ export default function CoachesPage() {
   
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      setSelectedCoaches(coaches.map(c => c.id));
+      setSelectedCoaches(filteredCoaches.map(c => c.id));
     } else {
       setSelectedCoaches([]);
     }
@@ -552,7 +562,7 @@ export default function CoachesPage() {
     )
   }
   
-  const isAllSelected = coaches.length > 0 && selectedCoaches.length === coaches.length;
+  const isAllSelected = filteredCoaches.length > 0 && selectedCoaches.length === filteredCoaches.length;
 
   return (
     <TooltipProvider>
@@ -596,6 +606,17 @@ export default function CoachesPage() {
                       ))}
                     </DropdownMenuContent>
                 </DropdownMenu>
+                <Select value={filterTeamId} onValueChange={setFilterTeamId}>
+                    <SelectTrigger className="h-8 w-[150px]">
+                      <SelectValue placeholder="Filtrar por equipo"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los equipos</SelectItem>
+                      {teams.map(team => (
+                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                </Select>
               {selectedCoaches.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -663,7 +684,7 @@ export default function CoachesPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {coaches.map(coach => (
+              {filteredCoaches.map(coach => (
                 <TableRow key={coach.id} data-state={selectedCoaches.includes(coach.id) && "selected"}>
                    <TableCell>
                     <Checkbox
@@ -729,7 +750,7 @@ export default function CoachesPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Mostrando <strong>{coaches.length}</strong> de <strong>{coaches.length}</strong> miembros
+            Mostrando <strong>{filteredCoaches.length}</strong> de <strong>{coaches.length}</strong> miembros
           </div>
         </CardFooter>
       </Card>
@@ -1056,3 +1077,4 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
