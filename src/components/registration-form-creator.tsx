@@ -2,12 +2,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, PlusCircle, Trash2, Info, Settings, FileText } from "lucide-react";
@@ -36,6 +36,7 @@ const formSchema = z.object({
   title: z.string().min(3, "El título del evento es obligatorio."),
   description: z.string().optional(),
   price: z.preprocess((val) => Number(val), z.number().min(0).optional()),
+  paymentIBAN: z.string().optional(),
   maxSubmissions: z.preprocess((val) => Number(val), z.number().min(0).optional()),
   registrationStartDate: z.date().optional(),
   registrationDeadline: z.date().optional(),
@@ -69,9 +70,15 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
       title: "",
       description: "",
       price: 0,
+      paymentIBAN: "",
       maxSubmissions: 0,
       selectedFieldIds: ["name", "email"],
     },
+  });
+
+  const price = useWatch({
+    control: form.control,
+    name: 'price',
   });
 
   useEffect(() => {
@@ -80,6 +87,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
         title: initialData.title,
         description: initialData.description,
         price: initialData.price || 0,
+        paymentIBAN: initialData.paymentIBAN || "",
         maxSubmissions: initialData.maxSubmissions || 0,
         registrationStartDate: initialData.registrationStartDate?.toDate(),
         registrationDeadline: initialData.registrationDeadline?.toDate(),
@@ -97,6 +105,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
           title: "",
           description: "",
           price: 0,
+          paymentIBAN: "",
           maxSubmissions: 0,
           selectedFieldIds: ["name", "email"],
           registrationStartDate: undefined,
@@ -159,7 +168,10 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
         const startDate = values.registrationStartDate;
         const endDate = values.registrationDeadline;
         let status: 'active' | 'closed' = 'closed';
-        if (startDate && now >= startDate) {
+        if (startDate) startDate.setHours(0,0,0,0);
+        if (endDate) endDate.setHours(23,59,59,999);
+
+        if (!startDate || now >= startDate) {
             if (endDate) {
                 if (now <= endDate) {
                     status = 'active';
@@ -173,6 +185,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
             title: values.title,
             description: values.description,
             price: values.price || 0,
+            paymentIBAN: values.paymentIBAN,
             maxSubmissions: values.maxSubmissions || null,
             status: status,
             registrationStartDate: values.registrationStartDate ? Timestamp.fromDate(values.registrationStartDate) : null,
@@ -277,6 +290,13 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                             <FormItem><FormLabel>Límite de Inscritos</FormLabel><Input type="number" placeholder="0 (sin límite)" {...field} /><FormMessage /></FormItem>
                         )}/>
                     </div>
+
+                    {price > 0 && (
+                        <FormField control={form.control} name="paymentIBAN" render={({ field }) => (
+                            <FormItem><FormLabel>IBAN para la Transferencia</FormLabel><Input placeholder="ES00 0000 0000 00 0000000000" {...field} /><FormMessage /></FormItem>
+                        )}/>
+                    )}
+
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField control={form.control} name="registrationStartDate" render={({ field }) => (
                             <FormItem><FormLabel>Fecha Inicio de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>

@@ -136,7 +136,8 @@ export default function PublicFormPage() {
             const formRef = doc(db, "clubs", formDef.clubId, "registrationForms", formId);
             await addDoc(collection(formRef, "submissions"), {
                 submittedAt: Timestamp.now(),
-                data: data
+                data: data,
+                paymentStatus: formDef.price > 0 ? 'pending' : 'not_applicable'
             });
 
             await updateDoc(formRef, {
@@ -209,7 +210,12 @@ export default function PublicFormPage() {
                         <CardDescription>{formDef.description}</CardDescription>
                     )}
                      {formDef.price > 0 && (
-                        <p className="font-semibold text-lg pt-2">Precio: {formDef.price}€</p>
+                        <div className="pt-4">
+                            <p className="font-semibold text-lg">Precio: {formDef.price}€</p>
+                            {formDef.paymentIBAN && (
+                                <p className="text-sm text-muted-foreground">Realiza la transferencia al siguiente IBAN: <span className="font-semibold text-foreground">{formDef.paymentIBAN}</span></p>
+                            )}
+                        </div>
                     )}
                 </CardHeader>
                 <CardContent>

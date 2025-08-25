@@ -216,6 +216,7 @@ export type RegistrationForm = {
     status: 'active' | 'closed';
     submissionCount: number;
     price: number;
+    paymentIBAN?: string;
     maxSubmissions: number | null;
     registrationStartDate: Timestamp | null;
     registrationDeadline: Timestamp | null;
@@ -228,6 +229,7 @@ export type FormSubmission = {
     formId: string;
     submittedAt: Timestamp;
     data: Record<string, any>;
+    paymentStatus?: 'paid' | 'pending' | 'not_applicable';
 }
 
 export type CalendarEvent = {

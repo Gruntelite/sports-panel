@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react";
 import { useParams, notFound, useRouter } from "next/navigation";
 import { db, auth } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
+import { doc, getDoc, collection, getDocs, query, orderBy, updateDoc } from "firebase/firestore";
 import type { RegistrationForm, FormSubmission } from "@/lib/types";
 import {
   Card,
@@ -22,9 +22,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Download } from "lucide-react";
+import { Loader2, ArrowLeft, Download, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 
 export default function RegistrationSubmissionsPage() {
   const params = useParams();
@@ -32,6 +34,7 @@ export default function RegistrationSubmissionsPage() {
   const formId = params.formId as string;
   const [clubId, setClubId] = useState<string | null>(null);
 
+  const { toast } = useToast();
   const [formDef, setFormDef] = useState<RegistrationForm | null>(null);
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,7 +92,7 @@ export default function RegistrationSubmissionsPage() {
   const handleDownloadCsv = () => {
     if (!formDef || submissions.length === 0) return;
 
-    const headers = ["Fecha de Inscripción", ...formDef.fields.map(field => field.label)];
+    const headers = ["Fecha de Inscripción", ...formDef.fields.map(field => field.label), ...(formDef.price > 0 ? ['Estado del Pago'] : [])];
     
     const csvRows = [
         headers.join(','),
@@ -99,6 +102,9 @@ export default function RegistrationSubmissionsPage() {
                 const value = submission.data[field.id] || "";
                 return `"${String(value).replace(/"/g, '""')}"`;
             });
+            if (formDef.price > 0) {
+              values.push(submission.paymentStatus === 'paid' ? "Pagado" : "Pendiente");
+            }
             return [`"${date}"`, ...values].join(',');
         })
     ];
@@ -112,6 +118,19 @@ export default function RegistrationSubmissionsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+  
+  const handlePaymentStatusChange = async (submissionId: string, newStatus: 'paid' | 'pending') => {
+    if (!clubId || !formId) return;
+
+    const submissionRef = doc(db, "clubs", clubId, "registrationForms", formId, "submissions", submissionId);
+    try {
+        await updateDoc(submissionRef, { paymentStatus: newStatus });
+        setSubmissions(prev => prev.map(sub => sub.id === submissionId ? { ...sub, paymentStatus: newStatus } : sub));
+        toast({ title: "Estado de pago actualizado."});
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el estado del pago." });
+    }
   };
 
 
@@ -155,10 +174,11 @@ export default function RegistrationSubmissionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha de Inscripción</TableHead>
+                <TableHead>Fecha</TableHead>
                 {formDef.fields.map((field) => (
                   <TableHead key={field.id}>{field.label}</TableHead>
                 ))}
+                 {formDef.price > 0 && <TableHead>Pagado</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -166,19 +186,27 @@ export default function RegistrationSubmissionsPage() {
                 submissions.map((submission) => (
                   <TableRow key={submission.id}>
                     <TableCell>
-                      {format(submission.submittedAt.toDate(), "d MMM yyyy, HH:mm", { locale: es })}
+                      {format(submission.submittedAt.toDate(), "d MMM yy, HH:mm", { locale: es })}
                     </TableCell>
                     {formDef.fields.map((field) => (
                       <TableCell key={field.id}>
                         {submission.data[field.id] || "-"}
                       </TableCell>
                     ))}
+                    {formDef.price > 0 && (
+                      <TableCell>
+                          <Checkbox
+                            checked={submission.paymentStatus === 'paid'}
+                            onCheckedChange={(checked) => handlePaymentStatusChange(submission.id, checked ? 'paid' : 'pending')}
+                          />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={formDef.fields.length + 1}
+                    colSpan={formDef.fields.length + 2}
                     className="h-24 text-center"
                   >
                     Todavía no hay ninguna inscripción.
@@ -192,4 +220,3 @@ export default function RegistrationSubmissionsPage() {
     </div>
   );
 }
-
