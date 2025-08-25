@@ -121,6 +121,7 @@ export default function PlayersPage() {
   const [clubId, setClubId] = useState<string | null>(null);
   
   const [players, setPlayers] = useState<Player[]>([]);
+  const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -139,6 +140,7 @@ export default function PlayersPage() {
   const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
 
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'monthlyFee', 'tutorEmail']));
+  const [filterTeamId, setFilterTeamId] = useState<string>('all');
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -169,6 +171,14 @@ export default function PlayersPage() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (filterTeamId === 'all') {
+      setFilteredPlayers(players);
+    } else {
+      setFilteredPlayers(players.filter(p => p.teamId === filterTeamId));
+    }
+  }, [filterTeamId, players]);
 
   const hasMissingData = (player: any): boolean => {
     const requiredFields = [
@@ -365,7 +375,7 @@ export default function PlayersPage() {
   
   const handleSelectAll = (isSelected: boolean) => {
     if (isSelected) {
-      setSelectedPlayers(players.map(p => p.id));
+      setSelectedPlayers(filteredPlayers.map(p => p.id));
     } else {
       setSelectedPlayers([]);
     }
@@ -545,7 +555,7 @@ export default function PlayersPage() {
     )
   }
   
-  const isAllSelected = players.length > 0 && selectedPlayers.length === players.length;
+  const isAllSelected = filteredPlayers.length > 0 && selectedPlayers.length === filteredPlayers.length;
 
   return (
     <TooltipProvider>
@@ -589,6 +599,17 @@ export default function PlayersPage() {
                       ))}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                  <Select value={filterTeamId} onValueChange={setFilterTeamId}>
+                    <SelectTrigger className="h-8 w-[150px]">
+                      <SelectValue placeholder="Filtrar por equipo"/>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos los equipos</SelectItem>
+                      {teams.map(team => (
+                        <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
               {selectedPlayers.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -631,7 +652,7 @@ export default function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 bg-card z-10">
+                <TableHead className="sticky left-0 bg-card z-20 w-[4rem]">
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
@@ -643,18 +664,18 @@ export default function PlayersPage() {
                     visibleColumns.has(field.id) && 
                     <TableHead 
                       key={field.id}
-                      className={cn(field.id === 'name' && 'sticky left-[4rem] bg-card z-10')}
+                      className={cn(field.id === 'name' && 'sticky left-[4rem] bg-card z-20')}
                     >
                         {field.label}
                     </TableHead>
                  ))}
-                <TableHead>
+                <TableHead className="sticky right-0 bg-card z-20 w-[4rem]">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {players.map(player => (
+              {filteredPlayers.map(player => (
                 <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
                   <TableCell className="sticky left-0 bg-card z-10">
                     <Checkbox
@@ -668,7 +689,8 @@ export default function PlayersPage() {
                         <TableCell 
                           key={field.id} 
                           className={cn(
-                            field.id === 'name' ? 'font-medium sticky left-[4rem] bg-card z-10' : ''
+                            'min-w-[150px]',
+                            field.id === 'name' && 'font-medium sticky left-[4rem] bg-card z-10'
                           )}
                         >
                              {field.id === 'name' ? (
@@ -697,7 +719,7 @@ export default function PlayersPage() {
                         </TableCell>
                     )
                   ))}
-                  <TableCell>
+                  <TableCell className="sticky right-0 bg-card z-10">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -722,7 +744,7 @@ export default function PlayersPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Mostrando <strong>{players.length}</strong> de <strong>{players.length}</strong> jugadores
+            Mostrando <strong>{filteredPlayers.length}</strong> de <strong>{players.length}</strong> jugadores
           </div>
         </CardFooter>
       </Card>
