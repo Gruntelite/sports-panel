@@ -25,7 +25,6 @@ const menuItems = [
     { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
-    { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
     { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
     { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
   ];
@@ -171,4 +170,3 @@ export function Sidebar() {
         </div>
     );
 }
-

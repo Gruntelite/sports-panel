@@ -18,7 +18,6 @@ const menuItems = [
     { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
     { href: "/staff", label: "Staff y Directiva", icon: UserCog},
-    { href: "/users", label: "Gestión de Usuarios", icon: UserCog },
     { href: "/protocols", label: "Protocolos", icon: ClipboardList },
 ];
 
