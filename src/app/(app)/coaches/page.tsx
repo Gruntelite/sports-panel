@@ -93,7 +93,6 @@ import { cn } from "@/lib/utils";
 const technicalRoles = [
     "Entrenador",
     "Segundo Entrenador",
-    "Entrenador de Porteros",
     "Preparador Físico",
     "Delegado",
     "Fisioterapeuta",
@@ -1077,4 +1076,5 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
 
