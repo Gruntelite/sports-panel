@@ -19,6 +19,7 @@ import {
   Trash2,
   Save,
   Briefcase,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,6 +84,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
+import { requestDataUpdateAction } from "@/lib/actions";
 
 const technicalRoles = [
     "Entrenador",
@@ -426,6 +428,15 @@ export default function CoachesPage() {
     }
   };
 
+  const handleRequestUpdate = async (memberId: string, memberType: 'coach') => {
+    if (!clubId) return;
+    const result = await requestDataUpdateAction({ clubId, memberId, memberType });
+    if (result.success) {
+      toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.error });
+    }
+  };
 
   if (loading && !coaches.length) {
     return (
@@ -561,6 +572,10 @@ export default function CoachesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleRequestUpdate(coach.id, 'coach')}>
+                          <Send className="mr-2 h-4 w-4" />
+                          Solicitar Actualización
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>
                           Eliminar
@@ -839,5 +854,3 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
-
-

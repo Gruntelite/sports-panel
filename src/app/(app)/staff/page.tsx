@@ -15,6 +15,7 @@ import {
   Briefcase,
   Users,
   Save,
+  Send,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,6 +73,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
+import { requestDataUpdateAction } from "@/lib/actions";
 
 
 export default function StaffPage() {
@@ -352,6 +354,16 @@ export default function StaffPage() {
     }
   };
 
+  const handleRequestUpdate = async (memberId: string, memberType: 'staff') => {
+    if (!clubId) return;
+    const result = await requestDataUpdateAction({ clubId, memberId, memberType });
+    if (result.success) {
+      toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.error });
+    }
+  };
+
   if (loading && staff.length === 0 && socios.length === 0) {
     return (
         <div className="flex items-center justify-center h-full">
@@ -440,6 +452,10 @@ export default function StaffPage() {
                               <DropdownMenuContent align="end">
                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                                 <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>Editar</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
+                                  <Send className="mr-2 h-4 w-4" />
+                                  Solicitar Actualización
+                                </DropdownMenuItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(member)}>
                                   Eliminar

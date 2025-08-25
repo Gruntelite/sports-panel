@@ -6,6 +6,17 @@ runConfig:
   # Increase this value if you'd like to automatically spin up
   # more instances in response to increased traffic.
   maxInstances: 1
+  # The following secrets are required for the app to function.
+  # They will be granted to your backend's service account.
+  # Ensure you have the Secret Manager and Cloud Build APIs enabled in your project.
+  secrets:
+    - FIREBASE_API_KEY
+    - FIREBASE_AUTH_DOMAIN
+    - FIREBASE_PROJECT_ID
+    - FIREBASE_STORAGE_BUCKET
+    - FIREBASE_MESSAGING_SENDER_ID
+    - FIREBASE_APP_ID
+    - FIREBASE_MEASUREMENT_ID
 
 # Defines a scheduled job that will be triggered by Cloud Scheduler.
 # The job will send a POST request to the specified path.

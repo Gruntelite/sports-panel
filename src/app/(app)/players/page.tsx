@@ -18,6 +18,7 @@ import {
   ChevronDown,
   Trash2,
   Save,
+  Send,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -83,6 +84,7 @@ import type { Team, Player } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
+import { requestDataUpdateAction } from "@/lib/actions";
 
 
 export default function PlayersPage() {
@@ -401,6 +403,16 @@ export default function PlayersPage() {
     }
   };
 
+  const handleRequestUpdate = async (memberId: string, memberType: 'player') => {
+    if (!clubId) return;
+    const result = await requestDataUpdateAction({ clubId, memberId, memberType });
+    if (result.success) {
+      toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.error });
+    }
+  };
+
   if (loading && !players.length) {
     return (
         <div className="flex items-center justify-center h-full">
@@ -555,6 +567,10 @@ export default function PlayersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleRequestUpdate(player.id, 'player')}>
+                          <Send className="mr-2 h-4 w-4" />
+                          Solicitar Actualización
+                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
                           Eliminar
@@ -826,5 +842,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
-

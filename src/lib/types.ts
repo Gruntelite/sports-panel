@@ -69,6 +69,7 @@ export type Player = {
     hasInterruption?: boolean;
     interruptionYears?: number[];
     medicalCheckCompleted?: boolean;
+    updateRequestActive?: boolean;
 }
 
 export type Coach = {
@@ -103,6 +104,7 @@ export type Coach = {
     endDate?: string;
     hasInterruption?: boolean;
     interruptionYears?: number[];
+    updateRequestActive?: boolean;
 }
 
 export type Staff = {
@@ -116,6 +118,7 @@ export type Staff = {
     avatar?: string;
     hasMissingData?: boolean;
     staffId?: string;
+    updateRequestActive?: boolean;
 }
 
 export type Socio = {
