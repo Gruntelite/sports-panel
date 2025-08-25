@@ -121,47 +121,6 @@ export function Sidebar() {
                     </nav>
                 </div>
                 <div className="mt-auto p-4 border-t border-primary-foreground/20 space-y-4">
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-start gap-3 rounded-lg px-3 py-2 transition-all hover:bg-primary-foreground/10 h-auto">
-                                <Avatar className="h-9 w-9">
-                                <AvatarImage src={`https://placehold.co/40x40.png?text=${userProfile?.initials || 'S'}`} alt="@admin" />
-                                <AvatarFallback>{userProfile?.initials || 'S'}</AvatarFallback>
-                                </Avatar>
-                                {loading ? (
-                                    <div className="space-y-1">
-                                        <Skeleton className="h-4 w-24 bg-primary-foreground/20" />
-                                        <Skeleton className="h-3 w-32 bg-primary-foreground/20" />
-                                    </div>
-                                ) : (
-                                    <div className="flex flex-col items-start">
-                                        <span className="font-semibold text-sm">{userProfile?.name}</span>
-                                        <span className="text-xs opacity-80">{userProfile?.email}</span>
-                                    </div>
-                                )}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-56 mb-2">
-                            <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                             <DropdownMenuItem asChild>
-                                <Link href="/account" className="w-full cursor-pointer">
-                                    <User className="mr-2 h-4 w-4" />
-                                    Mi Perfil
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                                <Link href="/club-settings" className="w-full cursor-pointer">
-                                    <Settings className="mr-2 h-4 w-4"/>
-                                    Ajustes del Club
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={handleLogout} className="cursor-pointer">
-                              <LogOut className="mr-2 h-4 w-4"/>
-                              Cerrar Sesión
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
                      <div className="flex items-center justify-start gap-2">
                         <Logo width={24} height={24} />
                         <span className="text-sm font-semibold">SportsPanel</span>
