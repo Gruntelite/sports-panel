@@ -111,6 +111,10 @@ export async function requestDataUpdateAction({
 
     const emailRecipients = members.map(m => ({ email: m.email, name: m.name }));
     let emailsSent = 0;
+    
+    const clubDocRef = doc(db, "clubs", clubId);
+    const clubDocSnap = await getDoc(clubDocRef);
+    const clubName = clubDocSnap.exists() ? clubDocSnap.data().name : 'Tu Club';
 
     for (const recipient of emailRecipients) {
         if (!recipient.email) continue;
@@ -123,7 +127,7 @@ export async function requestDataUpdateAction({
         const emailResult = await sendEmailWithSmtpAction({
             clubId,
             recipients: [recipient],
-            subject: `Actualiza tus datos en ${clubId}`, // A better club name would be good
+            subject: `Actualiza tus datos en ${clubName}`,
             htmlContent: `
                 <h1>Actualización de Datos</h1>
                 <p>Hola ${recipient.name},</p>
@@ -131,7 +135,7 @@ export async function requestDataUpdateAction({
                 <a href="${updateUrl}">Actualizar mis datos</a>
                 <p>Este enlace es de un solo uso.</p>
                 <p>Gracias,</p>
-                <p>El equipo de ${clubId}</p>
+                <p>El equipo de ${clubName}</p>
             `,
         });
 
