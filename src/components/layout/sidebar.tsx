@@ -40,6 +40,7 @@ export function Sidebar() {
     const router = useRouter();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [clubName, setClubName] = useState<string | null>(null);
+    const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -57,6 +58,13 @@ export function Sidebar() {
                         const clubDocSnap = await getDoc(clubDocRef);
                         if(clubDocSnap.exists()){
                             setClubName(clubDocSnap.data().name);
+                        }
+
+                        // Fetch club settings for logo
+                        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                        const settingsSnap = await getDoc(settingsRef);
+                        if(settingsSnap.exists()){
+                            setClubLogoUrl(settingsSnap.data().logoUrl || null);
                         }
 
                         // Fetch user-specific data
@@ -93,7 +101,15 @@ export function Sidebar() {
         <div className="hidden border-r bg-primary text-primary-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
             <div className="flex h-full max-h-screen flex-col">
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
-                    <Link href="/dashboard" className="flex items-center gap-2 font-semibold">
+                    <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
+                         {loading ? (
+                            <Skeleton className="h-8 w-8 rounded-md" />
+                         ) : clubLogoUrl ? (
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
+                                <AvatarFallback>{clubName?.charAt(0) || 'C'}</AvatarFallback>
+                            </Avatar>
+                         ) : null}
                         <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32" />}</span>
                     </Link>
                 </div>
@@ -119,7 +135,7 @@ export function Sidebar() {
                         })}
                     </nav>
                 </div>
-                <div className="mt-auto p-4 border-t border-primary-foreground/20 space-y-4">
+                <div className="mt-auto p-4 border-t border-primary-foreground/20">
                      <div className="flex items-center justify-center gap-2">
                         <Logo width={24} height={24} />
                         <span className="text-sm font-semibold">SportsPanel</span>
