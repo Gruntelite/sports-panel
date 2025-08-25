@@ -247,8 +247,8 @@ export default function EditTeamPage() {
   }, [clubId, teamId]);
   
   const handleTeamInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    setTeam(prev => ({ ...prev, [id]: value }));
+    const { id, value, type } = e.target;
+    setTeam(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
   };
 
   const handleMemberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -308,8 +308,9 @@ export default function EditTeamPage() {
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
         defaultMonthlyFee: (team.defaultMonthlyFee === '' || team.defaultMonthlyFee === undefined || team.defaultMonthlyFee === null) ? null : Number(team.defaultMonthlyFee),
-        image: imageUrl,
+        image: imageUrl || team.image,
       };
+      
       const teamDocRef = doc(db, "clubs", clubId, "teams", teamId);
       batch.update(teamDocRef, teamDataToUpdate);
       
@@ -675,11 +676,11 @@ export default function EditTeamPage() {
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
                                   <Label htmlFor="minAge">Edad Mínima</Label>
-                                  <Input id="minAge" type="number" value={team.minAge || ''} onChange={handleTeamInputChange} />
+                                  <Input id="minAge" type="number" value={team.minAge ?? ''} onChange={handleTeamInputChange} />
                               </div>
                               <div className="space-y-2">
                                   <Label htmlFor="maxAge">Edad Máxima</Label>
-                                  <Input id="maxAge" type="number" value={team.maxAge || ''} onChange={handleTeamInputChange} />
+                                  <Input id="maxAge" type="number" value={team.maxAge ?? ''} onChange={handleTeamInputChange} />
                               </div>
                           </div>
                            <div className="space-y-2">
