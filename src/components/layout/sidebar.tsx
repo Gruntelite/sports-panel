@@ -103,9 +103,9 @@ export function Sidebar() {
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
-                            <Skeleton className="h-8 w-8 rounded-md" />
+                            <Skeleton className="h-12 w-12 rounded-md" />
                          ) : clubLogoUrl ? (
-                            <Avatar className="h-8 w-8">
+                            <Avatar className="h-12 w-12 rounded-md">
                                 <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
                                 <AvatarFallback>{clubName?.charAt(0) || 'C'}</AvatarFallback>
                             </Avatar>
