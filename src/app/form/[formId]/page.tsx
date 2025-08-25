@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
+import Image from "next/image";
 import { useParams, notFound } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -56,6 +57,7 @@ export default function PublicFormPage() {
     const { toast } = useToast();
 
     const [formDef, setFormDef] = useState<RegistrationForm | null>(null);
+    const [clubInfo, setClubInfo] = useState<{name: string, logoUrl: string} | null>(null);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
@@ -81,6 +83,15 @@ export default function PublicFormPage() {
                     if (formSnap.exists()) {
                         clubId = clubDoc.id;
                         foundForm = { id: formSnap.id, ...formSnap.data(), clubId } as RegistrationForm;
+                        
+                        const clubData = clubDoc.data();
+                        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                        const settingsSnap = await getDoc(settingsRef);
+                        setClubInfo({
+                            name: clubData.name || 'Club',
+                            logoUrl: settingsSnap.exists() ? settingsSnap.data().logoUrl : '',
+                        });
+                        
                         break;
                     }
                 }
@@ -190,10 +201,8 @@ export default function PublicFormPage() {
             <div className="flex items-center justify-center min-h-screen bg-background p-4">
                 <Card className="w-full max-w-lg text-center">
                     <CardHeader>
-                         <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-                            <Logo />
-                        </div>
-                        <CardTitle className="text-2xl">¡Inscripción completada!</CardTitle>
+                        {clubInfo?.logoUrl && <Image src={clubInfo.logoUrl} alt={clubInfo.name} width={80} height={80} className="mx-auto rounded-md"/>}
+                        <CardTitle className="text-2xl pt-2">{clubInfo?.name || '¡Inscripción completada!'}</CardTitle>
                         <CardDescription>Gracias por registrarte en {formDef.title}. Hemos recibido tus datos correctamente.</CardDescription>
                     </CardHeader>
                 </Card>
@@ -204,13 +213,15 @@ export default function PublicFormPage() {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background p-4">
             <Card className="w-full max-w-lg">
-                <CardHeader>
+                <CardHeader className="text-center">
+                    {clubInfo?.logoUrl && <Image src={clubInfo.logoUrl} alt={clubInfo.name} width={80} height={80} className="mx-auto rounded-md"/>}
+                    <h2 className="text-lg font-semibold pt-2">{clubInfo?.name}</h2>
                     <CardTitle className="text-2xl">{formDef.title}</CardTitle>
                     {formDef.description && (
                         <CardDescription>{formDef.description}</CardDescription>
                     )}
                      {formDef.price > 0 && (
-                        <div className="pt-4">
+                        <div className="pt-4 text-left">
                             <p className="font-semibold text-lg">Precio: {formDef.price}€</p>
                             {formDef.paymentIBAN && (
                                 <p className="text-sm text-muted-foreground">Realiza la transferencia al siguiente IBAN: <span className="font-semibold text-foreground">{formDef.paymentIBAN}</span></p>
@@ -221,7 +232,7 @@ export default function PublicFormPage() {
                 <CardContent>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                         {formDef.fields.map(field => (
-                            <div key={field.id} className="space-y-2">
+                            <div key={field.id} className="space-y-2 text-left">
                                 <Label htmlFor={field.id}>
                                     {field.label}
                                     {field.required && <span className="text-destructive"> *</span>}

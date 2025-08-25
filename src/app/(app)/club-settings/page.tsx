@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -11,10 +12,11 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Palette, Save, Loader2 } from "lucide-react";
+import { CheckCircle, Star, Palette, Save, Loader2, Upload } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { auth, db, storage } from "@/lib/firebase";
+import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
@@ -48,6 +50,11 @@ export default function ClubSettingsPage() {
     const [clubName, setClubName] = useState('');
     const [themeColor, setThemeColor] = useState('#2563eb');
     
+    const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
+    const [newLogo, setNewLogo] = useState<File | null>(null);
+    const [logoPreview, setLogoPreview] = useState<string | null>(null);
+    const [originalLogoUrl, setOriginalLogoUrl] = useState<string | null>(null);
+
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
             if (user) {
@@ -80,6 +87,8 @@ export default function ClubSettingsPage() {
                 const settingsData = settingsSnap.data();
                 setCurrentPlan(settingsData?.billingPlan || 'basic');
                 setThemeColor(settingsData?.themeColor || '#2563eb');
+                setClubLogoUrl(settingsData?.logoUrl || null);
+                setOriginalLogoUrl(settingsData?.logoUrl || null);
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
@@ -88,31 +97,59 @@ export default function ClubSettingsPage() {
             setLoading(false);
         }
     };
+    
+    const handleLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setNewLogo(file);
+            setLogoPreview(URL.createObjectURL(file));
+        }
+    };
 
     const handleSaveChanges = async () => {
         if (!clubId) return;
         setSaving(true);
         try {
-            // Update club name
+            let newLogoUrl = clubLogoUrl;
+
+            if (newLogo) {
+                // Delete old logo if it exists and is not a placeholder
+                if (originalLogoUrl && originalLogoUrl.includes('firebasestorage')) {
+                    const oldLogoRef = ref(storage, originalLogoUrl);
+                    try {
+                        await deleteObject(oldLogoRef);
+                    } catch (e) {
+                        console.warn("Old logo could not be deleted, maybe it was already removed:", e);
+                    }
+                }
+                // Upload new logo
+                const logoPath = `club-logos/${clubId}/logo-${Date.now()}`;
+                const logoRef = ref(storage, logoPath);
+                await uploadBytes(logoRef, newLogo);
+                newLogoUrl = await getDownloadURL(logoRef);
+            }
+            
             const clubRef = doc(db, "clubs", clubId);
             await updateDoc(clubRef, { name: clubName });
 
-            // Update theme color
             const luminance = getLuminance(themeColor);
             const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
 
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-            await updateDoc(settingsRef, {
+            await setDoc(settingsRef, {
                 themeColor: themeColor,
-                themeColorForeground: foregroundColor
-            });
+                themeColorForeground: foregroundColor,
+                logoUrl: newLogoUrl
+            }, { merge: true });
             
-            // Force theme update by setting local storage which the ThemeProvider listens to
             localStorage.setItem('clubThemeColor', themeColor);
             localStorage.setItem('clubThemeColorForeground', foregroundColor);
-            window.dispatchEvent(new Event('storage')); // Notify other tabs/components
+            window.dispatchEvent(new Event('storage'));
 
             toast({ title: "¡Guardado!", description: "La configuración del club ha sido actualizada. Recarga la página para ver los cambios en los colores." });
+            setNewLogo(null);
+            setLogoPreview(null);
+            if(newLogoUrl) setClubLogoUrl(newLogoUrl);
         } catch (error) {
             console.error("Error saving settings:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
@@ -150,6 +187,13 @@ export default function ClubSettingsPage() {
                         <Label htmlFor="clubName">Nombre del Club</Label>
                         <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
                         <p className="text-xs text-muted-foreground">Se recomienda un máximo de 30 caracteres para una correcta visualización.</p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="clubLogo">Logo del Club</Label>
+                        <div className="flex items-center gap-4">
+                            <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
+                            <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
+                        </div>
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="clubColor">Color Principal del Club</Label>
@@ -253,5 +297,3 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
-
-    

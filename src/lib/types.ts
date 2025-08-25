@@ -290,6 +290,7 @@ export type OneOffExpense = {
 
 export type ClubSettings = {
     clubName?: string;
+    logoUrl?: string;
     feeExcludedMonths?: number[];
     coachFeeExcludedMonths?: number[];
     smtpHost?: string;
