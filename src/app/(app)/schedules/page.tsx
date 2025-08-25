@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -294,56 +293,7 @@ function CalendarView() {
     return () => unsubscribe();
   }, []);
 
-  useEffect(() => {
-    if (clubId) {
-      fetchTemplatesAndConfig(clubId);
-      fetchTeams(clubId);
-    }
-  }, [clubId]);
-
-  useEffect(() => {
-    if (clubId && templates.length > 0) {
-      fetchCalendarData(currentDate);
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clubId, currentDate, defaultTemplateId, templates]);
-
-  const fetchTemplatesAndConfig = async (clubId: string) => {
-      try {
-        const schedulesCol = collection(db, "clubs", clubId, "schedules");
-        const schedulesSnapshot = await getDocs(schedulesCol);
-        const fetchedTemplates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
-        setTemplates(fetchedTemplates);
-
-        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
-        if (settingsSnap.exists()) {
-          const settingsData = settingsSnap.data();
-          const currentDefaultId = settingsData?.defaultScheduleTemplateId;
-          if (fetchedTemplates.some(t => t.id === currentDefaultId)) {
-            setDefaultTemplateId(currentDefaultId);
-          } else if (fetchedTemplates.length > 0) {
-            setDefaultTemplateId(fetchedTemplates[0].id);
-          }
-        } else if (fetchedTemplates.length > 0) {
-            setDefaultTemplateId(fetchedTemplates[0].id);
-        }
-      } catch (error) {
-          console.error("Error fetching templates and config:", error);
-          toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las plantillas de horarios."});
-      }
-  };
-
-  const fetchTeams = async (clubId: string) => {
-    try {
-        const teamsSnapshot = await getDocs(collection(db, "clubs", clubId, "teams"));
-        setTeams(teamsSnapshot.docs.map(d => ({...d.data(), id: d.id } as Team)));
-    } catch(e) {
-        console.error(e);
-    }
-  }
-
-  const fetchCalendarData = async (date: Date) => {
+  const fetchCalendarData = useCallback(async (date: Date) => {
     if (!clubId || !defaultTemplateId) return;
     setLoading(true);
     try {
@@ -364,10 +314,10 @@ function CalendarView() {
       let allEvents: CalendarEvent[] = [];
       const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
       
-      const loopStartDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-      const loopEndDate = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
+      const loopStartDate = new Date(firstDayOfMonth);
+      const loopEndDate = new Date(lastDayOfMonth);
 
-      for (let d = new Date(loopStartDate); d <= loopEndDate; d.setDate(d.getDate() + 1)) {
+      for (let d = loopStartDate; d <= loopEndDate; d.setUTCDate(d.getUTCDate() + 1)) {
           const dayStr = format(d, "yyyy-MM-dd");
           const override = monthOverrides.get(dayStr);
           const templateIdToUse = override?.templateId || defaultTemplateId;
@@ -414,7 +364,46 @@ function CalendarView() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [clubId, defaultTemplateId, templates, toast]);
+
+  useEffect(() => {
+    const initialFetch = async () => {
+        if (clubId) {
+            try {
+                const schedulesCol = collection(db, "clubs", clubId, "schedules");
+                const schedulesSnapshot = await getDocs(schedulesCol);
+                const fetchedTemplates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
+                setTemplates(fetchedTemplates);
+
+                const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                const settingsSnap = await getDoc(settingsRef);
+                let currentDefaultId = null;
+                if (settingsSnap.exists()) {
+                    currentDefaultId = settingsSnap.data()?.defaultScheduleTemplateId;
+                }
+                
+                if (fetchedTemplates.some(t => t.id === currentDefaultId)) {
+                    setDefaultTemplateId(currentDefaultId);
+                } else if (fetchedTemplates.length > 0) {
+                    setDefaultTemplateId(fetchedTemplates[0].id);
+                }
+
+                const teamsSnapshot = await getDocs(collection(db, "clubs", clubId, "teams"));
+                setTeams(teamsSnapshot.docs.map(d => ({...d.data(), id: d.id } as Team)));
+            } catch (error) {
+                console.error("Error fetching initial data:", error);
+                toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las plantillas y equipos."});
+            }
+        }
+    };
+    initialFetch();
+  }, [clubId, toast]);
+
+  useEffect(() => {
+    if (clubId && defaultTemplateId && templates.length > 0) {
+        fetchCalendarData(currentDate);
+    }
+  }, [clubId, currentDate, defaultTemplateId, templates, fetchCalendarData]);
   
   const handleOpenModal = (mode: 'add' | 'edit', event?: Partial<CalendarEvent>) => {
     setModalMode(mode);
@@ -496,7 +485,6 @@ function CalendarView() {
         toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar la plantilla por defecto."});
     } finally {
         setIsUpdating(false);
-        fetchCalendarData(currentDate);
     }
   }
   
@@ -1595,3 +1583,5 @@ export default function SchedulesPage() {
 }
 
 
+
+    
