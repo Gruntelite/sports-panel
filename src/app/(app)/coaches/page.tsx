@@ -19,6 +19,7 @@ import {
   Save,
   Briefcase,
   Send,
+  Columns,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -58,6 +59,7 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -86,6 +88,7 @@ import { Badge } from "@/components/ui/badge";
 import { requestDataUpdateAction } from "@/lib/actions";
 import { FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const technicalRoles = [
     "Entrenador",
@@ -102,8 +105,8 @@ const technicalRoles = [
 
 const coachFields = {
     personal: [
-        { id: "name", label: "Nombre" }, { id: "lastName", label: "Apellidos" }, { id: "birthDate", label: "Fecha de Nacimiento" },
-        { id: "dni", label: "NIF" }, { id: "sex", label: "Sexo" }, { id: "nationality", label: "Nacionalidad" },
+        { id: "name", label: "Nombre y Apellidos" }, { id: "birthDate", label: "Fecha de Nacimiento" }, { id: "dni", label: "NIF" },
+        { id: "sex", label: "Sexo" }, { id: "nationality", label: "Nacionalidad" },
         { id: "address", label: "Dirección" }, { id: "city", label: "Ciudad" }, { id: "postalCode", label: "Código Postal" },
     ],
     contact: [
@@ -112,10 +115,16 @@ const coachFields = {
         { id: "phone", label: "Teléfono de Contacto" },
     ],
     payment: [
-        { id: "role", label: "Cargo" }, { id: "iban", label: "IBAN" },
+        { id: "role", label: "Cargo" }, { id: "teamName", label: "Equipo" }, { id: "iban", label: "IBAN" },
         { id: "monthlyPayment", label: "Pago Mensual (€)" }, { id: "kitSize", label: "Talla de Equipación" },
     ]
 };
+
+const allColumnFields = [
+    ...coachFields.personal,
+    ...coachFields.contact,
+    ...coachFields.payment
+];
 
 export default function CoachesPage() {
   const { toast } = useToast();
@@ -139,6 +148,8 @@ export default function CoachesPage() {
   const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'role', 'teamName', 'email']));
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -504,6 +515,34 @@ export default function CoachesPage() {
       }
       setSaving(false);
   };
+  
+  const toggleColumnVisibility = (columnId: string) => {
+    setVisibleColumns(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(columnId)) {
+            newSet.delete(columnId);
+        } else {
+            newSet.add(columnId);
+        }
+        return newSet;
+    });
+  };
+
+  const getCellContent = (coach: Coach, columnId: string) => {
+        const value = coach[columnId as keyof Coach];
+        switch (columnId) {
+            case 'name':
+                return `${coach.name} ${coach.lastName}`;
+            case 'role':
+                 return <Badge variant="secondary">{coach.role || 'Sin cargo'}</Badge>;
+            case 'teamName':
+                return coach.teamName;
+            case 'monthlyPayment':
+                return value === null || value === undefined ? 'N/A' : `${value} €`;
+            default:
+                 return value === null || value === undefined || value === '' ? 'N/A' : String(value);
+        }
+  };
 
   if (loading && !coaches.length) {
     return (
@@ -531,6 +570,32 @@ export default function CoachesPage() {
                   <Send className="mr-2 h-4 w-4" />
                   Solicitar Actualización
               </Button>
+               <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                        <Columns className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          Columnas
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {allColumnFields.map(field => (
+                          <DropdownMenuCheckboxItem
+                            key={field.id}
+                            className="capitalize"
+                            checked={visibleColumns.has(field.id)}
+                            onCheckedChange={() => toggleColumnVisibility(field.id)}
+                            onSelect={(e) => e.preventDefault()}
+                            disabled={field.id === 'name'}
+                          >
+                            {field.label}
+                          </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                </DropdownMenu>
               {selectedCoaches.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -561,12 +626,6 @@ export default function CoachesPage() {
                  </DropdownMenu>
               ) : (
                 <>
-                  <Button variant="outline" size="sm" className="h-8 gap-1">
-                    <Filter className="h-3.5 w-3.5" />
-                    <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                      Filtrar
-                    </span>
-                  </Button>
                   <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -589,10 +648,15 @@ export default function CoachesPage() {
                     aria-label="Seleccionar todo"
                   />
                 </TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Cargo</TableHead>
-                <TableHead>Equipo</TableHead>
-                <TableHead>Email</TableHead>
+                 {allColumnFields.map(field => (
+                    visibleColumns.has(field.id) && 
+                    <TableHead 
+                      key={field.id}
+                      className={cn(field.id === 'name' && 'font-medium', 'min-w-[150px]')}
+                    >
+                        {field.label}
+                    </TableHead>
+                 ))}
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -608,30 +672,38 @@ export default function CoachesPage() {
                       aria-label={`Seleccionar a ${coach.name}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={coach.avatar} alt={coach.name} data-ai-hint="foto persona" />
-                        <AvatarFallback>{coach.name?.charAt(0)}{coach.lastName?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                       <div className="flex items-center gap-2">
-                        <span>{coach.name} {coach.lastName}</span>
-                        {coach.hasMissingData && (
-                           <Tooltip>
-                              <TooltipTrigger>
-                                <AlertCircle className="h-4 w-4 text-destructive" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Faltan datos por rellenar</p>
-                              </TooltipContent>
-                           </Tooltip>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell><Badge variant="secondary">{coach.role || 'Sin cargo'}</Badge></TableCell>
-                  <TableCell>{coach.teamName}</TableCell>
-                  <TableCell>{coach.email || 'N/A'}</TableCell>
+                  {allColumnFields.map(field => (
+                     visibleColumns.has(field.id) && (
+                        <TableCell 
+                          key={field.id} 
+                          className={cn(field.id === 'name' && 'font-medium')}
+                        >
+                             {field.id === 'name' ? (
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-9 w-9">
+                                    <AvatarImage src={coach.avatar} alt={coach.name} data-ai-hint="foto persona" />
+                                    <AvatarFallback>{coach.name?.charAt(0)}{coach.lastName?.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex items-center gap-2">
+                                    <span>{getCellContent(coach, field.id)}</span>
+                                    {coach.hasMissingData && (
+                                      <Tooltip>
+                                          <TooltipTrigger>
+                                            <AlertCircle className="h-4 w-4 text-destructive" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Faltan datos por rellenar</p>
+                                          </TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                </div>
+                            ) : (
+                                getCellContent(coach, field.id)
+                            )}
+                        </TableCell>
+                    )
+                  ))}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>

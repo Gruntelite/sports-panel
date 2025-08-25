@@ -16,6 +16,7 @@ import {
   Users,
   Save,
   Send,
+  Columns,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +53,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu";
 import {
   Table,
@@ -74,6 +76,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestDataUpdateAction } from "@/lib/actions";
+import { cn } from "@/lib/utils";
+
+const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }];
+const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
 
 
 export default function StaffPage() {
@@ -95,6 +101,9 @@ export default function StaffPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+
+  const [visibleStaffColumns, setVisibleStaffColumns] = useState<Set<string>>(new Set(['name', 'role', 'email', 'phone']));
+  const [visibleSocioColumns, setVisibleSocioColumns] = useState<Set<string>>(new Set(['name', 'socioNumber', 'email', 'fee']));
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -363,6 +372,37 @@ export default function StaffPage() {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
   };
+  
+  const toggleStaffColumnVisibility = (columnId: string) => {
+    setVisibleStaffColumns(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(columnId)) newSet.delete(columnId);
+        else newSet.add(columnId);
+        return newSet;
+    });
+  };
+
+  const toggleSocioColumnVisibility = (columnId: string) => {
+    setVisibleSocioColumns(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(columnId)) newSet.delete(columnId);
+        else newSet.add(columnId);
+        return newSet;
+    });
+  };
+
+  const getStaffCellContent = (member: Staff, columnId: string) => {
+    const value = member[columnId as keyof Staff];
+     if (columnId === 'name') return `${member.name} ${member.lastName}`;
+    return value === null || value === undefined || value === '' ? 'N/A' : String(value);
+  }
+
+  const getSocioCellContent = (member: Socio, columnId: string) => {
+    if (columnId === 'name') return `${member.name} ${member.lastName}`;
+    if (columnId === 'fee') return `${member.fee}€ / ${member.paymentType === 'monthly' ? 'mes' : 'año'}`;
+    const value = member[columnId as keyof Socio];
+    return value === null || value === undefined || value === '' ? 'N/A' : String(value);
+  }
 
   if (loading && staff.length === 0 && socios.length === 0) {
     return (
@@ -399,16 +439,44 @@ export default function StaffPage() {
                         Personal administrativo y directivo del club.
                       </CardDescription>
                     </div>
+                    <div className="flex items-center gap-2">
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-8 gap-1">
+                                <Columns className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                  Columnas
+                                </span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {staffFields.map(field => (
+                                  <DropdownMenuCheckboxItem
+                                    key={field.id}
+                                    className="capitalize"
+                                    checked={visibleStaffColumns.has(field.id)}
+                                    onCheckedChange={() => toggleStaffColumnVisibility(field.id)}
+                                    onSelect={(e) => e.preventDefault()}
+                                    disabled={field.id === 'name'}
+                                  >
+                                    {field.label}
+                                  </DropdownMenuCheckboxItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Cargo</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Teléfono</TableHead>
+                        {staffFields.map(field => (
+                            visibleStaffColumns.has(field.id) && 
+                            <TableHead key={field.id}>{field.label}</TableHead>
+                         ))}
                         <TableHead>
                           <span className="sr-only">Acciones</span>
                         </TableHead>
@@ -417,30 +485,35 @@ export default function StaffPage() {
                     <TableBody>
                       {staff.map(member => (
                         <TableRow key={member.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                                <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
-                                <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex items-center gap-2">
-                                <span>{member.name} {member.lastName}</span>
-                                {member.hasMissingData && (
-                                  <Tooltip>
-                                      <TooltipTrigger>
-                                        <AlertCircle className="h-4 w-4 text-destructive" />
-                                      </TooltipTrigger>
-                                      <TooltipContent>
-                                        <p>Faltan datos por rellenar</p>
-                                      </TooltipContent>
-                                  </Tooltip>
-                                )}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>{member.role}</TableCell>
-                          <TableCell>{member.email || 'N/A'}</TableCell>
-                          <TableCell>{member.phone || 'N/A'}</TableCell>
+                           {staffFields.map(field => (
+                             visibleStaffColumns.has(field.id) && (
+                                <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
+                                     {field.id === 'name' ? (
+                                        <div className="flex items-center gap-3">
+                                          <Avatar className="h-9 w-9">
+                                            <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
+                                            <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
+                                          </Avatar>
+                                          <div className="flex items-center gap-2">
+                                            <span>{getStaffCellContent(member, field.id)}</span>
+                                            {member.hasMissingData && (
+                                              <Tooltip>
+                                                  <TooltipTrigger>
+                                                    <AlertCircle className="h-4 w-4 text-destructive" />
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                    <p>Faltan datos por rellenar</p>
+                                                  </TooltipContent>
+                                              </Tooltip>
+                                            )}
+                                          </div>
+                                        </div>
+                                    ) : (
+                                        getStaffCellContent(member, field.id)
+                                    )}
+                                </TableCell>
+                            )
+                          ))}
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
@@ -480,20 +553,48 @@ export default function StaffPage() {
                         Miembros del club que no son jugadores ni staff.
                       </CardDescription>
                     </div>
-                    <Button onClick={() => handleOpenModal('add', 'socio')}>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Añadir Socio
-                    </Button>
+                     <div className="flex items-center gap-2">
+                         <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" className="h-8 gap-1">
+                                <Columns className="h-3.5 w-3.5" />
+                                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                                  Columnas
+                                </span>
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              {socioFields.map(field => (
+                                  <DropdownMenuCheckboxItem
+                                    key={field.id}
+                                    className="capitalize"
+                                    checked={visibleSocioColumns.has(field.id)}
+                                    onCheckedChange={() => toggleSocioColumnVisibility(field.id)}
+                                    onSelect={(e) => e.preventDefault()}
+                                    disabled={field.id === 'name'}
+                                  >
+                                    {field.label}
+                                  </DropdownMenuCheckboxItem>
+                              ))}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        <Button onClick={() => handleOpenModal('add', 'socio')}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Añadir Socio
+                        </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Nombre</TableHead>
-                        <TableHead>Nº Socio</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Cuota</TableHead>
+                         {socioFields.map(field => (
+                            visibleSocioColumns.has(field.id) && 
+                            <TableHead key={field.id}>{field.label}</TableHead>
+                         ))}
                         <TableHead>
                           <span className="sr-only">Acciones</span>
                         </TableHead>
@@ -502,18 +603,23 @@ export default function StaffPage() {
                     <TableBody>
                       {socios.map(socio => (
                         <TableRow key={socio.id}>
-                          <TableCell className="font-medium">
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-9 w-9">
-                                <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
-                                <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
-                              </Avatar>
-                              <span>{socio.name} {socio.lastName}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell>{socio.socioNumber || 'N/A'}</TableCell>
-                          <TableCell>{socio.email}</TableCell>
-                          <TableCell>{socio.fee}€ / {socio.paymentType === 'monthly' ? 'mes' : 'año'}</TableCell>
+                          {socioFields.map(field => (
+                             visibleSocioColumns.has(field.id) && (
+                                <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
+                                     {field.id === 'name' ? (
+                                        <div className="flex items-center gap-3">
+                                          <Avatar className="h-9 w-9">
+                                            <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
+                                            <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
+                                          </Avatar>
+                                          <span>{getSocioCellContent(socio, field.id)}</span>
+                                        </div>
+                                    ) : (
+                                        getSocioCellContent(socio, field.id)
+                                    )}
+                                </TableCell>
+                            )
+                          ))}
                           <TableCell>
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
