@@ -104,14 +104,14 @@ export function Sidebar() {
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
-                            <Skeleton className="h-12 w-12 rounded-full" />
+                            <Skeleton className="h-10 w-10 rounded-full bg-white/20" />
                          ) : clubLogoUrl ? (
-                            <Avatar className="h-12 w-12">
+                            <Avatar className="h-10 w-10">
                                 <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
-                                <AvatarFallback>{clubName?.charAt(0) || 'C'}</AvatarFallback>
+                                <AvatarFallback className="bg-white/20 text-primary-foreground">{clubName?.charAt(0) || 'C'}</AvatarFallback>
                             </Avatar>
                          ) : null}
-                        <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32" />}</span>
+                        <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32 bg-white/20" />}</span>
                     </Link>
                 </div>
                 <div className="flex-1 overflow-y-auto">
@@ -136,10 +136,15 @@ export function Sidebar() {
                         })}
                     </nav>
                 </div>
-                <div className="mt-auto p-4 border-t border-primary-foreground/20">
+                <div className="mt-auto p-4">
+                    <Button variant="ghost" className="w-full justify-start gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20" onClick={handleLogout}>
+                        <LogOut className="h-4 w-4" />
+                        Cerrar Sesión
+                    </Button>
+                     <div className="my-4 h-px w-full bg-primary-foreground/20" />
                      <div className="flex items-center justify-center gap-2">
-                        <Logo width={32} height={32} />
-                        <span className="text-lg font-semibold">SportsPanel</span>
+                        <Logo width={28} height={28} />
+                        <span className="text-base font-semibold">SportsPanel</span>
                     </div>
                 </div>
             </div>
