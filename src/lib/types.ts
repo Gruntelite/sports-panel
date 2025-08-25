@@ -214,6 +214,8 @@ export type RegistrationForm = {
     fields: CustomFormField[];
     createdAt: Timestamp;
     clubId: string;
+    status: 'active' | 'closed';
+    submissionCount: number;
 }
 
 export type FormSubmission = {
@@ -298,3 +300,4 @@ export type Incident = {
     description: string;
     status: 'Abierta' | 'En Progreso' | 'Resuelta';
 }
+
