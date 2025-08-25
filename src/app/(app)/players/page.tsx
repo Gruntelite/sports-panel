@@ -18,6 +18,7 @@ import {
   Trash2,
   Save,
   Send,
+  Columns,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -100,10 +101,16 @@ const playerFields = {
         { id: "tutorPhone", label: "Teléfono de Contacto" }, { id: "iban", label: "IBAN" },
     ],
     sports: [
-        { id: "jerseyNumber", label: "Dorsal" }, { id: "monthlyFee", label: "Cuota Mensual (€)" },
+        { id: "teamName", label: "Equipo" }, { id: "jerseyNumber", label: "Dorsal" }, { id: "monthlyFee", label: "Cuota Mensual (€)" },
         { id: "kitSize", label: "Talla de Equipación" }, { id: "medicalCheckCompleted", label: "Revisión médica completada" },
     ]
 };
+
+const allColumnFields = [
+    ...playerFields.personal,
+    ...playerFields.contact,
+    ...playerFields.sports
+];
 
 
 export default function PlayersPage() {
@@ -129,6 +136,8 @@ export default function PlayersPage() {
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
+
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'monthlyFee', 'tutorEmail']));
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -499,6 +508,33 @@ export default function PlayersPage() {
       }
       setSaving(false);
   };
+  
+  const toggleColumnVisibility = (columnId: string) => {
+    setVisibleColumns(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(columnId)) {
+            newSet.delete(columnId);
+        } else {
+            newSet.add(columnId);
+        }
+        return newSet;
+    });
+  };
+
+  const getCellContent = (player: Player, columnId: string) => {
+        const value = player[columnId as keyof Player];
+        switch (columnId) {
+            case 'name':
+                return `${player.name} ${player.lastName}`;
+            case 'monthlyFee':
+                return value === null || value === undefined ? 'N/A' : `${value} €`;
+            case 'teamName':
+                return <Badge variant="outline">{player.teamName || "Sin equipo"}</Badge>;
+            default:
+                 return value === null || value === undefined || value === '' ? 'N/A' : String(value);
+        }
+  };
+
 
   if (loading && !players.length) {
     return (
@@ -526,6 +562,30 @@ export default function PlayersPage() {
                   <Send className="mr-2 h-4 w-4" />
                   Solicitar Actualización
               </Button>
+               <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                        <Columns className="h-3.5 w-3.5" />
+                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                          Columnas
+                        </span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                      <DropdownMenuSeparator />
+                      {allColumnFields.map(field => (
+                          <DropdownMenuCheckboxItem
+                            key={field.id}
+                            className="capitalize"
+                            checked={visibleColumns.has(field.id)}
+                            onCheckedChange={() => toggleColumnVisibility(field.id)}
+                          >
+                            {field.label}
+                          </DropdownMenuCheckboxItem>
+                      ))}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
               {selectedPlayers.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -553,24 +613,6 @@ export default function PlayersPage() {
                  </DropdownMenu>
               ) : (
                 <>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-1">
-                        <Filter className="h-3.5 w-3.5" />
-                        <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Filtrar
-                        </span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Filtrar por</DropdownMenuLabel>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuCheckboxItem checked>
-                        Activo
-                      </DropdownMenuCheckboxItem>
-                      <DropdownMenuCheckboxItem>Archivado</DropdownMenuCheckboxItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                   <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
                       <PlusCircle className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
@@ -594,11 +636,9 @@ export default function PlayersPage() {
                     className="translate-y-[2px]"
                   />
                 </TableHead>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Equipo</TableHead>
-                <TableHead>Dorsal</TableHead>
-                <TableHead>Cuota Mensual</TableHead>
-                <TableHead>Contacto</TableHead>
+                 {allColumnFields.map(field => (
+                    visibleColumns.has(field.id) && <TableHead key={field.id}>{field.label}</TableHead>
+                 ))}
                 <TableHead>
                   <span className="sr-only">Acciones</span>
                 </TableHead>
@@ -614,33 +654,35 @@ export default function PlayersPage() {
                       aria-label={`Seleccionar a ${player.name}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-9 w-9">
-                        <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
-                        <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
-                      </Avatar>
-                      <div className="flex items-center gap-2">
-                        <span>{player.name} {player.lastName}</span>
-                        {player.hasMissingData && (
-                           <Tooltip>
-                              <TooltipTrigger>
-                                <AlertCircle className="h-4 w-4 text-destructive" />
-                              </TooltipTrigger>
-                              <TooltipContent>
-                                <p>Faltan datos por rellenar</p>
-                              </TooltipContent>
-                           </Tooltip>
-                        )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="outline">{player.teamName}</Badge>
-                  </TableCell>
-                  <TableCell>{player.jerseyNumber || 'N/A'}</TableCell>
-                  <TableCell>{player.monthlyFee === null || player.monthlyFee === undefined ? 'N/A' : `${player.monthlyFee} €`}</TableCell>
-                  <TableCell>{player.tutorEmail || 'N/A'}</TableCell>
+                  {allColumnFields.map(field => (
+                    visibleColumns.has(field.id) && (
+                        <TableCell key={field.id} className={field.id === 'name' ? 'font-medium' : ''}>
+                             {field.id === 'name' ? (
+                                <div className="flex items-center gap-3">
+                                  <Avatar className="h-9 w-9">
+                                    <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
+                                    <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
+                                  </Avatar>
+                                  <div className="flex items-center gap-2">
+                                    <span>{getCellContent(player, field.id)}</span>
+                                    {player.hasMissingData && (
+                                      <Tooltip>
+                                          <TooltipTrigger>
+                                            <AlertCircle className="h-4 w-4 text-destructive" />
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p>Faltan datos por rellenar</p>
+                                          </TooltipContent>
+                                      </Tooltip>
+                                    )}
+                                  </div>
+                                </div>
+                            ) : (
+                                getCellContent(player, field.id)
+                            )}
+                        </TableCell>
+                    )
+                  ))}
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
