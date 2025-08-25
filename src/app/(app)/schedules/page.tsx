@@ -266,7 +266,6 @@ function CalendarView() {
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   
   const [templates, setTemplates] = useState<ScheduleTemplate[]>([]);
-  const [teams, setTeams] = useState<Team[]>([]);
   const [defaultTemplateId, setDefaultTemplateId] = useState<string | null>(null);
   const [overrides, setOverrides] = useState<Map<string, {templateId: string, color?: string}>>(new Map());
 
@@ -276,7 +275,7 @@ function CalendarView() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [eventData, setEventData] = useState<Partial<CalendarEvent>>({});
   
-
+  // Fetch initial data (templates, etc.) only once
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -285,97 +284,16 @@ function CalendarView() {
         if (userDocSnap.exists()) {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
-        }
-      } else {
-        setLoading(false);
-      }
-    });
-    return () => unsubscribe();
-  }, []);
-
-  const fetchCalendarData = useCallback(async (date: Date) => {
-    if (!clubId || !defaultTemplateId) return;
-    setLoading(true);
-    try {
-      const firstDayOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth(), 1));
-      const lastDayOfMonth = new Date(Date.UTC(date.getFullYear(), date.getMonth() + 1, 0));
-
-      const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"), 
-          where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
-          where('date', '<=', format(lastDayOfMonth, "yyyy-MM-dd"))
-      );
-      const overridesSnapshot = await getDocs(overridesQuery);
-      const monthOverrides = new Map<string, {templateId: string, color?: string}>();
-      overridesSnapshot.forEach(doc => {
-          monthOverrides.set(doc.data().date, { templateId: doc.data().templateId, color: doc.data().color });
-      });
-      setOverrides(monthOverrides);
-
-      let allEvents: CalendarEvent[] = [];
-      const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-      
-      const loopStartDate = new Date(firstDayOfMonth);
-      const loopEndDate = new Date(lastDayOfMonth);
-
-      for (let d = loopStartDate; d <= loopEndDate; d.setUTCDate(d.getUTCDate() + 1)) {
-          const dayStr = format(d, "yyyy-MM-dd");
-          const override = monthOverrides.get(dayStr);
-          const templateIdToUse = override?.templateId || defaultTemplateId;
-
-          if (!templateIdToUse) continue;
           
-          const template = templates.find(t => t.id === templateIdToUse);
-          if (!template) continue;
-
-          const weeklySchedule = template.weeklySchedule;
-          const dayIndex = d.getUTCDay();
-          const dayName = daysOfWeek[dayIndex];
-          const daySchedule = weeklySchedule?.[dayName as keyof typeof weeklySchedule] || [];
-
-          daySchedule.forEach((training: any) => {
-              const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
-              const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
-              allEvents.push({
-                  id: `${training.id}-${dayStr}`,
-                  title: `${training.teamName}`,
-                  start: Timestamp.fromDate(startDateTime),
-                  end: Timestamp.fromDate(endDateTime),
-                  type: 'Entrenamiento',
-                  location: training.venueName,
-                  color: 'bg-primary/20 text-primary border border-primary/50',
-                  isTemplateBased: true,
-              });
-          });
-      }
-
-      const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
-          where('start', '>=', Timestamp.fromDate(firstDayOfMonth)),
-          where('start', '<=', Timestamp.fromDate(lastDayOfMonth))
-      );
-      const customEventsSnapshot = await getDocs(customEventsQuery);
-      customEventsSnapshot.forEach(doc => {
-          allEvents.push({ id: doc.id, ...doc.data() } as CalendarEvent);
-      });
-
-      setEvents(allEvents);
-    } catch (error) {
-      console.error("Error fetching calendar data:", error);
-       toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos del calendario."});
-    } finally {
-      setLoading(false);
-    }
-  }, [clubId, defaultTemplateId, templates, toast]);
-
-  useEffect(() => {
-    const initialFetch = async () => {
-        if (clubId) {
-            try {
-                const schedulesCol = collection(db, "clubs", clubId, "schedules");
+           if (currentClubId) {
+            setLoading(true);
+             try {
+                const schedulesCol = collection(db, "clubs", currentClubId, "schedules");
                 const schedulesSnapshot = await getDocs(schedulesCol);
                 const fetchedTemplates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
                 setTemplates(fetchedTemplates);
 
-                const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 let currentDefaultId = null;
                 if (settingsSnap.exists()) {
@@ -386,24 +304,103 @@ function CalendarView() {
                     setDefaultTemplateId(currentDefaultId);
                 } else if (fetchedTemplates.length > 0) {
                     setDefaultTemplateId(fetchedTemplates[0].id);
+                } else {
+                    setDefaultTemplateId(null);
                 }
 
-                const teamsSnapshot = await getDocs(collection(db, "clubs", clubId, "teams"));
-                setTeams(teamsSnapshot.docs.map(d => ({...d.data(), id: d.id } as Team)));
             } catch (error) {
                 console.error("Error fetching initial data:", error);
-                toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las plantillas y equipos."});
+                toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las plantillas."});
+            } finally {
+                setLoading(false);
             }
+          }
+        } else {
+             setLoading(false);
+        }
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => unsubscribe();
+  }, [toast]);
+  
+  // Fetch calendar events whenever the month or dependencies change
+  useEffect(() => {
+    const fetchCalendarData = async () => {
+        if (!clubId || !defaultTemplateId || templates.length === 0) return;
+        
+        setLoading(true);
+        try {
+            const firstDayOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
+            const lastDayOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 0));
+
+            const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"),
+                where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
+                where('date', '<=', format(lastDayOfMonth, "yyyy-MM-dd"))
+            );
+            const overridesSnapshot = await getDocs(overridesQuery);
+            const monthOverrides = new Map<string, {templateId: string, color?: string}>();
+            overridesSnapshot.forEach(doc => {
+                monthOverrides.set(doc.data().date, { templateId: doc.data().templateId, color: doc.data().color });
+            });
+            setOverrides(monthOverrides);
+
+            let allEvents: CalendarEvent[] = [];
+            const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+            
+            for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setUTCDate(d.getUTCDate() + 1)) {
+                const dayStr = format(d, "yyyy-MM-dd");
+                const override = monthOverrides.get(dayStr);
+                const templateIdToUse = override?.templateId || defaultTemplateId;
+
+                if (!templateIdToUse) continue;
+                
+                const template = templates.find(t => t.id === templateIdToUse);
+                if (!template) continue;
+
+                const weeklySchedule = template.weeklySchedule;
+                const dayIndex = d.getUTCDay();
+                const dayName = daysOfWeek[dayIndex];
+                const daySchedule = weeklySchedule?.[dayName as keyof typeof weeklySchedule] || [];
+
+                daySchedule.forEach((training: any) => {
+                    const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
+                    const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
+                    allEvents.push({
+                        id: `${training.id}-${dayStr}`,
+                        title: `${training.teamName}`,
+                        start: Timestamp.fromDate(startDateTime),
+                        end: Timestamp.fromDate(endDateTime),
+                        type: 'Entrenamiento',
+                        location: training.venueName,
+                        color: 'bg-primary/20 text-primary border border-primary/50',
+                        isTemplateBased: true,
+                    });
+                });
+            }
+
+            const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
+                where('start', '>=', Timestamp.fromDate(firstDayOfMonth)),
+                where('start', '<=', Timestamp.fromDate(lastDayOfMonth))
+            );
+            const customEventsSnapshot = await getDocs(customEventsQuery);
+            customEventsSnapshot.forEach(doc => {
+                allEvents.push({ id: doc.id, ...doc.data() } as CalendarEvent);
+            });
+
+            setEvents(allEvents);
+        } catch (error) {
+            console.error("Error fetching calendar data:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos del calendario."});
+        } finally {
+            setLoading(false);
         }
     };
-    initialFetch();
-  }, [clubId, toast]);
-
-  useEffect(() => {
-    if (clubId && defaultTemplateId && templates.length > 0) {
-        fetchCalendarData(currentDate);
-    }
-  }, [clubId, currentDate, defaultTemplateId, templates, fetchCalendarData]);
+    
+    fetchCalendarData();
+  }, [clubId, currentDate, defaultTemplateId, templates, toast]);
+  
   
   const handleOpenModal = (mode: 'add' | 'edit', event?: Partial<CalendarEvent>) => {
     setModalMode(mode);
@@ -430,7 +427,7 @@ function CalendarView() {
             toast({ title: "Evento creado"});
         }
         setIsModalOpen(false);
-        fetchCalendarData(currentDate);
+        setCurrentDate(new Date(currentDate)); // Trigger refetch
     } catch(e) {
         console.error("Error saving event:", e);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el evento."});
@@ -446,7 +443,7 @@ function CalendarView() {
         await deleteDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
         toast({ title: "Evento Eliminado"});
         setIsModalOpen(false);
-        fetchCalendarData(currentDate);
+        setCurrentDate(new Date(currentDate)); // Trigger refetch
     } catch(e) {
         console.error("Error deleting event:", e);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el evento."});
@@ -508,7 +505,7 @@ function CalendarView() {
         await batch.commit();
         toast({ title: "Plantillas Asignadas", description: `${selectedDays.size} días han sido actualizados con la nueva plantilla.`});
         setSelectedDays(new Set());
-        fetchCalendarData(currentDate);
+        setCurrentDate(new Date(currentDate)); // Trigger refetch
     } catch(e) {
         toast({ variant: "destructive", title: "Error", description: "No se pudo asignar la plantilla a los días seleccionados."});
     } finally {
@@ -528,7 +525,7 @@ function CalendarView() {
         await batch.commit();
         toast({ title: "Plantillas Revertidas", description: `Los horarios de ${selectedDays.size} días han sido revertidos a la plantilla por defecto.`});
         setSelectedDays(new Set());
-        fetchCalendarData(currentDate);
+        setCurrentDate(new Date(currentDate)); // Trigger refetch
     } catch(e) {
         toast({ variant: "destructive", title: "Error", description: "No se pudo revertir la plantilla de los días seleccionados."});
     } finally {
