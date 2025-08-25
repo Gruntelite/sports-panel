@@ -267,8 +267,8 @@ export default function CoachesPage() {
   }
 
   const handleSaveCoach = async () => {
-    if (!coachData.name || !coachData.lastName || !coachData.email || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email son obligatorios." });
+    if (!coachData.name || !coachData.lastName || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
         return;
     }
 
@@ -889,8 +889,8 @@ export default function CoachesPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="email">Email *</Label>
-                                     <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} required />
+                                     <Label htmlFor="email">Email</Label>
+                                     <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="phone">Teléfono</Label>
