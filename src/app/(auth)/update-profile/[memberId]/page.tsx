@@ -72,7 +72,7 @@ export default function UpdateProfilePage() {
             .map(field => {
                 const baseSchema = profileSchemaBase[field as keyof typeof profileSchemaBase];
                 if (baseSchema) {
-                    if (baseSchema instanceof z.ZodString) {
+                    if (baseSchema instanceof z.ZodString && baseSchema.min) {
                          return [field, baseSchema.min(1, 'Este campo es obligatorio.')];
                     }
                     return [field, baseSchema];
@@ -161,7 +161,6 @@ export default function UpdateProfilePage() {
         let label = fieldName;
         let type = 'text';
 
-        // You can create a map for labels and types to make it cleaner
         const fieldMap: { [key: string]: { label: string; type?: string } } = {
           name: { label: 'Nombre' },
           lastName: { label: 'Apellidos' },
@@ -175,7 +174,16 @@ export default function UpdateProfilePage() {
           email: { label: 'Email', type: 'email' },
           tutorEmail: { label: 'Email del Tutor/a', type: 'email' },
           jerseyNumber: { label: 'Dorsal', type: 'number' },
-          // Add all other fields
+          birthDate: { label: 'Fecha de Nacimiento', type: 'date' },
+          kitSize: { label: 'Talla de Equipación' },
+          nationality: { label: 'Nacionalidad' },
+          healthCardNumber: { label: 'Nº Tarjeta Sanitaria'},
+          tutorName: { label: 'Nombre del Tutor/a' },
+          tutorLastName: { label: 'Apellidos del Tutor/a' },
+          tutorDni: { label: 'DNI/NIF del Tutor/a' },
+          monthlyFee: { label: 'Cuota Mensual', type: 'number' },
+          monthlyPayment: { label: 'Pago Mensual', type: 'number' },
+          role: { label: 'Cargo' }
         };
         
         if (fieldMap[fieldName]) {
