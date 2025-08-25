@@ -652,7 +652,7 @@ export default function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="sticky left-0 bg-card z-30 w-[4rem]">
+                <TableHead className="w-[4rem]">
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
@@ -664,12 +664,12 @@ export default function PlayersPage() {
                     visibleColumns.has(field.id) && 
                     <TableHead 
                       key={field.id}
-                      className={cn(field.id === 'name' && 'sticky left-[4rem] bg-card z-30')}
+                      className={cn(field.id === 'name' && 'font-medium')}
                     >
                         {field.label}
                     </TableHead>
                  ))}
-                <TableHead className="sticky right-0 bg-card z-30 w-[4rem]">
+                <TableHead className="w-[4rem]">
                   <span className="sr-only">Acciones</span>
                 </TableHead>
               </TableRow>
@@ -677,7 +677,7 @@ export default function PlayersPage() {
             <TableBody>
               {filteredPlayers.map(player => (
                 <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
-                  <TableCell className="sticky left-0 bg-card z-20">
+                  <TableCell>
                     <Checkbox
                       checked={selectedPlayers.includes(player.id)}
                       onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
@@ -690,7 +690,7 @@ export default function PlayersPage() {
                           key={field.id} 
                           className={cn(
                             'min-w-[150px]',
-                            field.id === 'name' && 'font-medium sticky left-[4rem] bg-card z-20'
+                            field.id === 'name' && 'font-medium'
                           )}
                         >
                              {field.id === 'name' ? (
@@ -719,7 +719,7 @@ export default function PlayersPage() {
                         </TableCell>
                     )
                   ))}
-                  <TableCell className="sticky right-0 bg-card z-20">
+                  <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -1064,4 +1064,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
