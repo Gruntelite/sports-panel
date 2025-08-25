@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -21,6 +20,8 @@ import {
   UserSquare,
   CircleDollarSign,
   UserPlus,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -81,7 +82,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Player, Coach, TeamMember } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -194,7 +195,7 @@ export default function EditTeamPage() {
         return;
       }
       
-      const teamsQuery = query(collection(db, "clubs", currentClubId, "teams"));
+      const teamsQuery = query(collection(db, "clubs", currentClubId, "teams"), orderBy("order"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
       setAllTeams(teamsList);
@@ -609,6 +610,17 @@ export default function EditTeamPage() {
     }
   };
 
+  const currentTeamIndex = allTeams.findIndex(t => t.id === teamId);
+  const prevTeamId = currentTeamIndex > 0 ? allTeams[currentTeamIndex - 1].id : null;
+  const nextTeamId = currentTeamIndex < allTeams.length - 1 ? allTeams[currentTeamIndex + 1].id : null;
+
+  const navigateToTeam = (newTeamId: string | null) => {
+    if (newTeamId) {
+      setLoading(true);
+      router.push(`/teams/${newTeamId}`);
+    }
+  };
+
   const isAllSelected = teamMembers.filter(m => m.role === 'Jugador').length > 0 && selectedMembers.length === teamMembers.filter(m => m.role === 'Jugador').length;
 
   if (loading) {
@@ -628,10 +640,18 @@ export default function EditTeamPage() {
     <TooltipProvider>
       <div className="flex flex-col gap-6">
           <div className="flex items-center gap-4">
-            <Button variant="outline" size="icon" onClick={() => router.back()}>
+            <Button variant="outline" size="icon" onClick={() => router.push('/teams')}>
               <ArrowLeft className="h-4 w-4" />
             </Button>
-            <h1 className="text-2xl font-bold font-headline tracking-tight">Editar Equipo: {team.name}</h1>
+            <div className="flex items-center gap-2">
+                <Button variant="outline" size="icon" onClick={() => navigateToTeam(prevTeamId)} disabled={!prevTeamId}>
+                    <ChevronLeft className="h-4 w-4"/>
+                </Button>
+                <h1 className="text-2xl font-bold font-headline tracking-tight whitespace-nowrap">Editar Equipo: {team.name}</h1>
+                 <Button variant="outline" size="icon" onClick={() => navigateToTeam(nextTeamId)} disabled={!nextTeamId}>
+                    <ChevronRight className="h-4 w-4"/>
+                </Button>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
