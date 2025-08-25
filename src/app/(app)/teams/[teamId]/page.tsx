@@ -476,8 +476,8 @@ export default function EditTeamPage() {
   };
 
   const handleSaveCoach = async () => {
-    if (!coachData.name || !coachData.lastName || !coachData.email || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email son obligatorios." });
+    if (!coachData.name || !coachData.lastName || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
         return;
     }
 
