@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, getDocs, collection, updateDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import type { Player, Coach, Staff } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,34 +16,37 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
+import { DatePicker } from "@/components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { format, parseISO } from "date-fns";
 
 // Base schema for common fields, all optional for dynamic validation
 const profileSchemaBase = {
-  name: z.string(),
-  lastName: z.string(),
-  dni: z.string(),
-  address: z.string(),
-  city: z.string(),
-  postalCode: z.string(),
-  tutorPhone: z.string(),
-  phone: z.string(),
-  iban: z.string(),
-  sex: z.string(),
-  birthDate: z.string(),
-  nationality: z.string(),
-  healthCardNumber: z.string(),
-  startDate: z.string(),
-  endDate: z.string(),
-  tutorName: z.string(),
-  tutorLastName: z.string(),
-  tutorDni: z.string(),
-  tutorEmail: z.string().email(),
-  email: z.string().email(),
-  jerseyNumber: z.preprocess((val) => Number(val), z.number()),
-  monthlyFee: z.preprocess((val) => Number(val), z.number()),
-  kitSize: z.string(),
-  monthlyPayment: z.preprocess((val) => Number(val), z.number()),
-  role: z.string(),
+  name: z.string().optional(),
+  lastName: z.string().optional(),
+  dni: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  postalCode: z.string().optional(),
+  tutorPhone: z.string().optional(),
+  phone: z.string().optional(),
+  iban: z.string().optional(),
+  sex: z.string().optional(),
+  birthDate: z.string().optional(),
+  nationality: z.string().optional(),
+  healthCardNumber: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  tutorName: z.string().optional(),
+  tutorLastName: z.string().optional(),
+  tutorDni: z.string().optional(),
+  tutorEmail: z.string().email().optional(),
+  email: z.string().email().optional(),
+  jerseyNumber: z.preprocess((val) => Number(val), z.number()).optional(),
+  monthlyFee: z.preprocess((val) => Number(val), z.number()).optional(),
+  kitSize: z.string().optional(),
+  monthlyPayment: z.preprocess((val) => Number(val), z.number()).optional(),
+  role: z.string().optional(),
 };
 
 type MemberData = Partial<Player & Coach & Staff>;
@@ -72,8 +75,11 @@ export default function UpdateProfilePage() {
             .map(field => {
                 const baseSchema = profileSchemaBase[field as keyof typeof profileSchemaBase];
                 if (baseSchema) {
-                    if (baseSchema instanceof z.ZodString && baseSchema.min) {
+                    if (baseSchema instanceof z.ZodString && !(baseSchema as any)._def.checks.some((c: any) => c.kind === "email")) {
                          return [field, baseSchema.min(1, 'Este campo es obligatorio.')];
+                    }
+                     if (baseSchema instanceof z.ZodString && (baseSchema as any)._def.checks.some((c: any) => c.kind === "email")) {
+                         return [field, baseSchema.min(1, 'Este campo es obligatorio.').email("Debe ser un email válido.")];
                     }
                     return [field, baseSchema];
                 }
@@ -134,6 +140,9 @@ export default function UpdateProfilePage() {
             const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
             
             const dataToUpdate: any = { ...data };
+            if (data.birthDate) {
+              dataToUpdate.birthDate = format(new Date(data.birthDate), "yyyy-MM-dd");
+            }
             dataToUpdate.updateRequestActive = false; // Deactivate the update request
 
             await updateDoc(memberRef, dataToUpdate);
@@ -158,10 +167,7 @@ export default function UpdateProfilePage() {
     const renderField = (fieldName: string) => {
         if (!editableFields.includes(fieldName)) return null;
         
-        let label = fieldName;
-        let type = 'text';
-
-        const fieldMap: { [key: string]: { label: string; type?: string } } = {
+        const fieldMap: { [key: string]: { label: string; type?: string, options?: {value: string, label: string}[] } } = {
           name: { label: 'Nombre' },
           lastName: { label: 'Apellidos' },
           dni: { label: 'DNI/NIF' },
@@ -183,19 +189,48 @@ export default function UpdateProfilePage() {
           tutorDni: { label: 'DNI/NIF del Tutor/a' },
           monthlyFee: { label: 'Cuota Mensual', type: 'number' },
           monthlyPayment: { label: 'Pago Mensual', type: 'number' },
-          role: { label: 'Cargo' }
+          role: { label: 'Cargo' },
+          sex: { label: 'Sexo', type: 'select', options: [{value: 'masculino', label: 'Masculino'}, {value: 'femenino', label: 'Femenino'}] },
         };
         
-        if (fieldMap[fieldName]) {
-            label = fieldMap[fieldName].label;
-            type = fieldMap[fieldName].type || 'text';
-        }
+        const fieldConfig = fieldMap[fieldName] || { label: fieldName, type: 'text' };
+        const { label, type, options } = fieldConfig;
 
         return (
-            <div key={fieldName} className="space-y-2">
-                <Label htmlFor={fieldName}>{label} *</Label>
-                <Input id={fieldName} type={type} {...form.register(fieldName as any)} />
-                {form.formState.errors[fieldName] && <p className="text-sm font-medium text-destructive">{form.formState.errors[fieldName]?.message as string}</p>}
+             <div key={fieldName} className="space-y-2">
+                <Controller
+                    name={fieldName as any}
+                    control={form.control}
+                    render={({ field, fieldState }) => (
+                         <FormItem>
+                            <FormLabel htmlFor={fieldName}>{label} *</FormLabel>
+                                {type === 'date' ? (
+                                    <DatePicker
+                                        date={field.value ? parseISO(field.value) : undefined}
+                                        onDateChange={field.onChange}
+                                    />
+                                ) : type === 'select' && options ? (
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent>
+                                            {options.map(opt => (
+                                                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                ) : (
+                                    <Input
+                                        id={fieldName}
+                                        type={type || 'text'}
+                                        {...field}
+                                    />
+                                )}
+                            {fieldState.error && <p className="text-sm font-medium text-destructive">{fieldState.error.message as string}</p>}
+                        </FormItem>
+                    )}
+                />
             </div>
         )
     }
@@ -258,3 +293,10 @@ export default function UpdateProfilePage() {
         </div>
     );
 }
+
+// Add these to avoid compilation errors, since we are not exporting them from the form component
+const FormItem = ({className, ...props}: React.HTMLAttributes<HTMLDivElement>) => <div className={cn("space-y-2", className)} {...props} />
+const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithoutRef<typeof Label>>(({className, ...props}, ref) => <Label ref={ref} className={className} {...props} />)
+FormLabel.displayName = 'FormLabel';
+const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({className, ...props}, ref) => <div ref={ref} className={className} {...props} />)
+FormControl.displayName = 'FormControl';
