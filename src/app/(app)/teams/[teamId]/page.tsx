@@ -248,7 +248,7 @@ export default function EditTeamPage() {
   
   const handleTeamInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
-    setTeam(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
+    setTeam(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? '' : Number(value)) : value }));
   };
 
   const handleMemberInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -995,8 +995,8 @@ export default function EditTeamPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email *" : "Email del Tutor/a *"}</Label>
-                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} required />
+                                     <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
