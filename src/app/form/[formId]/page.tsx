@@ -92,17 +92,19 @@ export default function PublicFormPage() {
                     const maxSubmissions = foundForm.maxSubmissions;
                     const currentSubmissions = foundForm.submissionCount || 0;
 
-                    let isActive = false;
-                    if (startDate && now >= startDate) {
-                       if (endDate) {
-                           if (now <= endDate) {
-                               isActive = true;
-                           }
-                       } else {
-                           isActive = true;
-                       }
+                    let isActive = true; // Assume active by default
+                    
+                    // Check start date: if it exists, we must be past it
+                    if (startDate && now < startDate) {
+                        isActive = false;
                     }
 
+                    // Check end date: if it exists, we must be before it
+                    if (endDate && now > endDate) {
+                        isActive = false;
+                    }
+
+                    // Check submission limit
                     if (maxSubmissions && currentSubmissions >= maxSubmissions) {
                       isActive = false;
                     }
