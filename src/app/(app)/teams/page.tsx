@@ -99,6 +99,16 @@ export default function TeamsPage() {
         return acc;
     }, {} as {[key: string]: number});
     
+    const coachesQuery = query(collection(db, "clubs", clubId, "coaches"));
+    const coachesSnapshot = await getDocs(coachesQuery);
+    const coachesCountByTeam = coachesSnapshot.docs.reduce((acc, doc) => {
+        const teamId = doc.data().teamId;
+        if (teamId) {
+            acc[teamId] = (acc[teamId] || 0) + 1;
+        }
+        return acc;
+    }, {} as {[key: string]: number});
+
     const teamsQuery = query(collection(db, "clubs", clubId, "teams"));
     const teamsSnapshot = await getDocs(teamsQuery);
     let needsUpdate = false;
@@ -121,7 +131,7 @@ export default function TeamsPage() {
         image: data.image || "https://placehold.co/600x400.png",
         hint: "equipo deportivo",
         players: playersCountByTeam[doc.id] || 0,
-        coaches: 0, // Placeholder
+        coaches: coachesCountByTeam[doc.id] || 0,
       };
     });
     
