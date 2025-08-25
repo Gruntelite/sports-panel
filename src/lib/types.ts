@@ -224,7 +224,7 @@ export type RegistrationForm = {
 }
 
 export type FormSubmission = {
-    id?: string;
+    id: string;
     formId: string;
     submittedAt: Timestamp;
     data: Record<string, any>;

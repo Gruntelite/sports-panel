@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, addDoc, Timestamp } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, Timestamp, updateDoc } from "firebase/firestore";
 import type { RegistrationForm } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -71,8 +71,6 @@ export default function PublicFormPage() {
 
         const fetchFormDefinition = async () => {
             try {
-                // We need to find which club this form belongs to.
-                // This is not ideal for security/scalability, a real app would have this in the URL or a global forms collection.
                 const clubsSnapshot = await getDocs(collection(db, "clubs"));
                 let foundForm = null;
                 let clubId = '';
@@ -82,7 +80,7 @@ export default function PublicFormPage() {
                     const formSnap = await getDoc(formRef);
                     if (formSnap.exists()) {
                         clubId = clubDoc.id;
-                        foundForm = { id: formSnap.id, ...formSnap.data() } as RegistrationForm;
+                        foundForm = { id: formSnap.id, ...formSnap.data(), clubId } as RegistrationForm;
                         break;
                     }
                 }
@@ -91,6 +89,8 @@ export default function PublicFormPage() {
                     const now = new Date();
                     const startDate = foundForm.registrationStartDate ? foundForm.registrationStartDate.toDate() : null;
                     const endDate = foundForm.registrationDeadline ? foundForm.registrationDeadline.toDate() : null;
+                    const maxSubmissions = foundForm.maxSubmissions;
+                    const currentSubmissions = foundForm.submissionCount || 0;
 
                     let isActive = false;
                     if (startDate && now >= startDate) {
@@ -102,9 +102,13 @@ export default function PublicFormPage() {
                            isActive = true;
                        }
                     }
+
+                    if (maxSubmissions && currentSubmissions >= maxSubmissions) {
+                      isActive = false;
+                    }
                     
                     if(isActive){
-                        setFormDef({...foundForm, clubId});
+                        setFormDef(foundForm);
                     } else {
                         setFormDef(null); // Form is not active
                     }
@@ -127,10 +131,16 @@ export default function PublicFormPage() {
         if (!formDef) return;
         setSubmitting(true);
         try {
-            await addDoc(collection(db, "clubs", formDef.clubId, "registrationForms", formId, "submissions"), {
+            const formRef = doc(db, "clubs", formDef.clubId, "registrationForms", formId);
+            await addDoc(collection(formRef, "submissions"), {
                 submittedAt: Timestamp.now(),
                 data: data
             });
+
+            await updateDoc(formRef, {
+              submissionCount: (formDef.submissionCount || 0) + 1,
+            });
+
             setSubmitted(true);
             toast({
                 title: "¡Inscripción Enviada!",
@@ -165,7 +175,7 @@ export default function PublicFormPage() {
                             <Logo />
                         </div>
                         <CardTitle className="text-2xl">Inscripción No Disponible</CardTitle>
-                        <CardDescription>El periodo de inscripción para este evento ha finalizado o todavía no ha comenzado. Contacta con el club para más información.</CardDescription>
+                        <CardDescription>El periodo de inscripción para este evento ha finalizado, no está disponible o se han alcanzado el número máximo de plazas. Contacta con el club para más información.</CardDescription>
                     </CardHeader>
                 </Card>
             </div>
@@ -195,6 +205,9 @@ export default function PublicFormPage() {
                     <CardTitle className="text-2xl">{formDef.title}</CardTitle>
                     {formDef.description && (
                         <CardDescription>{formDef.description}</CardDescription>
+                    )}
+                     {formDef.price > 0 && (
+                        <p className="font-semibold text-lg pt-2">Precio: {formDef.price}€</p>
                     )}
                 </CardHeader>
                 <CardContent>

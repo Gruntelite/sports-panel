@@ -58,14 +58,16 @@ import {
   ExternalLink,
   Users,
   Trash2,
-  Calendar,
   CalendarCheck,
   CircleDollarSign,
+  Edit,
+  Eye,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import { RegistrationFormCreator } from "@/components/registration-form-creator";
+import Link from "next/link";
 
 export default function RegistrationsPage() {
   const { toast } = useToast();
@@ -74,6 +76,8 @@ export default function RegistrationsPage() {
   const [clubId, setClubId] = useState<string | null>(null);
   const [registrationForms, setRegistrationForms] = useState<RegistrationForm[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
+  const [formToEdit, setFormToEdit] = useState<RegistrationForm | null>(null);
   const [formToDelete, setFormToDelete] = useState<RegistrationForm | null>(null);
 
   useEffect(() => {
@@ -109,10 +113,17 @@ export default function RegistrationsPage() {
     setLoading(false);
   };
   
-  const handleFormCreated = () => {
+  const handleFormSaved = () => {
     setIsModalOpen(false);
+    setFormToEdit(null);
     if(clubId) fetchForms(clubId);
   }
+
+  const handleOpenModal = (mode: 'add' | 'edit', form?: RegistrationForm) => {
+    setModalMode(mode);
+    setFormToEdit(form || null);
+    setIsModalOpen(true);
+  };
   
   const handleCopyLink = (formId: string) => {
      const fullUrl = `${window.location.origin}/form/${formId}`;
@@ -153,21 +164,10 @@ export default function RegistrationsPage() {
                   Formularios de inscripción creados para el club.
                 </CardDescription>
               </div>
-              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                  <DialogTrigger asChild>
-                      <Button>
-                          <PlusCircle className="mr-2 h-4 w-4" />
-                          Crear Nuevo Evento
-                      </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl">
-                      <DialogHeader>
-                          <DialogTitle>Crear Formulario de Inscripción</DialogTitle>
-                          <DialogDescription>Diseña un formulario público para tu próximo evento, torneo o captación.</DialogDescription>
-                      </DialogHeader>
-                      <RegistrationFormCreator onFormCreated={handleFormCreated} />
-                  </DialogContent>
-              </Dialog>
+              <Button onClick={() => handleOpenModal('add')}>
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Crear Nuevo Evento
+              </Button>
             </CardHeader>
             <CardContent>
               {loading ? (
@@ -195,6 +195,9 @@ export default function RegistrationsPage() {
                                 <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => handleOpenModal('edit', form)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                                <DropdownMenuItem asChild><Link href={`/registrations/${form.id}`}><Eye className="mr-2 h-4 w-4" />Ver Inscritos</Link></DropdownMenuItem>
+                                <DropdownMenuSeparator />
                                 <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
                                 <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
                                 <DropdownMenuSeparator />
@@ -238,7 +241,22 @@ export default function RegistrationsPage() {
           </Card>
       </div>
 
-       <AlertDialog open={!!formToDelete} onOpenChange={setFormToDelete}>
+       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{modalMode === 'add' ? 'Crear' : 'Editar'} Formulario de Inscripción</DialogTitle>
+            <DialogDescription>Diseña un formulario público para tu próximo evento, torneo o captación.</DialogDescription>
+          </DialogHeader>
+          <RegistrationFormCreator 
+            onFormSaved={handleFormSaved} 
+            initialData={formToEdit}
+            mode={modalMode}
+          />
+        </DialogContent>
+      </Dialog>
+
+
+       <AlertDialog open={!!formToDelete} onOpenChange={(open) => !open && setFormToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>

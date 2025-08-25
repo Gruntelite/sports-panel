@@ -1,27 +1,26 @@
 
 "use client";
 
-import { useState } from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useState, useEffect } from "react";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2, PlusCircle, Trash2, Info, Settings, FileText } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { CustomFormField, RegistrationForm } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
-import { addDoc, collection, doc, getDoc, Timestamp } from "firebase/firestore";
+import { addDoc, collection, doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
 import { DialogFooter, DialogClose } from "./ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { DatePicker } from "./ui/date-picker";
-import { format, parseISO } from "date-fns";
+import { Switch } from "./ui/switch";
 
 
 const initialFormFields: CustomFormField[] = [
@@ -38,7 +37,6 @@ const formSchema = z.object({
   description: z.string().optional(),
   price: z.preprocess((val) => Number(val), z.number().min(0).optional()),
   maxSubmissions: z.preprocess((val) => Number(val), z.number().min(0).optional()),
-  status: z.enum(['active', 'closed']),
   registrationStartDate: z.date().optional(),
   registrationDeadline: z.date().optional(),
   eventStartDate: z.date().optional(),
@@ -51,10 +49,12 @@ const formSchema = z.object({
 type FormData = z.infer<typeof formSchema>;
 
 type RegistrationFormCreatorProps = {
-  onFormCreated: () => void;
+  onFormSaved: () => void;
+  initialData?: RegistrationForm | null;
+  mode: 'add' | 'edit';
 };
 
-export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreatorProps) {
+export function RegistrationFormCreator({ onFormSaved, initialData, mode }: RegistrationFormCreatorProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
@@ -70,10 +70,43 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
       description: "",
       price: 0,
       maxSubmissions: 0,
-      status: 'active',
       selectedFieldIds: ["name", "email"],
     },
   });
+
+  useEffect(() => {
+    if (mode === 'edit' && initialData) {
+      form.reset({
+        title: initialData.title,
+        description: initialData.description,
+        price: initialData.price || 0,
+        maxSubmissions: initialData.maxSubmissions || 0,
+        registrationStartDate: initialData.registrationStartDate?.toDate(),
+        registrationDeadline: initialData.registrationDeadline?.toDate(),
+        eventStartDate: initialData.eventStartDate?.toDate(),
+        eventEndDate: initialData.eventEndDate?.toDate(),
+        selectedFieldIds: initialData.fields.map(f => f.id),
+      });
+      // Combine initial fields with any custom ones from the form
+      const existingCustomFields = initialData.fields.filter(f => f.custom);
+      const uniqueCustomFields = existingCustomFields.filter(ecf => !initialFormFields.some(iff => iff.id === ecf.id));
+      setAllFields([...initialFormFields, ...uniqueCustomFields]);
+
+    } else {
+       form.reset({
+          title: "",
+          description: "",
+          price: 0,
+          maxSubmissions: 0,
+          selectedFieldIds: ["name", "email"],
+          registrationStartDate: undefined,
+          registrationDeadline: undefined,
+          eventStartDate: undefined,
+          eventEndDate: undefined,
+       });
+       setAllFields(initialFormFields);
+    }
+  }, [initialData, mode, form]);
   
   const handleAddCustomField = () => {
     if (newFieldName.trim() === "") {
@@ -122,7 +155,6 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
     try {
         const fieldsToSave = allFields.filter(f => values.selectedFieldIds.includes(f.id));
         
-        // Determine status based on dates
         const now = new Date();
         const startDate = values.registrationStartDate;
         const endDate = values.registrationDeadline;
@@ -137,8 +169,7 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
             }
         }
 
-
-        const newFormDoc: Omit<RegistrationForm, "id"> = {
+        const formData: Omit<RegistrationForm, "id" | "createdAt" | "clubId" | "submissionCount"> = {
             title: values.title,
             description: values.description,
             price: values.price || 0,
@@ -149,25 +180,36 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
             eventStartDate: values.eventStartDate ? Timestamp.fromDate(values.eventStartDate) : null,
             eventEndDate: values.eventEndDate ? Timestamp.fromDate(values.eventEndDate) : null,
             fields: fieldsToSave,
-            createdAt: Timestamp.now(),
-            clubId: clubId,
-            submissionCount: 0,
         };
-
-        await addDoc(collection(db, "clubs", clubId, "registrationForms"), newFormDoc);
         
-        onFormCreated();
+        if (mode === 'edit' && initialData?.id) {
+            const formRef = doc(db, "clubs", clubId, "registrationForms", initialData.id);
+            await updateDoc(formRef, formData);
+             toast({
+                title: "¡Formulario Actualizado!",
+                description: "Los cambios en el formulario se han guardado.",
+            });
+        } else {
+            const newFormDoc = {
+                ...formData,
+                createdAt: Timestamp.now(),
+                clubId: clubId,
+                submissionCount: 0,
+            };
+            await addDoc(collection(db, "clubs", clubId, "registrationForms"), newFormDoc);
+             toast({
+                title: "¡Formulario Creado!",
+                description: "Tu formulario de inscripción público está listo.",
+            });
+        }
         
-        toast({
-            title: "¡Formulario Generado!",
-            description: "Tu formulario de inscripción público está listo.",
-        });
+        onFormSaved();
 
     } catch (error) {
-        console.error("Error creating form:", error);
+        console.error("Error saving form:", error);
         toast({
             variant: "destructive",
-            title: "Fallo en la Generación",
+            title: "Fallo al Guardar",
             description: "No se pudo guardar el formulario en la base de datos.",
         });
     }
@@ -339,7 +381,7 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
                       Guardando...
                   </>
                   ) : (
-                  'Crear Formulario'
+                  mode === 'add' ? 'Crear Formulario' : 'Guardar Cambios'
                   )}
               </Button>
           </DialogFooter>
