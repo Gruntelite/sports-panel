@@ -23,7 +23,7 @@ import type { Team, CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format, getDay } from "date-fns";
+import { format, getDay, getMonth, getYear } from "date-fns";
 
 
 type Venue = {
@@ -328,12 +328,12 @@ function CalendarView() {
   // Fetch calendar events whenever the month or dependencies change
   useEffect(() => {
     const fetchCalendarData = async () => {
-        if (!clubId || !defaultTemplateId || templates.length === 0) return;
+        if (!clubId || templates.length === 0) return;
         
         setLoading(true);
         try {
-            const firstDayOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
-            const lastDayOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 0));
+            const firstDayOfMonth = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), 1));
+            const lastDayOfMonth = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth() + 1, 0));
 
             const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"),
                 where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
