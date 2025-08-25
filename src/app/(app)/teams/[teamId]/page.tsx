@@ -303,7 +303,7 @@ export default function EditTeamPage() {
 
       const teamDataToUpdate = {
         name: team.name,
-        level: team.level,
+        level: team.level || null,
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
         defaultMonthlyFee: (team.defaultMonthlyFee === '' || team.defaultMonthlyFee === undefined || team.defaultMonthlyFee === null) ? null : Number(team.defaultMonthlyFee),
