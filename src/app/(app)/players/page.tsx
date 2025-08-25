@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -83,7 +84,7 @@ import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage
 import type { Team, Player, ClubMember } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 import { requestDataUpdateAction } from "@/lib/actions";
 import { DataUpdateSender, FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -576,7 +577,7 @@ export default function PlayersPage() {
                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-8 gap-1">
-                        <Columns className="h-3.5 w-3.5" />
+                        <Columns className="mr-2 h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                           Columnas
                         </span>
@@ -799,7 +800,7 @@ export default function PlayersPage() {
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
-                                    date={playerData.birthDate ? new Date(playerData.birthDate) : undefined} 
+                                    date={playerData.birthDate ? parseISO(playerData.birthDate) : undefined}
                                     onDateChange={(date) => handleDateChange('birthDate', date)}
                                   />
                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
@@ -847,14 +848,14 @@ export default function PlayersPage() {
                                 <div className="space-y-2">
                                   <Label htmlFor="startDate">Fecha de Alta</Label>
                                   <DatePicker 
-                                    date={playerData.startDate ? new Date(playerData.startDate) : undefined} 
+                                    date={playerData.startDate ? parseISO(playerData.startDate) : undefined}
                                     onDateChange={(date) => handleDateChange('startDate', date)}
                                   />
                                 </div>
                                  <div className="space-y-2">
                                   <Label htmlFor="endDate">Fecha de Baja</Label>
                                   <DatePicker 
-                                    date={playerData.endDate ? new Date(playerData.endDate) : undefined} 
+                                    date={playerData.endDate ? parseISO(playerData.endDate) : undefined}
                                     onDateChange={(date) => handleDateChange('endDate', date)}
                                   />
                                 </div>
@@ -1064,3 +1065,6 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
+
+    
