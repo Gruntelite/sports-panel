@@ -22,7 +22,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft } from "lucide-react";
+import { Loader2, ArrowLeft, Download } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -85,6 +85,35 @@ export default function RegistrationSubmissionsPage() {
 
     fetchFormData();
   }, [formId, clubId]);
+  
+  const handleDownloadCsv = () => {
+    if (!formDef || submissions.length === 0) return;
+
+    const headers = ["Fecha de Inscripción", ...formDef.fields.map(field => field.label)];
+    
+    const csvRows = [
+        headers.join(','),
+        ...submissions.map(submission => {
+            const date = format(submission.submittedAt.toDate(), "yyyy-MM-dd HH:mm:ss");
+            const values = formDef.fields.map(field => {
+                const value = submission.data[field.id] || "";
+                return `"${String(value).replace(/"/g, '""')}"`;
+            });
+            return [`"${date}"`, ...values].join(',');
+        })
+    ];
+
+    const csvContent = csvRows.join('\n');
+    const blob = new Blob([`\uFEFF${csvContent}`], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `inscritos_${formDef.title.replace(/\s+/g, '_')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   if (loading) {
     return (
@@ -106,15 +135,21 @@ export default function RegistrationSubmissionsPage() {
             </Button>
             <div>
                 <h1 className="text-2xl font-bold font-headline tracking-tight">Inscritos en: {formDef.title}</h1>
-                <p className="text-muted-foreground">Viendo {submissions.length} de {formDef.submissionCount} inscripciones.</p>
+                <p className="text-muted-foreground">Viendo {submissions.length} de {formDef.submissionCount || submissions.length} inscripciones.</p>
             </div>
         </div>
       <Card>
-        <CardHeader>
-          <CardTitle>Lista de Inscritos</CardTitle>
-          <CardDescription>
-            Estos son los datos de las personas que se han registrado a través del formulario público.
-          </CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+            <div>
+              <CardTitle>Lista de Inscritos</CardTitle>
+              <CardDescription>
+                Estos son los datos de las personas que se han registrado a través del formulario público.
+              </CardDescription>
+            </div>
+            <Button onClick={handleDownloadCsv} variant="outline" disabled={submissions.length === 0}>
+                <Download className="mr-2 h-4 w-4" />
+                Descargar CSV
+            </Button>
         </CardHeader>
         <CardContent>
           <Table>
