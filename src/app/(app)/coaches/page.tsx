@@ -428,9 +428,14 @@ export default function CoachesPage() {
     }
   };
 
-  const handleRequestUpdate = async (memberId: string, memberType: 'coach') => {
+  const handleRequestUpdate = async (member: Coach) => {
     if (!clubId) return;
-    const result = await requestDataUpdateAction({ clubId, memberId, memberType });
+    const result = await requestDataUpdateAction({
+        clubId,
+        members: [{ id: member.id, name: `${member.name} ${member.lastName}`, email: member.email }],
+        memberType: 'coach',
+        fields: ['dni', 'address', 'phone', 'iban'] // Example fields
+    });
     if (result.success) {
       toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
     } else {
@@ -460,6 +465,10 @@ export default function CoachesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+               <Button onClick={() => {}}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Solicitar Actualización
+              </Button>
               {selectedCoaches.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -572,7 +581,7 @@ export default function CoachesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRequestUpdate(coach.id, 'coach')}>
+                        <DropdownMenuItem onClick={() => handleRequestUpdate(coach)}>
                           <Send className="mr-2 h-4 w-4" />
                           Solicitar Actualización
                         </DropdownMenuItem>

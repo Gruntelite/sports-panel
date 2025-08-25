@@ -80,7 +80,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player } from "@/lib/types";
+import type { Team, Player, ClubMember } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
@@ -105,6 +105,11 @@ export default function PlayersPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+  
+  const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
+  const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -174,6 +179,9 @@ export default function PlayersPage() {
           } as Player
       });
       setPlayers(playersList);
+      
+      const members: ClubMember[] = playersList.map(p => ({ id: p.id, name: `${p.name} ${p.lastName}`, type: 'Jugador', data: p, teamId: p.teamId, email: p.tutorEmail }));
+      setAllMembers(members);
 
     } catch (error) {
       console.error("Error fetching data: ", error);
@@ -403,9 +411,14 @@ export default function PlayersPage() {
     }
   };
 
-  const handleRequestUpdate = async (memberId: string, memberType: 'player') => {
+  const handleRequestUpdate = async (member: Player) => {
     if (!clubId) return;
-    const result = await requestDataUpdateAction({ clubId, memberId, memberType });
+    const result = await requestDataUpdateAction({ 
+      clubId, 
+      members: [{ id: member.id, name: `${member.name} ${member.lastName}`, email: member.tutorEmail }],
+      memberType: 'player',
+      fields: ['dni', 'address', 'tutorPhone', 'iban'] // Example fields
+    });
     if (result.success) {
       toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
     } else {
@@ -435,6 +448,10 @@ export default function PlayersPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
+              <Button onClick={() => setIsFieldsModalOpen(true)}>
+                  <Send className="mr-2 h-4 w-4" />
+                  Solicitar Actualización
+              </Button>
               {selectedPlayers.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -567,7 +584,7 @@ export default function PlayersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRequestUpdate(player.id, 'player')}>
+                        <DropdownMenuItem onClick={() => handleRequestUpdate(player)}>
                           <Send className="mr-2 h-4 w-4" />
                           Solicitar Actualización
                         </DropdownMenuItem>
@@ -842,3 +859,4 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
