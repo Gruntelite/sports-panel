@@ -242,90 +242,87 @@ export default function ClubSettingsPage() {
                 </p>
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Ajustes Generales</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="clubName">Nombre del Club</Label>
-                                <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
-                                <p className="text-xs text-muted-foreground">Se recomienda un máximo de 30 caracteres para una correcta visualización.</p>
+            <div className="flex flex-col gap-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ajustes Generales</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="clubName">Nombre del Club</Label>
+                            <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
+                            <p className="text-xs text-muted-foreground">Se recomienda un máximo de 30 caracteres para una correcta visualización.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="clubLogo">Logo del Club</Label>
+                            <div className="flex items-center gap-4">
+                                <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
+                                <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="clubLogo">Logo del Club</Label>
-                                <div className="flex items-center gap-4">
-                                    <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
-                                    <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
-                                </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="clubColor">Color Principal del Club</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="clubColor"
+                                    type="color"
+                                    value={themeColor}
+                                    onChange={(e) => setThemeColor(e.target.value)}
+                                    className="p-1 h-10 w-14"
+                                />
+                                <Input
+                                    type="text"
+                                    value={themeColor}
+                                    onChange={(e) => setThemeColor(e.target.value)}
+                                    placeholder="#2563eb"
+                                    className="w-full"
+                                />
                             </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="clubColor">Color Principal del Club</Label>
-                                <div className="flex items-center gap-2">
-                                    <Input
-                                        id="clubColor"
-                                        type="color"
-                                        value={themeColor}
-                                        onChange={(e) => setThemeColor(e.target.value)}
-                                        className="p-1 h-10 w-14"
-                                    />
-                                    <Input
-                                        type="text"
-                                        value={themeColor}
-                                        onChange={(e) => setThemeColor(e.target.value)}
-                                        placeholder="#2563eb"
-                                        className="w-full"
-                                    />
-                                </div>
-                            </div>
-                            <Button onClick={handleSaveChanges} disabled={saving}>
-                                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <Save className="mr-2 h-4 w-4" /> Guardar Cambios
-                            </Button>
-                        </CardContent>
-                    </Card>
+                        </div>
+                        <Button onClick={handleSaveChanges} disabled={saving}>
+                            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Save className="mr-2 h-4 w-4" /> Guardar Cambios
+                        </Button>
+                    </CardContent>
+                </Card>
 
-                     <Card>
-                        <CardHeader>
-                            <CardTitle>Seguridad de la Cuenta</CardTitle>
-                            <CardDescription>Cambia tu email de inicio de sesión o tu contraseña.</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                             <div className="space-y-2">
-                                <Label htmlFor="newEmail">Correo Electrónico de Acceso</Label>
-                                <Input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                                <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Dejar en blanco para no cambiar"/>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="confirmNewPassword">Confirmar Nueva Contraseña</Label>
-                                <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
-                            </div>
-                            <div className="space-y-2 pt-2 border-t">
-                                <Label htmlFor="currentPassword">Contraseña Actual (para confirmar)</Label>
-                                <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required/>
-                            </div>
-                            <Button onClick={handleSaveSecurityChanges} disabled={savingSecurity}>
-                                {savingSecurity && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                <KeyRound className="mr-2 h-4 w-4" /> Guardar Cambios de Seguridad
-                            </Button>
-                        </CardContent>
-                    </Card>
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Seguridad de la Cuenta</CardTitle>
+                        <CardDescription>Cambia tu email de inicio de sesión o tu contraseña.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                         <div className="space-y-2">
+                            <Label htmlFor="newEmail">Correo Electrónico de Acceso</Label>
+                            <Input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Dejar en blanco para no cambiar"/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmNewPassword">Confirmar Nueva Contraseña</Label>
+                            <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
+                        </div>
+                        <div className="space-y-2 pt-2 border-t">
+                            <Label htmlFor="currentPassword">Contraseña Actual (para confirmar)</Label>
+                            <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required/>
+                        </div>
+                        <Button onClick={handleSaveSecurityChanges} disabled={savingSecurity}>
+                            {savingSecurity && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <KeyRound className="mr-2 h-4 w-4" /> Guardar Cambios de Seguridad
+                        </Button>
+                    </CardContent>
+                </Card>
 
-                </div>
-
-                 <Card className="lg:col-span-1">
+                <Card>
                     <CardHeader>
                         <CardTitle>Plan de Suscripción</CardTitle>
                         <CardDescription>
                             Selecciona el plan que mejor se ajuste al tamaño y las necesidades de tu club.
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-6">
+                    <CardContent className="grid gap-6 lg:grid-cols-3">
                         <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
                             <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
                             <p className="text-muted-foreground mt-1">Hasta <b>100</b> usuarios</p>
