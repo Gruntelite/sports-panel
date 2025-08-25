@@ -94,7 +94,7 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
     const { toast } = useToast();
 
     const handleCopyHeaders = () => {
-        const headerKeys = columns.map(c => c.key).join(',');
+        const headerKeys = columns.map(c => c.key).join('\t');
         navigator.clipboard.writeText(headerKeys);
         toast({
             title: "Cabeceras Copiadas",
@@ -106,7 +106,7 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
         <div className="space-y-4">
             <Button onClick={handleCopyHeaders} variant="outline" size="sm">
                 <Copy className="mr-2 h-4 w-4" />
-                Copiar Cabeceras CSV
+                Copiar Cabeceras para Pegar en Hoja de Cálculo
             </Button>
             <ol className="list-decimal list-inside grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 {columns.map(col => (
@@ -152,8 +152,8 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden y Nombres de las Columnas para Jugadores</CardTitle>
                     <CardDescription>
-                        Para importar jugadores, tu archivo CSV debe tener las siguientes columnas en este orden exacto.
-                        La primera fila debe ser la cabecera con los nombres técnicos entre paréntesis. Los campos como fechas deben estar en formato AAAA-MM-DD.
+                        Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. Los campos como fechas deben estar en formato AAAA-MM-DD.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -171,8 +171,8 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Entrenadores</CardTitle>
                      <CardDescription>
-                        Para importar entrenadores, tu archivo CSV debe tener las siguientes columnas en este orden exacto.
-                        La primera fila debe ser la cabecera con estos nombres (el nombre técnico entre paréntesis).
+                       Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -190,8 +190,8 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Staff y Directiva</CardTitle>
                      <CardDescription>
-                        Para importar staff y directiva, tu archivo CSV debe tener las siguientes columnas en este orden exacto.
-                        La primera fila debe ser la cabecera con estos nombres (el nombre técnico entre paréntesis).
+                        Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -209,8 +209,8 @@ export default function ImporterPage() {
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Socios</CardTitle>
                      <CardDescription>
-                        Para importar socios, tu archivo CSV debe tener las siguientes columnas en este orden exacto.
-                        La primera fila debe ser la cabecera con estos nombres (el nombre técnico entre paréntesis). Para 'paymentType', los valores deben ser 'monthly' o 'annual'.
+                        Usa el botón de arriba para copiar las cabeceras y pegarlas en la primera fila de tu hoja de cálculo.
+                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. Para 'paymentType', los valores deben ser 'monthly' o 'annual'.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
