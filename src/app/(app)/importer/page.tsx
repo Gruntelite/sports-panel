@@ -3,8 +3,10 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Users, UserSquare, Briefcase, Handshake, Database } from "lucide-react";
+import { Users, UserSquare, Briefcase, Handshake, Database, Copy } from "lucide-react";
 import { CsvImporter } from "@/components/csv-importer";
+import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 
 type ColumnInfo = {
     key: string;
@@ -88,16 +90,36 @@ const socioColumns: ColumnInfo[] = [
 ];
 
 
-const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => (
-    <ol className="list-decimal list-inside grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
-        {columns.map(col => (
-            <li key={col.key}>
-                <span className="font-semibold text-foreground">{col.label}</span>
-                <span className="text-xs ml-1">({col.key})</span>
-            </li>
-        ))}
-    </ol>
-);
+const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
+    const { toast } = useToast();
+
+    const handleCopyHeaders = () => {
+        const headerKeys = columns.map(c => c.key).join(',');
+        navigator.clipboard.writeText(headerKeys);
+        toast({
+            title: "Cabeceras Copiadas",
+            description: "Los nombres técnicos de las columnas se han copiado al portapapeles.",
+        });
+    };
+
+    return (
+        <div className="space-y-4">
+            <Button onClick={handleCopyHeaders} variant="outline" size="sm">
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar Cabeceras CSV
+            </Button>
+            <ol className="list-decimal list-inside grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+                {columns.map(col => (
+                    <li key={col.key}>
+                        <span className="font-semibold text-foreground">{col.label}</span>
+                        <span className="text-xs ml-1">({col.key})</span>
+                    </li>
+                ))}
+            </ol>
+        </div>
+    );
+};
+
 
 export default function ImporterPage() {
   return (
