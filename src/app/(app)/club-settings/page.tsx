@@ -242,8 +242,8 @@ export default function ClubSettingsPage() {
                 </p>
             </div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
-                <div className="space-y-6">
+            <div className="grid lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
                     <Card>
                         <CardHeader>
                             <CardTitle>Ajustes Generales</CardTitle>
