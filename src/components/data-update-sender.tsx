@@ -305,7 +305,7 @@ export function DataUpdateSender() {
     );
 }
 
-function FieldSelector({ fields, selectedFields, onFieldSelect }: { fields: any, selectedFields: string[], onFieldSelect: (id: string, selected: boolean) => void }) {
+export function FieldSelector({ fields, selectedFields, onFieldSelect }: { fields: any, selectedFields: string[], onFieldSelect: (id: string, selected: boolean) => void }) {
     return (
         <Tabs defaultValue="personal" className="w-full">
             <TabsList className="grid w-full grid-cols-3">
