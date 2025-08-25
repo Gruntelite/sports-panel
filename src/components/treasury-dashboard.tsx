@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, Calendar as CalendarIcon, User, ChevronDown, ChevronLeft, ChevronRight, BookUser } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc, orderBy } from "firebase/firestore";
-import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings, RegistrationForm, FormSubmission, FormWithSubmissions } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -233,6 +233,7 @@ export function TreasuryDashboard() {
   const [recurringExpenses, setRecurringExpenses] = useState<RecurringExpense[]>([]);
   const [oneOffExpenses, setOneOffExpenses] = useState<OneOffExpense[]>([]);
   const [clubSettings, setClubSettings] = useState<ClubSettings>({});
+  const [formsWithSubmissions, setFormsWithSubmissions] = useState<FormWithSubmissions[]>([]);
 
   const [filteredMembers, setFilteredMembers] = useState<FeeMember[]>([]);
   const [selectedTeam, setSelectedTeam] = useState<string>("all");
@@ -343,7 +344,6 @@ export function TreasuryDashboard() {
         let totalIncome = 0;
         let totalExpense = 0;
         
-        // Player Fees (Income)
         if (!localFeeExcluded.includes(month)) {
             players.forEach(p => {
                 if (p.monthlyFee && p.monthlyFee > 0) {
@@ -353,7 +353,6 @@ export function TreasuryDashboard() {
             });
         }
         
-        // Coach Payments (Expense)
         if (!localCoachFeeExcluded.includes(month)) {
             coaches.forEach(c => {
                 if (c.monthlyPayment && c.monthlyPayment > 0) {
@@ -363,7 +362,6 @@ export function TreasuryDashboard() {
             });
         }
         
-        // Recurring Expenses (Expense)
         recurringExpenses.forEach(e => {
              if (!e.excludedMonths?.includes(month)) {
                  transactions.push({ id: `re-${e.id}`, date: accountingDate, concept: e.title, amount: e.amount, type: 'expense', category: 'Gasto Recurrente' });
@@ -371,18 +369,16 @@ export function TreasuryDashboard() {
              }
         });
         
-        // Sponsorships (Income)
         sponsorships.forEach(s => {
             if(s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
                 transactions.push({ id: `s-${s.id}`, date: accountingDate, concept: `Patrocinio: ${s.sponsorName}`, amount: s.amount, type: 'income', category: 'Patrocinios' });
                 totalIncome += s.amount;
-            } else if (s.frequency === 'annual' && month === 0) { // Assume annual paid in January
+            } else if (s.frequency === 'annual' && month === 0) { 
                 transactions.push({ id: `s-${s.id}`, date: new Date(year, 0, 1), concept: `Patrocinio: ${s.sponsorName}`, amount: s.amount, type: 'income', category: 'Patrocinios' });
                 totalIncome += s.amount;
             }
         });
         
-        // One-off Payments and Expenses for the month
         oneTimePayments.filter(p => getYear(parseISO(p.issueDate)) === year && getMonth(parseISO(p.issueDate)) === month).forEach(p => {
             const amount = Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
             transactions.push({ id: `otp-${p.id}`, date: parseISO(p.issueDate), concept: p.concept, amount, type: 'income', category: 'Pago Puntual' });
@@ -394,6 +390,18 @@ export function TreasuryDashboard() {
             totalExpense += e.amount;
         });
 
+        formsWithSubmissions.forEach(form => {
+            if (form.price > 0) {
+                form.submissions.forEach(sub => {
+                    const subDate = sub.submittedAt.toDate();
+                    if(getYear(subDate) === year && getMonth(subDate) === month && sub.paymentStatus === 'paid') {
+                        transactions.push({ id: `form-${sub.id}`, date: subDate, concept: `Inscripción: ${form.title}`, amount: form.price, type: 'income', category: 'Inscripciones' });
+                        totalIncome += form.price;
+                    }
+                });
+            }
+        });
+
         setMonthlyTransactions(transactions.sort((a,b) => b.amount - a.amount));
         setMonthlyTotals({ income: totalIncome, expense: totalExpense, balance: totalIncome - totalExpense });
     };
@@ -401,7 +409,7 @@ export function TreasuryDashboard() {
     if (!loading) {
         calculateMonthlyTransactions();
     }
-  }, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, localFeeExcluded, localCoachFeeExcluded, loading]);
+  }, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading]);
 
   const fetchData = async (clubId: string) => {
     setLoading(true);
@@ -461,6 +469,18 @@ export function TreasuryDashboard() {
       const oneOffExpensesList = oneOffExpensesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as OneOffExpense));
       setOneOffExpenses(oneOffExpensesList);
       
+      const formsQuery = query(collection(db, "clubs", clubId, "registrationForms"));
+      const formsSnapshot = await getDocs(formsQuery);
+      const formsWithSubs: FormWithSubmissions[] = [];
+      for (const formDoc of formsSnapshot.docs) {
+          const formData = { id: formDoc.id, ...formDoc.data() } as RegistrationForm;
+          const submissionsQuery = query(collection(db, "clubs", clubId, "registrationForms", formDoc.id, "submissions"));
+          const submissionsSnapshot = await getDocs(submissionsQuery);
+          const subs = submissionsSnapshot.docs.map(subDoc => ({ id: subDoc.id, ...subDoc.data() } as FormSubmission));
+          formsWithSubs.push({ ...formData, submissions: subs });
+      }
+      setFormsWithSubmissions(formsWithSubs);
+
     } catch (error) {
       console.error("Error fetching treasury data:", error);
     } finally {

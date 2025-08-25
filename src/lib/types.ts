@@ -308,3 +308,7 @@ export type Incident = {
     description: string;
     status: 'Abierta' | 'En Progreso' | 'Resuelta';
 }
+
+export type FormWithSubmissions = RegistrationForm & {
+    submissions: FormSubmission[];
+}
