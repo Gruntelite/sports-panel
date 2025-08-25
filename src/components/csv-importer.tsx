@@ -34,6 +34,7 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
             setFile(selectedFile);
             setIsParsing(true);
             setData([]); // Reset previous preview
+            setHeaders([]);
             Papa.parse(selectedFile, {
                 header: true,
                 skipEmptyLines: true,
@@ -97,14 +98,13 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                    <Input type="file" accept=".csv" onChange={handleFileChange} disabled={isParsing} />
-                     <Button onClick={handleImport} disabled={isImporting || data.length === 0 || columnMismatch}>
-                        {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                        Confirmar e Importar
-                    </Button>
+                <div className="space-y-2">
+                    <label htmlFor="csv-upload" className="font-medium">Sube tu archivo CSV</label>
+                    <Input id="csv-upload" type="file" accept=".csv" onChange={handleFileChange} disabled={isParsing} className="max-w-md"/>
                 </div>
+
                 {isParsing && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Procesando archivo...</div>}
+                
                 {data.length > 0 && (
                     <div className="space-y-4">
                          {columnMismatch && (
@@ -133,6 +133,12 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
                                 </TableBody>
                             </Table>
                          </ScrollArea>
+                         <div className="flex justify-end">
+                            <Button onClick={handleImport} disabled={isImporting || data.length === 0 || columnMismatch}>
+                                {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                                Confirmar e Importar
+                            </Button>
+                        </div>
                     </div>
                 )}
             </CardContent>
