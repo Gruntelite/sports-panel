@@ -658,10 +658,6 @@ export default function PlayersPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRequestUpdate(player)}>
-                          <Send className="mr-2 h-4 w-4" />
-                          Solicitar Actualización
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
                           Eliminar

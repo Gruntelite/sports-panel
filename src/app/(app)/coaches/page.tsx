@@ -449,21 +449,6 @@ export default function CoachesPage() {
         if(clubId) fetchData(clubId);
     }
   };
-
-  const handleRequestUpdate = async (member: Coach) => {
-    if (!clubId) return;
-    const result = await requestDataUpdateAction({
-        clubId,
-        members: [{ id: member.id, name: `${member.name} ${member.lastName}`, email: member.email }],
-        memberType: 'coach',
-        fields: ['dni', 'address', 'phone', 'iban'] // Example fields
-    });
-    if (result.success) {
-      toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
-    }
-  };
   
     const handleFieldSelection = (fieldId: string, isSelected: boolean) => {
       if (isSelected) {
@@ -658,10 +643,6 @@ export default function CoachesPage() {
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleRequestUpdate(coach)}>
-                          <Send className="mr-2 h-4 w-4" />
-                          Solicitar Actualización
-                        </DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>
                           Eliminar
