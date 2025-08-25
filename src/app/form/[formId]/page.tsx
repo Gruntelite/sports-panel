@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, notFound } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -75,11 +75,13 @@ export default function PublicFormPage() {
                 // This is not ideal for security/scalability, a real app would have this in the URL or a global forms collection.
                 const clubsSnapshot = await getDocs(collection(db, "clubs"));
                 let foundForm = null;
+                let clubId = '';
 
                 for (const clubDoc of clubsSnapshot.docs) {
                     const formRef = doc(db, "clubs", clubDoc.id, "registrationForms", formId);
                     const formSnap = await getDoc(formRef);
                     if (formSnap.exists()) {
+                        clubId = clubDoc.id;
                         foundForm = { id: formSnap.id, ...formSnap.data() } as RegistrationForm;
                         break;
                     }
@@ -102,7 +104,7 @@ export default function PublicFormPage() {
                     }
                     
                     if(isActive){
-                        setFormDef(foundForm);
+                        setFormDef({...foundForm, clubId});
                     } else {
                         setFormDef(null); // Form is not active
                     }
