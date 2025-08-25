@@ -34,6 +34,15 @@ export type Team = {
     order?: number;
 };
 
+export type CustomFieldDef = {
+    id: string;
+    name: string;
+    type: 'text' | 'number' | 'date' | 'select';
+    options?: string[];
+    appliesTo: ('player' | 'coach' | 'staff' | 'socio')[];
+};
+
+
 export type Player = {
     id: string;
     name: string;
@@ -70,6 +79,7 @@ export type Player = {
     interruptionYears?: number[];
     medicalCheckCompleted?: boolean;
     updateRequestActive?: boolean;
+    customFields?: Record<string, any>;
 }
 
 export type Coach = {
@@ -105,6 +115,7 @@ export type Coach = {
     hasInterruption?: boolean;
     interruptionYears?: number[];
     updateRequestActive?: boolean;
+    customFields?: Record<string, any>;
 }
 
 export type Staff = {
@@ -119,6 +130,7 @@ export type Staff = {
     hasMissingData?: boolean;
     staffId?: string;
     updateRequestActive?: boolean;
+    customFields?: Record<string, any>;
 }
 
 export type Socio = {
@@ -132,6 +144,7 @@ export type Socio = {
     fee: number;
     avatar?: string;
     socioNumber?: string;
+    customFields?: Record<string, any>;
 }
 
 export type TeamMember = {
@@ -196,7 +209,7 @@ export type FormHistoryItem = {
     date: Date;
 }
 
-export type CustomFormField = {
+export type CustomRegistrationFormField = {
   id: string;
   label: string;
   type: 'text' | 'textarea' | 'email' | 'tel' | 'number' | 'select';
@@ -209,7 +222,7 @@ export type RegistrationForm = {
     id: string;
     title: string;
     description?: string;
-    fields: CustomFormField[];
+    fields: CustomRegistrationFormField[];
     createdAt: Timestamp;
     clubId: string;
     status: 'active' | 'closed';
@@ -297,6 +310,7 @@ export type ClubSettings = {
     smtpUser?: string;
     smtpPassword?: string;
     smtpFromEmail?: string;
+    customFields?: CustomFieldDef[];
 }
 
 export type Incident = {

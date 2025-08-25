@@ -13,7 +13,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2, PlusCircle, Trash2, Info, Settings, FileText } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { CustomFormField, RegistrationForm } from "@/lib/types";
+import type { CustomRegistrationFormField, RegistrationForm } from "@/lib/types";
 import { Label } from "@/components/ui/label";
 import { auth, db } from "@/lib/firebase";
 import { addDoc, collection, doc, getDoc, Timestamp, updateDoc } from "firebase/firestore";
@@ -23,7 +23,7 @@ import { DatePicker } from "./ui/date-picker";
 import { Switch } from "./ui/switch";
 
 
-const initialFormFields: CustomFormField[] = [
+const initialFormFields: CustomRegistrationFormField[] = [
     { id: "name", label: "Nombre y Apellidos", type: 'text', required: true, custom: false },
     { id: "email", label: "Correo Electrónico", type: 'email', required: true, custom: false },
     { id: "phone", label: "Teléfono", type: 'tel', required: false, custom: false },
@@ -59,9 +59,9 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   
-  const [allFields, setAllFields] = useState<CustomFormField[]>(initialFormFields);
+  const [allFields, setAllFields] = useState<CustomRegistrationFormField[]>(initialFormFields);
   const [newFieldName, setNewFieldName] = useState("");
-  const [newFieldType, setNewFieldType] = useState<CustomFormField['type']>('text');
+  const [newFieldType, setNewFieldType] = useState<CustomRegistrationFormField['type']>('text');
 
 
   const form = useForm<FormData>({
@@ -123,7 +123,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
         return;
     }
     const fieldId = newFieldName.toLowerCase().replace(/[^a-z0-9]/g, '_') + `_${Date.now()}`;
-    const newField: CustomFormField = {
+    const newField: CustomRegistrationFormField = {
         id: fieldId,
         label: newFieldName.trim(),
         type: newFieldType,
@@ -291,7 +291,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                         )}/>
                     </div>
 
-                    {price > 0 && (
+                    {price != null && price > 0 && (
                         <FormField control={form.control} name="paymentIBAN" render={({ field }) => (
                             <FormItem><FormLabel>IBAN para la Transferencia</FormLabel><Input placeholder="ES00 0000 0000 00 0000000000" {...field} /><FormMessage /></FormItem>
                         )}/>
@@ -366,7 +366,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                                 </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="new-field-type">Tipo de Campo</Label>
-                                    <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomFormField['type'])}>
+                                    <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomRegistrationFormField['type'])}>
                                         <SelectTrigger id="new-field-type"><SelectValue placeholder="Tipo" /></SelectTrigger>
                                         <SelectContent>
                                         <SelectItem value="text">Texto Corto</SelectItem>

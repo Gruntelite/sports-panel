@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -81,7 +80,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player, ClubMember } from "@/lib/types";
+import type { Team, Player, ClubMember, CustomFieldDef } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO } from "date-fns";
@@ -124,6 +123,7 @@ export default function PlayersPage() {
   const [players, setPlayers] = useState<Player[]>([]);
   const [filteredPlayers, setFilteredPlayers] = useState<Player[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -200,6 +200,13 @@ export default function PlayersPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
+      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        const clubCustomFields = settingsSnap.data().customFields || [];
+        setCustomFields(clubCustomFields.filter((f: CustomFieldDef) => f.appliesTo.includes('player')));
+      }
+
       const teamsQuery = query(collection(db, "clubs", clubId, "teams"), orderBy("order"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -234,6 +241,16 @@ export default function PlayersPage() {
     const { id, value, type } = e.target;
     setPlayerData(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
   };
+
+  const handleCustomFieldChange = (fieldId: string, value: any) => {
+    setPlayerData(prev => ({
+      ...prev,
+      customFields: {
+        ...prev.customFields,
+        [fieldId]: value,
+      }
+    }));
+  };
   
   const handleCheckboxChange = (id: keyof Player, checked: boolean) => {
     setPlayerData(prev => ({ ...prev, [id]: checked }));
@@ -259,7 +276,7 @@ export default function PlayersPage() {
   
   const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
     setModalMode(mode);
-    setPlayerData(mode === 'edit' && player ? player : {});
+    setPlayerData(mode === 'edit' && player ? player : { customFields: {} });
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -778,10 +795,11 @@ export default function PlayersPage() {
                 </div>
                 
                 <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
                         <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                        <TabsTrigger value="custom">Otros Datos</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="min-h-[280px]">
@@ -954,6 +972,23 @@ export default function PlayersPage() {
                         </div>
                       </div>
                     </TabsContent>
+                    <TabsContent value="custom" className="pt-6">
+                        <div className="min-h-[280px] space-y-6">
+                            {customFields.length > 0 ? customFields.map(field => (
+                                <div key={field.id} className="space-y-2">
+                                    <Label htmlFor={field.id}>{field.name}</Label>
+                                    <Input 
+                                        id={field.id}
+                                        type={field.type}
+                                        value={playerData.customFields?.[field.id] || ''}
+                                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                    />
+                                </div>
+                            )) : (
+                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.</p>
+                            )}
+                        </div>
+                    </TabsContent>
                 </Tabs>
             </div>
             <DialogFooter>
@@ -1065,6 +1100,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
-
-    

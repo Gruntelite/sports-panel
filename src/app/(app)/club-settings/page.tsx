@@ -12,10 +12,10 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard } from "lucide-react";
+import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, db, storage } from "@/lib/firebase";
-import { doc, getDoc, updateDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,6 +23,9 @@ import { updateEmail, updatePassword, EmailAuthProvider, reauthenticateWithCrede
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import type { CustomFieldDef } from "@/lib/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
 
 function getLuminance(hex: string): number {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -62,6 +65,14 @@ export default function ClubSettingsPage() {
     const [newEmail, setNewEmail] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmNewPassword, setConfirmNewPassword] = useState('');
+    
+    // Custom Fields State
+    const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
+    const [isFieldModalOpen, setIsFieldModalOpen] = useState(false);
+    const [newFieldName, setNewFieldName] = useState('');
+    const [newFieldType, setNewFieldType] = useState<CustomFieldDef['type']>('text');
+    const [newFieldAppliesTo, setNewFieldAppliesTo] = useState<CustomFieldDef['appliesTo']>([]);
+
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -97,6 +108,7 @@ export default function ClubSettingsPage() {
                 setThemeColor(settingsData?.themeColor || '#2563eb');
                 setClubLogoUrl(settingsData?.logoUrl || null);
                 setOriginalLogoUrl(settingsData?.logoUrl || null);
+                setCustomFields(settingsData?.customFields || []);
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
@@ -121,7 +133,6 @@ export default function ClubSettingsPage() {
             let newLogoUrl = clubLogoUrl;
 
             if (newLogo) {
-                // Delete old logo if it exists and is not a placeholder
                 if (originalLogoUrl && originalLogoUrl.includes('firebasestorage')) {
                     const oldLogoRef = ref(storage, originalLogoUrl);
                     try {
@@ -130,7 +141,6 @@ export default function ClubSettingsPage() {
                         console.warn("Old logo could not be deleted, maybe it was already removed:", e);
                     }
                 }
-                // Upload new logo
                 const logoPath = `club-logos/${clubId}/logo-${Date.now()}`;
                 const logoRef = ref(storage, logoPath);
                 await uploadBytes(logoRef, newLogo);
@@ -180,13 +190,11 @@ export default function ClubSettingsPage() {
             const credential = EmailAuthProvider.credential(user.email, currentPassword);
             await reauthenticateWithCredential(user, credential);
 
-            // Change email if it's different
             if (newEmail !== user.email) {
                 await updateEmail(user, newEmail);
                 toast({ title: "Email Actualizado", description: "Tu dirección de correo electrónico ha sido cambiada." });
             }
 
-            // Change password if new one is provided
             if (newPassword) {
                 if (newPassword !== confirmNewPassword) {
                     toast({ variant: "destructive", title: "Error", description: "Las nuevas contraseñas no coinciden." });
@@ -202,7 +210,6 @@ export default function ClubSettingsPage() {
                 toast({ title: "Contraseña Actualizada", description: "Tu contraseña ha sido cambiada." });
             }
 
-            // Reset fields
             setCurrentPassword('');
             setNewPassword('');
             setConfirmNewPassword('');
@@ -218,6 +225,59 @@ export default function ClubSettingsPage() {
             setSavingSecurity(false);
         }
     };
+
+    const handleAddCustomField = async () => {
+        if (!clubId || !newFieldName.trim() || newFieldAppliesTo.length === 0) {
+            toast({ variant: "destructive", title: "Faltan datos", description: "Nombre y a quién aplica son obligatorios." });
+            return;
+        }
+        
+        const newField: CustomFieldDef = {
+            id: `custom_${Date.now()}`,
+            name: newFieldName.trim(),
+            type: newFieldType,
+            appliesTo: newFieldAppliesTo,
+        };
+
+        setSaving(true);
+        try {
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            await updateDoc(settingsRef, {
+                customFields: arrayUnion(newField)
+            });
+            setCustomFields(prev => [...prev, newField]);
+            setIsFieldModalOpen(false);
+            setNewFieldName('');
+            setNewFieldType('text');
+            setNewFieldAppliesTo([]);
+            toast({ title: "Campo añadido", description: "El nuevo campo personalizado ha sido guardado." });
+        } catch(e) {
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el campo." });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const handleRemoveCustomField = async (fieldId: string) => {
+        if (!clubId) return;
+        const fieldToRemove = customFields.find(f => f.id === fieldId);
+        if (!fieldToRemove) return;
+        
+        setSaving(true);
+        try {
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            await updateDoc(settingsRef, {
+                customFields: arrayRemove(fieldToRemove)
+            });
+            setCustomFields(prev => prev.filter(f => f.id !== fieldId));
+            toast({ title: "Campo eliminado", description: "El campo personalizado ha sido eliminado." });
+        } catch(e) {
+            toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el campo." });
+        } finally {
+            setSaving(false);
+        }
+    };
+
 
     if (loading) {
         return (
@@ -239,8 +299,9 @@ export default function ClubSettingsPage() {
             </div>
 
             <Tabs defaultValue="settings" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4"/>Ajustes</TabsTrigger>
+                    <TabsTrigger value="customization">Campos Personalizados</TabsTrigger>
                     <TabsTrigger value="subscription"><CreditCard className="mr-2 h-4 w-4"/>Suscripción</TabsTrigger>
                 </TabsList>
                 <TabsContent value="settings" className="mt-6">
@@ -317,6 +378,88 @@ export default function ClubSettingsPage() {
                             </CardContent>
                         </Card>
                     </div>
+                </TabsContent>
+                <TabsContent value="customization" className="mt-6">
+                    <Card>
+                        <CardHeader className="flex flex-row justify-between items-center">
+                            <div>
+                                <CardTitle>Campos Personalizados</CardTitle>
+                                <CardDescription>
+                                    Añade campos adicionales a las fichas de tus miembros.
+                                </CardDescription>
+                            </div>
+                            <Dialog open={isFieldModalOpen} onOpenChange={setIsFieldModalOpen}>
+                                <DialogTrigger asChild>
+                                    <Button><PlusCircle className="mr-2 h-4 w-4" />Añadir Campo</Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Crear Campo Personalizado</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="py-4 space-y-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newFieldName">Nombre del Campo</Label>
+                                            <Input id="newFieldName" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Ej: Nº Expediente" />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="newFieldType">Tipo de Campo</Label>
+                                            <Select value={newFieldType} onValueChange={(v) => setNewFieldType(v as any)}>
+                                                <SelectTrigger><SelectValue/></SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="text">Texto</SelectItem>
+                                                    <SelectItem value="number">Número</SelectItem>
+                                                    <SelectItem value="date">Fecha</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label>Aplica a</Label>
+                                            <div className="flex gap-4">
+                                                {(['player', 'coach', 'staff'] as const).map(type => (
+                                                    <div key={type} className="flex items-center gap-2">
+                                                        <Switch
+                                                            id={`applies-${type}`}
+                                                            checked={newFieldAppliesTo.includes(type)}
+                                                            onCheckedChange={(checked) => {
+                                                                const updated = new Set(newFieldAppliesTo);
+                                                                if (checked) updated.add(type);
+                                                                else updated.delete(type);
+                                                                setNewFieldAppliesTo(Array.from(updated));
+                                                            }}
+                                                        />
+                                                        <Label htmlFor={`applies-${type}`} className="capitalize">{type === 'player' ? 'Jugadores' : type === 'coach' ? 'Entrenadores' : 'Staff'}</Label>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                                        <Button onClick={handleAddCustomField} disabled={saving}>{saving && <Loader2 className="animate-spin mr-2"/>}Guardar</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                        </CardHeader>
+                        <CardContent>
+                            {customFields.length > 0 ? (
+                                <ul className="space-y-2">
+                                    {customFields.map(field => (
+                                        <li key={field.id} className="flex items-center justify-between p-3 border rounded-md">
+                                            <div>
+                                                <p className="font-medium">{field.name}</p>
+                                                <p className="text-xs text-muted-foreground">Tipo: {field.type} | Aplica a: {field.appliesTo.join(', ')}</p>
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveCustomField(field.id)} disabled={saving}>
+                                                <Trash2 className="h-4 w-4 text-destructive"/>
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p className="text-center text-muted-foreground py-8">No has creado ningún campo personalizado.</p>
+                            )}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
                 <TabsContent value="subscription" className="mt-6">
                     <Card>
