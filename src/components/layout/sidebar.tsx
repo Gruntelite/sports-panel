@@ -104,9 +104,9 @@ export function Sidebar() {
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
-                            <Skeleton className="h-12 w-12 rounded-md" />
+                            <Skeleton className="h-12 w-12 rounded-full" />
                          ) : clubLogoUrl ? (
-                            <Avatar className="h-12 w-12 rounded-md">
+                            <Avatar className="h-12 w-12">
                                 <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
                                 <AvatarFallback>{clubName?.charAt(0) || 'C'}</AvatarFallback>
                             </Avatar>
@@ -138,8 +138,8 @@ export function Sidebar() {
                 </div>
                 <div className="mt-auto p-4 border-t border-primary-foreground/20">
                      <div className="flex items-center justify-center gap-2">
-                        <Logo width={32} height={32} />
-                        <span className="text-lg font-semibold">SportsPanel</span>
+                        <Logo width={40} height={40} />
+                        <span className="text-xl font-semibold">SportsPanel</span>
                     </div>
                 </div>
             </div>
