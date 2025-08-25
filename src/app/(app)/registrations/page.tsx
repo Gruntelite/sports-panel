@@ -30,8 +30,20 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -42,6 +54,7 @@ import {
   query,
   orderBy,
   updateDoc,
+  deleteDoc,
 } from "firebase/firestore";
 import type { RegistrationForm } from "@/lib/types";
 import {
@@ -50,7 +63,8 @@ import {
   MoreHorizontal,
   Clipboard,
   ExternalLink,
-  Users
+  Users,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -60,9 +74,11 @@ import { RegistrationFormCreator } from "@/components/registration-form-creator"
 export default function RegistrationsPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   const [registrationForms, setRegistrationForms] = useState<RegistrationForm[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formToDelete, setFormToDelete] = useState<RegistrationForm | null>(null);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -108,96 +124,142 @@ export default function RegistrationsPage() {
      toast({ title: "Enlace Copiado", description: "La URL del formulario se ha copiado." });
   }
 
-  return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones</h1>
-        <p className="text-muted-foreground">
-          Crea y gestiona formularios de inscripción para tus eventos, campus o captaciones.
-        </p>
-      </div>
+  const handleDeleteForm = async () => {
+    if (!clubId || !formToDelete) return;
+    setSaving(true);
+    try {
+        await deleteDoc(doc(db, "clubs", clubId, "registrationForms", formToDelete.id));
+        toast({ title: "Evento eliminado", description: `El evento "${formToDelete.title}" ha sido eliminado.` });
+        setFormToDelete(null);
+        fetchForms(clubId);
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el evento."});
+    } finally {
+        setSaving(false);
+    }
+  }
 
-       <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex-1">
-              <CardTitle>Eventos de Inscripción</CardTitle>
-              <CardDescription>
-                Formularios de inscripción creados para el club.
-              </CardDescription>
-            </div>
-             <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-                <DialogTrigger asChild>
-                     <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        Crear Nuevo Evento
-                    </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl">
-                     <DialogHeader>
-                        <DialogTitle>Crear Formulario de Inscripción</DialogTitle>
-                        <DialogDescription>Diseña un formulario público para tu próximo evento, torneo o captación.</DialogDescription>
-                    </DialogHeader>
-                    <RegistrationFormCreator onFormCreated={handleFormCreated} />
-                </DialogContent>
-            </Dialog>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  return (
+    <>
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones</h1>
+          <p className="text-muted-foreground">
+            Crea y gestiona formularios de inscripción para tus eventos, campus o captaciones.
+          </p>
+        </div>
+
+        <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div className="flex-1">
+                <CardTitle>Eventos de Inscripción</CardTitle>
+                <CardDescription>
+                  Formularios de inscripción creados para el club.
+                </CardDescription>
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Título del Evento</TableHead>
-                    <TableHead>Fecha de Creación</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead>Inscritos</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {registrationForms.length > 0 ? (
-                    registrationForms.map((form) => (
-                      <TableRow key={form.id}>
-                        <TableCell className="font-medium">{form.title}</TableCell>
-                        <TableCell>{format(form.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
-                        <TableCell>
-                           <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? 'Activo' : 'Cerrado'}</Badge>
-                        </TableCell>
-                         <TableCell>
-                            <div className="flex items-center gap-2">
-                                <Users className="h-4 w-4 text-muted-foreground"/>
-                                {form.submissionCount || 0}
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
-                                <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+              <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                  <DialogTrigger asChild>
+                      <Button>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Crear Nuevo Evento
+                      </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl">
+                      <DialogHeader>
+                          <DialogTitle>Crear Formulario de Inscripción</DialogTitle>
+                          <DialogDescription>Diseña un formulario público para tu próximo evento, torneo o captación.</DialogDescription>
+                      </DialogHeader>
+                      <RegistrationFormCreator onFormCreated={handleFormCreated} />
+                  </DialogContent>
+              </Dialog>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex items-center justify-center p-8">
+                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Título del Evento</TableHead>
+                      <TableHead>Fecha de Creación</TableHead>
+                      <TableHead>Estado</TableHead>
+                      <TableHead>Inscritos</TableHead>
+                      <TableHead className="text-right">Acciones</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {registrationForms.length > 0 ? (
+                      registrationForms.map((form) => (
+                        <TableRow key={form.id}>
+                          <TableCell className="font-medium">{form.title}</TableCell>
+                          <TableCell>{format(form.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
+                          <TableCell>
+                            <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? 'Activo' : 'Cerrado'}</Badge>
+                          </TableCell>
+                          <TableCell>
+                              <div className="flex items-center gap-2">
+                                  <Users className="h-4 w-4 text-muted-foreground"/>
+                                  {form.submissionCount || 0}
+                              </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
+                                  <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive" onSelect={() => setFormToDelete(form)}>
+                                    <Trash2 className="mr-2 h-4 w-4" />
+                                    Eliminar
+                                  </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                          No has creado ningún evento de inscripción todavía.
                         </TableCell>
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                        No has creado ningún evento de inscripción todavía.
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-    </div>
+                    )}
+                  </TableBody>
+                </Table>
+              )}
+            </CardContent>
+          </Card>
+      </div>
+
+       <AlertDialog open={!!formToDelete} onOpenChange={setFormToDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Se eliminará permanentemente el evento "{formToDelete?.title}" y todas sus inscripciones asociadas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteForm}
+              disabled={saving}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {saving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                "Eliminar"
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
-
