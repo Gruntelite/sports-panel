@@ -9,15 +9,8 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
+  CardFooter
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   Dialog,
   DialogContent,
@@ -65,6 +58,9 @@ import {
   ExternalLink,
   Users,
   Trash2,
+  Calendar,
+  CalendarCheck,
+  CircleDollarSign,
 } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -178,59 +174,65 @@ export default function RegistrationsPage() {
                 <div className="flex items-center justify-center p-8">
                   <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Título del Evento</TableHead>
-                      <TableHead>Fecha de Creación</TableHead>
-                      <TableHead>Estado</TableHead>
-                      <TableHead>Inscritos</TableHead>
-                      <TableHead className="text-right">Acciones</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {registrationForms.length > 0 ? (
-                      registrationForms.map((form) => (
-                        <TableRow key={form.id}>
-                          <TableCell className="font-medium">{form.title}</TableCell>
-                          <TableCell>{format(form.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
-                          <TableCell>
+              ) : registrationForms.length > 0 ? (
+                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {registrationForms.map((form) => (
+                    <Card key={form.id} className="flex flex-col">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-1">
+                            <CardTitle>{form.title}</CardTitle>
+                             <CardDescription>
+                                {form.eventStartDate ? (
+                                    <span>
+                                        Del {format(form.eventStartDate.toDate(), "d MMM", { locale: es })} al {format(form.eventEndDate ? form.eventEndDate.toDate() : form.eventStartDate.toDate(), "d MMM yyyy", { locale: es })}
+                                    </span>
+                                ) : "Sin fecha de evento"}
+                             </CardDescription>
+                          </div>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
+                                <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="text-destructive" onSelect={() => setFormToDelete(form)}>
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Eliminar
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-grow space-y-3">
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? 'Activo' : 'Cerrado'}</Badge>
-                          </TableCell>
-                          <TableCell>
-                              <div className="flex items-center gap-2">
-                                  <Users className="h-4 w-4 text-muted-foreground"/>
-                                  {form.submissionCount || 0}
-                              </div>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
-                                  <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
-                                  <DropdownMenuSeparator />
-                                  <DropdownMenuItem className="text-destructive" onSelect={() => setFormToDelete(form)}>
-                                    <Trash2 className="mr-2 h-4 w-4" />
-                                    Eliminar
-                                  </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    ) : (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                          No has creado ningún evento de inscripción todavía.
-                        </TableCell>
-                      </TableRow>
-                    )}
-                  </TableBody>
-                </Table>
+                         </div>
+                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <CalendarCheck className="h-4 w-4"/>
+                              <span>Inscripción: <b>{form.registrationStartDate ? format(form.registrationStartDate.toDate(), "dd/MM/yy") : 'N/A'} - {form.registrationDeadline ? format(form.registrationDeadline.toDate(), "dd/MM/yy") : 'N/A'}</b></span>
+                          </div>
+                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                              <CircleDollarSign className="h-4 w-4"/>
+                              <span>Precio: <b>{form.price > 0 ? `${form.price}€` : 'Gratis'}</b></span>
+                          </div>
+                      </CardContent>
+                      <CardFooter className="bg-muted/50 p-4">
+                        <div className="flex items-center gap-2 text-sm font-semibold">
+                            <Users className="h-4 w-4 text-muted-foreground"/>
+                            <span>{form.submissionCount || 0} de {form.maxSubmissions || '∞'} inscritos</span>
+                        </div>
+                      </CardFooter>
+                    </Card>
+                  ))}
+                 </div>
+              ) : (
+                 <div className="h-48 flex flex-col items-center justify-center text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                    <h3 className="text-lg font-semibold">No has creado ningún evento</h3>
+                    <p className="text-sm">Haz clic en "Crear Nuevo Evento" para empezar.</p>
+                 </div>
               )}
             </CardContent>
           </Card>
