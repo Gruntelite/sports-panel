@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -67,6 +68,7 @@ export default function UpdateProfilePage() {
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
     const [memberData, setMemberData] = useState<MemberData | null>(null);
+    const [clubInfo, setClubInfo] = useState<{name: string, logoUrl: string | null} | null>(null);
     const [collectionName, setCollectionName] = useState<string | null>(null);
     const [editableFields, setEditableFields] = useState<string[]>([]);
     
@@ -107,6 +109,19 @@ export default function UpdateProfilePage() {
 
         const fetchMemberData = async () => {
             try {
+                // Fetch Club Info
+                const clubDocRef = doc(db, "clubs", clubId);
+                const clubDocSnap = await getDoc(clubDocRef);
+                if (clubDocSnap.exists()) {
+                    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                    const settingsSnap = await getDoc(settingsRef);
+                    setClubInfo({
+                        name: clubDocSnap.data().name || 'Club',
+                        logoUrl: settingsSnap.exists() ? settingsSnap.data().logoUrl : null,
+                    });
+                }
+
+                // Fetch Member Info
                 const memberRef = doc(db, "clubs", clubId, currentCollectionName, memberId);
                 const memberSnap = await getDoc(memberRef);
 
@@ -269,7 +284,11 @@ export default function UpdateProfilePage() {
                 <Card className="w-full max-w-lg text-center">
                     <CardHeader>
                          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-                            <Logo />
+                            {clubInfo?.logoUrl ? (
+                               <Image src={clubInfo.logoUrl} alt={clubInfo.name} width={80} height={80} className="mx-auto rounded-md"/>
+                            ) : (
+                                <Logo />
+                            )}
                         </div>
                         <CardTitle className="text-2xl">¡Datos Actualizados!</CardTitle>
                         <CardDescription>Gracias por mantener tu información al día. Ya puedes cerrar esta página.</CardDescription>
@@ -282,7 +301,15 @@ export default function UpdateProfilePage() {
     return (
         <div className="flex items-center justify-center min-h-screen bg-background p-4">
             <Card className="w-full max-w-2xl">
-                <CardHeader>
+                <CardHeader className="text-center">
+                   {clubInfo?.logoUrl ? (
+                        <Image src={clubInfo.logoUrl} alt={clubInfo.name} width={80} height={80} className="mx-auto rounded-md"/>
+                    ) : (
+                        <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
+                           <Logo />
+                        </div>
+                    )}
+                    <h2 className="text-xl font-semibold pt-2">{clubInfo?.name}</h2>
                     <CardTitle className="text-2xl">Actualización de Datos para {memberData.name} {memberData.lastName}</CardTitle>
                     <CardDescription>Por favor, revisa y corrige la información solicitada. Los campos marcados con * son obligatorios.</CardDescription>
                 </CardHeader>
