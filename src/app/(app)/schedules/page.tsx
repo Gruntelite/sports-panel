@@ -23,7 +23,7 @@ import type { Team, CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 
 type Venue = {
@@ -338,8 +338,10 @@ function CalendarView() {
 
         setLoading(true);
         try {
-            const firstDayOfMonth = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), 1));
-            const lastDayOfMonth = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth() + 1, 0));
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
+            const firstDayOfMonth = new Date(Date.UTC(year, month, 1));
+            const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
 
             const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"),
                 where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
@@ -355,8 +357,9 @@ function CalendarView() {
             let allTemplateEvents: CalendarEvent[] = [];
             const weekDays = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
             
-            for (let i = 1; i <= lastDayOfMonth.getUTCDate(); i++) {
-                const dayDate = new Date(Date.UTC(firstDayOfMonth.getUTCFullYear(), firstDayOfMonth.getUTCMonth(), i));
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDate = new Date(Date.UTC(year, month, i));
                 const dayStr = format(dayDate, "yyyy-MM-dd");
                 const dayOfWeek = weekDays[dayDate.getUTCDay()];
                 
@@ -670,8 +673,8 @@ function CalendarView() {
                         <span className="font-bold self-end text-sm pr-1">{day}</span>
                         <div className="flex-grow space-y-1 overflow-y-auto">
                             {dayEvents.map(event => {
-                                const startTime = format(event.start.toDate(), 'HH:mm');
-                                const endTime = format(event.end.toDate(), 'HH:mm');
+                                const startTime = format(parseISO(event.start.toDate().toISOString()), 'HH:mm');
+                                const endTime = format(parseISO(event.end.toDate().toISOString()), 'HH:mm');
                                 return (
                                 <div 
                                     key={event.id} 
@@ -718,6 +721,8 @@ function CalendarView() {
                                     const oldDate = eventData.start.toDate();
                                     const newDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
                                     setEventData({ ...eventData, start: Timestamp.fromDate(newDate) });
+                                } else if (date) {
+                                     setEventData({ ...eventData, start: Timestamp.fromDate(date) });
                                 }
                             }}
                         />
@@ -731,6 +736,8 @@ function CalendarView() {
                                     const oldDate = eventData.end.toDate();
                                     const newDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
                                     setEventData({...eventData, end: Timestamp.fromDate(newDate)});
+                                } else if (date) {
+                                     setEventData({ ...eventData, end: Timestamp.fromDate(date) });
                                 }
                             }}
                         />
