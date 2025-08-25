@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Papa from 'papaparse';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,7 @@ import { AlertCircle, CheckCircle, Loader2, Upload, Database } from 'lucide-reac
 import { useToast } from '@/hooks/use-toast';
 import { auth, db } from "@/lib/firebase";
 import { importDataAction } from '@/lib/actions';
+import { doc, getDoc } from 'firebase/firestore';
 
 
 type ImporterProps = {
@@ -27,13 +28,31 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
     const [isParsing, setIsParsing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
     const { toast } = useToast();
+    const [clubId, setClubId] = useState<string | null>(null);
+    const [showPreview, setShowPreview] = useState(false);
+    const [showImportButton, setShowImportButton] = useState(false);
+
+    useEffect(() => {
+        const fetchClubId = async () => {
+            if (auth.currentUser) {
+                const userDocRef = doc(db, "users", auth.currentUser.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    setClubId(userDocSnap.data().clubId);
+                }
+            }
+        };
+        fetchClubId();
+    }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
         if (selectedFile) {
             setFile(selectedFile);
             setIsParsing(true);
-            setData([]); // Reset previous preview
+            setShowPreview(false);
+            setShowImportButton(false);
+            setData([]); 
             setHeaders([]);
             Papa.parse(selectedFile, {
                 header: true,
@@ -42,6 +61,8 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
                     setHeaders(results.meta.fields || []);
                     setData(results.data);
                     setIsParsing(false);
+                    setShowPreview(true); 
+                    setShowImportButton(true);
                 },
                 error: (error: any) => {
                     toast({ variant: 'destructive', title: "Error al leer el archivo", description: error.message });
@@ -52,13 +73,13 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
     };
 
     const handleImport = async () => {
-        if (!auth.currentUser) {
-             toast({ variant: "destructive", title: "Error de autenticación."});
+        if (!clubId) {
+             toast({ variant: "destructive", title: "Error", description: "No se pudo identificar el club actual."});
              return;
         }
         setIsImporting(true);
         const result = await importDataAction({
-            clubId: auth.currentUser.uid, // This is incorrect, need to fetch clubId
+            clubId: clubId,
             importerType,
             data
         });
@@ -73,6 +94,8 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
             setFile(null);
             setData([]);
             setHeaders([]);
+            setShowPreview(false);
+            setShowImportButton(false);
         } else {
             toast({
                 variant: 'destructive',
@@ -105,7 +128,7 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
 
                 {isParsing && <div className="flex items-center gap-2 text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Procesando archivo...</div>}
                 
-                {data.length > 0 && (
+                {showPreview && data.length > 0 && (
                     <div className="space-y-4">
                          {columnMismatch && (
                             <div className="p-4 bg-destructive/10 text-destructive border border-destructive/50 rounded-md flex items-start gap-3">
@@ -133,12 +156,14 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
                                 </TableBody>
                             </Table>
                          </ScrollArea>
-                         <div className="flex justify-end">
-                            <Button onClick={handleImport} disabled={isImporting || data.length === 0 || columnMismatch}>
-                                {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                                Confirmar e Importar
-                            </Button>
-                        </div>
+                         {showImportButton && (
+                            <div className="flex justify-end">
+                                <Button onClick={handleImport} disabled={isImporting || data.length === 0 || columnMismatch}>
+                                    {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+                                    Confirmar e Importar
+                                </Button>
+                            </div>
+                         )}
                     </div>
                 )}
             </CardContent>
