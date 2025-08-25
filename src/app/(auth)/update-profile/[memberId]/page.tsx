@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -19,6 +20,7 @@ import { Logo } from "@/components/logo";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
+import { cn } from "@/lib/utils";
 
 // Base schema for common fields, all optional for dynamic validation
 const profileSchemaBase = {
@@ -74,8 +76,8 @@ export default function UpdateProfilePage() {
             .map(field => {
                 const baseSchema = profileSchemaBase[field as keyof typeof profileSchemaBase];
                 if (baseSchema) {
-                    if (baseSchema instanceof z.ZodString || baseSchema instanceof z.ZodNumber) {
-                         return [field, baseSchema.refine(val => val !== "" && val !== null && val !== undefined, { message: "Este campo es obligatorio." })];
+                    if ((baseSchema instanceof z.ZodString || baseSchema instanceof z.ZodNumber) && baseSchema.safeParse('').success === false) {
+                         return [field, baseSchema.min(1, { message: "Este campo es obligatorio." })];
                     }
                     if (baseSchema instanceof z.ZodAny) { // For dates
                         return [field, z.any().refine(val => val, { message: "Este campo es obligatorio." })];
