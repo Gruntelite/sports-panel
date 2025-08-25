@@ -86,7 +86,26 @@ export default function PublicFormPage() {
                 }
                 
                 if (foundForm) {
-                    setFormDef(foundForm);
+                    const now = new Date();
+                    const startDate = foundForm.registrationStartDate ? foundForm.registrationStartDate.toDate() : null;
+                    const endDate = foundForm.registrationDeadline ? foundForm.registrationDeadline.toDate() : null;
+
+                    let isActive = false;
+                    if (startDate && now >= startDate) {
+                       if (endDate) {
+                           if (now <= endDate) {
+                               isActive = true;
+                           }
+                       } else {
+                           isActive = true;
+                       }
+                    }
+                    
+                    if(isActive){
+                        setFormDef(foundForm);
+                    } else {
+                        setFormDef(null); // Form is not active
+                    }
                 } else {
                     notFound();
                 }
@@ -136,7 +155,19 @@ export default function PublicFormPage() {
     }
 
     if (!formDef) {
-        return notFound();
+        return (
+             <div className="flex items-center justify-center min-h-screen bg-background p-4">
+                <Card className="w-full max-w-lg text-center">
+                    <CardHeader>
+                         <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
+                            <Logo />
+                        </div>
+                        <CardTitle className="text-2xl">Inscripción No Disponible</CardTitle>
+                        <CardDescription>El periodo de inscripción para este evento ha finalizado o todavía no ha comenzado. Contacta con el club para más información.</CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        )
     }
     
     if (submitted) {

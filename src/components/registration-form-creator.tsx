@@ -39,6 +39,7 @@ const formSchema = z.object({
   price: z.preprocess((val) => Number(val), z.number().min(0).optional()),
   maxSubmissions: z.preprocess((val) => Number(val), z.number().min(0).optional()),
   status: z.enum(['active', 'closed']),
+  registrationStartDate: z.date().optional(),
   registrationDeadline: z.date().optional(),
   eventStartDate: z.date().optional(),
   eventEndDate: z.date().optional(),
@@ -120,12 +121,30 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
 
     try {
         const fieldsToSave = allFields.filter(f => values.selectedFieldIds.includes(f.id));
+        
+        // Determine status based on dates
+        const now = new Date();
+        const startDate = values.registrationStartDate;
+        const endDate = values.registrationDeadline;
+        let status: 'active' | 'closed' = 'closed';
+        if (startDate && now >= startDate) {
+            if (endDate) {
+                if (now <= endDate) {
+                    status = 'active';
+                }
+            } else {
+                status = 'active';
+            }
+        }
+
+
         const newFormDoc: Omit<RegistrationForm, "id"> = {
             title: values.title,
             description: values.description,
             price: values.price || 0,
             maxSubmissions: values.maxSubmissions || null,
-            status: values.status,
+            status: status,
+            registrationStartDate: values.registrationStartDate ? Timestamp.fromDate(values.registrationStartDate) : null,
             registrationDeadline: values.registrationDeadline ? Timestamp.fromDate(values.registrationDeadline) : null,
             eventStartDate: values.eventStartDate ? Timestamp.fromDate(values.eventStartDate) : null,
             eventEndDate: values.eventEndDate ? Timestamp.fromDate(values.eventEndDate) : null,
@@ -216,20 +235,14 @@ export function RegistrationFormCreator({ onFormCreated }: RegistrationFormCreat
                             <FormItem><FormLabel>Límite de Inscritos</FormLabel><Input type="number" placeholder="0 (sin límite)" {...field} /><FormMessage /></FormItem>
                         )}/>
                     </div>
-                     <FormField control={form.control} name="registrationDeadline" render={({ field }) => (
-                        <FormItem><FormLabel>Fecha Límite de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
-                    )}/>
-                    <FormField control={form.control} name="status" render={({ field }) => (
-                        <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
-                            <div className="space-y-0.5">
-                                <FormLabel>Inscripciones Abiertas</FormLabel>
-                                <FormDescription>Permite que los usuarios se registren en el formulario.</FormDescription>
-                            </div>
-                            <FormControl>
-                                <Switch checked={field.value === 'active'} onCheckedChange={(checked) => field.onChange(checked ? 'active' : 'closed')} />
-                            </FormControl>
-                        </FormItem>
-                    )}/>
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormField control={form.control} name="registrationStartDate" render={({ field }) => (
+                            <FormItem><FormLabel>Fecha Inicio de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                        )}/>
+                         <FormField control={form.control} name="registrationDeadline" render={({ field }) => (
+                            <FormItem><FormLabel>Fecha Fin de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                        )}/>
+                    </div>
                 </div>
             </TabsContent>
 

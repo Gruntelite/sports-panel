@@ -217,6 +217,7 @@ export type RegistrationForm = {
     submissionCount: number;
     price: number;
     maxSubmissions: number | null;
+    registrationStartDate: Timestamp | null;
     registrationDeadline: Timestamp | null;
     eventStartDate: Timestamp | null;
     eventEndDate: Timestamp | null;
