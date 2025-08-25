@@ -195,7 +195,7 @@ export default function StaffPage() {
       setStaffData(mode === 'edit' && member ? (member as Staff) : {});
       setSocioData({});
     } else {
-      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0, createUser: false });
+      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0 });
       setStaffData({});
     }
     setIsModalOpen(true);
@@ -240,14 +240,10 @@ export default function StaffPage() {
       if (modalMode === 'edit' && staffData.id) {
         const staffDocRef = doc(db, "clubs", clubId, "staff", staffData.id);
         await updateDoc(staffDocRef, dataToSave);
-        
-        const userQuery = query(collection(db, "users"), where("email", "==", staffData.email));
-        const userSnapshot = await getDocs(userQuery);
-        if(!userSnapshot.empty){
-            const userDocRef = userSnapshot.docs[0].ref;
-            await updateDoc(userDocRef, { name: `${staffData.name} ${staffData.lastName}` });
-        }
         toast({ title: "Miembro actualizado", description: `${staffData.name} ha sido actualizado.` });
+      } else {
+         await addDoc(collection(db, "clubs", clubId, "staff"), dataToSave);
+         toast({ title: "Miembro añadido", description: `${staffData.name} ha sido añadido.` });
       }
       
       setIsModalOpen(false);
@@ -290,29 +286,13 @@ export default function StaffPage() {
         avatar: imageUrl || socioData.avatar || `https://placehold.co/40x40.png?text=${(socioData.name || '').charAt(0)}`,
       };
 
-      let socioId = socioData.id;
-
-      if (modalMode === 'edit' && socioId) {
-        const socioDocRef = doc(db, "clubs", clubId, "socios", socioId);
+      if (modalMode === 'edit' && socioData.id) {
+        const socioDocRef = doc(db, "clubs", clubId, "socios", socioData.id);
         await updateDoc(socioDocRef, dataToSave);
         toast({ title: "Socio actualizado", description: `${socioData.name} ha sido actualizado.` });
       } else {
-        const socioDocRef = await addDoc(collection(db, "clubs", clubId, "socios"), dataToSave);
-        socioId = socioDocRef.id;
-
-        if (socioData.createUser) {
-            const userRef = doc(db, "users", socioDocRef.id);
-            await setDoc(userRef, {
-                email: dataToSave.email,
-                name: `${dataToSave.name} ${dataToSave.lastName}`,
-                role: 'Socio',
-                clubId: clubId
-            });
-             toast({ title: "Socio y Usuario Creados", description: `${socioData.name} ha sido añadido como socio y se ha creado su cuenta de usuario.` });
-        } else {
-             toast({ title: "Socio añadido", description: `${socioData.name} ha sido añadido.` });
-        }
-
+        await addDoc(collection(db, "clubs", clubId, "socios"), dataToSave);
+        toast({ title: "Socio añadido", description: `${socioData.name} ha sido añadido.` });
       }
       
       setIsModalOpen(false);
@@ -343,13 +323,7 @@ export default function StaffPage() {
         const batch = writeBatch(db);
         const itemDocRef = doc(db, "clubs", clubId, collectionName, itemToDelete.id);
         batch.delete(itemDocRef);
-
-        const userQuery = query(collection(db, "users"), where("email", "==", itemToDelete.email));
-        const userSnapshot = await getDocs(userQuery);
-        if(!userSnapshot.empty) {
-            batch.delete(userSnapshot.docs[0].ref);
-        }
-
+        
         await batch.commit();
 
         toast({ title: "Miembro eliminado", description: `${itemToDelete.name} ${itemToDelete.lastName} ha sido eliminado.`});
@@ -466,6 +440,10 @@ export default function StaffPage() {
                               ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
+                          <Button onClick={() => handleOpenModal('add', 'staff')}>
+                            <PlusCircle className="mr-2 h-4 w-4" />
+                            Añadir Miembro
+                          </Button>
                     </div>
                   </div>
                 </CardHeader>
@@ -694,7 +672,7 @@ export default function StaffPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                            <div className="space-y-2">
                                <Label htmlFor="email">Email</Label>
-                               <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} readOnly/>
+                               <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} />
                            </div>
                            <div className="space-y-2">
                                <Label htmlFor="phone">Teléfono</Label>
@@ -760,14 +738,6 @@ export default function StaffPage() {
                             <Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} />
                         </div>
                       </div>
-                       <div className="flex items-center space-x-2 pt-2">
-                          <Checkbox
-                            id="createUser"
-                            checked={socioData.createUser || false}
-                            onCheckedChange={(checked) => handleCheckboxChange('createUser', checked as boolean)}
-                          />
-                          <Label htmlFor="createUser" className="font-normal">Crear cuenta de usuario para este socio</Label>
-                      </div>
                   </div>
                 )}
             </div>
@@ -800,3 +770,4 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+
