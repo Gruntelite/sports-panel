@@ -167,10 +167,11 @@ export async function importDataAction({
     
     try {
         const batch = writeBatch(db);
-        const collectionRef = collection(db, "clubs", clubId, importerType);
+        const collectionName = importerType;
+        const collectionRef = collection(db, "clubs", clubId, collectionName);
 
         let teams: { id: string, name: string }[] = [];
-        if (importerType === 'players' || importerType === 'coaches') {
+        if (collectionName === 'players' || collectionName === 'coaches') {
             const teamsSnapshot = await getDocs(collection(db, "clubs", clubId, "teams"));
             teams = teamsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
         }
@@ -178,15 +179,13 @@ export async function importDataAction({
         data.forEach(item => {
             const docRef = doc(collectionRef); // Creates a new document with a random ID
             
-            // For players and coaches, find teamId based on teamName
-            if ((importerType === 'players' || importerType === 'coaches') && item.teamName) {
+            if ((collectionName === 'players' || collectionName === 'coaches') && item.teamName) {
                 const team = teams.find(t => t.name.toLowerCase() === item.teamName.toLowerCase());
                 if (team) {
                     item.teamId = team.id;
                 }
             }
 
-            // Convert boolean-like strings to actual booleans
             for (const key in item) {
                 if (typeof item[key] === 'string') {
                     if (item[key].toLowerCase() === 'true') item[key] = true;

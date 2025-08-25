@@ -34,15 +34,23 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
 
     useEffect(() => {
         const fetchClubId = async () => {
-            if (auth.currentUser) {
-                const userDocRef = doc(db, "users", auth.currentUser.uid);
+            const user = auth.currentUser;
+            if (user) {
+                const userDocRef = doc(db, "users", user.uid);
                 const userDocSnap = await getDoc(userDocRef);
                 if (userDocSnap.exists()) {
                     setClubId(userDocSnap.data().clubId);
                 }
             }
         };
-        fetchClubId();
+
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                fetchClubId();
+            }
+        });
+        
+        return () => unsubscribe();
     }, []);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
