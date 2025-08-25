@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -85,6 +84,26 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { requestDataUpdateAction } from "@/lib/actions";
+import { DataUpdateSender, FieldSelector } from "@/components/data-update-sender";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+const playerFields = {
+    personal: [
+        { id: "name", label: "Nombre" }, { id: "lastName", label: "Apellidos" }, { id: "birthDate", label: "Fecha de Nacimiento" },
+        { id: "dni", label: "NIF" }, { id: "sex", label: "Sexo" }, { id: "nationality", label: "Nacionalidad" },
+        { id: "healthCardNumber", label: "Nº Tarjeta Sanitaria" }, { id: "address", label: "Dirección" },
+        { id: "city", label: "Ciudad" }, { id: "postalCode", label: "Código Postal" },
+    ],
+    contact: [
+        { id: "tutorName", label: "Nombre del Tutor/a" }, { id: "tutorLastName", label: "Apellidos del Tutor/a" },
+        { id: "tutorDni", label: "NIF del Tutor/a" }, { id: "tutorEmail", label: "Email de Contacto" },
+        { id: "tutorPhone", label: "Teléfono de Contacto" }, { id: "iban", label: "IBAN" },
+    ],
+    sports: [
+        { id: "jerseyNumber", label: "Dorsal" }, { id: "monthlyFee", label: "Cuota Mensual (€)" },
+        { id: "kitSize", label: "Talla de Equipación" }, { id: "medicalCheckCompleted", label: "Revisión médica completada" },
+    ]
+};
 
 
 export default function PlayersPage() {
@@ -424,6 +443,61 @@ export default function PlayersPage() {
     } else {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
+  };
+
+  const handleFieldSelection = (fieldId: string, isSelected: boolean) => {
+      if (isSelected) {
+          setSelectedFields(prev => [...prev, fieldId]);
+      } else {
+          setSelectedFields(prev => prev.filter(id => id !== fieldId));
+      }
+  };
+
+  const handleMemberSelection = (memberId: string, isSelected: boolean) => {
+      const newSelection = new Set(selectedPlayers);
+      if(isSelected) {
+        newSelection.add(memberId);
+      } else {
+        newSelection.delete(memberId);
+      }
+      setSelectedPlayers(Array.from(newSelection));
+  };
+
+  const handleSelectAllMembers = (checked: boolean) => {
+      if (checked) {
+          setSelectedPlayers(players.map(m => m.id));
+      } else {
+          setSelectedPlayers([]);
+      }
+  };
+
+  const handleSendUpdateRequests = async () => {
+      if (!clubId) return;
+      if (selectedPlayers.length === 0) {
+          toast({ variant: "destructive", title: "Error", description: "No has seleccionado ningún jugador." });
+          return;
+      }
+      setSaving(true);
+      const membersToSend = players.filter(p => selectedPlayers.includes(p.id))
+                                      .map(p => ({ id: p.id, name: `${p.name} ${p.lastName}`, email: p.tutorEmail || '' }));
+      const result = await requestDataUpdateAction({
+          clubId,
+          members: membersToSend,
+          memberType: 'player',
+          fields: selectedFields
+      });
+      if (result.success) {
+          toast({
+              title: "Solicitudes Enviadas",
+              description: `Se han enviado ${result.count} correos para la actualización de datos.`
+          });
+          setIsMembersModalOpen(false);
+          setSelectedFields([]);
+          setSelectedPlayers([]);
+      } else {
+          toast({ variant: "destructive", title: "Error al Enviar", description: result.error });
+      }
+      setSaving(false);
   };
 
   if (loading && !players.length) {
@@ -856,7 +930,69 @@ export default function PlayersPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+       {/* --- Data Update Modals --- */}
+      <Dialog open={isFieldsModalOpen} onOpenChange={setIsFieldsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Paso 1: Selecciona los campos a actualizar</DialogTitle>
+            <DialogDescription>Elige qué información quieres que actualicen los jugadores.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <FieldSelector fields={playerFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+            <Button onClick={() => { setIsFieldsModalOpen(false); setIsMembersModalOpen(true); }} disabled={selectedFields.length === 0}>
+              Siguiente: Seleccionar Jugadores
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isMembersModalOpen} onOpenChange={setIsMembersModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Paso 2: Selecciona los destinatarios</DialogTitle>
+            <DialogDescription>Elige los jugadores que recibirán la solicitud.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center p-2 border rounded-md">
+              <Checkbox 
+                id="select-all-members" 
+                onCheckedChange={(checked) => handleSelectAllMembers(checked as boolean)}
+                checked={players.length > 0 && selectedPlayers.length === players.length}
+              />
+              <Label htmlFor="select-all-members" className="ml-2 font-medium">Seleccionar todos ({players.length})</Label>
+            </div>
+            <ScrollArea className="h-72 mt-4">
+              <div className="space-y-2">
+                {players.map(member => (
+                  <div key={member.id} className="flex items-center space-x-2 p-2 border rounded-md">
+                    <Checkbox
+                      id={`member-${member.id}`}
+                      checked={selectedPlayers.includes(member.id)}
+                      onCheckedChange={(checked) => handleMemberSelection(member.id, checked as boolean)}
+                    />
+                    <Label htmlFor={`member-${member.id}`} className="flex-1">
+                      {member.name} {member.lastName}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => { setIsMembersModalOpen(false); setIsFieldsModalOpen(true); }}>
+              Atrás
+            </Button>
+            <Button onClick={handleSendUpdateRequests} disabled={saving || selectedPlayers.length === 0}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+              {saving ? 'Enviando...' : `Enviar a ${selectedPlayers.length} Jugador(es)`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
-

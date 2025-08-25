@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -79,12 +78,14 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Coach } from "@/lib/types";
+import type { Team, Coach, ClubMember } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { requestDataUpdateAction } from "@/lib/actions";
+import { FieldSelector } from "@/components/data-update-sender";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const technicalRoles = [
     "Entrenador",
@@ -98,6 +99,23 @@ const technicalRoles = [
     "Analista",
     "Otro",
 ];
+
+const coachFields = {
+    personal: [
+        { id: "name", label: "Nombre" }, { id: "lastName", label: "Apellidos" }, { id: "birthDate", label: "Fecha de Nacimiento" },
+        { id: "dni", label: "NIF" }, { id: "sex", label: "Sexo" }, { id: "nationality", label: "Nacionalidad" },
+        { id: "address", label: "Dirección" }, { id: "city", label: "Ciudad" }, { id: "postalCode", label: "Código Postal" },
+    ],
+    contact: [
+        { id: "tutorName", label: "Nombre del Tutor/a" }, { id: "tutorLastName", label: "Apellidos del Tutor/a" },
+        { id: "tutorDni", label: "NIF del Tutor/a" }, { id: "email", label: "Email de Contacto" },
+        { id: "phone", label: "Teléfono de Contacto" },
+    ],
+    payment: [
+        { id: "role", label: "Cargo" }, { id: "iban", label: "IBAN" },
+        { id: "monthlyPayment", label: "Pago Mensual (€)" }, { id: "kitSize", label: "Talla de Equipación" },
+    ]
+};
 
 export default function CoachesPage() {
   const { toast } = useToast();
@@ -117,6 +135,10 @@ export default function CoachesPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+  
+  const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
+  const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
+  const [selectedFields, setSelectedFields] = useState<string[]>([]);
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -442,6 +464,61 @@ export default function CoachesPage() {
       toast({ variant: "destructive", title: "Error", description: result.error });
     }
   };
+  
+    const handleFieldSelection = (fieldId: string, isSelected: boolean) => {
+      if (isSelected) {
+          setSelectedFields(prev => [...prev, fieldId]);
+      } else {
+          setSelectedFields(prev => prev.filter(id => id !== fieldId));
+      }
+  };
+
+  const handleMemberSelection = (memberId: string, isSelected: boolean) => {
+      const newSelection = new Set(selectedCoaches);
+      if(isSelected) {
+        newSelection.add(memberId);
+      } else {
+        newSelection.delete(memberId);
+      }
+      setSelectedCoaches(Array.from(newSelection));
+  };
+
+  const handleSelectAllMembers = (checked: boolean) => {
+      if (checked) {
+          setSelectedCoaches(coaches.map(m => m.id));
+      } else {
+          setSelectedCoaches([]);
+      }
+  };
+
+  const handleSendUpdateRequests = async () => {
+      if (!clubId) return;
+      if (selectedCoaches.length === 0) {
+          toast({ variant: "destructive", title: "Error", description: "No has seleccionado ningún entrenador." });
+          return;
+      }
+      setSaving(true);
+      const membersToSend = coaches.filter(p => selectedCoaches.includes(p.id))
+                                      .map(p => ({ id: p.id, name: `${p.name} ${p.lastName}`, email: p.email || '' }));
+      const result = await requestDataUpdateAction({
+          clubId,
+          members: membersToSend,
+          memberType: 'coach',
+          fields: selectedFields
+      });
+      if (result.success) {
+          toast({
+              title: "Solicitudes Enviadas",
+              description: `Se han enviado ${result.count} correos para la actualización de datos.`
+          });
+          setIsMembersModalOpen(false);
+          setSelectedFields([]);
+          setSelectedCoaches([]);
+      } else {
+          toast({ variant: "destructive", title: "Error al Enviar", description: result.error });
+      }
+      setSaving(false);
+  };
 
   if (loading && !coaches.length) {
     return (
@@ -465,7 +542,7 @@ export default function CoachesPage() {
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
-               <Button onClick={() => {}}>
+               <Button onClick={() => setIsFieldsModalOpen(true)}>
                   <Send className="mr-2 h-4 w-4" />
                   Solicitar Actualización
               </Button>
@@ -860,6 +937,69 @@ export default function CoachesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* --- Data Update Modals --- */}
+      <Dialog open={isFieldsModalOpen} onOpenChange={setIsFieldsModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Paso 1: Selecciona los campos a actualizar</DialogTitle>
+            <DialogDescription>Elige qué información quieres que actualicen los entrenadores.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <FieldSelector fields={coachFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
+          </div>
+          <DialogFooter>
+            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+            <Button onClick={() => { setIsFieldsModalOpen(false); setIsMembersModalOpen(true); }} disabled={selectedFields.length === 0}>
+              Siguiente: Seleccionar Entrenadores
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isMembersModalOpen} onOpenChange={setIsMembersModalOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Paso 2: Selecciona los destinatarios</DialogTitle>
+            <DialogDescription>Elige los entrenadores que recibirán la solicitud.</DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <div className="flex items-center p-2 border rounded-md">
+              <Checkbox 
+                id="select-all-members" 
+                onCheckedChange={(checked) => handleSelectAllMembers(checked as boolean)}
+                checked={coaches.length > 0 && selectedCoaches.length === coaches.length}
+              />
+              <Label htmlFor="select-all-members" className="ml-2 font-medium">Seleccionar todos ({coaches.length})</Label>
+            </div>
+            <ScrollArea className="h-72 mt-4">
+              <div className="space-y-2">
+                {coaches.map(member => (
+                  <div key={member.id} className="flex items-center space-x-2 p-2 border rounded-md">
+                    <Checkbox
+                      id={`member-${member.id}`}
+                      checked={selectedCoaches.includes(member.id)}
+                      onCheckedChange={(checked) => handleMemberSelection(member.id, checked as boolean)}
+                    />
+                    <Label htmlFor={`member-${member.id}`} className="flex-1">
+                      {member.name} {member.lastName}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+          <DialogFooter>
+            <Button variant="secondary" onClick={() => { setIsMembersModalOpen(false); setIsFieldsModalOpen(true); }}>
+              Atrás
+            </Button>
+            <Button onClick={handleSendUpdateRequests} disabled={saving || selectedCoaches.length === 0}>
+              {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+              {saving ? 'Enviando...' : `Enviar a ${selectedCoaches.length} Entrenador(es)`}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
