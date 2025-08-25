@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, collection, addDoc, Timestamp, updateDoc } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, Timestamp, updateDoc, getDocs } from "firebase/firestore";
 import type { RegistrationForm } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
