@@ -149,20 +149,22 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
                          )}
                          <h3 className="font-semibold">Vista Previa de la Importación ({data.length} filas)</h3>
                          <ScrollArea className="h-72 w-full border rounded-md">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        {headers.map(header => <TableHead key={header}>{requiredColumns.find(c => c.key === header)?.label || header}</TableHead>)}
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {data.map((row, rowIndex) => (
-                                        <TableRow key={rowIndex}>
-                                            {headers.map(header => <TableCell key={header}>{String(row[header])}</TableCell>)}
+                            <div className="overflow-x-auto">
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow>
+                                            {headers.map(header => <TableHead key={header} className="whitespace-nowrap">{requiredColumns.find(c => c.key === header)?.label || header}</TableHead>)}
                                         </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {data.map((row, rowIndex) => (
+                                            <TableRow key={rowIndex}>
+                                                {headers.map(header => <TableCell key={header} className="whitespace-nowrap">{String(row[header])}</TableCell>)}
+                                            </TableRow>
+                                        ))}
+                                    </TableBody>
+                                </Table>
+                            </div>
                          </ScrollArea>
                          {showImportButton && (
                             <div className="flex justify-end">
