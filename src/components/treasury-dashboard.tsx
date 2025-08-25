@@ -50,14 +50,12 @@ type FeeMember = {
     payment?: number;
 };
 
-type MonthlyTransaction = {
-    id: string;
-    date: Date;
-    concept: string;
+type MonthlyCategorySummary = {
+    category: string;
     amount: number;
     type: 'income' | 'expense';
-    category: string;
 };
+
 
 function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths }: { 
     players: Player[], 
@@ -249,7 +247,7 @@ export function TreasuryDashboard() {
   
   // States for Accounting Tab
   const [accountingDate, setAccountingDate] = useState(new Date());
-  const [monthlyTransactions, setMonthlyTransactions] = useState<MonthlyTransaction[]>([]);
+  const [monthlySummary, setMonthlySummary] = useState<MonthlyCategorySummary[]>([]);
   const [monthlyTotals, setMonthlyTotals] = useState({ income: 0, expense: 0, balance: 0 });
 
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
@@ -336,80 +334,86 @@ export function TreasuryDashboard() {
     setHasChanges(feeChanged || coachFeeChanged);
   }, [localFeeExcluded, localCoachFeeExcluded, clubSettings]);
 
-  useEffect(() => {
-    const calculateMonthlyTransactions = () => {
+ useEffect(() => {
+    const calculateMonthlySummary = () => {
         const year = getYear(accountingDate);
         const month = getMonth(accountingDate);
-        const transactions: MonthlyTransaction[] = [];
-        let totalIncome = 0;
-        let totalExpense = 0;
-        
+        const summary: { [key: string]: MonthlyCategorySummary } = {};
+
+        const addOrUpdate = (category: string, amount: number, type: 'income' | 'expense') => {
+            if (!summary[category]) {
+                summary[category] = { category, amount: 0, type };
+            }
+            summary[category].amount += amount;
+        };
+
+        // Incomes
         if (!localFeeExcluded.includes(month)) {
-            players.forEach(p => {
-                if (p.monthlyFee && p.monthlyFee > 0) {
-                    transactions.push({ id: `p-${p.id}`, date: accountingDate, concept: `Cuota de ${p.name} ${p.lastName}`, amount: p.monthlyFee, type: 'income', category: 'Cuotas' });
-                    totalIncome += p.monthlyFee;
-                }
-            });
+            const totalFees = players.reduce((acc, p) => acc + (p.monthlyFee || 0), 0);
+            if (totalFees > 0) addOrUpdate("Cuotas de Jugadores", totalFees, 'income');
         }
-        
-        if (!localCoachFeeExcluded.includes(month)) {
-            coaches.forEach(c => {
-                if (c.monthlyPayment && c.monthlyPayment > 0) {
-                    transactions.push({ id: `c-${c.id}`, date: accountingDate, concept: `Pago a ${c.name} ${c.lastName}`, amount: c.monthlyPayment, type: 'expense', category: 'Cuerpo Técnico' });
-                    totalExpense += c.monthlyPayment;
-                }
-            });
-        }
-        
-        recurringExpenses.forEach(e => {
-             if (!e.excludedMonths?.includes(month)) {
-                 transactions.push({ id: `re-${e.id}`, date: accountingDate, concept: e.title, amount: e.amount, type: 'expense', category: 'Gasto Recurrente' });
-                 totalExpense += e.amount;
-             }
-        });
-        
+
         sponsorships.forEach(s => {
-            if(s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
-                transactions.push({ id: `s-${s.id}`, date: accountingDate, concept: `Patrocinio: ${s.sponsorName}`, amount: s.amount, type: 'income', category: 'Patrocinios' });
-                totalIncome += s.amount;
-            } else if (s.frequency === 'annual' && month === 0) { 
-                transactions.push({ id: `s-${s.id}`, date: new Date(year, 0, 1), concept: `Patrocinio: ${s.sponsorName}`, amount: s.amount, type: 'income', category: 'Patrocinios' });
-                totalIncome += s.amount;
+            if (s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
+                addOrUpdate(`Patrocinio: ${s.sponsorName}`, s.amount, 'income');
+            } else if (s.frequency === 'annual' && month === 0) {
+                addOrUpdate(`Patrocinio: ${s.sponsorName}`, s.amount, 'income');
             }
         });
+
+        oneTimePayments
+            .filter(p => getYear(parseISO(p.issueDate)) === year && getMonth(parseISO(p.issueDate)) === month)
+            .forEach(p => {
+                const amount = Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
+                addOrUpdate(`Pago Puntual: ${p.concept}`, amount, 'income');
+            });
         
-        oneTimePayments.filter(p => getYear(parseISO(p.issueDate)) === year && getMonth(parseISO(p.issueDate)) === month).forEach(p => {
-            const amount = Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
-            transactions.push({ id: `otp-${p.id}`, date: parseISO(p.issueDate), concept: p.concept, amount, type: 'income', category: 'Pago Puntual' });
-            totalIncome += amount;
-        });
-
-        oneOffExpenses.filter(e => getYear(parseISO(e.date)) === year && getMonth(parseISO(e.date)) === month).forEach(e => {
-            transactions.push({ id: `ooe-${e.id}`, date: parseISO(e.date), concept: e.title, amount: e.amount, type: 'expense', category: 'Gasto Puntual' });
-            totalExpense += e.amount;
-        });
-
         formsWithSubmissions.forEach(form => {
             if (form.price > 0) {
-                form.submissions.forEach(sub => {
-                    const subDate = sub.submittedAt.toDate();
-                    if(getYear(subDate) === year && getMonth(subDate) === month && sub.paymentStatus === 'paid') {
-                        transactions.push({ id: `form-${sub.id}`, date: subDate, concept: `Inscripción: ${form.title}`, amount: form.price, type: 'income', category: 'Inscripciones' });
-                        totalIncome += form.price;
-                    }
-                });
+                const formIncome = form.submissions
+                    .filter(sub => {
+                        const subDate = sub.submittedAt.toDate();
+                        return getYear(subDate) === year && getMonth(subDate) === month && sub.paymentStatus === 'paid';
+                    })
+                    .reduce((acc) => acc + form.price, 0);
+
+                if (formIncome > 0) {
+                    addOrUpdate(`Inscripciones: ${form.title}`, formIncome, 'income');
+                }
             }
         });
+        
+        // Expenses
+        if (!localCoachFeeExcluded.includes(month)) {
+            const totalCoachPayments = coaches.reduce((acc, c) => acc + (c.monthlyPayment || 0), 0);
+             if (totalCoachPayments > 0) addOrUpdate("Nóminas Cuerpo Técnico", totalCoachPayments, 'expense');
+        }
 
-        setMonthlyTransactions(transactions.sort((a,b) => b.amount - a.amount));
+        recurringExpenses
+            .filter(e => !e.excludedMonths?.includes(month))
+            .forEach(e => {
+                addOrUpdate(e.title, e.amount, 'expense');
+            });
+
+        oneOffExpenses
+            .filter(e => getYear(parseISO(e.date)) === year && getMonth(parseISO(e.date)) === month)
+            .forEach(e => {
+                addOrUpdate(e.title, e.amount, 'expense');
+            });
+
+        const summaryArray = Object.values(summary).sort((a, b) => b.amount - a.amount);
+        setMonthlySummary(summaryArray);
+        
+        const totalIncome = summaryArray.filter(s => s.type === 'income').reduce((acc, s) => acc + s.amount, 0);
+        const totalExpense = summaryArray.filter(s => s.type === 'expense').reduce((acc, s) => acc + s.amount, 0);
         setMonthlyTotals({ income: totalIncome, expense: totalExpense, balance: totalIncome - totalExpense });
     };
 
     if (!loading) {
-        calculateMonthlyTransactions();
+        calculateMonthlySummary();
     }
-  }, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading]);
+}, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading]);
+
 
   const fetchData = async (clubId: string) => {
     setLoading(true);
@@ -936,25 +940,21 @@ export function TreasuryDashboard() {
                      <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Fecha</TableHead>
-                                <TableHead>Concepto</TableHead>
                                 <TableHead>Categoría</TableHead>
                                 <TableHead className="text-right">Importe</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {monthlyTransactions.length > 0 ? monthlyTransactions.map(t => (
-                                <TableRow key={t.id}>
-                                    <TableCell>{format(t.date, "dd/MM/yyyy")}</TableCell>
-                                    <TableCell className="font-medium">{t.concept}</TableCell>
-                                    <TableCell><Badge variant="secondary">{t.category}</Badge></TableCell>
-                                    <TableCell className={cn("text-right font-semibold", t.type === 'income' ? 'text-green-600' : 'text-red-600')}>
-                                        {t.type === 'income' ? '+' : '-'}{t.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}
+                            {monthlySummary.length > 0 ? monthlySummary.map(item => (
+                                <TableRow key={item.category}>
+                                    <TableCell className="font-medium">{item.category}</TableCell>
+                                    <TableCell className={cn("text-right font-semibold", item.type === 'income' ? 'text-green-600' : 'text-red-600')}>
+                                        {item.type === 'income' ? '+' : '-'}{item.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}
                                     </TableCell>
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24">No hay movimientos este mes.</TableCell>
+                                    <TableCell colSpan={2} className="text-center h-24">No hay movimientos este mes.</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
