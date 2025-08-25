@@ -349,7 +349,8 @@ function CalendarView() {
             let allEvents: CalendarEvent[] = [];
             const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
             
-            for (let d = new Date(firstDayOfMonth); d <= lastDayOfMonth; d.setUTCDate(d.getUTCDate() + 1)) {
+            for (let day = 1; day <= lastDayOfMonth.getUTCDate(); day++) {
+                const d = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), day));
                 const dayStr = format(d, "yyyy-MM-dd");
                 const override = monthOverrides.get(dayStr);
                 const templateIdToUse = override?.templateId || defaultTemplateId;
