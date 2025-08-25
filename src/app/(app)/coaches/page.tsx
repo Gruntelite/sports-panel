@@ -95,6 +95,7 @@ const technicalRoles = [
     "Segundo Entrenador",
     "Coordinador",
     "Director Técnico",
+    "Director Deportivo",
     "Preparador Físico",
     "Delegado",
     "Fisioterapeuta",
