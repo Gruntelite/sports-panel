@@ -2,17 +2,22 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Skeleton } from "../ui/skeleton";
 import { Logo } from "../logo";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { sendEmailWithSmtpAction } from "@/lib/email";
+import { useToast } from "@/hooks/use-toast";
 
 
 const menuItems = [
@@ -36,10 +41,70 @@ type UserProfile = {
     initials: string;
 }
 
+function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfile}) {
+    const { toast } = useToast();
+    const [subject, setSubject] = useState("");
+    const [message, setMessage] = useState("");
+    const [isSending, setIsSending] = useState(false);
+    
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setIsSending(true);
+        
+        const htmlContent = `
+            <p><strong>Club ID:</strong> ${clubId}</p>
+            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+            <hr>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+        `;
+        
+        const result = await sendEmailWithSmtpAction({
+            clubId: clubId,
+            recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Soporte SportsPanel' }],
+            subject: `Consulta de Soporte: ${subject}`,
+            htmlContent
+        });
+
+        if (result.success) {
+            toast({ title: "Mensaje Enviado", description: "Hemos recibido tu consulta. Te responderemos lo antes posible."});
+            setSubject("");
+            setMessage("");
+        } else {
+            toast({ variant: "destructive", title: "Error al enviar", description: result.error});
+        }
+        
+        setIsSending(false);
+    }
+    
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="subject">Asunto</Label>
+                <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} required/>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="message">Mensaje</Label>
+                <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} required className="min-h-[150px]"/>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="ghost">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit" disabled={isSending}>
+                    {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    <Send className="mr-2 h-4 w-4"/>
+                    Enviar
+                </Button>
+            </DialogFooter>
+        </form>
+    )
+}
+
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+    const [clubId, setClubId] = useState<string | null>(null);
     const [clubName, setClubName] = useState<string | null>(null);
     const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
@@ -52,34 +117,26 @@ export function Sidebar() {
                     const rootUserDocSnap = await getDoc(rootUserDocRef);
 
                     if (rootUserDocSnap.exists()) {
-                        const clubId = rootUserDocSnap.data().clubId;
+                        const currentClubId = rootUserDocSnap.data().clubId;
+                        setClubId(currentClubId);
                         
-                        // Fetch club name
-                        const clubDocRef = doc(db, "clubs", clubId);
+                        const clubDocRef = doc(db, "clubs", currentClubId);
                         const clubDocSnap = await getDoc(clubDocRef);
                         if(clubDocSnap.exists()){
                             setClubName(clubDocSnap.data().name);
                         }
 
-                        // Fetch club settings for logo
-                        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
                         const settingsSnap = await getDoc(settingsRef);
                         if(settingsSnap.exists()){
                             setClubLogoUrl(settingsSnap.data().logoUrl || null);
                         }
 
-                        // Fetch user-specific data
-                        const userDocRef = doc(db, "clubs", clubId, "users", user.uid);
-                        const userDocSnap = await getDoc(userDocRef);
-
-                        if (userDocSnap.exists()) {
-                            const userData = userDocSnap.data();
-                            setUserProfile({
-                                name: userData.name || "Sin Nombre",
-                                email: userData.email || "Sin Email",
-                                initials: (userData.name || "U").split(' ').map((n:string) => n[0]).join('')
-                            });
-                        }
+                        setUserProfile({
+                            name: user.displayName || "Sin Nombre",
+                            email: user.email || "Sin Email",
+                            initials: (user.displayName || "U").split(' ').map((n:string) => n[0]).join('')
+                        });
                     }
                 } catch (error) {
                     console.error("Error fetching user profile:", error);
@@ -104,9 +161,9 @@ export function Sidebar() {
                 <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
-                            <Skeleton className="h-10 w-10 rounded-full bg-white/20" />
+                            <Skeleton className="h-8 w-8 rounded-md bg-white/20" />
                          ) : clubLogoUrl ? (
-                            <Avatar className="h-10 w-10">
+                            <Avatar className="h-8 w-8">
                                 <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
                                 <AvatarFallback className="bg-white/20 text-primary-foreground">{clubName?.charAt(0) || 'C'}</AvatarFallback>
                             </Avatar>
@@ -136,7 +193,27 @@ export function Sidebar() {
                         })}
                     </nav>
                 </div>
-                <div className="mt-auto p-4">
+                <div className="mt-auto p-4 space-y-2">
+                    <Dialog>
+                        <DialogTrigger asChild>
+                            <Button variant="ghost" className="w-full justify-start gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20">
+                                <HelpCircle className="h-4 w-4" />
+                                Ayuda y Soporte
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Contacto de Soporte</DialogTitle>
+                                <DialogDescription>
+                                    ¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.
+                                </DialogDescription>
+                            </DialogHeader>
+                            {clubId && userProfile && (
+                                <HelpForm clubId={clubId} userProfile={userProfile} />
+                            )}
+                        </DialogContent>
+                    </Dialog>
+                    
                     <Button variant="ghost" className="w-full justify-start gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20" onClick={handleLogout}>
                         <LogOut className="h-4 w-4" />
                         Cerrar Sesión
