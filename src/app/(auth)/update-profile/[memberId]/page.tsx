@@ -7,7 +7,7 @@ import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
-import { doc, getDoc, getDocs, collection, updateDoc, writeBatch } from "firebase/firestore";
+import { doc, getDoc, getDocs, collection, updateDoc } from "firebase/firestore";
 import type { Player, Coach, Staff } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,10 +17,10 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 
-const profileSchema = z.object({
-  // Define a schema that can accommodate fields from all member types
-  name: z.string().min(1, "El nombre es obligatorio."),
-  lastName: z.string().min(1, "Los apellidos son obligatorios."),
+// Base schema for common fields, all optional for dynamic validation
+const profileSchemaBase = {
+  name: z.string().optional(),
+  lastName: z.string().optional(),
   dni: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
@@ -28,75 +28,84 @@ const profileSchema = z.object({
   tutorPhone: z.string().optional(),
   phone: z.string().optional(),
   iban: z.string().optional(),
-  // Add other editable fields here
-});
+  // Add other possible fields here as optional
+  sex: z.string().optional(),
+  birthDate: z.string().optional(),
+  nationality: z.string().optional(),
+  healthCardNumber: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  tutorName: z.string().optional(),
+  tutorLastName: z.string().optional(),
+  tutorDni: z.string().optional(),
+  tutorEmail: z.string().optional(),
+  email: z.string().optional(),
+  jerseyNumber: z.preprocess((val) => Number(val), z.number().optional()),
+  monthlyFee: z.preprocess((val) => Number(val), z.number().optional()),
+  kitSize: z.string().optional(),
+  monthlyPayment: z.preprocess((val) => Number(val), z.number().optional()),
+  role: z.string().optional(),
+};
 
-type FormData = z.infer<typeof profileSchema>;
+type MemberData = Partial<Player & Coach & Staff>;
 
 export default function UpdateProfilePage() {
     const params = useParams();
     const searchParams = useSearchParams();
     const memberId = params.memberId as string;
     const memberType = searchParams.get('type');
+    const clubId = searchParams.get('clubId');
+    const fieldsParam = searchParams.get('fields');
+
     const { toast } = useToast();
 
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
-    const [memberData, setMemberData] = useState<Partial<Player & Coach & Staff> | null>(null);
+    const [memberData, setMemberData] = useState<MemberData | null>(null);
     const [collectionName, setCollectionName] = useState<string | null>(null);
-    const [clubId, setClubId] = useState<string | null>(null);
+    const [editableFields, setEditableFields] = useState<string[]>([]);
     
-    const form = useForm<FormData>();
+    // Dynamically build the Zod schema based on the fields passed in the URL
+    const dynamicSchema = z.object(
+      Object.fromEntries(
+        (fieldsParam ? fieldsParam.split(',') : [])
+        .map(field => [field, profileSchemaBase[field as keyof typeof profileSchemaBase]?.min(1, 'Este campo es obligatorio.') ?? z.any()])
+      )
+    );
+
+    const form = useForm<z.infer<typeof dynamicSchema>>({
+      resolver: zodResolver(dynamicSchema),
+    });
 
     useEffect(() => {
-        if (!memberId || !memberType) {
+        if (!memberId || !memberType || !clubId || !fieldsParam) {
             setLoading(false);
             return;
         }
 
+        const fields = fieldsParam.split(',');
+        setEditableFields(fields);
+        
+        const currentCollectionName = memberType === 'player' ? 'players' : memberType === 'coach' ? 'coaches' : 'staff';
+        setCollectionName(currentCollectionName);
+
         const fetchMemberData = async () => {
-            let foundMember = null;
-            let foundClubId = null;
-            let foundCollection = null;
-
             try {
-                 const clubsSnapshot = await getDocs(collection(db, "clubs"));
-                 for (const clubDoc of clubsSnapshot.docs) {
-                    const currentClubId = clubDoc.id;
-                    const collectionName = memberType === 'player' ? 'players' : memberType === 'coach' ? 'coaches' : 'staff';
+                const memberRef = doc(db, "clubs", clubId, currentCollectionName, memberId);
+                const memberSnap = await getDoc(memberRef);
+
+                if (memberSnap.exists() && memberSnap.data().updateRequestActive) {
+                    const data = memberSnap.data() as MemberData;
+                    setMemberData(data);
                     
-                    const memberRef = doc(db, "clubs", currentClubId, collectionName, memberId);
-                    const memberSnap = await getDoc(memberRef);
-
-                    if (memberSnap.exists()) {
-                        const data = memberSnap.data();
-                        if (data.updateRequestActive) {
-                            foundMember = data;
-                            foundClubId = currentClubId;
-                            foundCollection = collectionName;
-                        }
-                        break; 
-                    }
-                 }
-
-                if (foundMember && foundClubId && foundCollection) {
-                    setMemberData(foundMember);
-                    setClubId(foundClubId);
-                    setCollectionName(foundCollection);
-                    form.reset({
-                        name: foundMember.name,
-                        lastName: foundMember.lastName,
-                        dni: foundMember.dni,
-                        address: foundMember.address,
-                        city: foundMember.city,
-                        postalCode: foundMember.postalCode,
-                        tutorPhone: (foundMember as Player).tutorPhone,
-                        phone: (foundMember as Coach | Staff).phone,
-                        iban: foundMember.iban,
+                    const defaultValues: any = {};
+                    fields.forEach(field => {
+                        defaultValues[field] = data[field as keyof MemberData] || "";
                     });
+                    form.reset(defaultValues);
                 } else {
-                    setMemberData(null);
+                    setMemberData(null); // Invalid link or request
                 }
             } catch (error) {
                 console.error("Error fetching member data:", error);
@@ -107,9 +116,9 @@ export default function UpdateProfilePage() {
         };
 
         fetchMemberData();
-    }, [memberId, memberType, form]);
+    }, [memberId, memberType, clubId, fieldsParam, form]);
 
-    const onSubmit = async (data: FormData) => {
+    const onSubmit = async (data: z.infer<typeof dynamicSchema>) => {
         if (!clubId || !collectionName || !memberId) return;
 
         setSubmitting(true);
@@ -117,9 +126,7 @@ export default function UpdateProfilePage() {
             const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
             
             const dataToUpdate: any = { ...data };
-            
-            // Deactivate the update request
-            dataToUpdate.updateRequestActive = false;
+            dataToUpdate.updateRequestActive = false; // Deactivate the update request
 
             await updateDoc(memberRef, dataToUpdate);
 
@@ -139,6 +146,43 @@ export default function UpdateProfilePage() {
             setSubmitting(false);
         }
     };
+    
+    const renderField = (fieldName: string) => {
+        if (!editableFields.includes(fieldName)) return null;
+        
+        let label = fieldName;
+        let type = 'text';
+
+        // You can create a map for labels and types to make it cleaner
+        const fieldMap: { [key: string]: { label: string; type?: string } } = {
+          name: { label: 'Nombre' },
+          lastName: { label: 'Apellidos' },
+          dni: { label: 'DNI/NIF' },
+          address: { label: 'Dirección' },
+          city: { label: 'Ciudad' },
+          postalCode: { label: 'Código Postal' },
+          tutorPhone: { label: 'Teléfono del Tutor/a', type: 'tel' },
+          phone: { label: 'Teléfono', type: 'tel' },
+          iban: { label: 'IBAN' },
+          email: { label: 'Email', type: 'email' },
+          tutorEmail: { label: 'Email del Tutor/a', type: 'email' },
+          jerseyNumber: { label: 'Dorsal', type: 'number' },
+          // Add all other fields
+        };
+        
+        if (fieldMap[fieldName]) {
+            label = fieldMap[fieldName].label;
+            type = fieldMap[fieldName].type || 'text';
+        }
+
+        return (
+            <div key={fieldName} className="space-y-2">
+                <Label htmlFor={fieldName}>{label} *</Label>
+                <Input id={fieldName} type={type} {...form.register(fieldName as any)} />
+                {form.formState.errors[fieldName] && <p className="text-sm font-medium text-destructive">{form.formState.errors[fieldName]?.message as string}</p>}
+            </div>
+        )
+    }
 
     if (loading) {
         return (
@@ -181,49 +225,13 @@ export default function UpdateProfilePage() {
         <div className="flex items-center justify-center min-h-screen bg-background p-4">
             <Card className="w-full max-w-2xl">
                 <CardHeader>
-                    <CardTitle className="text-2xl">Actualización de Datos</CardTitle>
-                    <CardDescription>Por favor, revisa y corrige tu información. Los campos marcados con * son obligatorios.</CardDescription>
+                    <CardTitle className="text-2xl">Actualización de Datos para {memberData.name} {memberData.lastName}</CardTitle>
+                    <CardDescription>Por favor, revisa y corrige la información solicitada. Los campos marcados con * son obligatorios.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Nombre</Label>
-                                <Input id="name" {...form.register("name")} />
-                                {form.formState.errors.name && <p className="text-sm font-medium text-destructive">{form.formState.errors.name.message}</p>}
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="lastName">Apellidos</Label>
-                                <Input id="lastName" {...form.register("lastName")} />
-                                {form.formState.errors.lastName && <p className="text-sm font-medium text-destructive">{form.formState.errors.lastName.message}</p>}
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="dni">DNI/NIF</Label>
-                            <Input id="dni" {...form.register("dni")} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="address">Dirección</Label>
-                            <Input id="address" {...form.register("address")} />
-                        </div>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="city">Ciudad</Label>
-                                <Input id="city" {...form.register("city")} />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="postalCode">Código Postal</Label>
-                                <Input id="postalCode" {...form.register("postalCode")} />
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Teléfono de Contacto</Label>
-                            <Input id="phone" type="tel" {...form.register(memberType === 'player' ? 'tutorPhone' : 'phone')} />
-                        </div>
-                         <div className="space-y-2">
-                            <Label htmlFor="iban">IBAN (para cuotas/pagos)</Label>
-                            <Input id="iban" {...form.register("iban")} />
-                        </div>
+                        {editableFields.map(field => renderField(field))}
+                        
                         <Button type="submit" className="w-full" disabled={submitting}>
                             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                             Guardar Cambios

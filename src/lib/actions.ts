@@ -83,63 +83,73 @@ export async function createClubAction(data: { clubName: string, adminName: stri
 
 export async function requestDataUpdateAction({
   clubId,
-  memberId,
+  members,
   memberType,
+  fields
 }: {
   clubId: string;
-  memberId: string;
-  memberType: 'player' | 'coach' | 'staff';
-}): Promise<{ success: boolean; error?: string }> {
+  members: { id: string; name: string; email: string }[];
+  memberType: 'player' | 'coach';
+  fields: string[];
+}): Promise<{ success: boolean; error?: string; count?: number }> {
+  if (members.length === 0) {
+    return { success: false, error: "No se seleccionaron miembros." };
+  }
+
   try {
-    const collectionName = memberType === 'player' ? 'players' : memberType === 'coach' ? 'coaches' : 'staff';
-    const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
-
-    const memberSnap = await getDoc(memberRef);
-    if (!memberSnap.exists()) {
-      return { success: false, error: "No se encontró al miembro." };
-    }
-
-    await updateDoc(memberRef, {
-      updateRequestActive: true,
-    });
-
-    const memberData = memberSnap.data() as Player | Coach | Staff;
+    const collectionName = memberType === 'player' ? 'players' : 'coaches';
+    const batch = writeBatch(db);
     
-    let contactEmail = '';
-    if ('tutorEmail' in memberData && memberData.tutorEmail) {
-        contactEmail = memberData.tutorEmail;
-    } else if ('email' in memberData && memberData.email) {
-        contactEmail = memberData.email;
-    }
-
-    if (!contactEmail) {
-       await updateDoc(memberRef, { updateRequestActive: false }); // Rollback
-       return { success: false, error: "El miembro no tiene un correo electrónico de contacto." };
-    }
-
-    const updateUrl = `${window.location.origin}/update-profile/${memberId}?type=${memberType}`;
-
-    const emailResult = await sendEmailWithSmtpAction({
-      clubId,
-      recipients: [{ email: contactEmail, name: memberData.name }],
-      subject: `Actualiza tus datos en ${clubId}`, // A better club name would be good
-      htmlContent: `
-        <h1>Actualización de Datos</h1>
-        <p>Hola ${memberData.name},</p>
-        <p>Por favor, ayúdanos a mantener tu información actualizada. Haz clic en el siguiente enlace para revisar y corregir tus datos:</p>
-        <a href="${updateUrl}">Actualizar mis datos</a>
-        <p>Este enlace es válido solo para ti y caducará una vez lo utilices.</p>
-        <p>Gracias,</p>
-        <p>El equipo de ${clubId}</p>
-      `,
+    members.forEach(member => {
+        const memberRef = doc(db, "clubs", clubId, collectionName, member.id);
+        batch.update(memberRef, { updateRequestActive: true });
     });
+    
+    await batch.commit();
 
-    if (!emailResult.success) {
-      await updateDoc(memberRef, { updateRequestActive: false }); // Rollback
-      return { success: false, error: `Error al enviar el correo: ${emailResult.error}` };
+    const fieldsQueryParam = fields.join(',');
+
+    const emailRecipients = members.map(m => ({ email: m.email, name: m.name }));
+    let emailsSent = 0;
+
+    for (const recipient of emailRecipients) {
+        if (!recipient.email) continue;
+        
+        const memberId = members.find(m => m.email === recipient.email)?.id;
+        if (!memberId) continue;
+
+        const updateUrl = `${window.location.origin}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
+
+        const emailResult = await sendEmailWithSmtpAction({
+            clubId,
+            recipients: [recipient],
+            subject: `Actualiza tus datos en ${clubId}`, // A better club name would be good
+            htmlContent: `
+                <h1>Actualización de Datos</h1>
+                <p>Hola ${recipient.name},</p>
+                <p>Por favor, ayúdanos a mantener tu información actualizada. Haz clic en el siguiente enlace para revisar y corregir los datos solicitados:</p>
+                <a href="${updateUrl}">Actualizar mis datos</a>
+                <p>Este enlace es de un solo uso.</p>
+                <p>Gracias,</p>
+                <p>El equipo de ${clubId}</p>
+            `,
+        });
+
+        if (emailResult.success) {
+            emailsSent++;
+        } else {
+            console.warn(`Failed to send email to ${recipient.email}: ${emailResult.error}`);
+            // Optionally rollback the updateRequestActive flag for this user
+            const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
+            await updateDoc(memberRef, { updateRequestActive: false });
+        }
     }
 
-    return { success: true };
+    if (emailsSent === 0 && members.length > 0) {
+      return { success: false, error: 'No se pudo enviar ningún correo. Revisa la configuración SMTP y que los miembros tengan email.' };
+    }
+
+    return { success: true, count: emailsSent };
   } catch (error: any) {
     console.error("Error requesting data update:", error);
     return { success: false, error: error.message };

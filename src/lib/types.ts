@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -148,6 +149,7 @@ export type TeamMember = {
 export type ClubMember = {
     id: string;
     name: string;
+    email?: string;
     type: 'Jugador' | 'Entrenador' | 'Staff';
     data: Player | Coach | Staff;
     teamId?: string;
