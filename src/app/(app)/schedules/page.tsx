@@ -23,7 +23,7 @@ import type { Team, CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format, getDay, getMonth, getYear } from "date-fns";
+import { format } from "date-fns";
 
 
 type Venue = {
@@ -275,7 +275,37 @@ function CalendarView() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [eventData, setEventData] = useState<Partial<CalendarEvent>>({});
   
-  // Fetch initial data (templates, etc.) only once
+  const fetchInitialData = useCallback(async (clubId: string) => {
+    setLoading(true);
+    try {
+        const schedulesCol = collection(db, "clubs", clubId, "schedules");
+        const schedulesSnapshot = await getDocs(schedulesCol);
+        const fetchedTemplates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
+        setTemplates(fetchedTemplates);
+
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
+        let currentDefaultId = null;
+        if (settingsSnap.exists()) {
+            currentDefaultId = settingsSnap.data()?.defaultScheduleTemplateId;
+        }
+        
+        if (fetchedTemplates.some(t => t.id === currentDefaultId)) {
+            setDefaultTemplateId(currentDefaultId);
+        } else if (fetchedTemplates.length > 0) {
+            setDefaultTemplateId(fetchedTemplates[0].id);
+        } else {
+            setDefaultTemplateId(null);
+        }
+    } catch (error) {
+        console.error("Error fetching initial data:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las plantillas."});
+    } finally {
+        setLoading(false);
+    }
+  }, [toast]);
+  
+  // Fetch initial data (templates, etc.) once
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -284,36 +314,8 @@ function CalendarView() {
         if (userDocSnap.exists()) {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
-          
-           if (currentClubId) {
-            setLoading(true);
-             try {
-                const schedulesCol = collection(db, "clubs", currentClubId, "schedules");
-                const schedulesSnapshot = await getDocs(schedulesCol);
-                const fetchedTemplates = schedulesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as ScheduleTemplate));
-                setTemplates(fetchedTemplates);
-
-                const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-                const settingsSnap = await getDoc(settingsRef);
-                let currentDefaultId = null;
-                if (settingsSnap.exists()) {
-                    currentDefaultId = settingsSnap.data()?.defaultScheduleTemplateId;
-                }
-                
-                if (fetchedTemplates.some(t => t.id === currentDefaultId)) {
-                    setDefaultTemplateId(currentDefaultId);
-                } else if (fetchedTemplates.length > 0) {
-                    setDefaultTemplateId(fetchedTemplates[0].id);
-                } else {
-                    setDefaultTemplateId(null);
-                }
-
-            } catch (error) {
-                console.error("Error fetching initial data:", error);
-                toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las plantillas."});
-            } finally {
-                setLoading(false);
-            }
+          if (currentClubId) {
+            fetchInitialData(currentClubId);
           }
         } else {
              setLoading(false);
@@ -323,13 +325,17 @@ function CalendarView() {
       }
     });
     return () => unsubscribe();
-  }, [toast]);
+  }, [fetchInitialData]);
+  
   
   // Fetch calendar events whenever the month or dependencies change
   useEffect(() => {
     const fetchCalendarData = async () => {
-        if (!clubId || templates.length === 0) return;
-        
+        if (!clubId || templates.length === 0 || !defaultTemplateId) {
+            setEvents([]);
+            return;
+        };
+
         setLoading(true);
         try {
             const firstDayOfMonth = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), 1));
@@ -346,29 +352,26 @@ function CalendarView() {
             });
             setOverrides(monthOverrides);
 
-            let allEvents: CalendarEvent[] = [];
-            const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+            let allTemplateEvents: CalendarEvent[] = [];
+            const weekDays = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
             
-            for (let day = 1; day <= lastDayOfMonth.getUTCDate(); day++) {
-                const d = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), day));
-                const dayStr = format(d, "yyyy-MM-dd");
-                const override = monthOverrides.get(dayStr);
-                const templateIdToUse = override?.templateId || defaultTemplateId;
-
-                if (!templateIdToUse) continue;
+            for (let i = 1; i <= lastDayOfMonth.getUTCDate(); i++) {
+                const dayDate = new Date(Date.UTC(firstDayOfMonth.getUTCFullYear(), firstDayOfMonth.getUTCMonth(), i));
+                const dayStr = format(dayDate, "yyyy-MM-dd");
+                const dayOfWeek = weekDays[dayDate.getUTCDay()];
                 
-                const template = templates.find(t => t.id === templateIdToUse);
-                if (!template) continue;
+                const override = monthOverrides.get(dayStr);
+                const templateId = override?.templateId || defaultTemplateId;
+                
+                const template = templates.find(t => t.id === templateId);
+                if (!template || !template.weeklySchedule) continue;
 
-                const weeklySchedule = template.weeklySchedule;
-                const dayIndex = d.getUTCDay();
-                const dayName = daysOfWeek[dayIndex];
-                const daySchedule = weeklySchedule?.[dayName as keyof typeof weeklySchedule] || [];
+                const daySchedule = template.weeklySchedule[dayOfWeek as keyof WeeklySchedule] || [];
 
                 daySchedule.forEach((training: any) => {
-                    const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
-                    const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
-                    allEvents.push({
+                    const startDateTime = new Date(`${dayStr}T${training.startTime}:00Z`);
+                    const endDateTime = new Date(`${dayStr}T${training.endTime}:00Z`);
+                    allTemplateEvents.push({
                         id: `${training.id}-${dayStr}`,
                         title: `${training.teamName}`,
                         start: Timestamp.fromDate(startDateTime),
@@ -380,17 +383,16 @@ function CalendarView() {
                     });
                 });
             }
-
+            
             const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                 where('start', '>=', Timestamp.fromDate(firstDayOfMonth)),
-                where('start', '<=', Timestamp.fromDate(lastDayOfMonth))
+                where('start', '<=', Timestamp.fromMillis(lastDayOfMonth.getTime() + 86400000 - 1))
             );
             const customEventsSnapshot = await getDocs(customEventsQuery);
-            customEventsSnapshot.forEach(doc => {
-                allEvents.push({ id: doc.id, ...doc.data() } as CalendarEvent);
-            });
+            const customEvents = customEventsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CalendarEvent));
 
-            setEvents(allEvents);
+            setEvents([...allTemplateEvents, ...customEvents]);
+            
         } catch (error) {
             console.error("Error fetching calendar data:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos del calendario."});
@@ -642,7 +644,7 @@ function CalendarView() {
             <div className="grid grid-cols-7 gap-px bg-border">
                 {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
                 {days.map(day => {
-                    const dayDate = new Date(Date.UTC(currentDate.getUTCFullYear(), currentDate.getUTCMonth(), day));
+                    const dayDate = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), day));
                     const dayStr = format(dayDate, "yyyy-MM-dd");
                     const isSelected = selectedDays.has(dayStr);
                     const dayStart = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 0, 0, 0, 0));
