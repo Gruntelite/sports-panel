@@ -57,7 +57,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import type { Document, User } from "@/lib/types";
+import type { Document, Player, Coach, Staff } from "@/lib/types";
 import {
   PlusCircle,
   Loader2,
@@ -128,13 +128,24 @@ export default function ClubFilesPage() {
       );
       setDocuments(docsList);
       
-      const usersQuery = query(collection(db, "clubs", currentClubId, "users"));
-      const usersSnapshot = await getDocs(usersQuery);
       const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
+      
+      const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
+      playersSnap.forEach(doc => {
+          const data = doc.data() as Player;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: 'Jugador' });
+      });
+      
+      const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
+      coachesSnap.forEach(doc => {
+          const data = doc.data() as Coach;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: 'Entrenador' });
+      });
 
-      usersSnapshot.forEach(doc => {
-          const data = doc.data() as User;
-          allOwners.push({ id: doc.id, name: data.name, role: data.role });
+      const staffSnap = await getDocs(collection(db, "clubs", currentClubId, "staff"));
+       staffSnap.forEach(doc => {
+          const data = doc.data() as Staff;
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: data.role });
       });
 
       const sortedOwners = allOwners.sort((a, b) => {

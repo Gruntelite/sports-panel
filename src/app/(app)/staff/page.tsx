@@ -241,7 +241,7 @@ export default function StaffPage() {
         const staffDocRef = doc(db, "clubs", clubId, "staff", staffData.id);
         await updateDoc(staffDocRef, dataToSave);
         
-        const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", staffData.email));
+        const userQuery = query(collection(db, "users"), where("email", "==", staffData.email));
         const userSnapshot = await getDocs(userQuery);
         if(!userSnapshot.empty){
             const userDocRef = userSnapshot.docs[0].ref;
@@ -301,12 +301,12 @@ export default function StaffPage() {
         socioId = socioDocRef.id;
 
         if (socioData.createUser) {
-            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            const userRef = doc(db, "users", socioDocRef.id);
             await setDoc(userRef, {
                 email: dataToSave.email,
                 name: `${dataToSave.name} ${dataToSave.lastName}`,
                 role: 'Socio',
-                socioId: socioId,
+                clubId: clubId
             });
              toast({ title: "Socio y Usuario Creados", description: `${socioData.name} ha sido añadido como socio y se ha creado su cuenta de usuario.` });
         } else {
@@ -344,7 +344,7 @@ export default function StaffPage() {
         const itemDocRef = doc(db, "clubs", clubId, collectionName, itemToDelete.id);
         batch.delete(itemDocRef);
 
-        const userQuery = query(collection(db, "clubs", clubId, "users"), where("email", "==", itemToDelete.email));
+        const userQuery = query(collection(db, "users"), where("email", "==", itemToDelete.email));
         const userSnapshot = await getDocs(userQuery);
         if(!userSnapshot.empty) {
             batch.delete(userSnapshot.docs[0].ref);
@@ -365,7 +365,7 @@ export default function StaffPage() {
 
   const handleRequestUpdate = async (memberId: string, memberType: 'staff') => {
     if (!clubId) return;
-    const result = await requestDataUpdateAction({ clubId, memberId, memberType });
+    const result = await requestDataUpdateAction({ clubId, members: [], memberType: "coach", fields: [] });
     if (result.success) {
       toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
     } else {

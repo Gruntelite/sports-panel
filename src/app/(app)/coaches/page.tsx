@@ -327,16 +327,16 @@ export default function CoachesPage() {
         toast({ title: "Miembro añadido", description: `${coachData.name} ha sido añadido al equipo técnico.` });
         
         if (dataToSave.email) {
-            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            const userRef = doc(db, "users", coachDocRef.id);
             await setDoc(userRef, {
                 email: dataToSave.email,
                 name: `${dataToSave.name} ${dataToSave.lastName}`,
                 role: 'Entrenador',
-                coachId: coachDocRef.id,
+                clubId: clubId
             });
             toast({
-                title: "Registro de Usuario Creado",
-                description: `Se ha creado un registro de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
+                title: "Acceso a la app creado",
+                description: `Se ha creado una cuenta de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
             });
         }
       }
@@ -364,11 +364,11 @@ export default function CoachesPage() {
         }
         await deleteDoc(doc(db, "clubs", clubId, "coaches", coachToDelete.id));
 
-        const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('coachId', '==', coachToDelete.id));
+        const usersQuery = query(collection(db, 'users'), where('email', '==', coachToDelete.email));
         const usersSnapshot = await getDocs(usersQuery);
         if (!usersSnapshot.empty) {
             const userDoc = usersSnapshot.docs[0];
-            await deleteDoc(doc(db, 'clubs', clubId, 'users', userDoc.id));
+            await deleteDoc(doc(db, 'users', userDoc.id));
         }
 
         toast({ title: "Miembro eliminado", description: `${coachToDelete.name} ${coachToDelete.lastName} ha sido eliminado.`});
@@ -448,11 +448,11 @@ export default function CoachesPage() {
                 const coachRef = doc(db, "clubs", clubId, "coaches", coachId);
                 batch.delete(coachRef);
 
-                const usersQuery = query(collection(db, 'clubs', clubId, 'users'), where('coachId', '==', coachId));
+                const usersQuery = query(collection(db, 'users'), where('email', '==', coach.email));
                 const usersSnapshot = await getDocs(usersQuery);
                 if (!usersSnapshot.empty) {
                     const userDoc = usersSnapshot.docs[0];
-                    batch.delete(doc(db, 'clubs', clubId, 'users', userDoc.id));
+                    batch.delete(doc(db, 'users', userDoc.id));
                 }
             }
         }

@@ -183,9 +183,6 @@ export default function ClubSettingsPage() {
             // Change email if it's different
             if (newEmail !== user.email) {
                 await updateEmail(user, newEmail);
-                // Also update it in the user's document
-                const userDocRef = doc(db, "clubs", clubId!, "users", user.uid);
-                await updateDoc(userDocRef, { email: newEmail });
                 toast({ title: "Email Actualizado", description: "Tu dirección de correo electrónico ha sido cambiada." });
             }
 

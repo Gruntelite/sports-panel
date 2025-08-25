@@ -10,7 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Users, Shield, Calendar, CircleDollarSign, Loader2, MapPin, Clock } from "lucide-react";
+import { Users, Shield, Calendar, CircleDollarSign, Loader2, MapPin, Clock, UserSquare } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
 import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
@@ -25,6 +25,7 @@ const iconMap = {
   Shield: Shield,
   Calendar: Calendar,
   CircleDollarSign: CircleDollarSign,
+  UserSquare: UserSquare,
 };
 
 type TrainingEntry = {
@@ -245,8 +246,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([
     { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
+    { id: "coaches", title: "Total de Entrenadores", value: "0", change: "", icon: 'UserSquare' },
     { id: "teams", title: "Equipos", value: "0", change: "", icon: 'Shield' },
-    { id: "users", title: "Total de Usuarios", value: "0", change: "", icon: 'Users' },
     { id: "fees", title: "Ingresos Previstos (Mes)", value: "0 €", change: "", icon: 'CircleDollarSign' },
   ]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
@@ -257,18 +258,18 @@ export default function DashboardPage() {
         try {
             const teamsCol = collection(db, "clubs", clubId, "teams");
             const playersCol = collection(db, "clubs", clubId, "players");
-            const usersCol = query(collection(db, "clubs", clubId, "users"));
+            const coachesCol = collection(db, "clubs", clubId, "coaches");
 
-            const [teamsCountSnap, playersCountSnap, usersCountSnap, playersSnapshot] = await Promise.all([
+            const [teamsCountSnap, playersCountSnap, coachesCountSnap, playersSnapshot] = await Promise.all([
                 getCountFromServer(teamsCol),
                 getCountFromServer(playersCol),
-                getCountFromServer(usersCol),
+                getCountFromServer(coachesCol),
                 getDocs(playersCol)
             ]);
             
             const teamsCount = teamsCountSnap.data().count;
             const playersCount = playersCountSnap.data().count;
-            const usersCount = usersCountSnap.data().count;
+            const coachesCount = coachesCountSnap.data().count;
 
             const expectedIncome = playersSnapshot.docs.reduce((acc, doc) => {
                 const player = doc.data();
@@ -279,8 +280,8 @@ export default function DashboardPage() {
 
             setStats(prevStats => prevStats.map(stat => {
                 if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
+                if (stat.id === 'coaches') return { ...stat, value: coachesCount.toString() };
                 if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
-                if (stat.id === 'users') return { ...stat, value: usersCount.toString() };
                 if (stat.id === 'fees') return { ...stat, value: `${expectedIncome.toLocaleString('es-ES')} €`, change: `Total de ingresos en ${monthName}` };
                 return stat;
             }));
