@@ -131,7 +131,6 @@ export type Socio = {
     paymentType: 'monthly' | 'annual';
     fee: number;
     avatar?: string;
-    createUser?: boolean;
     socioNumber?: string;
 }
 

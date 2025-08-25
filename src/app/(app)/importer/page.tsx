@@ -4,6 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, UserSquare, Briefcase, Handshake, Database } from "lucide-react";
+import { CsvImporter } from "@/components/csv-importer";
 
 type ColumnInfo = {
     key: string;
@@ -107,7 +108,7 @@ export default function ImporterPage() {
             Importador de BBDD
         </h1>
         <p className="text-muted-foreground">
-          Guía para importar tus bases de datos mediante archivos CSV.
+          Sube tus bases de datos mediante archivos CSV para una carga rápida.
         </p>
       </div>
       
@@ -119,13 +120,18 @@ export default function ImporterPage() {
           <TabsTrigger value="socios"><Handshake className="mr-2 h-4 w-4" />Socios</TabsTrigger>
         </TabsList>
         
-        <TabsContent value="players" className="mt-6">
+        <TabsContent value="players" className="mt-6 space-y-6">
+            <CsvImporter 
+                importerType="players"
+                requiredColumns={playerColumns}
+                onImportSuccess={() => console.log('Players imported!')}
+            />
             <Card>
                 <CardHeader>
-                    <CardTitle>Orden de Columnas para Jugadores</CardTitle>
+                    <CardTitle>Orden y Nombres de las Columnas para Jugadores</CardTitle>
                     <CardDescription>
                         Para importar jugadores, tu archivo CSV debe tener las siguientes columnas en este orden exacto.
-                        La primera fila debe ser la cabecera con estos nombres (el nombre técnico entre paréntesis). Los campos como fechas deben estar en formato AAAA-MM-DD.
+                        La primera fila debe ser la cabecera con los nombres técnicos entre paréntesis. Los campos como fechas deben estar en formato AAAA-MM-DD.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -133,7 +139,12 @@ export default function ImporterPage() {
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="coaches" className="mt-6">
+        <TabsContent value="coaches" className="mt-6 space-y-6">
+            <CsvImporter 
+                importerType="coaches"
+                requiredColumns={coachColumns}
+                onImportSuccess={() => console.log('Coaches imported!')}
+            />
             <Card>
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Entrenadores</CardTitle>
@@ -147,7 +158,12 @@ export default function ImporterPage() {
                 </CardContent>
             </Card>
         </TabsContent>
-         <TabsContent value="staff" className="mt-6">
+         <TabsContent value="staff" className="mt-6 space-y-6">
+             <CsvImporter 
+                importerType="staff"
+                requiredColumns={staffColumns}
+                onImportSuccess={() => console.log('Staff imported!')}
+            />
             <Card>
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Staff y Directiva</CardTitle>
@@ -161,7 +177,12 @@ export default function ImporterPage() {
                 </CardContent>
             </Card>
         </TabsContent>
-         <TabsContent value="socios" className="mt-6">
+         <TabsContent value="socios" className="mt-6 space-y-6">
+             <CsvImporter 
+                importerType="socios"
+                requiredColumns={socioColumns}
+                onImportSuccess={() => console.log('Socios imported!')}
+            />
             <Card>
                 <CardHeader>
                     <CardTitle>Orden de Columnas para Socios</CardTitle>
