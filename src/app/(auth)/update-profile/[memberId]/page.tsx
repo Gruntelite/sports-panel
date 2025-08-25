@@ -32,11 +32,11 @@ const profileSchemaBase = {
   phone: z.string().optional(),
   iban: z.string().optional(),
   sex: z.string().optional(),
-  birthDate: z.string().optional(),
+  birthDate: z.any().optional(),
   nationality: z.string().optional(),
   healthCardNumber: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
+  startDate: z.any().optional(),
+  endDate: z.any().optional(),
   tutorName: z.string().optional(),
   tutorLastName: z.string().optional(),
   tutorDni: z.string().optional(),
@@ -68,18 +68,17 @@ export default function UpdateProfilePage() {
     const [collectionName, setCollectionName] = useState<string | null>(null);
     const [editableFields, setEditableFields] = useState<string[]>([]);
     
-    // Dynamically build the Zod schema based on the fields passed in the URL
     const dynamicSchema = z.object(
         Object.fromEntries(
             (fieldsParam ? fieldsParam.split(',') : [])
             .map(field => {
                 const baseSchema = profileSchemaBase[field as keyof typeof profileSchemaBase];
                 if (baseSchema) {
-                    if (baseSchema instanceof z.ZodString && !(baseSchema as any)._def.checks.some((c: any) => c.kind === "email")) {
-                         return [field, baseSchema.min(1, 'Este campo es obligatorio.')];
+                    if (baseSchema instanceof z.ZodString || baseSchema instanceof z.ZodNumber) {
+                         return [field, baseSchema.refine(val => val !== "" && val !== null && val !== undefined, { message: "Este campo es obligatorio." })];
                     }
-                     if (baseSchema instanceof z.ZodString && (baseSchema as any)._def.checks.some((c: any) => c.kind === "email")) {
-                         return [field, baseSchema.min(1, 'Este campo es obligatorio.').email("Debe ser un email válido.")];
+                    if (baseSchema instanceof z.ZodAny) { // For dates
+                        return [field, z.any().refine(val => val, { message: "Este campo es obligatorio." })];
                     }
                     return [field, baseSchema];
                 }
@@ -119,7 +118,7 @@ export default function UpdateProfilePage() {
                     });
                     form.reset(defaultValues);
                 } else {
-                    setMemberData(null); // Invalid link or request
+                    setMemberData(null); 
                 }
             } catch (error) {
                 console.error("Error fetching member data:", error);
@@ -140,10 +139,14 @@ export default function UpdateProfilePage() {
             const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
             
             const dataToUpdate: any = { ...data };
-            if (data.birthDate) {
-              dataToUpdate.birthDate = format(new Date(data.birthDate), "yyyy-MM-dd");
-            }
-            dataToUpdate.updateRequestActive = false; // Deactivate the update request
+            
+            ['birthDate', 'startDate', 'endDate'].forEach(dateField => {
+                if (data[dateField]) {
+                    dataToUpdate[dateField] = format(new Date(data[dateField]), "yyyy-MM-dd");
+                }
+            });
+
+            dataToUpdate.updateRequestActive = false;
 
             await updateDoc(memberRef, dataToUpdate);
 
@@ -181,6 +184,8 @@ export default function UpdateProfilePage() {
           tutorEmail: { label: 'Email del Tutor/a', type: 'email' },
           jerseyNumber: { label: 'Dorsal', type: 'number' },
           birthDate: { label: 'Fecha de Nacimiento', type: 'date' },
+          startDate: { label: 'Fecha de Alta', type: 'date' },
+          endDate: { label: 'Fecha de Baja', type: 'date' },
           kitSize: { label: 'Talla de Equipación' },
           nationality: { label: 'Nacionalidad' },
           healthCardNumber: { label: 'Nº Tarjeta Sanitaria'},
@@ -206,7 +211,7 @@ export default function UpdateProfilePage() {
                             <FormLabel htmlFor={fieldName}>{label} *</FormLabel>
                                 {type === 'date' ? (
                                     <DatePicker
-                                        date={field.value ? parseISO(field.value) : undefined}
+                                        date={field.value ? (typeof field.value === 'string' ? parseISO(field.value) : field.value) : undefined}
                                         onDateChange={field.onChange}
                                     />
                                 ) : type === 'select' && options ? (
@@ -294,7 +299,6 @@ export default function UpdateProfilePage() {
     );
 }
 
-// Add these to avoid compilation errors, since we are not exporting them from the form component
 const FormItem = ({className, ...props}: React.HTMLAttributes<HTMLDivElement>) => <div className={cn("space-y-2", className)} {...props} />
 const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithoutRef<typeof Label>>(({className, ...props}, ref) => <Label ref={ref} className={className} {...props} />)
 FormLabel.displayName = 'FormLabel';
