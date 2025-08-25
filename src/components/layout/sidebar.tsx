@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -18,6 +18,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 
 
 const menuItems = [
@@ -109,6 +110,8 @@ export function Sidebar() {
     const [clubName, setClubName] = useState<string | null>(null);
     const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isHelpOpen, setIsHelpOpen] = useState(false);
+
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -195,36 +198,40 @@ export function Sidebar() {
                     </nav>
                 </div>
                 <div className="mt-auto p-4 space-y-2">
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-start gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20">
-                                <HelpCircle className="h-4 w-4" />
-                                Ayuda y Soporte
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" className="w-full justify-center gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20">
+                                <Logo width={28} height={28} />
+                                <span className="text-base font-semibold">SportsPanel</span>
+                                <MoreVertical className="h-4 w-4 ml-auto"/>
                             </Button>
-                        </DialogTrigger>
-                        <DialogContent>
-                            <DialogHeader>
-                                <DialogTitle>Contacto de Soporte</DialogTitle>
-                                <DialogDescription>
-                                    ¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.
-                                </DialogDescription>
-                            </DialogHeader>
-                            {clubId && userProfile && (
-                                <HelpForm clubId={clubId} userProfile={userProfile} />
-                            )}
-                        </DialogContent>
-                    </Dialog>
-                    
-                    <Button variant="ghost" className="w-full justify-start gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20" onClick={handleLogout}>
-                        <LogOut className="h-4 w-4" />
-                        Cerrar Sesión
-                    </Button>
-                     <div className="my-4 h-px w-full bg-primary-foreground/20" />
-                     <div className="flex items-center justify-center gap-2">
-                        <Logo width={28} height={28} />
-                        <span className="text-base font-semibold">SportsPanel</span>
-                    </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent className="w-56 mb-2" align="end">
+                            <DropdownMenuItem onSelect={() => setIsHelpOpen(true)}>
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>Ayuda y Soporte</span>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={handleLogout}>
+                                <LogOut className="mr-2 h-4 w-4" />
+                                <span>Cerrar Sesión</span>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
+                <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Contacto de Soporte</DialogTitle>
+                            <DialogDescription>
+                                ¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.
+                            </DialogDescription>
+                        </DialogHeader>
+                        {clubId && userProfile && (
+                            <HelpForm clubId={clubId} userProfile={userProfile} />
+                        )}
+                    </DialogContent>
+                </Dialog>
             </div>
         </div>
     );
