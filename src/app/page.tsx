@@ -174,9 +174,7 @@ export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
 
   const pricing = {
-    basic: { monthly: 29.99, yearly: Math.round(29.99 * 12 * 0.9) },
-    pro: { monthly: 39.99, yearly: Math.round(39.99 * 12 * 0.9) },
-    elite: { monthly: 59.99, yearly: Math.round(59.99 * 12 * 0.9) }
+    pro: { monthly: 39.99, yearly: Math.round(39.99 * 12 * 0.9) }
   };
 
   return (
@@ -393,10 +391,10 @@ export default function LandingPage() {
              <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                 <div className="space-y-2">
                     <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                       Planes y Precios
+                       Un Plan Simple y Transparente
                     </h2>
                     <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                        Elige el plan que mejor se adapte a las necesidades de tu club.
+                        Todo lo que necesitas, sin complicaciones. Un único plan con todas las funcionalidades y sin límite de miembros.
                     </p>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -406,41 +404,11 @@ export default function LandingPage() {
                   <Badge variant="secondary" className="bg-green-100 text-green-800">Ahorra 10%</Badge>
                 </div>
             </div>
-             <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-                
-                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
-                    <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>150</b> fichas</p>
-                    <div className="mt-4 flex items-baseline justify-center gap-2">
-                       {isYearly ? (
-                         <>
-                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.basic.monthly * 12)}€</span>
-                           <span className="text-4xl font-bold">{pricing.basic.yearly}€</span>
-                           <span className="text-muted-foreground self-end">/año</span>
-                         </>
-                       ) : (
-                         <>
-                           <span className="text-4xl font-bold">{pricing.basic.monthly}€</span>
-                           <span className="text-muted-foreground self-end">/mes</span>
-                         </>
-                       )}
-                    </div>
-                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
-                    </ul>
-                    <Button variant="outline" className="mt-6 w-full" asChild><Link href="/register">Empezar ahora</Link></Button>
-                </div>
-
-                <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 text-center">
-                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
-                    <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>300</b> fichas</p>
+             <div className="mx-auto flex justify-center">
+                <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-8 text-center max-w-md">
+                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>Plan Único</div>
+                    <h3 className="text-2xl font-bold font-headline">SportsPanel Completo</h3>
+                    <p className="text-muted-foreground mt-1">Fichas <b>ilimitadas</b></p>
                      <div className="mt-4 flex items-baseline justify-center gap-2">
                        {isYearly ? (
                          <>
@@ -456,44 +424,15 @@ export default function LandingPage() {
                        )}
                     </div>
                      <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros ilimitada</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos ilimitada</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
-                    <Button className="mt-6 w-full" asChild><Link href="/register">Empezar ahora</Link></Button>
-                </div>
-
-                <div className="flex flex-col rounded-lg border bg-card shadow-sm p-6 text-center">
-                    <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
-                    <p className="text-muted-foreground mt-1">Hasta <b>600</b> fichas</p>
-                     <div className="mt-4 flex items-baseline justify-center gap-2">
-                       {isYearly ? (
-                         <>
-                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.elite.monthly * 12)}€</span>
-                           <span className="text-4xl font-bold">{pricing.elite.yearly}€</span>
-                           <span className="text-muted-foreground self-end">/año</span>
-                         </>
-                       ) : (
-                         <>
-                           <span className="text-4xl font-bold">{pricing.elite.monthly}€</span>
-                           <span className="text-muted-foreground self-end">/mes</span>
-                         </>
-                       )}
-                    </div>
-                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
-                    </ul>
-                    <Button variant="outline" className="mt-6 w-full" asChild><Link href="/register">Empezar ahora</Link></Button>
+                    <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empezar Prueba de 15 Días</Link></Button>
                 </div>
             </div>
           </div>
