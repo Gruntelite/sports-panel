@@ -19,32 +19,31 @@ import { Logo } from "@/components/logo";
 
 // Base schema for common fields, all optional for dynamic validation
 const profileSchemaBase = {
-  name: z.string().optional(),
-  lastName: z.string().optional(),
-  dni: z.string().optional(),
-  address: z.string().optional(),
-  city: z.string().optional(),
-  postalCode: z.string().optional(),
-  tutorPhone: z.string().optional(),
-  phone: z.string().optional(),
-  iban: z.string().optional(),
-  // Add other possible fields here as optional
-  sex: z.string().optional(),
-  birthDate: z.string().optional(),
-  nationality: z.string().optional(),
-  healthCardNumber: z.string().optional(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-  tutorName: z.string().optional(),
-  tutorLastName: z.string().optional(),
-  tutorDni: z.string().optional(),
-  tutorEmail: z.string().optional(),
-  email: z.string().optional(),
-  jerseyNumber: z.preprocess((val) => Number(val), z.number().optional()),
-  monthlyFee: z.preprocess((val) => Number(val), z.number().optional()),
-  kitSize: z.string().optional(),
-  monthlyPayment: z.preprocess((val) => Number(val), z.number().optional()),
-  role: z.string().optional(),
+  name: z.string(),
+  lastName: z.string(),
+  dni: z.string(),
+  address: z.string(),
+  city: z.string(),
+  postalCode: z.string(),
+  tutorPhone: z.string(),
+  phone: z.string(),
+  iban: z.string(),
+  sex: z.string(),
+  birthDate: z.string(),
+  nationality: z.string(),
+  healthCardNumber: z.string(),
+  startDate: z.string(),
+  endDate: z.string(),
+  tutorName: z.string(),
+  tutorLastName: z.string(),
+  tutorDni: z.string(),
+  tutorEmail: z.string().email(),
+  email: z.string().email(),
+  jerseyNumber: z.preprocess((val) => Number(val), z.number()),
+  monthlyFee: z.preprocess((val) => Number(val), z.number()),
+  kitSize: z.string(),
+  monthlyPayment: z.preprocess((val) => Number(val), z.number()),
+  role: z.string(),
 };
 
 type MemberData = Partial<Player & Coach & Staff>;
@@ -68,10 +67,19 @@ export default function UpdateProfilePage() {
     
     // Dynamically build the Zod schema based on the fields passed in the URL
     const dynamicSchema = z.object(
-      Object.fromEntries(
-        (fieldsParam ? fieldsParam.split(',') : [])
-        .map(field => [field, profileSchemaBase[field as keyof typeof profileSchemaBase]?.min(1, 'Este campo es obligatorio.') ?? z.any()])
-      )
+        Object.fromEntries(
+            (fieldsParam ? fieldsParam.split(',') : [])
+            .map(field => {
+                const baseSchema = profileSchemaBase[field as keyof typeof profileSchemaBase];
+                if (baseSchema) {
+                    if (baseSchema instanceof z.ZodString) {
+                         return [field, baseSchema.min(1, 'Este campo es obligatorio.')];
+                    }
+                    return [field, baseSchema];
+                }
+                return [field, z.any()];
+            })
+        )
     );
 
     const form = useForm<z.infer<typeof dynamicSchema>>({
