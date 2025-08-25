@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'Panel de Deportes',
+  title: 'SportsPanel',
   description: 'La plataforma de gestión todo en uno para tu club deportivo.',
 };
 
