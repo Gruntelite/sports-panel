@@ -325,7 +325,7 @@ export default function ClubSettingsPage() {
                     <CardContent className="grid gap-6 lg:grid-cols-3">
                         <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'basic' && "border-primary ring-2 ring-primary")}>
                             <h3 className="text-2xl font-bold font-headline">Club Básico</h3>
-                            <p className="text-muted-foreground mt-1">Hasta <b>100</b> usuarios</p>
+                            <p className="text-muted-foreground mt-1">Hasta <b>150</b> fichas</p>
                             <div className="mt-4 flex items-baseline justify-center gap-2">
                                 <span className="text-4xl font-bold">{pricing.basic.monthly}€</span>
                                 <span className="text-muted-foreground self-end">/mes</span>
@@ -347,7 +347,7 @@ export default function ClubSettingsPage() {
                         <Card className={cn("relative flex flex-col p-6 text-center", currentPlan === 'pro' && "border-primary ring-2 ring-primary")}>
                             <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>El más popular</div>
                             <h3 className="text-2xl font-bold font-headline">Club Pro</h3>
-                            <p className="text-muted-foreground mt-1">Hasta <b>150</b> usuarios</p>
+                            <p className="text-muted-foreground mt-1">Hasta <b>300</b> fichas</p>
                             <div className="mt-4 flex items-baseline justify-center gap-2">
                                 <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
                                 <span className="text-muted-foreground self-end">/mes</span>
@@ -368,7 +368,7 @@ export default function ClubSettingsPage() {
 
                         <Card className={cn("flex flex-col p-6 text-center", currentPlan === 'elite' && "border-primary ring-2 ring-primary")}>
                             <h3 className="text-2xl font-bold font-headline">Club Élite</h3>
-                            <p className="text-muted-foreground mt-1">Hasta <b>300</b> usuarios</p>
+                            <p className="text-muted-foreground mt-1">Hasta <b>600</b> fichas</p>
                             <div className="mt-4 flex items-baseline justify-center gap-2">
                                 <span className="text-4xl font-bold">{pricing.elite.monthly}€</span>
                                 <span className="text-muted-foreground self-end">/mes</span>
