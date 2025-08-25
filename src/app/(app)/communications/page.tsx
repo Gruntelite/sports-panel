@@ -4,9 +4,8 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DirectEmailSender } from "@/components/direct-email-sender";
-import { Mail, Send, Settings, ClipboardList, UserCheck } from "lucide-react";
+import { Mail, Send, Settings } from "lucide-react";
 import { EmailSettings } from "@/components/email-settings";
-import type { FormHistoryItem } from "@/lib/types";
 
 
 export default function CommunicationsPage() {

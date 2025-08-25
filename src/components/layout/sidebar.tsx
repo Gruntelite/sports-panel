@@ -24,6 +24,7 @@ const menuItems = [
     { href: "/staff", label: "Socios y Directiva", icon: Briefcase},
     { href: "/schedules", label: "Horarios", icon: Clock },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
+    { href: "/registrations", label: "Inscripciones", icon: ClipboardList },
     { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
     { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
     { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
