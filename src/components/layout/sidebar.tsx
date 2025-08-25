@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -32,6 +32,7 @@ const menuItems = [
     { href: "/registrations", label: "Inscripciones y Eventos", icon: ClipboardList },
     { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
     { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
+    { href: "/importer", label: "Importador de BBDD", icon: Database },
     { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
   ];
 
