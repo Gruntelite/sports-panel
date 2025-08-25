@@ -87,6 +87,7 @@ import { format } from "date-fns";
 import { requestDataUpdateAction } from "@/lib/actions";
 import { DataUpdateSender, FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 const playerFields = {
     personal: [
@@ -580,6 +581,8 @@ export default function PlayersPage() {
                             className="capitalize"
                             checked={visibleColumns.has(field.id)}
                             onCheckedChange={() => toggleColumnVisibility(field.id)}
+                            onSelect={(e) => e.preventDefault()}
+                            disabled={field.id === 'name'}
                           >
                             {field.label}
                           </DropdownMenuCheckboxItem>
@@ -628,7 +631,7 @@ export default function PlayersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>
+                <TableHead className="sticky left-0 bg-card z-10">
                   <Checkbox
                     checked={isAllSelected}
                     onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
@@ -637,7 +640,13 @@ export default function PlayersPage() {
                   />
                 </TableHead>
                  {allColumnFields.map(field => (
-                    visibleColumns.has(field.id) && <TableHead key={field.id}>{field.label}</TableHead>
+                    visibleColumns.has(field.id) && 
+                    <TableHead 
+                      key={field.id}
+                      className={cn(field.id === 'name' && 'sticky left-[4rem] bg-card z-10')}
+                    >
+                        {field.label}
+                    </TableHead>
                  ))}
                 <TableHead>
                   <span className="sr-only">Acciones</span>
@@ -647,7 +656,7 @@ export default function PlayersPage() {
             <TableBody>
               {players.map(player => (
                 <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
-                  <TableCell>
+                  <TableCell className="sticky left-0 bg-card z-10">
                     <Checkbox
                       checked={selectedPlayers.includes(player.id)}
                       onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
@@ -656,7 +665,12 @@ export default function PlayersPage() {
                   </TableCell>
                   {allColumnFields.map(field => (
                     visibleColumns.has(field.id) && (
-                        <TableCell key={field.id} className={field.id === 'name' ? 'font-medium' : ''}>
+                        <TableCell 
+                          key={field.id} 
+                          className={cn(
+                            field.id === 'name' ? 'font-medium sticky left-[4rem] bg-card z-10' : ''
+                          )}
+                        >
                              {field.id === 'name' ? (
                                 <div className="flex items-center gap-3">
                                   <Avatar className="h-9 w-9">
