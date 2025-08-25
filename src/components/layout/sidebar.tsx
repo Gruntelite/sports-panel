@@ -138,8 +138,8 @@ export function Sidebar() {
                 </div>
                 <div className="mt-auto p-4 border-t border-primary-foreground/20">
                      <div className="flex items-center justify-center gap-2">
-                        <Logo width={28} height={28} />
-                        <span className="text-base font-semibold">SportsPanel</span>
+                        <Logo width={32} height={32} />
+                        <span className="text-lg font-semibold">SportsPanel</span>
                     </div>
                 </div>
             </div>
