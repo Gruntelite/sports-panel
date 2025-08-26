@@ -162,7 +162,7 @@ export function Sidebar() {
     return (
         <div className="hidden border-r bg-primary text-primary-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
             <div className="flex h-full max-h-screen flex-col">
-                <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6 pt-4 mt-2">
+                <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6 pt-4 mt-2 pb-2">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
                             <Skeleton className="h-8 w-8 rounded-md bg-white/20" />
