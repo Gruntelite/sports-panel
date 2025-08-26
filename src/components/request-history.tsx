@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, where, getDocs, orderBy, writeBatch, doc } from "firebase/firestore";
+import { collection, query, where, getDocs, orderBy, writeBatch, doc, getDoc } from "firebase/firestore";
 import type { FileRequestBatch, FileRequest } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
