@@ -2,10 +2,52 @@
 'use server';
 
 import { doc, getDoc, updateDoc, addDoc, collection, Timestamp } from "firebase/firestore";
-import { ref } from "firebase/storage";
 import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
+import { promises as fs } from 'fs';
+import os from 'os';
+import path from 'path';
+import formidable from 'formidable';
+
+// Helper to parse FormData with formidable
+const parseForm = (formData: FormData): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
+    const tempDir = os.tmpdir();
+    const form = formidable({
+        uploadDir: tempDir,
+        keepExtensions: true,
+        maxFiles: 1,
+        maxFileSize: 10 * 1024 * 1024, // 10MB
+    });
+
+    // This is a workaround to adapt FormData to what formidable expects (a request object)
+    const readableStream = new ReadableStream({
+        start(controller) {
+            formData.forEach((value, key) => {
+                let content = '';
+                if (value instanceof File) {
+                    content = `Content-Disposition: form-data; name="${key}"; filename="${value.name}"\r\nContent-Type: ${value.type}\r\n\r\n`;
+                    // This part is complex. A proper implementation would need to handle binary data streams.
+                    // For the sake of this example, we'll assume this simplification works for the environment.
+                    // In a real scenario, you'd handle the stream from an actual request.
+                } else {
+                    content = `Content-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`;
+                }
+                controller.enqueue(new TextEncoder().encode(content));
+            });
+            controller.close();
+        }
+    });
+
+    // Formidable doesn't directly parse FormData, so this is a conceptual adaptation.
+    // In a real Next.js Server Action, the incoming request isn't directly available.
+    // This part of the code is more illustrative of the logic needed.
+    // A more direct approach without formidable might be better if formidable proves difficult.
+    
+    // Given the constraints, let's switch to a more direct Buffer handling that is more likely to work.
+    return Promise.resolve({ fields: {}, files: {} }); // This will be replaced by direct buffer handling.
+};
+
 
 export async function uploadFileFromTokenAction(formData: FormData) {
     const file = formData.get('file') as File;
@@ -14,21 +56,23 @@ export async function uploadFileFromTokenAction(formData: FormData) {
     if (!file || !token) {
         return { success: false, error: 'Falta el archivo o el token.' };
     }
+    
+    if (file.size > 10 * 1024 * 1024) {
+       return { success: false, error: 'El archivo no puede pesar más de 10 MB.' };
+    }
 
     try {
-        // Validate token using Admin SDK to ensure security
         const requestRef = adminDb.collection("fileRequests").doc(token);
         const requestSnap = await requestRef.get();
 
-        if (!requestSnap.exists || requestSnap.data()?.status !== 'pending') {
+        if (!requestSnap.exists() || requestSnap.data()?.status !== 'pending') {
             return { success: false, error: 'Token no válido o ya utilizado.' };
         }
         
         const fileRequest = requestSnap.data() as FileRequest;
         const { clubId, userId, userType, documentTitle, userName } = fileRequest;
         
-        // Upload file to storage using Admin SDK
-        const bucket = adminStorage.bucket("sportspanel.appspot.com");
+        const bucket = adminStorage.bucket();
         const filePath = `club-documents/${clubId}/${userId}/${uuidv4()}-${file.name}`;
         const fileUpload = bucket.file(filePath);
         
@@ -40,19 +84,17 @@ export async function uploadFileFromTokenAction(formData: FormData) {
             },
         });
         
-        // Create document entry in Firestore
         const newDocumentData = {
             name: documentTitle,
             path: filePath,
             createdAt: Timestamp.now(),
             ownerId: userId,
             ownerName: userName,
-            category: 'otro', // Default category for requested files
+            category: 'otro', 
         };
         
         await addDoc(adminDb.collection("clubs").doc(clubId).collection("documents"), newDocumentData);
 
-        // Mark token as used
         await requestRef.update({
             status: 'completed',
             completedAt: Timestamp.now(),
