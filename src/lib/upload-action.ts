@@ -2,9 +2,8 @@
 'use server';
 
 import { doc, getDoc, updateDoc, addDoc, collection, Timestamp } from "firebase/firestore";
-import { ref, uploadBytes } from "firebase/storage";
-import { db as adminDb } from './firebase-admin'; // Use Admin SDK
-import { storage as adminStorage } from './firebase'; // Storage can use client SDK for ref
+import { ref } from "firebase/storage";
+import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
 
@@ -28,13 +27,17 @@ export async function uploadFileFromTokenAction(formData: FormData) {
         const fileRequest = requestSnap.data() as FileRequest;
         const { clubId, userId, userType, documentTitle, userName } = fileRequest;
         
-        // Upload file to storage
+        // Upload file to storage using Admin SDK
+        const bucket = adminStorage.bucket("sportspanel.appspot.com");
         const filePath = `club-documents/${clubId}/${userId}/${uuidv4()}-${file.name}`;
-        const fileRef = ref(adminStorage, filePath);
-        const buffer = Buffer.from(await file.arrayBuffer());
+        const fileUpload = bucket.file(filePath);
         
-        await uploadBytes(fileRef, buffer, {
-            contentType: file.type,
+        const buffer = Buffer.from(await file.arrayBuffer());
+
+        await fileUpload.save(buffer, {
+            metadata: {
+                contentType: file.type,
+            },
         });
         
         // Create document entry in Firestore
