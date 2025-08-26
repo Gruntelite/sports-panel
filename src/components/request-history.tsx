@@ -6,7 +6,7 @@ import { collection, query, where, getDocs, orderBy, writeBatch, doc } from "fir
 import type { FileRequestBatch, FileRequest } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Loader2, FileClock, Trash2 } from "lucide-react";
+import { Loader2, FileClock, Trash2, Eye } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Progress } from "./ui/progress";
@@ -21,6 +21,17 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "./ui/scroll-area";
+
 
 export function RequestHistory() {
   const { toast } = useToast();
@@ -28,8 +39,14 @@ export function RequestHistory() {
   const [batches, setBatches] = useState<FileRequestBatch[]>([]);
   const [completedCounts, setCompletedCounts] = useState<Record<string, number>>({});
   const [clubId, setClubId] = useState<string | null>(null);
+  
   const [batchToDelete, setBatchToDelete] = useState<FileRequestBatch | null>(null);
   const [deleting, setDeleting] = useState(false);
+  
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [pendingUsers, setPendingUsers] = useState<string[]>([]);
+  const [selectedBatchTitle, setSelectedBatchTitle] = useState("");
 
   useEffect(() => {
     const fetchClubId = async () => {
@@ -96,11 +113,9 @@ export function RequestHistory() {
     try {
         const batch = writeBatch(db);
 
-        // Delete the batch document
         const batchRef = doc(db, "fileRequestBatches", batchToDelete.id);
         batch.delete(batchRef);
         
-        // Find and delete all associated requests
         const requestsQuery = query(collection(db, 'fileRequests'), where('batchId', '==', batchToDelete.id));
         const requestsSnapshot = await getDocs(requestsQuery);
         requestsSnapshot.forEach(doc => {
@@ -117,6 +132,28 @@ export function RequestHistory() {
     } finally {
         setDeleting(false);
         setBatchToDelete(null);
+    }
+  }
+  
+  const handleShowDetails = async (batch: FileRequestBatch) => {
+    if (!clubId) return;
+    setDetailsLoading(true);
+    setSelectedBatchTitle(batch.documentTitle);
+    setIsDetailsModalOpen(true);
+    
+    try {
+        const pendingQuery = query(
+            collection(db, "fileRequests"),
+            where("batchId", "==", batch.id),
+            where("status", "==", "pending")
+        );
+        const pendingSnapshot = await getDocs(pendingQuery);
+        const users = pendingSnapshot.docs.map(d => (d.data() as FileRequest).userName);
+        setPendingUsers(users);
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los detalles." });
+    } finally {
+        setDetailsLoading(false);
     }
   }
 
@@ -159,9 +196,15 @@ export function RequestHistory() {
                         Solicitado el {format(batch.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: es })}
                       </p>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => setBatchToDelete(batch)}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                     <div className="flex items-center gap-1">
+                        <Button variant="outline" size="sm" onClick={() => handleShowDetails(batch)}>
+                            <Eye className="h-4 w-4 mr-2"/>
+                            Ver Detalles
+                        </Button>
+                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => setBatchToDelete(batch)}>
+                            <Trash2 className="h-4 w-4" />
+                        </Button>
+                    </div>
                   </div>
                   <Progress value={progress} />
                   <p className="text-sm font-medium text-right">
@@ -174,6 +217,37 @@ export function RequestHistory() {
         )}
       </CardContent>
     </Card>
+    
+    <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Entregas Pendientes: {selectedBatchTitle}</DialogTitle>
+                <DialogDescription>
+                    Esta es la lista de personas que todavía no han subido el archivo solicitado.
+                </DialogDescription>
+            </DialogHeader>
+             <div className="py-4">
+                {detailsLoading ? (
+                    <div className="flex justify-center items-center h-40">
+                         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    </div>
+                ) : (
+                    <ScrollArea className="h-72">
+                        <ul className="space-y-2">
+                            {pendingUsers.length > 0 ? pendingUsers.map((name, index) => (
+                                <li key={index} className="p-2 border rounded-md text-sm">{name}</li>
+                            )) : <p className="text-center text-muted-foreground">¡Todos han completado la entrega!</p>}
+                        </ul>
+                    </ScrollArea>
+                )}
+            </div>
+             <DialogFooter>
+                <DialogClose asChild>
+                    <Button>Cerrar</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 
     <AlertDialog open={!!batchToDelete} onOpenChange={(open) => !open && setBatchToDelete(null)}>
         <AlertDialogContent>
