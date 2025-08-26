@@ -208,17 +208,13 @@ export async function importDataAction({
     }
 }
 
-export async function requestFilesAction({
-  clubId,
-  members,
-  documentTitle,
-  message,
-}: {
-  clubId: string;
-  members: { id: string; name: string; email: string; type: 'Jugador' | 'Entrenador' | 'Staff' }[];
-  documentTitle: string;
-  message?: string;
-}): Promise<{ success: boolean; error?: string; count?: number }> {
+export async function requestFilesAction(formData: FormData): Promise<{ success: boolean; error?: string; count?: number }> {
+  const clubId = formData.get('clubId') as string;
+  const members = JSON.parse(formData.get('members') as string) as { id: string; name: string; email: string; type: 'Jugador' | 'Entrenador' | 'Staff' }[];
+  const documentTitle = formData.get('doc-title') as string;
+  const message = formData.get('message') as string;
+  const attachment = formData.get('attachment') as File;
+
   if (members.length === 0) {
     return { success: false, error: "No se seleccionaron miembros." };
   }
@@ -259,11 +255,11 @@ export async function requestFilesAction({
     let emailsSent = 0;
 
     for (const request of requestsToSend) {
-        const formData = new FormData();
-        formData.append('clubId', clubId);
-        formData.append('recipients', JSON.stringify([request.recipient]));
-        formData.append('subject', `Solicitud de archivo: ${documentTitle}`);
-        formData.append('htmlContent', `
+        const emailFormData = new FormData();
+        emailFormData.append('clubId', clubId);
+        emailFormData.append('recipients', JSON.stringify([request.recipient]));
+        emailFormData.append('subject', `Solicitud de archivo: ${documentTitle}`);
+        emailFormData.append('htmlContent', `
             <h1>Solicitud de Archivo</h1>
             <p>Hola ${request.recipient.name},</p>
             <p>El club ${clubName} te solicita que subas el siguiente documento: <strong>${documentTitle}</strong>.</p>
@@ -273,8 +269,12 @@ export async function requestFilesAction({
             <p>Gracias,</p>
             <p>El equipo de ${clubName}</p>
         `);
+        
+        if (attachment && attachment.size > 0) {
+            emailFormData.append('attachments', attachment);
+        }
 
-      const emailResult = await sendEmailWithSmtpAction(formData);
+      const emailResult = await sendEmailWithSmtpAction(emailFormData);
       if(emailResult.success) emailsSent++;
     }
     
