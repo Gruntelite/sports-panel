@@ -70,6 +70,8 @@ import {
   ChevronsUpDown,
   Tag,
   Search,
+  Send,
+  FolderOpen,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
@@ -81,6 +83,8 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FileRequestSender } from "@/components/file-request-sender";
 
 type Owner = {
     id: string;
@@ -96,7 +100,7 @@ const docCategories = [
     { value: 'otro', label: 'Otro' },
 ];
 
-export default function ClubFilesPage() {
+function DocumentsList() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -296,239 +300,227 @@ export default function ClubFilesPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight">
-            Archivos del Club
-          </h1>
-          <p className="text-muted-foreground">
-            Gestiona documentos importantes como normativas, formularios de
-            inscripción o autorizaciones.
-          </p>
-        </div>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <div className="flex-1">
-              <CardTitle>Todos los Documentos</CardTitle>
-              <CardDescription>
-                Archivos disponibles para todo el club.
-              </CardDescription>
-            </div>
-            <div className="flex items-center gap-2">
-                <div className="relative">
-                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        type="search"
-                        placeholder="Buscar por nombre..."
-                        className="pl-8 sm:w-[200px]"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                </div>
-                 <Select value={filterCategory} onValueChange={setFilterCategory}>
-                    <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Filtrar por categoría" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todas las categorías</SelectItem>
-                        {docCategories.map(cat => (
-                            <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                 <Select value={filterOwnerId} onValueChange={setFilterOwnerId}>
-                    <SelectTrigger className="w-[200px]">
-                        <SelectValue placeholder="Filtrar por propietario" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos los propietarios</SelectItem>
-                        {owners.map(owner => (
-                            <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-                <Dialog
-                  open={isUploadModalOpen}
-                  onOpenChange={setIsUploadModalOpen}
-                >
-                  <DialogTrigger asChild>
-                    <Button>
-                      <PlusCircle className="mr-2 h-4 w-4" />
-                      Subir Nuevo Archivo
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>Subir Nuevo Documento</DialogTitle>
-                      <DialogDescription>
-                        Selecciona un archivo y ponle un nombre descriptivo para
-                        identificarlo fácilmente.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="doc-name">Nombre del Documento *</Label>
-                        <Input
-                          id="doc-name"
-                          placeholder="p.ej., Normativa Interna 2024"
-                          value={documentNameToSave}
-                          onChange={(e) => setDocumentNameToSave(e.target.value)}
-                        />
-                      </div>
-                       <div className="space-y-2">
-                          <Label htmlFor="doc-category">Categoría *</Label>
-                          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                            <SelectTrigger id="doc-category">
-                              <SelectValue placeholder="Selecciona una categoría" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {docCategories.map(cat => (
-                                <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      <div className="space-y-2">
-                        <Label>Asignar a Usuario *</Label>
-                        <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
-                            <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={isOwnerPopoverOpen}
-                                className="w-full justify-between"
-                            >
-                                {selectedOwner
-                                ? selectedOwner.name
-                                : "Selecciona un propietario..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                            <Command>
-                                <CommandInput placeholder="Buscar usuario..." />
-                                 <CommandList>
-                                    <CommandEmpty>No se encontró ningún usuario.</CommandEmpty>
-                                    <CommandGroup>
-                                    {owners.map((owner) => (
-                                        <CommandItem
-                                        key={owner.id}
-                                        value={owner.name}
-                                        onSelect={() => {
-                                            setSelectedOwner(owner);
-                                            setIsOwnerPopoverOpen(false);
-                                        }}
-                                        >
-                                        <Check
-                                            className={cn(
-                                            "mr-2 h-4 w-4",
-                                            selectedOwner?.id === owner.id ? "opacity-100" : "opacity-0"
-                                            )}
-                                        />
-                                        {owner.name}
-                                        {owner.role && <span className="ml-2 text-xs text-muted-foreground">({owner.role})</span>}
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                            </PopoverContent>
-                        </Popover>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="doc-file">Archivo *</Label>
-                        <Input
-                          id="doc-file"
-                          type="file"
-                          onChange={(e) =>
-                            setFileToUpload(e.target.files?.[0] || null)
-                          }
-                        />
-                        <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
-                      </div>
-                    </div>
-                    <DialogFooter>
-                      <DialogClose asChild>
-                        <Button variant="secondary">Cancelar</Button>
-                      </DialogClose>
-                      <Button onClick={handleFileUpload} disabled={saving}>
-                        {saving && (
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        )}
-                        <Upload className="mr-2 h-4 w-4" />
-                        Subir y Guardar
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-            </div>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center p-8">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div className="flex-1">
+            <CardTitle>Todos los Documentos</CardTitle>
+            <CardDescription>
+              Archivos disponibles para todo el club.
+            </CardDescription>
+          </div>
+          <div className="flex items-center gap-2">
+              <div className="relative">
+                  <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                      type="search"
+                      placeholder="Buscar por nombre..."
+                      className="pl-8 sm:w-[200px]"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                  />
               </div>
-            ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nombre del Archivo</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Propietario</TableHead>
-                    <TableHead>Fecha de Subida</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredDocuments.length > 0 ? (
-                    filteredDocuments.map((doc) => (
-                      <TableRow key={doc.id}>
-                        <TableCell className="font-medium flex items-center gap-2">
-                           <FileIcon className="h-4 w-4 text-muted-foreground"/>
-                           {doc.name}
-                        </TableCell>
-                        <TableCell>
-                          <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || 'Sin Categoría'}</Badge>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <UserIcon className="h-4 w-4 text-muted-foreground" />
-                            {doc.ownerName || "Club"}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <Button asChild variant="outline" size="icon" className="mr-2">
-                            <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                              <Download className="h-4 w-4" />
-                            </a>
+               <Select value={filterCategory} onValueChange={setFilterCategory}>
+                  <SelectTrigger className="w-[180px]">
+                      <SelectValue placeholder="Filtrar por categoría" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todas las categorías</SelectItem>
+                      {docCategories.map(cat => (
+                          <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+               <Select value={filterOwnerId} onValueChange={setFilterOwnerId}>
+                  <SelectTrigger className="w-[200px]">
+                      <SelectValue placeholder="Filtrar por propietario" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">Todos los propietarios</SelectItem>
+                      {owners.map(owner => (
+                          <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
+              <Dialog
+                open={isUploadModalOpen}
+                onOpenChange={setIsUploadModalOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Subir Nuevo Archivo
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Subir Nuevo Documento</DialogTitle>
+                    <DialogDescription>
+                      Selecciona un archivo y ponle un nombre descriptivo para
+                      identificarlo fácilmente.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="doc-name">Nombre del Documento *</Label>
+                      <Input
+                        id="doc-name"
+                        placeholder="p.ej., Normativa Interna 2024"
+                        value={documentNameToSave}
+                        onChange={(e) => setDocumentNameToSave(e.target.value)}
+                      />
+                    </div>
+                     <div className="space-y-2">
+                        <Label htmlFor="doc-category">Categoría *</Label>
+                        <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                          <SelectTrigger id="doc-category">
+                            <SelectValue placeholder="Selecciona una categoría" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {docCategories.map(cat => (
+                              <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    <div className="space-y-2">
+                      <Label>Asignar a Usuario *</Label>
+                      <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
+                          <PopoverTrigger asChild>
+                          <Button
+                              variant="outline"
+                              role="combobox"
+                              aria-expanded={isOwnerPopoverOpen}
+                              className="w-full justify-between"
+                          >
+                              {selectedOwner
+                              ? selectedOwner.name
+                              : "Selecciona un propietario..."}
+                              <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
-                          <Button variant="destructive" size="icon" onClick={() => setDocToDelete(doc)}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="h-24 text-center text-muted-foreground"
-                      >
-                        No hay documentos que coincidan con el filtro actual.
+                          </PopoverTrigger>
+                          <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                          <Command>
+                              <CommandInput placeholder="Buscar usuario..." />
+                               <CommandList>
+                                  <CommandEmpty>No se encontró ningún usuario.</CommandEmpty>
+                                  <CommandGroup>
+                                  {owners.map((owner) => (
+                                      <CommandItem
+                                      key={owner.id}
+                                      value={owner.name}
+                                      onSelect={() => {
+                                          setSelectedOwner(owner);
+                                          setIsOwnerPopoverOpen(false);
+                                      }}
+                                      >
+                                      <Check
+                                          className={cn(
+                                          "mr-2 h-4 w-4",
+                                          selectedOwner?.id === owner.id ? "opacity-100" : "opacity-0"
+                                          )}
+                                      />
+                                      {owner.name}
+                                      {owner.role && <span className="ml-2 text-xs text-muted-foreground">({owner.role})</span>}
+                                      </CommandItem>
+                                  ))}
+                                  </CommandGroup>
+                              </CommandList>
+                          </Command>
+                          </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="doc-file">Archivo *</Label>
+                      <Input
+                        id="doc-file"
+                        type="file"
+                        onChange={(e) =>
+                          setFileToUpload(e.target.files?.[0] || null)
+                        }
+                      />
+                      <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
+                    </div>
+                  </div>
+                  <DialogFooter>
+                    <DialogClose asChild>
+                      <Button variant="secondary">Cancelar</Button>
+                    </DialogClose>
+                    <Button onClick={handleFileUpload} disabled={saving}>
+                      {saving && (
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      )}
+                      <Upload className="mr-2 h-4 w-4" />
+                      Subir y Guardar
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center p-8">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nombre del Archivo</TableHead>
+                  <TableHead>Categoría</TableHead>
+                  <TableHead>Propietario</TableHead>
+                  <TableHead>Fecha de Subida</TableHead>
+                  <TableHead className="text-right">Acciones</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredDocuments.length > 0 ? (
+                  filteredDocuments.map((doc) => (
+                    <TableRow key={doc.id}>
+                      <TableCell className="font-medium flex items-center gap-2">
+                         <FileIcon className="h-4 w-4 text-muted-foreground"/>
+                         {doc.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || 'Sin Categoría'}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <UserIcon className="h-4 w-4 text-muted-foreground" />
+                          {doc.ownerName || "Club"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button asChild variant="outline" size="icon" className="mr-2">
+                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                            <Download className="h-4 w-4" />
+                          </a>
+                        </Button>
+                        <Button variant="destructive" size="icon" onClick={() => setDocToDelete(doc)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="h-24 text-center text-muted-foreground"
+                    >
+                      No hay documentos que coincidan con el filtro actual.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+      
       <AlertDialog
         open={!!docToDelete}
         onOpenChange={(open) => !open && setDocToDelete(null)}
@@ -558,5 +550,32 @@ export default function ClubFilesPage() {
         </AlertDialogContent>
       </AlertDialog>
     </>
+  );
+}
+
+export default function ClubFilesPage() {
+  return (
+    <div className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold font-headline tracking-tight">
+          Archivos del Club
+        </h1>
+        <p className="text-muted-foreground">
+          Gestiona documentos importantes como normativas, formularios o autorizaciones.
+        </p>
+      </div>
+      <Tabs defaultValue="documents">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="documents"><FolderOpen className="mr-2 h-4 w-4"/>Ver Documentos</TabsTrigger>
+          <TabsTrigger value="request"><Send className="mr-2 h-4 w-4"/>Solicitar Archivos</TabsTrigger>
+        </TabsList>
+        <TabsContent value="documents" className="mt-6">
+            <DocumentsList/>
+        </TabsContent>
+        <TabsContent value="request" className="mt-6">
+            <FileRequestSender />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
