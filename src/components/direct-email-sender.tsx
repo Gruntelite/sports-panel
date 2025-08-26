@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
 import type { Player, Coach, Staff, ClubMember, Team } from "@/lib/types";
@@ -42,9 +41,8 @@ export function DirectEmailSender() {
     const [isTypePopoverOpen, setIsTypePopoverOpen] = useState(false);
     const [selectedTeams, setSelectedTeams] = useState<Set<string>>(new Set());
     const [isTeamPopoverOpen, setIsTeamPopoverOpen] = useState(false);
-    
-    const [subject, setSubject] = useState("");
-    const [body, setBody] = useState("");
+
+    const formRef = useRef<HTMLFormElement>(null);
     
     const { toast } = useToast();
 
@@ -73,19 +71,19 @@ export function DirectEmailSender() {
             const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
             playersSnap.forEach(doc => {
                 const data = doc.data() as Player;
-                members.push({ id: doc.id, name: `${data.name} ${data.lastName}`, type: 'Jugador', data, teamId: data.teamId });
+                members.push({ id: doc.id, name: `${data.name} ${data.lastName}`, type: 'Jugador', data, teamId: data.teamId, email: data.tutorEmail });
             });
 
             const coachesSnap = await getDocs(collection(db, "clubs", clubId, "coaches"));
             coachesSnap.forEach(doc => {
                 const data = doc.data() as Coach;
-                members.push({ id: doc.id, name: `${data.name} ${data.lastName}`, type: 'Entrenador', data, teamId: data.teamId });
+                members.push({ id: doc.id, name: `${data.name} ${data.lastName}`, type: 'Entrenador', data, teamId: data.teamId, email: data.email });
             });
 
             const staffSnap = await getDocs(collection(db, "clubs", clubId, "staff"));
             staffSnap.forEach(doc => {
                 const data = doc.data() as Staff;
-                members.push({ id: doc.id, name: `${data.name} ${data.lastName}`, type: 'Staff', data, teamId: undefined });
+                members.push({ id: doc.id, name: `${data.name} ${data.lastName}`, type: 'Staff', data, teamId: undefined, email: data.email });
             });
             
             setAllMembers(members);
@@ -131,50 +129,50 @@ export function DirectEmailSender() {
         }
     }
     
-    const handleSend = async () => {
-      if (!clubId) return;
-
-      if (membersToSend.length === 0) {
-        toast({ variant: "destructive", title: "Error", description: "Debes seleccionar al menos un destinatario." });
-        return;
-      }
-      
-      if (!subject.trim() || !body.trim()) {
-        toast({ variant: "destructive", title: "Error", description: "El asunto y el mensaje son obligatorios." });
-        return;
-      }
-      
-      setSending(true);
-
-      const recipients = membersToSend.map(member => {
-        let email = '';
-        if (member.type === 'Jugador') {
-          email = (member.data as Player).tutorEmail || '';
-        } else {
-          email = (member.data as Coach | Staff).email || '';
+    const handleFormSubmit = async (formData: FormData) => {
+        if (!clubId) {
+            toast({ variant: "destructive", title: "Error", description: "No se ha podido identificar el club." });
+            return;
         }
-        return { email, name: member.name };
-      }).filter(item => item.email); // Filter out any empty emails
 
-      const result = await sendEmailWithSmtpAction({ clubId, recipients, subject, htmlContent: body });
+        const recipients = membersToSend.map(member => {
+            let email = '';
+            if (member.type === 'Jugador') {
+                email = (member.data as Player).tutorEmail || '';
+            } else {
+                email = (member.data as Coach | Staff).email || '';
+            }
+            return { email, name: member.name };
+        }).filter(item => item.email);
 
-      if (result.success) {
-          toast({
-              title: "¡Correos enviados!",
-              description: `Se han enviado ${result.count} correos correctamente.`,
-          });
-          setSelectedMemberIds(new Set());
-          setSubject('');
-          setBody('');
-      } else {
-          toast({
-              variant: "destructive",
-              title: "Error de Envío",
-              description: result.error,
-          });
-      }
+        if (recipients.length === 0) {
+            toast({ variant: "destructive", title: "Error", description: "Debes seleccionar al menos un destinatario con email." });
+            return;
+        }
 
-      setSending(false);
+        formData.set('clubId', clubId);
+        formData.set('recipients', JSON.stringify(recipients));
+
+        setSending(true);
+
+        const result = await sendEmailWithSmtpAction(formData);
+
+        if (result.success) {
+            toast({
+                title: "¡Correos enviados!",
+                description: `Se han enviado ${result.count} correos correctamente.`,
+            });
+            formRef.current?.reset();
+            setSelectedMemberIds(new Set());
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Error de Envío",
+                description: result.error,
+            });
+        }
+        
+        setSending(false);
     }
     
     const recipientCount = selectedMemberIds.size;
@@ -186,174 +184,180 @@ export function DirectEmailSender() {
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>Enviar Correo Directo</CardTitle>
-                <CardDescription>
-                    Redacta un correo y envíalo a grupos de miembros o a personas específicas.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label>Filtrar destinatarios por tipo</Label>
-                         <Popover open={isTypePopoverOpen} onOpenChange={setIsTypePopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start font-normal">
-                                    {selectedTypes.size > 0 ? `${selectedTypes.size} tipo(s) seleccionado(s)` : "Seleccionar tipo..."}
-                                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
-                                <Command>
-                                    <CommandInput placeholder="Buscar tipo..." />
-                                    <CommandList>
-                                        <CommandEmpty>No se encontró el tipo.</CommandEmpty>
-                                        <CommandGroup>
-                                            {MEMBER_TYPES.map(type => (
-                                                <CommandItem
-                                                    key={type.value}
-                                                    onSelect={() => {
-                                                        const newSelection = new Set(selectedTypes);
-                                                        if (newSelection.has(type.value)) {
-                                                            newSelection.delete(type.value);
-                                                        } else {
-                                                            newSelection.add(type.value);
-                                                        }
-                                                        setSelectedTypes(newSelection);
-                                                    }}
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", selectedTypes.has(type.value) ? "opacity-100" : "opacity-0")} />
-                                                    {type.label}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Filtrar destinatarios por equipo</Label>
-                        <Popover open={isTeamPopoverOpen} onOpenChange={setIsTeamPopoverOpen}>
-                            <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-full justify-start font-normal">
-                                    {selectedTeams.size > 0 ? `${selectedTeams.size} equipo(s) seleccionado(s)` : "Seleccionar equipo..."}
-                                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                             <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
-                                <Command>
-                                    <CommandInput placeholder="Buscar equipo..." />
-                                    <CommandList>
-                                        <CommandEmpty>No se encontró el equipo.</CommandEmpty>
-                                        <CommandGroup>
-                                            {teams.map(team => (
-                                                <CommandItem
-                                                    key={team.id}
-                                                    onSelect={() => {
-                                                        const newSelection = new Set(selectedTeams);
-                                                        if (newSelection.has(team.id)) {
-                                                            newSelection.delete(team.id);
-                                                        } else {
-                                                            newSelection.add(team.id);
-                                                        }
-                                                        setSelectedTeams(newSelection);
-                                                    }}
-                                                >
-                                                    <Check className={cn("mr-2 h-4 w-4", selectedTeams.has(team.id) ? "opacity-100" : "opacity-0")} />
-                                                    {team.name}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    </div>
-                </div>
-
-                <div className="space-y-2">
-                    <Label>Destinatarios</Label>
-                     <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
-                        <DialogTrigger asChild>
-                             <Button variant="outline" className="w-full md:w-[400px] justify-between font-normal">
-                                {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : `Seleccionar de los ${filteredMembers.length} miembros filtrados...`}
-                                <UserPlus className="ml-auto h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                             <DialogHeader>
-                                <DialogTitle>Seleccionar Destinatarios</DialogTitle>
-                                <DialogDescription>
-                                    Selecciona los miembros que recibirán este correo.
-                                </DialogDescription>
-                            </DialogHeader>
-                            <Command>
-                                <CommandInput placeholder="Buscar miembro..." />
-                                <CommandList>
-                                    <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
-                                    <CommandGroup>
-                                        <CommandItem onSelect={() => handleSelectAllFiltered(!isAllFilteredSelected)} className="flex items-center space-x-2 font-semibold cursor-pointer">
-                                            <Checkbox
-                                                id="select-all"
-                                                checked={isAllFilteredSelected}
-                                                onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
-                                            />
-                                            <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los ${filteredMembers.length} miembros</label>
-                                        </CommandItem>
-                                        <ScrollArea className="h-64">
-                                            {filteredMembers.map((member) => (
-                                                <CommandItem
-                                                    key={member.id}
-                                                    value={member.name}
-                                                    onSelect={() => handleSelectMember(member.id)}
-                                                    className="flex items-center space-x-2 cursor-pointer"
-                                                >
-                                                    <Checkbox
-                                                        id={`select-${member.id}`}
-                                                        checked={selectedMemberIds.has(member.id)}
-                                                        onCheckedChange={() => handleSelectMember(member.id)}
-                                                    />
-                                                    <label
-                                                        htmlFor={`select-${member.id}`}
-                                                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer"
+            <form ref={formRef} action={handleFormSubmit}>
+                <CardHeader>
+                    <CardTitle>Enviar Correo Directo</CardTitle>
+                    <CardDescription>
+                        Redacta un correo y envíalo a grupos de miembros o a personas específicas.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Filtrar destinatarios por tipo</Label>
+                             <Popover open={isTypePopoverOpen} onOpenChange={setIsTypePopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start font-normal">
+                                        {selectedTypes.size > 0 ? `${selectedTypes.size} tipo(s) seleccionado(s)` : "Seleccionar tipo..."}
+                                        <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                                    <Command>
+                                        <CommandInput placeholder="Buscar tipo..." />
+                                        <CommandList>
+                                            <CommandEmpty>No se encontró el tipo.</CommandEmpty>
+                                            <CommandGroup>
+                                                {MEMBER_TYPES.map(type => (
+                                                    <CommandItem
+                                                        key={type.value}
+                                                        onSelect={() => {
+                                                            const newSelection = new Set(selectedTypes);
+                                                            if (newSelection.has(type.value)) {
+                                                                newSelection.delete(type.value);
+                                                            } else {
+                                                                newSelection.add(type.value);
+                                                            }
+                                                            setSelectedTypes(newSelection);
+                                                        }}
                                                     >
-                                                    {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
-                                                    </label>
-                                                </CommandItem>
-                                            ))}
-                                        </ScrollArea>
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                            <DialogFooter>
-                                <DialogClose asChild>
-                                    <Button>Aceptar</Button>
-                                </DialogClose>
-                            </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                    <p className="text-xs text-muted-foreground">
-                        El correo se enviará a <span className="font-semibold">{recipientCount}</span> destinatario(s).
-                    </p>
-                </div>
-                
-                <div className="space-y-2">
-                    <Label htmlFor="subject">Asunto</Label>
-                    <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} placeholder="Asunto del correo electrónico" />
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="body">Mensaje</Label>
-                    <Textarea id="body" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Escribe aquí tu mensaje... (Puedes usar HTML)" className="min-h-[200px]" />
-                </div>
-                 
-            </CardContent>
-             <CardFooter className="border-t pt-6">
-                <Button className="w-full md:w-auto ml-auto" onClick={handleSend} disabled={recipientCount === 0 || sending}>
-                    {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                    {sending ? "Enviando..." : `Enviar Correo a ${recipientCount} Miembro(s)`}
-                </Button>
-            </CardFooter>
+                                                        <Check className={cn("mr-2 h-4 w-4", selectedTypes.has(type.value) ? "opacity-100" : "opacity-0")} />
+                                                        {type.label}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Filtrar destinatarios por equipo</Label>
+                            <Popover open={isTeamPopoverOpen} onOpenChange={setIsTeamPopoverOpen}>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start font-normal">
+                                        {selectedTeams.size > 0 ? `${selectedTeams.size} equipo(s) seleccionado(s)` : "Seleccionar equipo..."}
+                                        <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                    </Button>
+                                </PopoverTrigger>
+                                 <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                                    <Command>
+                                        <CommandInput placeholder="Buscar equipo..." />
+                                        <CommandList>
+                                            <CommandEmpty>No se encontró el equipo.</CommandEmpty>
+                                            <CommandGroup>
+                                                {teams.map(team => (
+                                                    <CommandItem
+                                                        key={team.id}
+                                                        onSelect={() => {
+                                                            const newSelection = new Set(selectedTeams);
+                                                            if (newSelection.has(team.id)) {
+                                                                newSelection.delete(team.id);
+                                                            } else {
+                                                                newSelection.add(team.id);
+                                                            }
+                                                            setSelectedTeams(newSelection);
+                                                        }}
+                                                    >
+                                                        <Check className={cn("mr-2 h-4 w-4", selectedTeams.has(team.id) ? "opacity-100" : "opacity-0")} />
+                                                        {team.name}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>Destinatarios</Label>
+                         <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
+                            <DialogTrigger asChild>
+                                 <Button variant="outline" className="w-full md:w-[400px] justify-between font-normal">
+                                    {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : `Seleccionar de los ${filteredMembers.length} miembros filtrados...`}
+                                    <UserPlus className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                                 <DialogHeader>
+                                    <DialogTitle>Seleccionar Destinatarios</DialogTitle>
+                                    <DialogDescription>
+                                        Selecciona los miembros que recibirán este correo.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <Command>
+                                    <CommandInput placeholder="Buscar miembro..." />
+                                    <CommandList>
+                                        <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
+                                        <CommandGroup>
+                                            <CommandItem onSelect={() => handleSelectAllFiltered(!isAllFilteredSelected)} className="flex items-center space-x-2 font-semibold cursor-pointer">
+                                                <Checkbox
+                                                    id="select-all"
+                                                    checked={isAllFilteredSelected}
+                                                    onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
+                                                />
+                                                <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                            </CommandItem>
+                                            <ScrollArea className="h-64">
+                                                {filteredMembers.map((member) => (
+                                                    <CommandItem
+                                                        key={member.id}
+                                                        value={member.name}
+                                                        onSelect={() => handleSelectMember(member.id)}
+                                                        className="flex items-center space-x-2 cursor-pointer"
+                                                    >
+                                                        <Checkbox
+                                                            id={`select-${member.id}`}
+                                                            checked={selectedMemberIds.has(member.id)}
+                                                            onCheckedChange={() => handleSelectMember(member.id)}
+                                                        />
+                                                        <label
+                                                            htmlFor={`select-${member.id}`}
+                                                            className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer"
+                                                        >
+                                                        {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
+                                                        </label>
+                                                    </CommandItem>
+                                                ))}
+                                            </ScrollArea>
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                                <DialogFooter>
+                                    <DialogClose asChild>
+                                        <Button>Aceptar</Button>
+                                    </DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        <p className="text-xs text-muted-foreground">
+                            El correo se enviará a <span className="font-semibold">{recipientCount}</span> destinatario(s).
+                        </p>
+                    </div>
+                    
+                    <div className="space-y-2">
+                        <Label htmlFor="subject">Asunto</Label>
+                        <Input name="subject" id="subject" placeholder="Asunto del correo electrónico" required/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="body">Mensaje</Label>
+                        <Textarea name="htmlContent" id="body" placeholder="Escribe aquí tu mensaje... (Puedes usar HTML)" className="min-h-[200px]" required/>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="attachments">Adjuntos</Label>
+                        <Input name="attachments" id="attachments" type="file" multiple />
+                    </div>
+                     
+                </CardContent>
+                 <CardFooter className="border-t pt-6">
+                    <Button type="submit" className="w-full md:w-auto ml-auto" disabled={recipientCount === 0 || sending}>
+                        {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                        {sending ? "Enviando..." : `Enviar Correo a ${recipientCount} Miembro(s)`}
+                    </Button>
+                </CardFooter>
+            </form>
         </Card>
     );
 }

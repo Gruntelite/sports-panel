@@ -6,18 +6,19 @@ import { db } from './firebase'; // Use server SDK
 import type { ClubSettings } from "./types";
 import nodemailer from "nodemailer";
 
+interface Attachment {
+  filename: string;
+  content: Buffer;
+  contentType: string;
+}
 
-export async function sendEmailWithSmtpAction({
-    clubId,
-    recipients,
-    subject,
-    htmlContent,
-}: {
-    clubId: string,
-    recipients: { email: string, name: string }[],
-    subject: string,
-    htmlContent: string
-}) {
+export async function sendEmailWithSmtpAction(formData: FormData) {
+    const clubId = formData.get('clubId') as string;
+    const recipients = JSON.parse(formData.get('recipients') as string) as { email: string, name: string }[];
+    const subject = formData.get('subject') as string;
+    const htmlContent = formData.get('htmlContent') as string;
+    const files = formData.getAll('attachments') as File[];
+
     if (!clubId || recipients.length === 0 || !subject || !htmlContent) {
         return { success: false, error: "Faltan parámetros para enviar el correo." };
     }
@@ -50,12 +51,25 @@ export async function sendEmailWithSmtpAction({
             },
         });
 
+        const attachments: Attachment[] = [];
+        for (const file of files) {
+            if(file.size > 0) {
+                const buffer = Buffer.from(await file.arrayBuffer());
+                attachments.push({
+                    filename: file.name,
+                    content: buffer,
+                    contentType: file.type,
+                });
+            }
+        }
+        
         for (const recipient of recipients) {
             await transporter.sendMail({
                 from: `"${clubName}" <${smtpFromEmail}>`,
                 to: recipient.email,
                 subject: subject,
                 html: htmlContent,
+                attachments: attachments,
             });
         }
 
