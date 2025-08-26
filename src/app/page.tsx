@@ -189,7 +189,7 @@ export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
 
   const pricing = {
-    pro: { monthly: 34.99, yearly: Math.round(34.99 * 12 * 0.9) }
+    pro: { monthly: 33, yearly: Math.round(33 * 12 * 0.9) }
   };
 
   return (

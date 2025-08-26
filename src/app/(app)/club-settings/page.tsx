@@ -39,7 +39,7 @@ function getLuminance(hex: string): number {
 }
 
 const pricing = {
-    pro: { monthly: 34.99, yearly: Math.round(34.99 * 12 * 0.9) },
+    pro: { monthly: 33, yearly: Math.round(33 * 12 * 0.9) },
 };
 
 
