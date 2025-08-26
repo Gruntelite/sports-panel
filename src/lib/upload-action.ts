@@ -4,7 +4,7 @@
 import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
-import { addDoc, collection, Timestamp } from "firebase/firestore";
+import { Timestamp } from "firebase-admin/firestore";
 
 export async function uploadFileFromTokenAction(formData: FormData) {
     const file = formData.get('file') as File;
@@ -55,7 +55,8 @@ export async function uploadFileFromTokenAction(formData: FormData) {
             category: 'otro', 
         };
         
-        await addDoc(adminDb.collection("clubs").doc(clubId).collection("documents"), newDocumentData);
+        // Corrected line: use the admin SDK method to add a document
+        await adminDb.collection("clubs").doc(clubId).collection("documents").add(newDocumentData);
 
         await requestRef.update({
             status: 'completed',
