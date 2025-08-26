@@ -340,8 +340,8 @@ function CalendarView() {
         try {
             const year = currentDate.getFullYear();
             const month = currentDate.getMonth();
-            const firstDayOfMonth = new Date(Date.UTC(year, month, 1));
-            const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0, 23, 59, 59));
+            const firstDayOfMonth = new Date(year, month, 1);
+            const lastDayOfMonth = new Date(year, month + 1, 0, 23, 59, 59);
 
             const overridesQuery = query(collection(db, "clubs", clubId, "calendarOverrides"),
                 where('date', '>=', format(firstDayOfMonth, "yyyy-MM-dd")),
@@ -359,9 +359,9 @@ function CalendarView() {
             
             const daysInMonth = new Date(year, month + 1, 0).getDate();
             for (let i = 1; i <= daysInMonth; i++) {
-                const dayDate = new Date(Date.UTC(year, month, i));
+                const dayDate = new Date(year, month, i);
                 const dayStr = format(dayDate, "yyyy-MM-dd");
-                const dayOfWeek = weekDays[dayDate.getUTCDay()];
+                const dayOfWeek = weekDays[dayDate.getDay()];
                 
                 const override = monthOverrides.get(dayStr);
                 const templateId = override?.templateId || defaultTemplateId;
@@ -372,8 +372,8 @@ function CalendarView() {
                 const daySchedule = template.weeklySchedule[dayOfWeek as keyof WeeklySchedule] || [];
 
                 daySchedule.forEach((training: any) => {
-                    const startDateTime = new Date(`${dayStr}T${training.startTime}:00Z`);
-                    const endDateTime = new Date(`${dayStr}T${training.endTime}:00Z`);
+                    const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
+                    const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
                     allTemplateEvents.push({
                         id: `${training.id}-${dayStr}`,
                         title: `${training.teamName}`,
@@ -412,7 +412,7 @@ function CalendarView() {
     setModalMode(mode);
     if(mode === 'add' && selectedDays.size > 0) {
         const firstDay = Array.from(selectedDays)[0];
-        const date = new Date(`${firstDay}T12:00:00Z`);
+        const date = new Date(`${firstDay}T12:00:00`);
         setEventData({ start: Timestamp.fromDate(date), end: Timestamp.fromDate(date), color: EVENT_COLORS[0].value, type: "Evento" });
     } else {
         setEventData(event || { color: EVENT_COLORS[0].value, type: "Evento" });
@@ -464,7 +464,7 @@ function CalendarView() {
   };
   
   const handleDayClick = (day: number) => {
-    const dayDate = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), day));
+    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
     const dayStr = format(dayDate, "yyyy-MM-dd");
 
     const newSelectedDays = new Set(selectedDays);
@@ -539,10 +539,10 @@ function CalendarView() {
     }
   }
   
-  const startOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), 1));
-  const endOfMonth = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth() + 1, 0));
-  const daysInMonth = endOfMonth.getUTCDate();
-  const startDayRaw = startOfMonth.getUTCDay(); 
+  const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+  const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+  const daysInMonth = endOfMonth.getDate();
+  const startDayRaw = startOfMonth.getDay(); 
   const startDay = startDayRaw === 0 ? 6 : startDayRaw - 1;
 
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -647,11 +647,11 @@ function CalendarView() {
             <div className="grid grid-cols-7 gap-px bg-border">
                 {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
                 {days.map(day => {
-                    const dayDate = new Date(Date.UTC(currentDate.getFullYear(), currentDate.getMonth(), day));
+                    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                     const dayStr = format(dayDate, "yyyy-MM-dd");
                     const isSelected = selectedDays.has(dayStr);
-                    const dayStart = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 0, 0, 0, 0));
-                    const dayEnd = new Date(Date.UTC(dayDate.getUTCFullYear(), dayDate.getUTCMonth(), dayDate.getUTCDate(), 23, 59, 59, 999));
+                    const dayStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 0, 0, 0, 0);
+                    const dayEnd = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 23, 59, 59, 999);
 
                     const dayEvents = events.filter(e => {
                         const eventDate = e.start.toDate();
@@ -719,7 +719,7 @@ function CalendarView() {
                             onDateChange={(date) => {
                                 if (date && eventData.start) {
                                     const oldDate = eventData.start.toDate();
-                                    const newDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
+                                    const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getHours(), oldDate.getMinutes());
                                     setEventData({ ...eventData, start: Timestamp.fromDate(newDate) });
                                 } else if (date) {
                                      setEventData({ ...eventData, start: Timestamp.fromDate(date) });
@@ -734,7 +734,7 @@ function CalendarView() {
                             onDateChange={(date) => {
                                 if(date && eventData.end) {
                                     const oldDate = eventData.end.toDate();
-                                    const newDate = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getUTCHours(), oldDate.getUTCMinutes()));
+                                    const newDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), oldDate.getHours(), oldDate.getMinutes());
                                     setEventData({...eventData, end: Timestamp.fromDate(newDate)});
                                 } else if (date) {
                                      setEventData({ ...eventData, end: Timestamp.fromDate(date) });
@@ -750,7 +750,7 @@ function CalendarView() {
                              if(eventData.start) {
                                 const [h, m] = e.target.value.split(':');
                                 const newDate = eventData.start.toDate();
-                                newDate.setUTCHours(Number(h), Number(m));
+                                newDate.setHours(Number(h), Number(m));
                                 setEventData({...eventData, start: Timestamp.fromDate(newDate)})
                             }
                         }}/>
@@ -761,7 +761,7 @@ function CalendarView() {
                              if(eventData.end) {
                                 const [h, m] = e.target.value.split(':');
                                 const newDate = eventData.end.toDate();
-                                newDate.setUTCHours(Number(h), Number(m));
+                                newDate.setHours(Number(h), Number(m));
                                 setEventData({...eventData, end: Timestamp.fromDate(newDate)})
                             }
                         }}/>
