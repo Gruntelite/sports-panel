@@ -2,9 +2,9 @@
 'use server';
 
 import { doc, getDoc, updateDoc, addDoc, collection, Timestamp } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref, uploadBytes } from "firebase/storage";
 import { db as adminDb } from './firebase-admin'; // Use Admin SDK
-import { storage as adminStorage } from './firebase'; // Storage can use client SDK for ref, but admin for actual upload if needed for permissions
+import { storage as adminStorage } from './firebase'; // Storage can use client SDK for ref
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
 
@@ -36,13 +36,10 @@ export async function uploadFileFromTokenAction(formData: FormData) {
         await uploadBytes(fileRef, buffer, {
             contentType: file.type,
         });
-
-        const url = await getDownloadURL(fileRef);
-
+        
         // Create document entry in Firestore
         const newDocumentData = {
             name: documentTitle,
-            url,
             path: filePath,
             createdAt: Timestamp.now(),
             ownerId: userId,

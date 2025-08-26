@@ -127,9 +127,23 @@ function DocumentsList() {
     try {
       const docsQuery = query(collection(db, "clubs", currentClubId, "documents"), orderBy("createdAt", "desc"));
       const docsSnapshot = await getDocs(docsQuery);
-      const docsList = docsSnapshot.docs.map(
-        (doc) => ({ id: doc.id, ...doc.data() } as Document)
-      );
+      
+      const docsListPromises = docsSnapshot.docs.map(async (docData) => {
+          const doc = { id: docData.id, ...docData.data() } as Document;
+          if (doc.path && !doc.url) {
+              try {
+                  const url = await getDownloadURL(ref(storage, doc.path));
+                  doc.url = url;
+              } catch (e) {
+                  console.warn(`Could not get download URL for ${doc.path}`, e);
+                  doc.url = '#'; // Assign a fallback URL
+              }
+          }
+          return doc;
+      });
+
+      const docsList = await Promise.all(docsListPromises);
+
       setDocuments(docsList);
       
       const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
@@ -233,9 +247,8 @@ function DocumentsList() {
       
       const url = await getDownloadURL(fileRef);
       
-      const newDocumentData: Omit<Document, "id"> = {
+      const newDocumentData: Omit<Document, "id" | "url"> = {
         name: documentNameToSave.trim(),
-        url,
         path: filePath,
         createdAt: Timestamp.now(),
         ownerId: owner.id,
@@ -494,7 +507,7 @@ function DocumentsList() {
                         {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
                       </TableCell>
                       <TableCell className="text-right">
-                        <Button asChild variant="outline" size="icon" className="mr-2">
+                        <Button asChild variant="outline" size="icon" className="mr-2" disabled={!doc.url}>
                           <a href={doc.url} target="_blank" rel="noopener noreferrer">
                             <Download className="h-4 w-4" />
                           </a>

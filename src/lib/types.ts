@@ -4,7 +4,7 @@ import type { Timestamp } from "firebase/firestore";
 export type Document = {
     id?: string;
     name: string;
-    url: string;
+    url?: string;
     path: string;
     createdAt: Timestamp;
     ownerId?: string;
