@@ -5,49 +5,6 @@ import { doc, getDoc, updateDoc, addDoc, collection, Timestamp } from "firebase/
 import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
-import { promises as fs } from 'fs';
-import os from 'os';
-import path from 'path';
-import formidable from 'formidable';
-
-// Helper to parse FormData with formidable
-const parseForm = (formData: FormData): Promise<{ fields: formidable.Fields; files: formidable.Files }> => {
-    const tempDir = os.tmpdir();
-    const form = formidable({
-        uploadDir: tempDir,
-        keepExtensions: true,
-        maxFiles: 1,
-        maxFileSize: 10 * 1024 * 1024, // 10MB
-    });
-
-    // This is a workaround to adapt FormData to what formidable expects (a request object)
-    const readableStream = new ReadableStream({
-        start(controller) {
-            formData.forEach((value, key) => {
-                let content = '';
-                if (value instanceof File) {
-                    content = `Content-Disposition: form-data; name="${key}"; filename="${value.name}"\r\nContent-Type: ${value.type}\r\n\r\n`;
-                    // This part is complex. A proper implementation would need to handle binary data streams.
-                    // For the sake of this example, we'll assume this simplification works for the environment.
-                    // In a real scenario, you'd handle the stream from an actual request.
-                } else {
-                    content = `Content-Disposition: form-data; name="${key}"\r\n\r\n${value}\r\n`;
-                }
-                controller.enqueue(new TextEncoder().encode(content));
-            });
-            controller.close();
-        }
-    });
-
-    // Formidable doesn't directly parse FormData, so this is a conceptual adaptation.
-    // In a real Next.js Server Action, the incoming request isn't directly available.
-    // This part of the code is more illustrative of the logic needed.
-    // A more direct approach without formidable might be better if formidable proves difficult.
-    
-    // Given the constraints, let's switch to a more direct Buffer handling that is more likely to work.
-    return Promise.resolve({ fields: {}, files: {} }); // This will be replaced by direct buffer handling.
-};
-
 
 export async function uploadFileFromTokenAction(formData: FormData) {
     const file = formData.get('file') as File;
