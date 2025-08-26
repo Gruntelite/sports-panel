@@ -34,9 +34,9 @@ const features = [
     description: "Envía correos electrónicos a equipos, grupos o a todo el club directamente desde la plataforma.",
   },
   {
-    icon: <Calendar className="h-8 w-8" />,
-    title: "Calendario y Horarios",
-    description: "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar.",
+    icon: <Database className="h-8 w-8" />,
+    title: "Importador de BBDD",
+    description: "Importa fácilmente tu base de datos de miembros (jugadores, técnicos, etc.) mediante archivos CSV para una puesta en marcha rápida.",
   },
   {
     icon: <UserCheck className="h-8 w-8" />,
@@ -49,9 +49,9 @@ const features = [
     description: "Crea y publica formularios para eventos, campus o captaciones. Gestiona inscritos y pagos de forma centralizada.",
   },
   {
-    icon: <Database className="h-8 w-8" />,
-    title: "Importador de BBDD",
-    description: "Importa fácilmente tu base de datos de miembros (jugadores, técnicos, etc.) mediante archivos CSV para una puesta en marcha rápida.",
+    icon: <Calendar className="h-8 w-8" />,
+    title: "Calendario y Horarios",
+    description: "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar.",
   },
   {
     icon: <AlertTriangle className="h-8 w-8" />,
