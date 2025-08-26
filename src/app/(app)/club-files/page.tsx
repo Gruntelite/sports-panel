@@ -316,26 +316,26 @@ function DocumentsList() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
           <div className="flex-1">
             <CardTitle>Todos los Documentos</CardTitle>
             <CardDescription>
               Archivos disponibles para todo el club.
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2">
-              <div className="relative">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full md:w-auto">
+              <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                       type="search"
                       placeholder="Buscar por nombre..."
-                      className="pl-8 sm:w-[200px]"
+                      className="pl-8 w-full sm:w-[200px]"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
                <Select value={filterCategory} onValueChange={setFilterCategory}>
-                  <SelectTrigger className="w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                       <SelectValue placeholder="Filtrar por categoría" />
                   </SelectTrigger>
                   <SelectContent>
@@ -346,7 +346,7 @@ function DocumentsList() {
                   </SelectContent>
               </Select>
                <Select value={filterOwnerId} onValueChange={setFilterOwnerId}>
-                  <SelectTrigger className="w-[200px]">
+                  <SelectTrigger className="w-full sm:w-[200px]">
                       <SelectValue placeholder="Filtrar por propietario" />
                   </SelectTrigger>
                   <SelectContent>
@@ -361,7 +361,7 @@ function DocumentsList() {
                 onOpenChange={setIsUploadModalOpen}
               >
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button className="w-full sm:w-auto">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Subir Nuevo Archivo
                   </Button>
@@ -478,60 +478,62 @@ function DocumentsList() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre del Archivo</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Propietario</TableHead>
-                  <TableHead>Fecha de Subida</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredDocuments.length > 0 ? (
-                  filteredDocuments.map((doc) => (
-                    <TableRow key={doc.id}>
-                      <TableCell className="font-medium flex items-center gap-2">
-                         <FileIcon className="h-4 w-4 text-muted-foreground"/>
-                         {doc.name}
-                      </TableCell>
-                      <TableCell>
-                        <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || 'Sin Categoría'}</Badge>
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <UserIcon className="h-4 w-4 text-muted-foreground" />
-                          {doc.ownerName || "Club"}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild variant="outline" size="icon" className="mr-2" disabled={!doc.url}>
-                          <a href={doc.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        <Button variant="destructive" size="icon" onClick={() => setDocToDelete(doc)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+             <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre del Archivo</TableHead>
+                    <TableHead>Categoría</TableHead>
+                    <TableHead>Propietario</TableHead>
+                    <TableHead>Fecha de Subida</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredDocuments.length > 0 ? (
+                    filteredDocuments.map((doc) => (
+                      <TableRow key={doc.id}>
+                        <TableCell className="font-medium flex items-center gap-2">
+                          <FileIcon className="h-4 w-4 text-muted-foreground"/>
+                          {doc.name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || 'Sin Categoría'}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <UserIcon className="h-4 w-4 text-muted-foreground" />
+                            {doc.ownerName || "Club"}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild variant="outline" size="icon" className="mr-2" disabled={!doc.url}>
+                            <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          <Button variant="destructive" size="icon" onClick={() => setDocToDelete(doc)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={5}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        No hay documentos que coincidan con el filtro actual.
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={5}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      No hay documentos que coincidan con el filtro actual.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>

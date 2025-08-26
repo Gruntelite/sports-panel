@@ -406,17 +406,17 @@ export default function StaffPage() {
         <TabsContent value="staff">
             <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                       <CardTitle>Staff y Directiva</CardTitle>
                       <CardDescription>
                         Personal administrativo y directivo del club.
                       </CardDescription>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-8 gap-1">
+                              <Button variant="outline" size="sm" className="h-9 gap-1">
                                 <Columns className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                                   Columnas
@@ -440,7 +440,7 @@ export default function StaffPage() {
                               ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          <Button onClick={() => handleOpenModal('add', 'staff')}>
+                          <Button onClick={() => handleOpenModal('add', 'staff')} className="h-9">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Añadir Miembro
                           </Button>
@@ -448,93 +448,95 @@ export default function StaffPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        {staffFields.map(field => (
-                            visibleStaffColumns.has(field.id) && 
-                            <TableHead key={field.id}>{field.label}</TableHead>
-                         ))}
-                        <TableHead>
-                          <span className="sr-only">Acciones</span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {staff.map(member => (
-                        <TableRow key={member.id}>
-                           {staffFields.map(field => (
-                             visibleStaffColumns.has(field.id) && (
-                                <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
-                                     {field.id === 'name' ? (
-                                        <div className="flex items-center gap-3">
-                                          <Avatar className="h-9 w-9">
-                                            <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
-                                            <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
-                                          </Avatar>
-                                          <div className="flex items-center gap-2">
-                                            <span>{getStaffCellContent(member, field.id)}</span>
-                                            {member.hasMissingData && (
-                                              <Tooltip>
-                                                  <TooltipTrigger>
-                                                    <AlertCircle className="h-4 w-4 text-destructive" />
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                    <p>Faltan datos por rellenar</p>
-                                                  </TooltipContent>
-                                              </Tooltip>
-                                            )}
-                                          </div>
-                                        </div>
-                                    ) : (
-                                        getStaffCellContent(member, field.id)
-                                    )}
-                                </TableCell>
-                            )
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          {staffFields.map(field => (
+                              visibleStaffColumns.has(field.id) && 
+                              <TableHead key={field.id} className="min-w-[150px]">{field.label}</TableHead>
                           ))}
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Alternar menú</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>Editar</DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
-                                  <Send className="mr-2 h-4 w-4" />
-                                  Solicitar Actualización
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(member)}>
-                                  Eliminar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                          <TableHead>
+                            <span className="sr-only">Acciones</span>
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {staff.map(member => (
+                          <TableRow key={member.id}>
+                            {staffFields.map(field => (
+                              visibleStaffColumns.has(field.id) && (
+                                  <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
+                                      {field.id === 'name' ? (
+                                          <div className="flex items-center gap-3">
+                                            <Avatar className="h-9 w-9">
+                                              <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
+                                              <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div className="flex items-center gap-2">
+                                              <span>{getStaffCellContent(member, field.id)}</span>
+                                              {member.hasMissingData && (
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                      <AlertCircle className="h-4 w-4 text-destructive" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <p>Faltan datos por rellenar</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                              )}
+                                            </div>
+                                          </div>
+                                      ) : (
+                                          getStaffCellContent(member, field.id)
+                                      )}
+                                  </TableCell>
+                              )
+                            ))}
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Alternar menú</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>Editar</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
+                                    <Send className="mr-2 h-4 w-4" />
+                                    Solicitar Actualización
+                                  </DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(member)}>
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
             </Card>
         </TabsContent>
         <TabsContent value="socios">
           <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
                       <CardTitle>Socios</CardTitle>
                       <CardDescription>
                         Miembros del club que no son jugadores ni staff.
                       </CardDescription>
                     </div>
-                     <div className="flex items-center gap-2">
+                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-8 gap-1">
+                              <Button variant="outline" size="sm" className="h-9 gap-1">
                                 <Columns className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                                   Columnas
@@ -558,7 +560,7 @@ export default function StaffPage() {
                               ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        <Button onClick={() => handleOpenModal('add', 'socio')}>
+                        <Button onClick={() => handleOpenModal('add', 'socio')} className="h-9">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Añadir Socio
                         </Button>
@@ -566,60 +568,62 @@ export default function StaffPage() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                         {socioFields.map(field => (
-                            visibleSocioColumns.has(field.id) && 
-                            <TableHead key={field.id}>{field.label}</TableHead>
-                         ))}
-                        <TableHead>
-                          <span className="sr-only">Acciones</span>
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {socios.map(socio => (
-                        <TableRow key={socio.id}>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
                           {socioFields.map(field => (
-                             visibleSocioColumns.has(field.id) && (
-                                <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
-                                     {field.id === 'name' ? (
-                                        <div className="flex items-center gap-3">
-                                          <Avatar className="h-9 w-9">
-                                            <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
-                                            <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
-                                          </Avatar>
-                                          <span>{getSocioCellContent(socio, field.id)}</span>
-                                        </div>
-                                    ) : (
-                                        getSocioCellContent(socio, field.id)
-                                    )}
-                                </TableCell>
-                            )
+                              visibleSocioColumns.has(field.id) && 
+                              <TableHead key={field.id} className="min-w-[150px]">{field.label}</TableHead>
                           ))}
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button aria-haspopup="true" size="icon" variant="ghost">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                  <span className="sr-only">Alternar menú</span>
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>Editar</DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
-                                  Eliminar
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
+                          <TableHead>
+                            <span className="sr-only">Acciones</span>
+                          </TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {socios.map(socio => (
+                          <TableRow key={socio.id}>
+                            {socioFields.map(field => (
+                              visibleSocioColumns.has(field.id) && (
+                                  <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
+                                      {field.id === 'name' ? (
+                                          <div className="flex items-center gap-3">
+                                            <Avatar className="h-9 w-9">
+                                              <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
+                                              <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span>{getSocioCellContent(socio, field.id)}</span>
+                                          </div>
+                                      ) : (
+                                          getSocioCellContent(socio, field.id)
+                                      )}
+                                  </TableCell>
+                              )
+                            ))}
+                            <TableCell>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button aria-haspopup="true" size="icon" variant="ghost">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                    <span className="sr-only">Alternar menú</span>
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>Editar</DropdownMenuItem>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
+                                    Eliminar
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
             </Card>
         </TabsContent>

@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -619,21 +618,21 @@ export default function CoachesPage() {
     <TooltipProvider>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <CardTitle>Equipo Técnico</CardTitle>
               <CardDescription>
                 Gestiona a todos los miembros del personal técnico de tu club.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-               <Button onClick={() => setIsFieldsModalOpen(true)}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+               <Button onClick={() => setIsFieldsModalOpen(true)} className="w-full sm:w-auto">
                   <Send className="mr-2 h-4 w-4" />
                   Solicitar Actualización
               </Button>
                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                      <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                         <Columns className="mr-2 h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                           Columnas
@@ -658,7 +657,7 @@ export default function CoachesPage() {
                     </DropdownMenuContent>
                 </DropdownMenu>
                 <Select value={filterTeamId} onValueChange={setFilterTeamId}>
-                    <SelectTrigger className="h-8 w-[150px]">
+                    <SelectTrigger className="h-9 w-full sm:w-[150px]">
                       <SelectValue placeholder="Filtrar por equipo"/>
                     </SelectTrigger>
                     <SelectContent>
@@ -671,7 +670,7 @@ export default function CoachesPage() {
               {selectedCoaches.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="h-8 gap-1">
+                      <Button variant="outline" className="h-9 gap-1 w-full sm:w-auto">
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                            Acciones ({selectedCoaches.length})
                         </span>
@@ -698,7 +697,7 @@ export default function CoachesPage() {
                  </DropdownMenu>
               ) : (
                 <>
-                  <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
+                  <Button size="sm" className="h-9 gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         Añadir Miembro
@@ -710,94 +709,96 @@ export default function CoachesPage() {
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[80px]">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                    aria-label="Seleccionar todo"
-                  />
-                </TableHead>
-                 {allColumnFields.map(field => (
-                    visibleColumns.has(field.id) && 
-                    <TableHead 
-                      key={field.id}
-                      className={cn(field.id === 'name' && 'font-medium', 'min-w-[150px]')}
-                    >
-                        {field.label}
-                    </TableHead>
-                 ))}
-                <TableHead>
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredCoaches.map(coach => (
-                <TableRow key={coach.id} data-state={selectedCoaches.includes(coach.id) && "selected"}>
-                   <TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">
                     <Checkbox
-                      checked={selectedCoaches.includes(coach.id)}
-                      onCheckedChange={(checked) => handleSelectCoach(coach.id, checked as boolean)}
-                      aria-label={`Seleccionar a ${coach.name}`}
+                      checked={isAllSelected}
+                      onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                      aria-label="Seleccionar todo"
                     />
-                  </TableCell>
+                  </TableHead>
                   {allColumnFields.map(field => (
-                     visibleColumns.has(field.id) && (
-                        <TableCell 
-                          key={field.id} 
-                          className={cn(field.id === 'name' && 'font-medium')}
-                        >
-                             {field.id === 'name' ? (
-                                <div className="flex items-center gap-3">
-                                  <Avatar className="h-9 w-9">
-                                    <AvatarImage src={coach.avatar} alt={coach.name} data-ai-hint="foto persona" />
-                                    <AvatarFallback>{coach.name?.charAt(0)}{coach.lastName?.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex items-center gap-2">
-                                    <span>{getCellContent(coach, field.id)}</span>
-                                    {coach.hasMissingData && (
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                            <AlertCircle className="h-4 w-4 text-destructive" />
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Faltan datos por rellenar</p>
-                                          </TooltipContent>
-                                      </Tooltip>
-                                    )}
-                                  </div>
-                                </div>
-                            ) : (
-                                getCellContent(coach, field.id)
-                            )}
-                        </TableCell>
-                    )
+                      visibleColumns.has(field.id) && 
+                      <TableHead 
+                        key={field.id}
+                        className={cn(field.id === 'name' && 'font-medium', 'min-w-[150px]')}
+                      >
+                          {field.label}
+                      </TableHead>
                   ))}
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Alternar menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                  <TableHead>
+                    <span className="sr-only">Acciones</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredCoaches.map(coach => (
+                  <TableRow key={coach.id} data-state={selectedCoaches.includes(coach.id) && "selected"}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedCoaches.includes(coach.id)}
+                        onCheckedChange={(checked) => handleSelectCoach(coach.id, checked as boolean)}
+                        aria-label={`Seleccionar a ${coach.name}`}
+                      />
+                    </TableCell>
+                    {allColumnFields.map(field => (
+                      visibleColumns.has(field.id) && (
+                          <TableCell 
+                            key={field.id} 
+                            className={cn(field.id === 'name' && 'font-medium')}
+                          >
+                              {field.id === 'name' ? (
+                                  <div className="flex items-center gap-3">
+                                    <Avatar className="h-9 w-9">
+                                      <AvatarImage src={coach.avatar} alt={coach.name} data-ai-hint="foto persona" />
+                                      <AvatarFallback>{coach.name?.charAt(0)}{coach.lastName?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex items-center gap-2">
+                                      <span>{getCellContent(coach, field.id)}</span>
+                                      {coach.hasMissingData && (
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                              <AlertCircle className="h-4 w-4 text-destructive" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Faltan datos por rellenar</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                    </div>
+                                  </div>
+                              ) : (
+                                  getCellContent(coach, field.id)
+                              )}
+                          </TableCell>
+                      )
+                    ))}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Alternar menú</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">

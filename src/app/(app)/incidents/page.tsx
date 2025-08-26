@@ -198,46 +198,48 @@ function IncidentsTab() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Fecha</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Involucrados</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {incidents.length > 0 ? (
-                  incidents.map((incident) => (
-                    <TableRow key={incident.id}>
-                      <TableCell>{format(incident.date.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
-                      <TableCell>{incident.type}</TableCell>
-                      <TableCell className="max-w-xs truncate">{incident.involved.join(', ')}</TableCell>
-                      <TableCell>
-                        <Badge variant={incident.status === 'Resuelta' ? 'secondary' : incident.status === 'En Progreso' ? 'outline' : 'destructive'}>{incident.status}</Badge>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => handleOpenModal('edit', incident)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => setIncidentToDelete(incident)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={5} className="h-24 text-center">No hay incidencias registradas.</TableCell>
+                    <TableHead>Fecha</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Involucrados</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {incidents.length > 0 ? (
+                    incidents.map((incident) => (
+                      <TableRow key={incident.id}>
+                        <TableCell>{format(incident.date.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
+                        <TableCell>{incident.type}</TableCell>
+                        <TableCell className="max-w-xs truncate">{incident.involved.join(', ')}</TableCell>
+                        <TableCell>
+                          <Badge variant={incident.status === 'Resuelta' ? 'secondary' : incident.status === 'En Progreso' ? 'outline' : 'destructive'}>{incident.status}</Badge>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onSelect={() => handleOpenModal('edit', incident)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setIncidentToDelete(incident)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell colSpan={5} className="h-24 text-center">No hay incidencias registradas.</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -526,51 +528,53 @@ function ProtocolsTab() {
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre del Archivo</TableHead>
-                  <TableHead>Fecha de Subida</TableHead>
-                  <TableHead className="text-right">Acciones</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {protocols.length > 0 ? (
-                  protocols.map((protocol) => (
-                    <TableRow key={protocol.id}>
-                      <TableCell className="font-medium">
-                        <div className="flex items-center gap-2">
-                           <FileText className="h-4 w-4 text-muted-foreground"/>
-                           {protocol.name}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        {format(protocol.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild variant="outline" size="icon" className="mr-2">
-                          <a href={protocol.url} target="_blank" rel="noopener noreferrer">
-                            <Download className="h-4 w-4" />
-                          </a>
-                        </Button>
-                        <Button variant="destructive" size="icon" onClick={() => setProtocolToDelete(protocol)}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nombre del Archivo</TableHead>
+                    <TableHead>Fecha de Subida</TableHead>
+                    <TableHead className="text-right">Acciones</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {protocols.length > 0 ? (
+                    protocols.map((protocol) => (
+                      <TableRow key={protocol.id}>
+                        <TableCell className="font-medium">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground"/>
+                            {protocol.name}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          {format(protocol.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button asChild variant="outline" size="icon" className="mr-2">
+                            <a href={protocol.url} target="_blank" rel="noopener noreferrer">
+                              <Download className="h-4 w-4" />
+                            </a>
+                          </Button>
+                          <Button variant="destructive" size="icon" onClick={() => setProtocolToDelete(protocol)}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  ) : (
+                    <TableRow>
+                      <TableCell
+                        colSpan={3}
+                        className="h-24 text-center text-muted-foreground"
+                      >
+                        Todavía no se ha subido ningún protocolo.
                       </TableCell>
                     </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      className="h-24 text-center text-muted-foreground"
-                    >
-                      Todavía no se ha subido ningún protocolo.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           )}
         </CardContent>
       </Card>
