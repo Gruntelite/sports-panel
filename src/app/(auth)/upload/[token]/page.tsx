@@ -16,6 +16,7 @@ import { Loader2, Upload, FileCheck2, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 import { uploadFileFromTokenAction } from "@/lib/upload-action";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 async function validateToken(token: string): Promise<FileRequest | null> {
     try {
