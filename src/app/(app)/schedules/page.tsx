@@ -372,8 +372,12 @@ function CalendarView() {
                 const daySchedule = template.weeklySchedule[dayOfWeek as keyof WeeklySchedule] || [];
 
                 daySchedule.forEach((training: any) => {
-                    const startDateTime = new Date(`${dayStr}T${training.startTime}:00`);
-                    const endDateTime = new Date(`${dayStr}T${training.endTime}:00`);
+                    const startDateTimeParts = training.startTime.split(':');
+                    const endDateTimeParts = training.endTime.split(':');
+
+                    const startDateTime = new Date(year, month, i, startDateTimeParts[0], startDateTimeParts[1]);
+                    const endDateTime = new Date(year, month, i, endDateTimeParts[0], endDateTimeParts[1]);
+
                     allTemplateEvents.push({
                         id: `${training.id}-${dayStr}`,
                         title: `${training.teamName}`,
