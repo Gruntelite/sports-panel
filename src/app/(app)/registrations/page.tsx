@@ -149,96 +149,88 @@ export default function RegistrationsPage() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones</h1>
-          <p className="text-muted-foreground">
-            Crea y gestiona formularios de inscripción para tus eventos, campus o captaciones.
-          </p>
+        <div className="md:flex md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones</h1>
+            <p className="text-muted-foreground">
+              Crea y gestiona formularios para tus eventos.
+            </p>
+          </div>
+           <div className="mt-4 md:mt-0">
+             <Button onClick={() => handleOpenModal('add')}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Crear Nuevo Evento
+              </Button>
+           </div>
         </div>
 
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div className="flex-1">
-                <CardTitle>Eventos de Inscripción</CardTitle>
-                <CardDescription>
-                  Formularios de inscripción creados para el club.
-                </CardDescription>
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {loading ? (
+            Array.from({length: 3}).map((_, i) => (
+                <Card key={i}><CardContent className="p-6 h-48 animate-pulse bg-muted/50"></CardContent></Card>
+            ))
+          ) : registrationForms.length > 0 ? (
+              registrationForms.map((form) => (
+                <Card key={form.id} className="flex flex-col">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="space-y-1">
+                        <CardTitle>{form.title}</CardTitle>
+                          <CardDescription>
+                            {form.eventStartDate ? (
+                                <span>
+                                    Del {format(form.eventStartDate.toDate(), "d MMM", { locale: es })} al {format(form.eventEndDate ? form.eventEndDate.toDate() : form.eventStartDate.toDate(), "d MMM yyyy", { locale: es })}
+                                </span>
+                            ) : "Sin fecha de evento"}
+                          </CardDescription>
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onSelect={() => handleOpenModal('edit', form)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href={`/registrations/${form.id}`}><Eye className="mr-2 h-4 w-4" />Ver Inscritos</Link></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
+                            <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem className="text-destructive" onSelect={() => setFormToDelete(form)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Eliminar
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-3">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? 'Activo' : 'Cerrado'}</Badge>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CalendarCheck className="h-4 w-4"/>
+                          <span>Inscripción: <b>{form.registrationStartDate ? format(form.registrationStartDate.toDate(), "dd/MM/yy") : 'N/A'} - {form.registrationDeadline ? format(form.registrationDeadline.toDate(), "dd/MM/yy") : 'N/A'}</b></span>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <CircleDollarSign className="h-4 w-4"/>
+                          <span>Precio: <b>{form.price > 0 ? `${form.price}€` : 'Gratis'}</b></span>
+                      </div>
+                  </CardContent>
+                  <CardFooter className="bg-muted/50 p-4">
+                    <div className="flex items-center gap-2 text-sm font-semibold">
+                        <Users className="h-4 w-4 text-muted-foreground"/>
+                        <span>{form.submissionCount || 0} de {form.maxSubmissions || '∞'} inscritos</span>
+                    </div>
+                  </CardFooter>
+                </Card>
+              ))
+          ) : (
+              <div className="col-span-full h-48 flex flex-col items-center justify-center text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                <h3 className="text-lg font-semibold">No has creado ningún evento</h3>
+                <p className="text-sm">Haz clic en "Crear Nuevo Evento" para empezar.</p>
               </div>
-              <Button onClick={() => handleOpenModal('add')}>
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Crear Nuevo Evento
-              </Button>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <div className="flex items-center justify-center p-8">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
-              ) : registrationForms.length > 0 ? (
-                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                  {registrationForms.map((form) => (
-                    <Card key={form.id} className="flex flex-col">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <CardTitle>{form.title}</CardTitle>
-                             <CardDescription>
-                                {form.eventStartDate ? (
-                                    <span>
-                                        Del {format(form.eventStartDate.toDate(), "d MMM", { locale: es })} al {format(form.eventEndDate ? form.eventEndDate.toDate() : form.eventStartDate.toDate(), "d MMM yyyy", { locale: es })}
-                                    </span>
-                                ) : "Sin fecha de evento"}
-                             </CardDescription>
-                          </div>
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => handleOpenModal('edit', form)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
-                                <DropdownMenuItem asChild><Link href={`/registrations/${form.id}`}><Eye className="mr-2 h-4 w-4" />Ver Inscritos</Link></DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
-                                <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem className="text-destructive" onSelect={() => setFormToDelete(form)}>
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Eliminar
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="flex-grow space-y-3">
-                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? 'Activo' : 'Cerrado'}</Badge>
-                         </div>
-                          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <CalendarCheck className="h-4 w-4"/>
-                              <span>Inscripción: <b>{form.registrationStartDate ? format(form.registrationStartDate.toDate(), "dd/MM/yy") : 'N/A'} - {form.registrationDeadline ? format(form.registrationDeadline.toDate(), "dd/MM/yy") : 'N/A'}</b></span>
-                          </div>
-                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                              <CircleDollarSign className="h-4 w-4"/>
-                              <span>Precio: <b>{form.price > 0 ? `${form.price}€` : 'Gratis'}</b></span>
-                          </div>
-                      </CardContent>
-                      <CardFooter className="bg-muted/50 p-4">
-                        <div className="flex items-center gap-2 text-sm font-semibold">
-                            <Users className="h-4 w-4 text-muted-foreground"/>
-                            <span>{form.submissionCount || 0} de {form.maxSubmissions || '∞'} inscritos</span>
-                        </div>
-                      </CardFooter>
-                    </Card>
-                  ))}
-                 </div>
-              ) : (
-                 <div className="h-48 flex flex-col items-center justify-center text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                    <h3 className="text-lg font-semibold">No has creado ningún evento</h3>
-                    <p className="text-sm">Haz clic en "Crear Nuevo Evento" para empezar.</p>
-                 </div>
-              )}
-            </CardContent>
-          </Card>
+          )}
+        </div>
       </div>
 
        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

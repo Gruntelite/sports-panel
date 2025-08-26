@@ -4,37 +4,52 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Logo } from "../logo";
 
 const menuItems = [
     { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
+    { href: "/treasury", label: "Tesorería", icon: CircleDollarSign },
     { href: "/players", label: "Jugadores", icon: Users },
     { href: "/coaches", label: "Entrenadores", icon: UserSquare },
     { href: "/teams", label: "Equipos", icon: Shield },
+    { href: "/staff", label: "Socios y Directiva", icon: Briefcase},
     { href: "/schedules", label: "Horarios", icon: Clock },
-    { href: "/calendar", label: "Calendario", icon: Calendar },
     { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
-    { href: "/staff", label: "Staff y Directiva", icon: UserCog},
-    { href: "/protocols", label: "Protocolos", icon: ClipboardList },
+    { href: "/registrations", label: "Inscripciones y Eventos", icon: ClipboardList },
+    { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
+    { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
+    { href: "/importer", label: "Importador de BBDD", icon: Database },
+    { href: "/club-settings", label: "Ajustes del Club", icon: UserCog},
 ];
+
 
 export function Header() {
     const pathname = usePathname();
+    const currentPage = menuItems.find(item => pathname.startsWith(item.href))?.label || 'Panel';
 
     return (
+        <>
         <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30 md:hidden">
-            <Sheet>
+             <h1 className="text-xl font-bold font-headline tracking-tight">
+                {currentPage}
+            </h1>
+        </header>
+
+        {/* Floating Action Button for Mobile Menu */}
+        <div className="md:hidden fixed bottom-6 right-6 z-50">
+             <Sheet>
                 <SheetTrigger asChild>
                     <Button
-                        variant="outline"
+                        variant="default"
                         size="icon"
-                        className="shrink-0"
+                        className="rounded-full w-14 h-14 shadow-lg"
                     >
-                        <Menu className="h-5 w-5" />
-                        <span className="sr-only">Alternar menú de navegación</span>
+                        <Menu className="h-6 w-6" />
+                        <span className="sr-only">Abrir menú de navegación</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col">
@@ -43,7 +58,7 @@ export function Header() {
                             href="/dashboard"
                             className="flex items-center gap-2 text-lg font-semibold mb-4"
                         >
-                            <Shield className="h-6 w-6 text-primary" />
+                            <Logo width={32} height={32}/>
                             <span className="font-headline">SportsPanel</span>
                         </Link>
                         {menuItems.map((item) => (
@@ -60,37 +75,9 @@ export function Header() {
                          </Link>
                         ))}
                     </nav>
-                     <div className="mt-auto border-t pt-4">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" className="w-full justify-start gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary h-auto">
-                                    <Avatar className="h-9 w-9">
-                                    <AvatarImage src="https://placehold.co/40x40.png" alt="@admin" />
-                                    <AvatarFallback>AU</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col items-start">
-                                        <span className="font-semibold text-sm text-foreground">Usuario Admin</span>
-                                        <span className="text-xs text-muted-foreground">admin@sportspanel.com</span>
-                                    </div>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 mb-2">
-                                <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>Ajustes</DropdownMenuItem>
-                                <DropdownMenuItem asChild>
-                                <Link href="/">Cerrar Sesión</Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
                 </SheetContent>
             </Sheet>
-            <div className="flex-1 text-center">
-                 <h1 className="text-xl font-bold font-headline tracking-tight">
-                    {menuItems.find(item => pathname.startsWith(item.href))?.label || 'SportsPanel'}
-                </h1>
-            </div>
-        </header>
+        </div>
+        </>
     )
 }

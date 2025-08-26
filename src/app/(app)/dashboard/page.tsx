@@ -166,9 +166,9 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className="capitalize">Entrenamientos del {titleDate}</CardTitle>
+                    <CardTitle className="capitalize text-lg md:text-xl">Entrenamientos del {titleDate}</CardTitle>
                     <CardDescription>
-                        Sesiones programadas según la plantilla de horarios activa para este día.
+                        Sesiones programadas para este día.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -180,14 +180,14 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         <div className="space-y-3">
                             {trainings.map(item => (
                                 <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
-                                    <div className="flex flex-col items-center w-20">
-                                        <span className="font-bold text-base">{item.startTime}</span>
+                                    <div className="flex flex-col items-center w-16 md:w-20">
+                                        <span className="font-bold text-sm md:text-base">{item.startTime}</span>
                                         <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                     </div>
                                     <div className="h-10 w-1 bg-primary rounded-full"></div>
                                     <div className="flex-1">
-                                        <p className="font-semibold">{item.title}</p>
-                                        {item.location && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
+                                        <p className="font-semibold text-sm md:text-base">{item.title}</p>
+                                        {item.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
                                     </div>
                                 </div>
                             ))}
@@ -202,9 +202,9 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
 
              <Card>
                 <CardHeader>
-                    <CardTitle className="capitalize">Otros Eventos del {titleDate}</CardTitle>
+                    <CardTitle className="capitalize text-lg md:text-xl">Otros Eventos del {titleDate}</CardTitle>
                     <CardDescription>
-                        Partidos, reuniones y otros eventos creados en el calendario.
+                        Partidos, reuniones y otros eventos.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -218,14 +218,14 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                                 const separatorColor = getSeparatorColorFromBorder(item.color);
                                 return (
                                 <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
-                                    <div className="flex flex-col items-center w-20">
-                                        <span className="font-bold text-base">{item.startTime}</span>
+                                    <div className="flex flex-col items-center w-16 md:w-20">
+                                        <span className="font-bold text-sm md:text-base">{item.startTime}</span>
                                         <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                     </div>
                                     <div className={cn("h-10 w-1 rounded-full", separatorColor)}></div>
                                     <div className="flex-1">
-                                        <p className="font-semibold">{item.title}</p>
-                                        {item.location && <div className="flex items-center gap-1.5 text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
+                                        <p className="font-semibold text-sm md:text-base">{item.title}</p>
+                                        {item.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
                                     </div>
                                 </div>
                                 );
@@ -316,7 +316,7 @@ export default function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {loading ? (
             Array.from({length: 4}).map((_, i) => (
                 <Card key={i}>
@@ -352,9 +352,9 @@ export default function DashboardPage() {
       </div>
       
        <Card>
-        <CardHeader className="flex-row items-center gap-4 space-y-0">
+        <CardHeader className="flex-col items-start gap-4 space-y-0 md:flex-row md:items-center">
           <CardTitle>Agenda del Día</CardTitle>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto">
             <DatePicker date={selectedDate} onDateChange={(date) => date && setSelectedDate(date)} />
             <Button variant="outline" onClick={() => setSelectedDate(new Date())}>Hoy</Button>
           </div>

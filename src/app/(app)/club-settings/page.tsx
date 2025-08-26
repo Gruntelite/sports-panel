@@ -289,19 +289,10 @@ export default function ClubSettingsPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-2xl font-bold font-headline tracking-tight">
-                Ajustes del Club
-                </h1>
-                <p className="text-muted-foreground">
-                Gestiona la configuración general, seguridad y las integraciones de tu club.
-                </p>
-            </div>
-
             <Tabs defaultValue="settings" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4"/>Ajustes</TabsTrigger>
-                    <TabsTrigger value="customization">Campos Personalizados</TabsTrigger>
+                    <TabsTrigger value="customization">Campos</TabsTrigger>
                     <TabsTrigger value="subscription"><CreditCard className="mr-2 h-4 w-4"/>Suscripción</TabsTrigger>
                 </TabsList>
                 <TabsContent value="settings" className="mt-6">
@@ -414,7 +405,7 @@ export default function ClubSettingsPage() {
                                         </div>
                                         <div className="space-y-2">
                                             <Label>Aplica a</Label>
-                                            <div className="flex gap-4">
+                                            <div className="flex flex-col sm:flex-row gap-4">
                                                 {(['player', 'coach', 'staff'] as const).map(type => (
                                                     <div key={type} className="flex items-center gap-2">
                                                         <Switch
