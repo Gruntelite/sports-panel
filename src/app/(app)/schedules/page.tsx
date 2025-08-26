@@ -23,7 +23,7 @@ import type { Team, CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format, parse, parseISO } from "date-fns";
+import { format, parse, parseISO, addMonths } from "date-fns";
 
 
 type Venue = {
@@ -549,7 +549,7 @@ function CalendarView() {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const placeholders = Array.from({ length: startDay }, (_, i) => i);
   
-  const monthName = startOfMonth.toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
+  const monthName = addMonths(startOfMonth, 1).toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
   const year = startOfMonth.getUTCFullYear();
   const selectedTemplateName = templates.find(t => t.id === defaultTemplateId)?.name || 'Seleccionar Plantilla';
 
