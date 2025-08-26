@@ -4,7 +4,9 @@ import { getFirestore } from 'firebase-admin/firestore';
 import * as admin from 'firebase-admin';
 
 if (admin.apps.length === 0) {
-  admin.initializeApp();
+  admin.initializeApp({
+    storageBucket: "sportspanel.firebasestorage.app",
+  });
 }
 
 const db = getFirestore();

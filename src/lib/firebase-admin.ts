@@ -6,7 +6,9 @@ if (!admin.apps.length) {
   try {
     // This will use the GOOGLE_APPLICATION_CREDENTIALS environment variable
     // for authentication on the server.
-    admin.initializeApp();
+    admin.initializeApp({
+        storageBucket: "sportspanel.firebasestorage.app",
+    });
   } catch (e) {
     console.error('Firebase admin initialization error', e);
   }
