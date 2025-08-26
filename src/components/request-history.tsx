@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -49,18 +50,20 @@ export function RequestHistory() {
   const [selectedBatchTitle, setSelectedBatchTitle] = useState("");
 
   useEffect(() => {
-    const fetchClubId = async () => {
-      const user = auth.currentUser;
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDoc = await getDoc(doc(db, "users", user.uid));
         if (userDoc.exists()) {
           setClubId(userDoc.data().clubId);
+        } else {
+            setLoading(false);
         }
+      } else {
+        setLoading(false);
       }
-      setLoading(false);
-    };
-
-    fetchClubId();
+    });
+      
+    return () => unsubscribe();
   }, []);
 
   useEffect(() => {
