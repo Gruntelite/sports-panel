@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle, UserCheck, Database, ClipboardList, AlertTriangle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -20,8 +20,8 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 const features = [
   {
     icon: <Users className="h-8 w-8" />,
-    title: "Gestión Centralizada de Miembros",
-    description: "Administra fichas de jugadores, entrenadores y staff en un único lugar. Accede a toda la información al instante.",
+    title: "Gestión Centralizada de Miembros y Equipos",
+    description: "Administra fichas de jugadores, entrenadores, staff y equipos en un único lugar. Accede a toda la información al instante.",
   },
   {
     icon: <CircleDollarSign className="h-8 w-8" />,
@@ -38,10 +38,25 @@ const features = [
     title: "Calendario y Horarios",
     description: "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar.",
   },
-   {
-    icon: <Home className="h-8 w-8" />,
-    title: "Portal para Familias y Miembros",
-    description: "Ofrece un acceso privado para que cada miembro pueda consultar y actualizar sus datos de forma segura.",
+  {
+    icon: <UserCheck className="h-8 w-8" />,
+    title: "Actualización de Datos Digitalizada",
+    description: "Envía solicitudes automáticas a tus miembros para que actualicen sus datos. La información se sincroniza al instante.",
+  },
+  {
+    icon: <ClipboardList className="h-8 w-8" />,
+    title: "Formularios de Inscripción",
+    description: "Crea y publica formularios para eventos, campus o captaciones. Gestiona inscritos y pagos de forma centralizada.",
+  },
+  {
+    icon: <Database className="h-8 w-8" />,
+    title: "Importador de BBDD",
+    description: "Importa fácilmente tu base de datos de miembros (jugadores, técnicos, etc.) mediante archivos CSV para una puesta en marcha rápida.",
+  },
+  {
+    icon: <AlertTriangle className="h-8 w-8" />,
+    title: "Incidencias y Protocolos",
+    description: "Registra incidencias, lesiones o sanciones y ten a mano los protocolos de actuación del club para una gestión rápida y eficaz.",
   },
   {
     icon: <FolderArchive className="h-8 w-8" />,
