@@ -330,3 +330,17 @@ export type Incident = {
 export type FormWithSubmissions = RegistrationForm & {
     submissions: FormSubmission[];
 }
+
+export type FileRequest = {
+    id: string;
+    clubId: string;
+    userId: string;
+    userType: 'players' | 'coaches' | 'staff';
+    userName: string;
+    documentTitle: string;
+    message?: string;
+    status: 'pending' | 'completed';
+    createdAt: Timestamp;
+    completedAt?: Timestamp;
+    filePath?: string;
+}

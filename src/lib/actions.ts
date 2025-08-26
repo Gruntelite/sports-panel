@@ -205,3 +205,79 @@ export async function importDataAction({
         return { success: false, error: `Ocurrió un error durante la importación: ${error.message}` };
     }
 }
+
+export async function requestFilesAction({
+  clubId,
+  members,
+  documentTitle,
+  message,
+}: {
+  clubId: string;
+  members: { id: string; name: string; email: string; type: 'Jugador' | 'Entrenador' | 'Staff' }[];
+  documentTitle: string;
+  message?: string;
+}): Promise<{ success: boolean; error?: string; count?: number }> {
+  if (members.length === 0) {
+    return { success: false, error: "No se seleccionaron miembros." };
+  }
+
+  try {
+    const batch = writeBatch(db);
+    const requestsToSend: { recipient: {email: string, name: string}, url: string }[] = [];
+
+    for (const member of members) {
+      if (!member.email) continue;
+      
+      const requestRef = doc(collection(db, "fileRequests"));
+      const token = requestRef.id;
+      const userType = member.type === 'Jugador' ? 'players' : member.type === 'Entrenador' ? 'coaches' : 'staff';
+
+      batch.set(requestRef, {
+        clubId,
+        userId: member.id,
+        userType: userType,
+        userName: member.name,
+        documentTitle,
+        message,
+        status: 'pending',
+        createdAt: Timestamp.now(),
+      });
+      
+      requestsToSend.push({
+        recipient: { email: member.email, name: member.name },
+        url: `${window.location.origin}/upload/${token}`,
+      });
+    }
+
+    await batch.commit();
+
+    const clubDocRef = doc(db, "clubs", clubId);
+    const clubDocSnap = await getDoc(clubDocRef);
+    const clubName = clubDocSnap.exists() ? clubDocSnap.data().name : 'Tu Club';
+    let emailsSent = 0;
+
+    for (const request of requestsToSend) {
+      const emailResult = await sendEmailWithSmtpAction({
+        clubId,
+        recipients: [request.recipient],
+        subject: `Solicitud de archivo: ${documentTitle}`,
+        htmlContent: `
+          <h1>Solicitud de Archivo</h1>
+          <p>Hola ${request.recipient.name},</p>
+          <p>El club ${clubName} te solicita que subas el siguiente documento: <strong>${documentTitle}</strong>.</p>
+          ${message ? `<p><strong>Mensaje del club:</strong> ${message}</p>` : ''}
+          <p>Por favor, utiliza el siguiente enlace seguro para subir tu archivo:</p>
+          <a href="${request.url}">Subir Archivo</a>
+          <p>Gracias,</p>
+          <p>El equipo de ${clubName}</p>
+        `,
+      });
+      if(emailResult.success) emailsSent++;
+    }
+    
+    return { success: true, count: emailsSent };
+  } catch (error: any) {
+    console.error("Error requesting files:", error);
+    return { success: false, error: error.message };
+  }
+}
