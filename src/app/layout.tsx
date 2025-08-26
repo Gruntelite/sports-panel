@@ -5,6 +5,9 @@ import { Toaster } from "@/components/ui/toaster"
 export const metadata: Metadata = {
   title: 'SportsPanel',
   description: 'La plataforma de gestión todo en uno para tu club deportivo.',
+  icons: {
+    icon: 'https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba',
+  },
 };
 
 export default function RootLayout({
