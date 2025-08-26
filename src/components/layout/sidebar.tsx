@@ -162,7 +162,7 @@ export function Sidebar() {
     return (
         <div className="hidden border-r bg-primary text-primary-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
             <div className="flex h-full max-h-screen flex-col">
-                <div className="flex h-14 items-center border-b border-primary-foreground/20 px-4 lg:h-[60px] lg:px-6">
+                <div className="flex h-20 items-center border-b border-primary-foreground/20 px-4 lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
                             <Skeleton className="h-8 w-8 rounded-md bg-white/20" />
@@ -175,8 +175,8 @@ export function Sidebar() {
                         <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32 bg-white/20" />}</span>
                     </Link>
                 </div>
-                <div className="flex-1 overflow-y-auto">
-                    <nav className="grid items-start px-2 font-medium lg:px-4 py-4">
+                <div className="flex-1 overflow-y-auto pt-4">
+                    <nav className="grid items-start px-2 font-medium lg:px-4">
                         {menuItems.map((item) => {
                             const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
                             return (
