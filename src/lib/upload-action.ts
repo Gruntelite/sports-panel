@@ -1,7 +1,7 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, addDoc, collection, Timestamp } from "firebase/firestore";
+import { doc, updateDoc, addDoc, collection, Timestamp } from "firebase/firestore";
 import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
