@@ -1,10 +1,10 @@
 
 'use server';
 
-import { doc, updateDoc, addDoc, collection, Timestamp } from "firebase/firestore";
 import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
 import { v4 as uuidv4 } from "uuid";
 import type { FileRequest } from "./types";
+import { addDoc, collection, Timestamp } from "firebase/firestore";
 
 export async function uploadFileFromTokenAction(formData: FormData) {
     const file = formData.get('file') as File;
@@ -22,11 +22,16 @@ export async function uploadFileFromTokenAction(formData: FormData) {
         const requestRef = adminDb.collection("fileRequests").doc(token);
         const requestSnap = await requestRef.get();
 
-        if (!requestSnap.exists || requestSnap.data()?.status !== 'pending') {
+        if (!requestSnap.exists) {
             return { success: false, error: 'Token no válido o ya utilizado.' };
         }
         
         const fileRequest = requestSnap.data() as FileRequest;
+        
+        if (fileRequest.status !== 'pending') {
+             return { success: false, error: 'Token no válido o ya utilizado.' };
+        }
+
         const { clubId, userId, userType, documentTitle, userName } = fileRequest;
         
         const bucket = adminStorage.bucket();
