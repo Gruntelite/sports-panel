@@ -354,11 +354,11 @@ export default function LandingPage() {
                     {benefits.map((benefit, index) => (
                         <div key={index} className={cn(
                             "grid gap-10 lg:grid-cols-2 lg:gap-12 items-center p-8 rounded-2xl",
-                            index === 0 ? "bg-gray-800 text-white" : "bg-white",
+                            index % 2 === 0 ? "bg-gray-800 text-white" : "bg-white",
                         )}>
                             <div className={cn("space-y-4", index % 2 !== 0 && "lg:order-last")}>
                                 <h3 className="text-2xl font-bold font-headline tracking-tight">{benefit.title}</h3>
-                                <p className={cn(index === 0 ? "text-gray-300" : "text-muted-foreground")}>{benefit.subtitle}</p>
+                                <p className={cn(index % 2 === 0 ? "text-gray-300" : "text-muted-foreground")}>{benefit.subtitle}</p>
                                 <ul className="mt-6 space-y-4">
                                     {benefit.points.map((point, pIndex) => (
                                         <li key={pIndex} className="flex items-start gap-3">
@@ -369,7 +369,7 @@ export default function LandingPage() {
                                 </ul>
                             </div>
                             <div className="flex items-center justify-center">
-                                <div className={cn("p-6 rounded-xl", index === 0 ? "bg-gray-700/50" : "bg-turquesa/10")}>
+                                <div className={cn("p-6 rounded-xl", index % 2 === 0 ? "bg-gray-700/50" : "bg-turquesa/10")}>
                                     <Image
                                         src={benefit.image.src}
                                         alt={benefit.image.alt}
