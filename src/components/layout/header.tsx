@@ -1,10 +1,10 @@
 
 "use client";
 import Link from "next/link";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -52,28 +52,40 @@ export function Header() {
                         <span className="sr-only">Abrir menú de navegación</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="flex flex-col">
-                    <nav className="grid gap-2 text-lg font-medium">
-                        <Link
-                            href="/dashboard"
-                            className="flex items-center gap-2 text-lg font-semibold mb-4"
-                        >
-                            <Logo width={32} height={32}/>
-                            <span className="font-headline">SportsPanel</span>
-                        </Link>
-                        {menuItems.map((item) => (
+                <SheetContent side="left" className="flex flex-col p-0">
+                     <nav className="flex flex-col h-full">
+                        <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0 justify-between">
                              <Link
-                             key={item.href}
-                             href={item.href}
-                             className={cn(
-                                 "flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground",
-                                 pathname.startsWith(item.href) && "bg-muted text-foreground"
-                             )}
-                         >
-                             <item.icon className="h-5 w-5" />
-                             {item.label}
-                         </Link>
-                        ))}
+                                href="/dashboard"
+                                className="flex items-center gap-3 text-lg font-semibold"
+                            >
+                                <Logo width={32} height={32}/>
+                                <span className="font-headline text-lg font-bold">SportsPanel</span>
+                            </Link>
+                             <SheetClose asChild>
+                                <Button variant="ghost" size="icon" className="rounded-full">
+                                    <X className="h-5 w-5" />
+                                </Button>
+                            </SheetClose>
+                        </div>
+                        <div className="flex-1 overflow-y-auto">
+                             <div className="grid items-start p-4 gap-1">
+                            {menuItems.map((item) => (
+                                <SheetClose asChild key={item.href}>
+                                    <Link
+                                    href={item.href}
+                                    className={cn(
+                                        "flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors",
+                                        pathname.startsWith(item.href) && "bg-muted text-foreground"
+                                    )}
+                                    >
+                                        <item.icon className="h-5 w-5" />
+                                        {item.label}
+                                    </Link>
+                                </SheetClose>
+                            ))}
+                            </div>
+                        </div>
                     </nav>
                 </SheetContent>
             </Sheet>

@@ -185,9 +185,9 @@ function IncidentsTab() {
    return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <CardTitle>Historial de Incidencias</CardTitle>
-          <Button onClick={() => handleOpenModal('add')}>
+          <Button onClick={() => handleOpenModal('add')} className="w-full md:w-auto">
             <PlusCircle className="mr-2 h-4 w-4" />
             Registrar Incidencia
           </Button>
@@ -460,7 +460,7 @@ function ProtocolsTab() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <CardTitle>Todos los Protocolos</CardTitle>
             <CardDescription>
@@ -472,7 +472,7 @@ function ProtocolsTab() {
             onOpenChange={setIsUploadModalOpen}
           >
             <DialogTrigger asChild>
-              <Button>
+              <Button className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Subir Nuevo Protocolo
               </Button>

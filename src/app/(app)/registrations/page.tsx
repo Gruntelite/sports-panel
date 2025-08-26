@@ -149,7 +149,7 @@ export default function RegistrationsPage() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <div className="md:flex md:items-center md:justify-between">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones</h1>
             <p className="text-muted-foreground">
@@ -157,7 +157,7 @@ export default function RegistrationsPage() {
             </p>
           </div>
            <div className="mt-4 md:mt-0">
-             <Button onClick={() => handleOpenModal('add')}>
+             <Button onClick={() => handleOpenModal('add')} className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Crear Nuevo Evento
               </Button>

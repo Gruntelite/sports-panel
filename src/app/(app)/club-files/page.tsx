@@ -316,14 +316,14 @@ function DocumentsList() {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex-1">
             <CardTitle>Todos los Documentos</CardTitle>
             <CardDescription>
               Archivos disponibles para todo el club.
             </CardDescription>
           </div>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 w-full md:w-auto">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
               <div className="relative w-full sm:w-auto">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
