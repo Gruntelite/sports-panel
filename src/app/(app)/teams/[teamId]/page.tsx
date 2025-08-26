@@ -405,7 +405,7 @@ export default function EditTeamPage() {
 
   const handleSavePlayer = async () => {
     if (!playerData.name || !playerData.lastName || !playerData.teamId || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y equipo son obligatorios." });
+        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
         return;
     }
 
@@ -1134,4 +1134,3 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
-    

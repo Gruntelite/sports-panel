@@ -1080,6 +1080,3 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
-
-
-    

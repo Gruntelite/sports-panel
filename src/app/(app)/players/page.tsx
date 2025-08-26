@@ -283,8 +283,8 @@ export default function PlayersPage() {
   }
 
   const handleSavePlayer = async () => {
-    if (!playerData.name || !playerData.lastName || !playerData.tutorEmail || !clubId) {
-        toast({ variant: "destructive", title: "Error", description: "Nombre, apellidos y email de contacto son obligatorios." });
+    if (!playerData.name || !playerData.lastName || !clubId) {
+        toast({ variant: "destructive", title: "Error", description: "Nombre y apellidos son obligatorios." });
         return;
     }
 
@@ -919,8 +919,8 @@ export default function PlayersPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                  <div className="space-y-2">
-                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email *" : "Email del Tutor/a *"}</Label>
-                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} required />
+                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
                                  </div>
                                  <div className="space-y-2">
                                      <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
