@@ -1,8 +1,8 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   File,
@@ -22,6 +22,7 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
+  Trash,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,10 +85,10 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player, Coach, TeamMember } from "@/lib/types";
+import type { Team, Player, Coach, TeamMember, Interruption } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
-import { format } from "date-fns";
+import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
 
 
 export default function EditTeamPage() {
@@ -108,8 +109,8 @@ export default function EditTeamPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [modalType, setModalType] = useState<'player' | 'coach'>('player');
 
-  const [playerData, setPlayerData] = useState<Partial<Player>>({});
-  const [coachData, setCoachData] = useState<Partial<Coach>>({});
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [] });
+  const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [] });
 
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -128,6 +129,37 @@ export default function EditTeamPage() {
     }
     return age;
   };
+
+    const calculateTenure = (member: Partial<Player> | Partial<Coach>): string => {
+        if (!member.startDate) return "N/A";
+        
+        const start = parseISO(member.startDate);
+        const end = member.currentlyActive ? new Date() : (member.endDate ? parseISO(member.endDate) : new Date());
+        
+        if (start > end) return "Fechas inválidas";
+        
+        let totalMilliseconds = differenceInMilliseconds(end, start);
+        
+        member.interruptions?.forEach(interruption => {
+            if (interruption.startDate && interruption.endDate) {
+                const intStart = parseISO(interruption.startDate);
+                const intEnd = parseISO(interruption.endDate);
+                if (intStart < intEnd) {
+                    totalMilliseconds -= differenceInMilliseconds(intEnd, intStart);
+                }
+            }
+        });
+
+        if (totalMilliseconds < 0) totalMilliseconds = 0;
+        
+        const duration = intervalToDuration({ start: 0, end: totalMilliseconds });
+        
+        const years = duration.years || 0;
+        const months = duration.months || 0;
+        
+        return `${years} año(s) y ${months} mes(es)`;
+    };
+
 
   useEffect(() => {
     const fetchClubId = async () => {
@@ -154,7 +186,7 @@ export default function EditTeamPage() {
 
   const hasMissingPlayerData = (player: any): boolean => {
     const requiredFields = [
-      'birthDate', 'dni', 'address', 'city', 'postalCode', 'tutorEmail',
+      'birthDate', 'dni', 'address', 'city', 'postalCode',
       'tutorPhone', 'iban', 'jerseyNumber'
     ];
     if (player.monthlyFee === undefined || player.monthlyFee === null) {
@@ -170,7 +202,7 @@ export default function EditTeamPage() {
   
   const hasMissingCoachData = (coach: any): boolean => {
     const requiredFields = [
-      'birthDate', 'dni', 'address', 'city', 'postalCode', 'email',
+      'birthDate', 'dni', 'address', 'city', 'postalCode',
       'phone', 'iban'
     ];
      if (coach.isOwnTutor) {
@@ -368,25 +400,54 @@ export default function EditTeamPage() {
     }
   };
   
+    const handleInterruptionDateChange = (index: number, field: 'startDate' | 'endDate', date: Date | undefined) => {
+    if(date){
+        const updatedInterruptions = [...(modalType === 'player' ? playerData.interruptions || [] : coachData.interruptions || [])];
+        updatedInterruptions[index][field] = format(date, "yyyy-MM-dd");
+        if(modalType === 'player') {
+            setPlayerData(prev => ({...prev, interruptions: updatedInterruptions}));
+        } else {
+            setCoachData(prev => ({...prev, interruptions: updatedInterruptions}));
+        }
+    }
+  }
+
+  const handleAddInterruption = () => {
+    const newInterruption: Interruption = { id: uuidv4(), startDate: '', endDate: '' };
+    if(modalType === 'player'){
+        setPlayerData(prev => ({...prev, interruptions: [...(prev.interruptions || []), newInterruption]}));
+    } else {
+        setCoachData(prev => ({...prev, interruptions: [...(prev.interruptions || []), newInterruption]}));
+    }
+  }
+
+  const handleRemoveInterruption = (id: string) => {
+    if(modalType === 'player'){
+        setPlayerData(prev => ({...prev, interruptions: prev.interruptions?.filter(i => i.id !== id)}));
+    } else {
+        setCoachData(prev => ({...prev, interruptions: prev.interruptions?.filter(i => i.id !== id)}));
+    }
+  }
+  
   const handleOpenModal = (mode: 'add' | 'edit', memberType: 'player' | 'coach', member?: TeamMember) => {
     setModalMode(mode);
     setModalType(memberType);
     
     if (mode === 'add') {
       if (memberType === 'player') {
-        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee });
-        setCoachData({});
+        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee, interruptions: [] });
+        setCoachData({interruptions: []});
       } else {
-        setCoachData({ teamId: teamId });
-        setPlayerData({});
+        setCoachData({ teamId: teamId, interruptions: [] });
+        setPlayerData({interruptions: []});
       }
     } else if (member) {
       if (memberType === 'player') {
         setPlayerData(member.data as Player);
-        setCoachData({});
+        setCoachData({interruptions: []});
       } else {
         setCoachData(member.data as Coach);
-        setPlayerData({});
+        setPlayerData({interruptions: []});
       }
     }
     
@@ -464,7 +525,7 @@ export default function EditTeamPage() {
       }
       
       setIsModalOpen(false);
-      setPlayerData({});
+      setPlayerData({interruptions: []});
       if (clubId) fetchTeamData(clubId);
     } catch (error) {
         console.error("Error saving player: ", error);
@@ -532,7 +593,7 @@ export default function EditTeamPage() {
       }
       
       setIsModalOpen(false);
-      setCoachData({});
+      setCoachData({interruptions: []});
       if (clubId) fetchTeamData(clubId);
     } catch (error) {
         console.error("Error saving coach: ", error);
@@ -922,7 +983,7 @@ export default function EditTeamPage() {
                                <div className="space-y-2">
                                   <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
                                   <DatePicker 
-                                    date={currentData.birthDate ? new Date(currentData.birthDate) : undefined} 
+                                    date={currentData.birthDate ? parseISO(currentData.birthDate) : undefined} 
                                     onDateChange={(date) => handleDateChange('birthDate', date)} 
                                   />
                                    {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
@@ -956,26 +1017,58 @@ export default function EditTeamPage() {
                                    <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleMemberInputChange} />
                                </div>
                            </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                  <Label htmlFor="startDate">Fecha de Alta</Label>
+                                  <Label>Fecha de Alta</Label>
                                   <DatePicker 
-                                    date={currentData.startDate ? new Date(currentData.startDate) : undefined} 
+                                    date={currentData.startDate ? parseISO(currentData.startDate) : undefined}
                                     onDateChange={(date) => handleDateChange('startDate', date)}
                                   />
                                 </div>
                                  <div className="space-y-2">
-                                  <Label htmlFor="endDate">Fecha de Baja</Label>
+                                  <Label>Fecha de Baja</Label>
                                   <DatePicker 
-                                    date={currentData.endDate ? new Date(currentData.endDate) : undefined} 
+                                    date={currentData.endDate ? parseISO(currentData.endDate) : undefined}
                                     onDateChange={(date) => handleDateChange('endDate', date)}
+                                    disabled={currentData.currentlyActive}
                                   />
                                 </div>
                            </div>
                            <div className="flex items-center space-x-2">
-                              <Checkbox id="hasInterruption" checked={currentData.hasInterruption} onCheckedChange={(checked) => handleCheckboxChange('hasInterruption', checked as boolean)} />
-                              <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
-                            </div>
+                               <Checkbox id="currentlyActive" checked={currentData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
+                               <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                               <Checkbox id="hasInterruption" checked={(currentData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
+                                   if(checked) { handleAddInterruption() }
+                                   else { 
+                                      if(modalType === 'player') setPlayerData(prev => ({...prev, interruptions: []}))
+                                      else setCoachData(prev => ({...prev, interruptions: []}))
+                                    }
+                               }} />
+                               <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                           </div>
+                           {(currentData.interruptions?.length || 0) > 0 && (
+                               <div className="space-y-2 pl-6">
+                                   {currentData.interruptions?.map((interruption, index) => (
+                                       <div key={interruption.id} className="flex items-end gap-2">
+                                           <div className="space-y-1">
+                                               <Label>Inicio Interrupción</Label>
+                                                <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
+                                           </div>
+                                           <div className="space-y-1">
+                                               <Label>Fin Interrupción</Label>
+                                                <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
+                                           </div>
+                                           <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
+                                       </div>
+                                   ))}
+                                   <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                               </div>
+                           )}
+                           <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
+                        </div>
                        </div>
                        </div>
                     </TabsContent>

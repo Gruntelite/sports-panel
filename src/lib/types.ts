@@ -42,6 +42,11 @@ export type CustomFieldDef = {
     appliesTo: ('player' | 'coach' | 'staff' | 'socio')[];
 };
 
+export type Interruption = {
+    id: string;
+    startDate: string;
+    endDate: string;
+}
 
 export type Player = {
     id: string;
@@ -56,7 +61,7 @@ export type Player = {
     address?: string;
     city?: string;
     postalCode?: string;
-    tutorEmail: string; // Made mandatory
+    tutorEmail?: string; 
     tutorPhone?: string;
     iban?: string;
     teamId?: string;
@@ -75,8 +80,8 @@ export type Player = {
     documents?: Document[];
     startDate?: string;
     endDate?: string;
-    hasInterruption?: boolean;
-    interruptionYears?: number[];
+    currentlyActive?: boolean;
+    interruptions?: Interruption[];
     medicalCheckCompleted?: boolean;
     updateRequestActive?: boolean;
     customFields?: Record<string, any>;
@@ -89,7 +94,7 @@ export type Coach = {
     sex?: 'masculino' | 'femenino';
     season?: string;
     role?: string;
-    email: string; // Made mandatory
+    email?: string;
     phone?: string;
     teamId?: string;
     teamName?: string;
@@ -112,8 +117,8 @@ export type Coach = {
     documents?: Document[];
     startDate?: string;
     endDate?: string;
-    hasInterruption?: boolean;
-    interruptionYears?: number[];
+    currentlyActive?: boolean;
+    interruptions?: Interruption[];
     updateRequestActive?: boolean;
     customFields?: Record<string, any>;
 }
