@@ -115,21 +115,23 @@ export async function requestDataUpdateAction({
         if (!memberId) continue;
 
         const updateUrl = `${window.location.origin}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
+        
+        const formData = new FormData();
+        formData.append('clubId', clubId);
+        formData.append('recipients', JSON.stringify([recipient]));
+        formData.append('subject', `Actualiza tus datos en ${clubName}`);
+        formData.append('htmlContent', `
+            <h1>Actualización de Datos</h1>
+            <p>Hola ${recipient.name},</p>
+            <p>Por favor, ayúdanos a mantener tu información actualizada. Haz clic en el siguiente enlace para revisar y corregir los datos solicitados:</p>
+            <a href="${updateUrl}">Actualizar mis datos</a>
+            <p>Este enlace es de un solo uso.</p>
+            <p>Gracias,</p>
+            <p>El equipo de ${clubName}</p>
+        `);
 
-        const emailResult = await sendEmailWithSmtpAction({
-            clubId,
-            recipients: [recipient],
-            subject: `Actualiza tus datos en ${clubName}`,
-            htmlContent: `
-                <h1>Actualización de Datos</h1>
-                <p>Hola ${recipient.name},</p>
-                <p>Por favor, ayúdanos a mantener tu información actualizada. Haz clic en el siguiente enlace para revisar y corregir los datos solicitados:</p>
-                <a href="${updateUrl}">Actualizar mis datos</a>
-                <p>Este enlace es de un solo uso.</p>
-                <p>Gracias,</p>
-                <p>El equipo de ${clubName}</p>
-            `,
-        });
+
+        const emailResult = await sendEmailWithSmtpAction(formData);
 
         if (emailResult.success) {
             emailsSent++;
@@ -257,21 +259,22 @@ export async function requestFilesAction({
     let emailsSent = 0;
 
     for (const request of requestsToSend) {
-      const emailResult = await sendEmailWithSmtpAction({
-        clubId,
-        recipients: [request.recipient],
-        subject: `Solicitud de archivo: ${documentTitle}`,
-        htmlContent: `
-          <h1>Solicitud de Archivo</h1>
-          <p>Hola ${request.recipient.name},</p>
-          <p>El club ${clubName} te solicita que subas el siguiente documento: <strong>${documentTitle}</strong>.</p>
-          ${message ? `<p><strong>Mensaje del club:</strong> ${message}</p>` : ''}
-          <p>Por favor, utiliza el siguiente enlace seguro para subir tu archivo:</p>
-          <a href="${request.url}">Subir Archivo</a>
-          <p>Gracias,</p>
-          <p>El equipo de ${clubName}</p>
-        `,
-      });
+        const formData = new FormData();
+        formData.append('clubId', clubId);
+        formData.append('recipients', JSON.stringify([request.recipient]));
+        formData.append('subject', `Solicitud de archivo: ${documentTitle}`);
+        formData.append('htmlContent', `
+            <h1>Solicitud de Archivo</h1>
+            <p>Hola ${request.recipient.name},</p>
+            <p>El club ${clubName} te solicita que subas el siguiente documento: <strong>${documentTitle}</strong>.</p>
+            ${message ? `<p><strong>Mensaje del club:</strong> ${message}</p>` : ''}
+            <p>Por favor, utiliza el siguiente enlace seguro para subir tu archivo:</p>
+            <a href="${request.url}">Subir Archivo</a>
+            <p>Gracias,</p>
+            <p>El equipo de ${clubName}</p>
+        `);
+
+      const emailResult = await sendEmailWithSmtpAction(formData);
       if(emailResult.success) emailsSent++;
     }
     
