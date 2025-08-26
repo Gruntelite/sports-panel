@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -73,13 +74,15 @@ export function RequestHistory() {
       try {
         const batchesQuery = query(
           collection(db, "fileRequestBatches"),
-          where("clubId", "==", clubId),
-          orderBy("createdAt", "desc")
+          where("clubId", "==", clubId)
         );
         const batchesSnapshot = await getDocs(batchesQuery);
         const batchesData = batchesSnapshot.docs.map(
           (d) => ({ id: d.id, ...d.data() } as FileRequestBatch)
         );
+
+        batchesData.sort((a, b) => b.createdAt.toDate().getTime() - a.createdAt.toDate().getTime());
+
         setBatches(batchesData);
 
         const counts: Record<string, number> = {};
