@@ -61,7 +61,7 @@ const features = [
   {
     icon: <FolderArchive className="h-8 w-8" />,
     title: "Almacén de Documentos",
-    description: "Guarda y comparte documentos importantes como normativas o autorizaciones de forma segura en la nube.",
+    description: "Guarda y organiza tus documentos importantes como normativas o autorizaciones de forma segura en la nube.",
   },
 ];
 
