@@ -334,6 +334,7 @@ export type FormWithSubmissions = RegistrationForm & {
 export type FileRequest = {
     id: string;
     clubId: string;
+    batchId: string;
     userId: string;
     userType: 'players' | 'coaches' | 'staff';
     userName: string;
@@ -343,4 +344,12 @@ export type FileRequest = {
     createdAt: Timestamp;
     completedAt?: Timestamp;
     filePath?: string;
+}
+
+export type FileRequestBatch = {
+    id: string;
+    clubId: string;
+    documentTitle: string;
+    totalSent: number;
+    createdAt: Timestamp;
 }

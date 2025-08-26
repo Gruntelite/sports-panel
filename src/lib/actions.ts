@@ -221,6 +221,15 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 
   try {
     const batch = writeBatch(db);
+    const batchRef = doc(collection(db, 'fileRequestBatches'));
+    
+    batch.set(batchRef, {
+      clubId,
+      documentTitle,
+      totalSent: members.filter(m => m.email).length,
+      createdAt: Timestamp.now()
+    });
+
     const requestsToSend: { recipient: {email: string, name: string}, url: string }[] = [];
 
     for (const member of members) {
@@ -232,6 +241,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 
       batch.set(requestRef, {
         clubId,
+        batchId: batchRef.id,
         userId: member.id,
         userType: userType,
         userName: member.name,

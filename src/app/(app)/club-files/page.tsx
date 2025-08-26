@@ -85,6 +85,8 @@ import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileRequestSender } from "@/components/file-request-sender";
+import { RequestHistory } from "@/components/request-history";
+import { Separator } from "@/components/ui/separator";
 
 type Owner = {
     id: string;
@@ -585,8 +587,10 @@ export default function ClubFilesPage() {
         <TabsContent value="documents" className="mt-6">
             <DocumentsList/>
         </TabsContent>
-        <TabsContent value="request" className="mt-6">
+        <TabsContent value="request" className="mt-6 space-y-6">
             <FileRequestSender />
+            <Separator />
+            <RequestHistory />
         </TabsContent>
       </Tabs>
     </div>
