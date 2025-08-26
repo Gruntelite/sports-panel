@@ -89,6 +89,7 @@ import type { Team, Player, Coach, TeamMember, Interruption } from "@/lib/types"
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
+import { useParams, useRouter } from "next/navigation";
 
 
 export default function EditTeamPage() {
