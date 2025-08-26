@@ -23,7 +23,7 @@ import type { Team, CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
-import { format, parseISO } from "date-fns";
+import { format, parse, parseISO } from "date-fns";
 
 
 type Venue = {
@@ -372,11 +372,8 @@ function CalendarView() {
                 const daySchedule = template.weeklySchedule[dayOfWeek as keyof WeeklySchedule] || [];
 
                 daySchedule.forEach((training: any) => {
-                    const startDateTimeParts = training.startTime.split(':');
-                    const endDateTimeParts = training.endTime.split(':');
-
-                    const startDateTime = new Date(year, month, i, startDateTimeParts[0], startDateTimeParts[1]);
-                    const endDateTime = new Date(year, month, i, endDateTimeParts[0], endDateTimeParts[1]);
+                    const startDateTime = parse(`${dayStr} ${training.startTime}`, 'yyyy-MM-dd HH:mm', new Date());
+                    const endDateTime = parse(`${dayStr} ${training.endTime}`, 'yyyy-MM-dd HH:mm', new Date());
 
                     allTemplateEvents.push({
                         id: `${training.id}-${dayStr}`,
