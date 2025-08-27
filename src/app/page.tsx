@@ -444,31 +444,18 @@ export default function LandingPage() {
                         Todo lo que necesitas, sin complicaciones. Un único plan con todas las funcionalidades y sin límite de miembros.
                     </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Label htmlFor="billing-cycle">Mensual</Label>
-                  <Switch id="billing-cycle" checked={isYearly} onCheckedChange={setIsYearly} />
-                  <Label htmlFor="billing-cycle">Anual</Label>
-                  <Badge variant="secondary" className="bg-green-100 text-green-800">Ahorra 10%</Badge>
-                </div>
             </div>
              <div className="mx-auto flex justify-center">
                 <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-8 text-center max-w-md">
                     <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>Plan Único</div>
                     <h3 className="text-2xl font-bold font-headline">SportsPanel Completo</h3>
                     <p className="text-muted-foreground mt-1">Fichas <b>ilimitadas</b></p>
-                     <div className="mt-4 flex items-baseline justify-center gap-2">
-                       {isYearly ? (
-                         <>
-                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
-                           <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
-                           <span className="text-muted-foreground self-end">/año</span>
-                         </>
-                       ) : (
-                         <>
-                           <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                           <span className="text-muted-foreground self-end">/mes</span>
-                         </>
-                       )}
+                     <div className="mt-4 flex flex-col items-center justify-center gap-2">
+                       <div className="flex items-baseline">
+                         <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                         <span className="text-muted-foreground self-end">/mes</span>
+                       </div>
+                        <span className="text-xs text-muted-foreground">+ IVA</span>
                     </div>
                      <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
