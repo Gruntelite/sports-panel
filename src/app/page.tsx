@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from 'react';
@@ -428,15 +429,19 @@ export default function LandingPage() {
                        {isYearly ? (
                          <>
                            <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
-                           <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
+                           <div className="relative">
+                                <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
+                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+IVA</span>
+                           </div>
                            <span className="text-muted-foreground self-end">/año</span>
-                           <span className="text-xs font-medium text-muted-foreground self-end">+IVA</span>
                          </>
                        ) : (
                          <>
-                           <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                           <div className="relative">
+                            <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+IVA</span>
+                           </div>
                            <span className="text-muted-foreground self-end">/mes</span>
-                            <span className="text-xs font-medium text-muted-foreground self-end">+IVA</span>
                          </>
                        )}
                     </div>
