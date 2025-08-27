@@ -2,8 +2,7 @@
 'use server';
 
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc, onSnapshot } from "firebase/firestore";
-import { db, app } from './firebase-admin'; // Use Admin SDK for user creation
-import { auth as adminAuth } from 'firebase-admin';
+import { db, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 
@@ -24,15 +23,15 @@ function getLuminance(hex: string): number {
 }
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
+  let uid: string;
   try {
-    // Step 1: Create the Firebase Auth user
-    const userRecord = await adminAuth().createUser({
+    // Step 1: Create the Firebase Auth user first
+    const userRecord = await adminAuth.createUser({
       email: data.email,
       password: data.password,
       displayName: data.adminName,
     });
-
-    const uid = userRecord.uid;
+    uid = userRecord.uid;
 
     // Step 2: Create the club document to get a clubId
     const clubRef = doc(collection(db, "clubs"));
@@ -326,55 +325,6 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 }
 
-export async function createCheckoutSessionAction(data: { formId?: string, submissionId?: string, clubId?: string }) {
-    const { formId, submissionId, clubId } = data;
-    try {
-        const user = adminAuth().currentUser; // This will not work on server actions from client
-        if (!user) throw new Error("User not authenticated");
-        
-        const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw"; // Hardcoded price ID for subscription
-        
-        const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
-
-        const docData: any = {
-            price: priceId,
-            success_url: formId ? `${process.env.NEXT_PUBLIC_APP_URL}/form/${formId}?subscription=success` : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
-            cancel_url: formId ? `${process.env.NEXT_PUBLIC_APP_URL}/form/${formId}?subscription=cancelled` : process.env.NEXT_PUBLIC_APP_URL,
-        };
-
-        if (formId) {
-            docData.metadata = {
-                formId,
-                submissionId,
-                clubId
-            };
-        }
-
-        const docRef = await addDoc(checkoutSessionsRef, docData);
-
-        return new Promise<string>((resolve, reject) => {
-            const unsubscribe = onSnapshot(docRef, (snap) => {
-              const { error, sessionId } = snap.data() as {
-                error?: { message: string };
-                sessionId?: string;
-              };
-              if (error) {
-                unsubscribe();
-                reject(new Error(error.message));
-              }
-              if (sessionId) {
-                unsubscribe();
-                resolve(sessionId);
-              }
-            });
-          });
-    } catch(e) {
-        console.log(e);
-        throw e;
-    }
-}
-
-
 export async function createPortalLinkAction(): Promise<string> {
     const user = adminAuth().currentUser;
     if (!user) throw new Error("User not authenticated");
@@ -386,8 +336,8 @@ export async function createPortalLinkAction(): Promise<string> {
     const customerId = userDocSnap.data().stripeId;
     if (!customerId) throw new Error("Stripe Customer ID not found.");
     
-    const functions = (await import('firebase-functions')).getFunctions((await import('./firebase-admin')).app);
-    const createPortalLink = (await import('firebase-functions')).httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+    const functions = (await import('firebase-functions/v2')).getFunctions(adminAuth().app);
+    const createPortalLink = (await import('firebase-functions/v2')).httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
 
     const { data } = await createPortalLink({
         customerId: customerId,
