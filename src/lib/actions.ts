@@ -26,7 +26,7 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
-    // 1. Create the user in Firebase Auth first
+    // 1. Create the user in Firebase Auth first to ensure the email is not already in use
     const userCredential = await createUserWithEmailAndPassword(clientAuth, data.email, data.password);
     const user = userCredential.user;
 
@@ -36,7 +36,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       
     // 2. Now that we have a user UID, create the checkout session document under that user
     const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
-    const checkoutSessionRef = collection(db, 'users', user.uid, 'checkout_sessions');
+    const checkoutSessionRef = collection(db, 'checkout_sessions');
 
     const checkoutDocRef = await addDoc(checkoutSessionRef, {
         price: priceId,
