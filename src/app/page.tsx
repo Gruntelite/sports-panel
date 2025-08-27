@@ -161,24 +161,24 @@ const benefits = [
 
 const faqs = [
   {
-    question: "¿Ofrecen un periodo de prueba gratuito?",
-    answer: "¡Sí! Ofrecemos una prueba gratuita de 15 días en cualquiera de nuestros planes. No necesitas introducir una tarjeta de crédito para empezar. Durante la prueba, tendrás acceso a todas las funcionalidades para que puedas ver cómo SportsPanel puede transformar la gestión de tu club."
+    question: "¿Ofrecen un periodo de prueba?",
+    answer: "¡Sí! Ofrecemos una prueba de 20 días para que explores todas las funcionalidades de SportsPanel. Puedes cancelar tu suscripción en cualquier momento. Además, nuestro plan mensual no tiene ningún tipo de permanencia."
   },
   {
-    question: "¿Qué ocurre cuando termina la prueba gratuita?",
-    answer: "Cuando termine tu prueba de 15 días, tus datos se guardarán, pero necesitarás suscribirte a uno de nuestros planes para continuar utilizando la plataforma. Te avisaremos antes de que termine para que puedas decidir sin presiones."
+    question: "¿Puedo importar mis datos existentes de otro programa?",
+    answer: "Sí. Contamos con un importador de datos mediante archivos CSV. Puedes preparar una hoja de cálculo con tus jugadores, entrenadores o socios y subirlos a la plataforma de forma masiva, ahorrándote horas de trabajo manual."
   },
   {
     question: "¿Mis datos están seguros en la plataforma?",
     answer: "La seguridad es nuestra máxima prioridad. Utilizamos la infraestructura de Google Cloud, una de las más seguras del mundo, para proteger tus datos. Todas las conexiones están encriptadas y realizamos copias de seguridad periódicas."
   },
   {
-    question: "¿Puedo cambiar de plan en cualquier momento?",
-    answer: "Por supuesto. Puedes cambiar a un plan superior o inferior en cualquier momento desde los ajustes de tu club. El cambio se aplicará en el siguiente ciclo de facturación."
+    question: "¿Cómo funciona la comunicación con las familias?",
+    answer: "Puedes enviar correos electrónicos directamente desde la plataforma. Tienes la opción de segmentar tus envíos por equipos, por tipo de miembro (jugadores, entrenadores...) o a todo el club. Las familias recibirán las notificaciones en su email."
   },
   {
-    question: "¿Qué tipo de soporte ofrecen?",
-    answer: "Ofrecemos soporte por correo electrónico para todos nuestros planes. Nuestro objetivo es responder a todas las consultas en menos de 24 horas. También contamos con una sección de ayuda con guías y tutoriales."
+    question: "¿Puedo solicitar a mis miembros que actualicen sus datos?",
+    answer: "Sí, y es una de nuestras funcionalidades estrella. Puedes seleccionar qué campos necesitas que se actualicen (DNI, dirección, teléfono...) y enviar una solicitud masiva. Los miembros recibirán un enlace único y seguro para rellenar la información, que se actualizará automáticamente en su ficha."
   },
   {
     question: "¿SportsPanel se puede personalizar con el logo y los colores de mi club?",
@@ -431,7 +431,7 @@ export default function LandingPage() {
                            <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
                            <div className="relative">
                                 <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
-                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+IVA</span>
+                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-foreground">+IVA</span>
                            </div>
                            <span className="text-muted-foreground self-end">/año</span>
                          </>
@@ -439,7 +439,7 @@ export default function LandingPage() {
                          <>
                            <div className="relative">
                             <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+IVA</span>
+                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-foreground">+IVA</span>
                            </div>
                            <span className="text-muted-foreground self-end">/mes</span>
                          </>
@@ -454,7 +454,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
-                    <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empezar Prueba de 15 Días</Link></Button>
+                    <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empezar Prueba de 20 Días</Link></Button>
                 </div>
             </div>
           </div>

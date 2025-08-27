@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -219,7 +220,7 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba gratuita'}
+                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días'}
               </Button>
             </form>
           </Form>
