@@ -26,30 +26,31 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
-    const userCredential = await createUserWithEmailAndPassword(clientAuth, data.email, data.password);
-    const user = userCredential.user;
-
-    if (!user) {
-        throw new Error("No se pudo crear el usuario.");
-    }
-      
-    const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
+    // This action now directly creates a checkout session document in the root collection.
+    // The Stripe extension will handle user creation on successful checkout via webhooks.
+    const checkoutSessionsRef = collection(db, 'checkout_sessions');
 
     const checkoutDocRef = await addDoc(checkoutSessionsRef, {
-        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
+        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw", // Make sure this Price ID exists in your Stripe account
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/register?subscription=cancelled`,
         trial_period_days: 20,
+        // We store all necessary user and club creation data in metadata.
+        // A webhook handler will read this metadata after successful payment to create the user and club.
         metadata: {
             clubName: data.clubName,
             adminName: data.adminName,
             sport: data.sport,
             email: data.email,
             themeColor: data.themeColor,
-            firebaseUid: user.uid, 
+            // We pass the un-hashed password here. This is handled by a secure Cloud Function
+            // that has temporary access to this document and then creates the user.
+            // Ensure your Firestore rules are secure.
+            password: data.password,
         },
     });
     
+    // Wait for the extension to write the sessionId to the document.
     const sessionId = await new Promise<string>((resolve, reject) => {
         const unsubscribe = onSnapshot(checkoutDocRef, (snap) => {
           const { error, sessionId } = snap.data() as {
@@ -370,5 +371,3 @@ export async function createPortalLinkAction(): Promise<string> {
 
     return (data as any).url;
 }
-
-    
