@@ -62,11 +62,13 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         logoUrl: null
     }, { merge: true });
 
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`;
+
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
       price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/register?subscription=cancelled`,
+      success_url: `${appUrl}/dashboard?subscription=success`,
+      cancel_url: `${appUrl}/register?subscription=cancelled`,
       trial_period_days: 20,
       allow_promotion_codes: true,
       mode: 'subscription',
@@ -124,8 +126,9 @@ export async function requestDataUpdateAction({
         
         const memberId = members.find(m => m.email === recipient.email)?.id;
         if (!memberId) continue;
-
-        const updateUrl = `${process.env.NEXT_PUBLIC_APP_URL}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
+        
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`;
+        const updateUrl = `${appUrl}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
         
         const formData = new FormData();
         formData.append('clubId', clubId);
@@ -261,9 +264,10 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
         createdAt: FieldValue.serverTimestamp(),
       });
       
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`;
       requestsToSend.push({
         recipient: { email: member.email, name: member.name },
-        url: `${process.env.NEXT_PUBLIC_APP_URL}/upload/${token}`,
+        url: `${appUrl}/upload/${token}`,
       });
     }
 
@@ -306,17 +310,13 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-  const app = getApp();
-  const auth = getAuth(app);
-  
-  // This logic must run on the client to get the current user.
-  // We will call a callable function to generate the link.
-  const functions = getFunctions(getApp());
-  const createPortalLink = functions.httpsCallable('ext-firestore-stripe-payments-createPortalLink');
+    const app = getApp();
+    const functions = getFunctions(app, "europe-west1"); // Asegúrate de que la región es correcta
+    const createPortalLink = getFunctions(getApp(), "https://europe-west1-sportspanel.cloudfunctions.net/ext-firestore-stripe-payments-createPortalLink");
+    const { data } = await createPortalLink({
+        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`}/club-settings`,
+        locale: 'es',
+    });
 
-  const { data } = await createPortalLink({
-      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/club-settings`,
-  });
-
-  return (data as any).url;
+    return (data as any).url;
 }

@@ -70,8 +70,9 @@ export default function RegisterPage() {
       });
       
       const { userId, checkoutSessionId } = result;
+      const userDocRef = doc(db, "users", userId);
 
-      const checkoutSessionRef = doc(db, "users", userId, "checkout_sessions", checkoutSessionId);
+      const checkoutSessionRef = doc(userDocRef, "checkout_sessions", checkoutSessionId);
 
       const unsubscribe = onSnapshot(checkoutSessionRef, async (snap) => {
         const { error, url } = snap.data() as {
