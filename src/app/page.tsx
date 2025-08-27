@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import * as React from 'react';
@@ -474,8 +473,8 @@ export default function LandingPage() {
                      <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y control de cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación integrada (Email)</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Importador de datos (CSV)</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación integrada</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Importador de datos</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Solicitud de datos a familias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Formularios de inscripción</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
