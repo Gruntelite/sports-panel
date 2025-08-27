@@ -278,6 +278,28 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <section className="w-full bg-gray-800 text-white py-12 md:py-16">
+            <div className="container px-4 md:px-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                        <span className="text-5xl font-bold text-turquesa">7h+</span>
+                        <p className="font-semibold text-lg">Ahorro Semanal</p>
+                        <p className="text-sm text-gray-300">Es el tiempo medio que nuestros clubs ahorran en tareas administrativas.</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                        <span className="text-5xl font-bold text-turquesa">85%</span>
+                        <p className="font-semibold text-lg">Tasa de Retención</p>
+                        <p className="text-sm text-gray-300">De los clubs que prueban SportsPanel, la gran mayoría se queda con nosotros.</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                        <span className="text-5xl font-bold text-turquesa">98%</span>
+                        <p className="font-semibold text-lg">Digitalización</p>
+                        <p className="text-sm text-gray-300">De los procesos de un club que se pueden digitalizar con nuestra plataforma.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <section id="features" className="w-full py-6 md:py-8">
           <div className="container px-4 md:px-6">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -429,18 +451,12 @@ export default function LandingPage() {
                        {isYearly ? (
                          <>
                            <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
-                           <div className="relative">
-                                <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
-                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+ IVA</span>
-                           </div>
+                           <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
                            <span className="text-muted-foreground self-end">/año</span>
                          </>
                        ) : (
                          <>
-                           <div className="relative">
-                            <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+ IVA</span>
-                           </div>
+                           <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
                            <span className="text-muted-foreground self-end">/mes</span>
                          </>
                        )}
