@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -27,7 +27,8 @@ import { sports } from "@/lib/sports";
 import { Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "@/lib/firebase";
+import { auth, db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 
 const registerSchema = z.object({
@@ -62,27 +63,35 @@ export default function RegisterPage() {
     
     const result = await createClubAction(values);
 
-    if (result.success && result.sessionId) {
+    if (result.success && result.userId && result.checkoutSessionId) {
       toast({
         title: "¡Ya casi estamos!",
         description: "Ahora serás redirigido para completar tu suscripción de prueba.",
       });
       
-      // Sign in the user on the client before redirecting
-      await signInWithEmailAndPassword(auth, values.email, values.password);
+      const { userId, checkoutSessionId } = result;
 
-      const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-      const stripe = await stripePromise;
-      if (stripe) {
-          const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
-          if(error) {
-              toast({ variant: "destructive", title: "Error de Redirección", description: error.message });
-              setLoading(false);
-          }
-      } else {
-          toast({ variant: "destructive", title: "Error de Stripe", description: "No se pudo cargar la pasarela de pago." });
-           setLoading(false);
-      }
+      const checkoutSessionRef = doc(db, "users", userId, "checkout_sessions", checkoutSessionId);
+
+      const unsubscribe = onSnapshot(checkoutSessionRef, async (snap) => {
+        const { error, url } = snap.data() as {
+          error?: { message: string };
+          url?: string;
+        };
+
+        if (error) {
+          unsubscribe();
+          toast({ variant: "destructive", title: "Error de Pago", description: error.message });
+          setLoading(false);
+        }
+
+        if (url) {
+          unsubscribe();
+          await signInWithEmailAndPassword(auth, values.email, values.password);
+          window.location.assign(url);
+        }
+      });
+      
     } else {
       toast({
         variant: "destructive",

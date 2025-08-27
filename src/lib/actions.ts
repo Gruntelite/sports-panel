@@ -25,10 +25,9 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, userId?: string, checkoutSessionId?: string}> {
   let uid: string;
   try {
-    // Step 1: Create the Firebase Auth user first
     const userRecord = await adminAuth.createUser({
       email: data.email,
       password: data.password,
@@ -36,7 +35,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     });
     uid = userRecord.uid;
 
-    // Step 2: Create the club document to get a clubId
     const clubRef = db.collection("clubs").doc();
     const clubId = clubRef.id;
     
@@ -47,7 +45,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    // Step 3: Create the user document in the 'users' collection
     const userDocRef = db.collection('users').doc(uid);
     await userDocRef.set({
         clubId: clubId,
@@ -56,7 +53,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         role: 'super-admin'
     });
     
-    // Step 4: Create the club settings document
     const luminance = getLuminance(data.themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const settingsRef = db.collection("clubs").doc(clubId).collection("settings").doc("config");
@@ -66,7 +62,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         logoUrl: null
     }, { merge: true });
 
-    // Step 5: Create the checkout session document in the user's subcollection
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
       price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
@@ -77,28 +72,10 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       mode: 'subscription',
     });
 
-    // Step 6: Wait for the extension to write the sessionId
-    const sessionId = await new Promise<string>((resolve, reject) => {
-      const unsubscribe = checkoutDocRef.onSnapshot((snap) => {
-        const { error, sessionId } = snap.data() as {
-          error?: { message: string };
-          sessionId?: string;
-        };
-        if (error) {
-          unsubscribe();
-          reject(new Error(error.message));
-        }
-        if (sessionId) {
-          unsubscribe();
-          resolve(sessionId);
-        }
-      });
-    });
-
-    return { success: true, sessionId };
+    return { success: true, userId: uid, checkoutSessionId: checkoutDocRef.id };
 
   } catch (error: any) {
-    console.error("Error creating club and checkout session:", error);
+    console.error("Error creating club:", error);
     let errorMessage = "Ocurrió un error inesperado al iniciar el registro.";
      if (error.code === 'auth/email-already-exists') {
         errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
@@ -329,25 +306,17 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-    const app = getApp();
-    const auth = getAuth(app);
-    const user = auth.currentUser;
-    if (!user) throw new Error("User not authenticated");
+  const app = getApp();
+  const auth = getAuth(app);
+  
+  // This logic must run on the client to get the current user.
+  // We will call a callable function to generate the link.
+  const functions = getFunctions(getApp());
+  const createPortalLink = functions.httpsCallable('ext-firestore-stripe-payments-createPortalLink');
 
-    const userDocRef = db.collection("users").doc(user.uid);
-    const userDocSnap = await userDocRef.get();
-    if (!userDocSnap.exists) throw new Error("User document not found.");
+  const { data } = await createPortalLink({
+      returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/club-settings`,
+  });
 
-    const customerId = userDocSnap.data()!.stripeId;
-    if (!customerId) throw new Error("Stripe Customer ID not found.");
-    
-    const functions = getFunctions(getApp());
-    const createPortalLink = functions.httpsCallable('ext-firestore-stripe-payments-createPortalLink');
-
-    const { data } = await createPortalLink({
-        customerId: customerId,
-        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/club-settings`,
-    });
-
-    return (data as any).url;
+  return (data as any).url;
 }
