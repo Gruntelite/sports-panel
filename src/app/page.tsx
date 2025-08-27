@@ -431,7 +431,7 @@ export default function LandingPage() {
                            <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
                            <div className="relative">
                                 <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
-                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-foreground">+IVA</span>
+                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-black">+IVA</span>
                            </div>
                            <span className="text-muted-foreground self-end">/año</span>
                          </>
@@ -439,19 +439,21 @@ export default function LandingPage() {
                          <>
                            <div className="relative">
                             <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-foreground">+IVA</span>
+                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-black">+IVA</span>
                            </div>
                            <span className="text-muted-foreground self-end">/mes</span>
                          </>
                        )}
                     </div>
                      <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros ilimitada</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos ilimitada</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y control de cuotas</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación integrada (Email)</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Importador de datos (CSV)</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Solicitud de datos a familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Formularios de inscripción</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
+                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Registro de incidencias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
                     <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empezar Prueba de 20 Días</Link></Button>
