@@ -2,7 +2,7 @@
 'use server';
 
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc, onSnapshot } from "firebase/firestore";
-import { db, auth as clientAuth } from './firebase'; // Use client SDK
+import { db, app, auth as clientAuth } from './firebase'; // Use client SDK
 import { auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
@@ -26,8 +26,7 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
-    // We create the checkout session first. The user & club will be created via webhook after successful payment/trial.
-    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw"; // Your actual price ID
+    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
     const checkoutSessionsRef = collection(db, 'checkout_sessions');
 
     const checkoutDocRef = await addDoc(checkoutSessionsRef, {
@@ -40,7 +39,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
             adminName: data.adminName,
             sport: data.sport,
             email: data.email,
-            password: data.password, // This is not ideal, but necessary for webhook creation. It's temporary.
+            password: data.password, 
             themeColor: data.themeColor,
         },
         // We will create the Stripe Customer on the fly
