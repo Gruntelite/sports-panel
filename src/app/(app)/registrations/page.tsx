@@ -66,8 +66,8 @@ import {
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
-import { RegistrationFormCreator } from "@/components/registration-form-creator";
 import Link from "next/link";
+import { RegistrationFormCreator } from "@/components/registration-form-creator";
 
 export default function RegistrationsPage() {
   const { toast } = useToast();
@@ -151,9 +151,9 @@ export default function RegistrationsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones</h1>
+            <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones y Eventos</h1>
             <p className="text-muted-foreground">
-              Crea y gestiona formularios para tus eventos.
+              Crea y gestiona formularios para tus eventos, campus o captaciones.
             </p>
           </div>
            <div className="mt-4 md:mt-0">
@@ -275,3 +275,5 @@ export default function RegistrationsPage() {
     </>
   );
 }
+
+    
