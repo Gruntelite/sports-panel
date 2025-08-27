@@ -295,19 +295,18 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 }
 
-export async function createCheckoutSessionAction(data: {formId: string, submissionId: string, clubId: string}) {
+export async function createCheckoutSessionAction(data: { priceId: string }) {
     'use server';
-    const {formId, submissionId, clubId} = data;
+    const { priceId } = data;
     try {
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated");
 
-        // The collection is at the root, so we reference it directly.
         const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
 
         const docRef = await addDoc(checkoutSessionsRef, {
-            price: 'price_1PQR7RRx41P1V5sKqmTqaodk',
-            success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+            price: priceId,
+            success_url: `${window.location.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: window.location.href,
         });
 

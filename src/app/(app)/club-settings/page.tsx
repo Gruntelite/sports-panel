@@ -26,6 +26,8 @@ import { Switch } from "@/components/ui/switch";
 import type { CustomFieldDef } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { createCheckoutSessionAction } from "@/lib/actions";
+import { loadStripe } from "@stripe/stripe-js";
 
 function getLuminance(hex: string): number {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -39,7 +41,7 @@ function getLuminance(hex: string): number {
 }
 
 const pricing = {
-    pro: { monthly: 33, yearly: Math.round(33 * 12 * 0.9) },
+    pro: { id: "price_1S0TMLPXxsPnWGkZFXrjSAaw", monthly: 39.93, yearly: Math.round(39.93 * 12 * 0.9) },
 };
 
 
@@ -277,6 +279,21 @@ export default function ClubSettingsPage() {
             setSaving(false);
         }
     };
+    
+    const handleSubscribe = async () => {
+        setSaving(true);
+        try {
+            const sessionId = await createCheckoutSessionAction({ priceId: pricing.pro.id }) as string;
+            const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+            const stripe = await stripePromise;
+            await stripe?.redirectToCheckout({ sessionId });
+        } catch (error: any) {
+            console.error("Error creating checkout session:", error);
+            toast({ variant: "destructive", title: "Error de Pago", description: "No se pudo iniciar el proceso de pago. " + error.message });
+        } finally {
+            setSaving(false);
+        }
+    };
 
 
     if (loading) {
@@ -495,8 +512,9 @@ export default function ClubSettingsPage() {
                                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
                                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                                     </ul>
-                                    <Button className="mt-6 w-full" disabled>
-                                        Tu Plan Actual
+                                    <Button onClick={handleSubscribe} className="mt-6 w-full" disabled={saving}>
+                                        {saving && <Loader2 className="animate-spin mr-2"/>}
+                                        Suscribirse Ahora
                                     </Button>
                                 </Card>
                             </div>
