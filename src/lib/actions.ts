@@ -62,13 +62,11 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         logoUrl: null
     }, { merge: true });
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`;
-
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
       price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-      success_url: `${appUrl}/dashboard?subscription=success`,
-      cancel_url: `${appUrl}/register?subscription=cancelled`,
+      success_url: "https://sportspanel.net/dashboard?subscription=success",
+      cancel_url: "https://sportspanel.net/register?subscription=cancelled",
       trial_period_days: 20,
       allow_promotion_codes: true,
       mode: 'subscription',
@@ -127,7 +125,7 @@ export async function requestDataUpdateAction({
         const memberId = members.find(m => m.email === recipient.email)?.id;
         if (!memberId) continue;
         
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`;
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://sportspanel.net`;
         const updateUrl = `${appUrl}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
         
         const formData = new FormData();
@@ -264,7 +262,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
         createdAt: FieldValue.serverTimestamp(),
       });
       
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://sportspanel.net`;
       requestsToSend.push({
         recipient: { email: member.email, name: member.name },
         url: `${appUrl}/upload/${token}`,
@@ -312,9 +310,26 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 export async function createPortalLinkAction(): Promise<string> {
     const app = getApp();
     const functions = getFunctions(app, "europe-west1"); // Asegúrate de que la región es correcta
-    const createPortalLink = getFunctions(getApp(), "https://europe-west1-sportspanel.cloudfunctions.net/ext-firestore-stripe-payments-createPortalLink");
-    const { data } = await createPortalLink({
-        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || `https://${process.env.GCLOUD_PROJECT}.web.app`}/club-settings`,
+    
+    const user = adminAuth.currentUser;
+    if (!user) {
+        throw new Error("Usuario no autenticado.");
+    }
+    
+    const userDocRef = db.collection('users').doc(user.uid);
+    const userDocSnap = await userDocRef.get();
+    if (!userDocSnap.exists) {
+        throw new Error("No se encontró el documento del usuario.");
+    }
+    const stripeId = userDocSnap.data()!.stripeId;
+    
+    if (!stripeId) {
+        throw new Error("ID de cliente de Stripe no encontrado.");
+    }
+
+    const { data } = await getFunctions(getApp(), "https://europe-west1-sportspanel.cloudfunctions.net/ext-firestore-stripe-payments-createPortalLink")({
+        customerId: stripeId,
+        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || `https://sportspanel.net`}/club-settings`,
         locale: 'es',
     });
 
