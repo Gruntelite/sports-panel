@@ -430,11 +430,13 @@ export default function LandingPage() {
                            <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
                            <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
                            <span className="text-muted-foreground self-end">/año</span>
+                           <span className="text-xs font-medium text-muted-foreground self-end">+IVA</span>
                          </>
                        ) : (
                          <>
                            <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
                            <span className="text-muted-foreground self-end">/mes</span>
+                            <span className="text-xs font-medium text-muted-foreground self-end">+IVA</span>
                          </>
                        )}
                     </div>
