@@ -15,12 +15,6 @@ const db = getFirestore();
 export const onFileDelete = onObjectDeleted(async (event) => {
   const filePath = event.data.name;
 
-  // We only care about files in the club-documents path.
-  if (!filePath.startsWith('club-documents/')) {
-    console.log(`File path ${filePath} is not a club document, skipping.`);
-    return;
-  }
-
   console.log(`File ${filePath} has been deleted. Searching for matching document in Firestore.`);
 
   try {
@@ -44,3 +38,4 @@ export const onFileDelete = onObjectDeleted(async (event) => {
     console.error(`Error deleting Firestore document for path ${filePath}:`, error);
   }
 });
+
