@@ -26,10 +26,19 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
-    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
-    const checkoutSessionsRef = collection(db, 'checkout_sessions');
+    // 1. Create the user in Firebase Auth first
+    const userCredential = await createUserWithEmailAndPassword(clientAuth, data.email, data.password);
+    const user = userCredential.user;
 
-    const checkoutDocRef = await addDoc(checkoutSessionsRef, {
+    if (!user) {
+        throw new Error("No se pudo crear el usuario.");
+    }
+      
+    // 2. Now that we have a user UID, create the checkout session document under that user
+    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
+    const checkoutSessionRef = collection(db, 'users', user.uid, 'checkout_sessions');
+
+    const checkoutDocRef = await addDoc(checkoutSessionRef, {
         price: priceId,
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/register?subscription=cancelled`,
@@ -39,12 +48,13 @@ export async function createClubAction(data: { clubName: string, adminName: stri
             adminName: data.adminName,
             sport: data.sport,
             email: data.email,
-            password: data.password, 
             themeColor: data.themeColor,
+            // We pass the UID so the webhook can find the user
+            firebaseUid: user.uid, 
         },
-        // We will create the Stripe Customer on the fly
     });
     
+    // 3. Wait for the extension to create the session ID
     const sessionId = await new Promise<string>((resolve, reject) => {
         const unsubscribe = onSnapshot(checkoutDocRef, (snap) => {
           const { error, sessionId } = snap.data() as {
@@ -67,6 +77,9 @@ export async function createClubAction(data: { clubName: string, adminName: stri
   } catch (error: any) {
     console.error("Error creating checkout session:", error);
     let errorMessage = "Ocurrió un error inesperado al iniciar el registro.";
+     if (error.code === 'auth/email-already-in-use') {
+        errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
+    }
     return { success: false, error: errorMessage };
   }
 }
