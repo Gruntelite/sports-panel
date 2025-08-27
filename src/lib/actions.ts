@@ -1,7 +1,10 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc, onSnapshot } from "firebase/firestore";
+import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
+import { getAuth } from 'firebase-admin/auth';
+import { getApp } from "firebase-admin/app";
+import { getFunctions } from "firebase-admin/functions";
 import { db, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
@@ -34,19 +37,19 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     uid = userRecord.uid;
 
     // Step 2: Create the club document to get a clubId
-    const clubRef = doc(collection(db, "clubs"));
+    const clubRef = db.collection("clubs").doc();
     const clubId = clubRef.id;
     
-    await setDoc(clubRef, {
+    await clubRef.set({
       name: data.clubName,
       sport: data.sport,
       adminUid: uid,
-      createdAt: Timestamp.now(),
+      createdAt: FieldValue.serverTimestamp(),
     });
 
     // Step 3: Create the user document in the 'users' collection
-    const userDocRef = doc(db, 'users', uid);
-    await setDoc(userDocRef, {
+    const userDocRef = db.collection('users').doc(uid);
+    await userDocRef.set({
         clubId: clubId,
         email: data.email,
         name: data.adminName,
@@ -56,16 +59,16 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     // Step 4: Create the club settings document
     const luminance = getLuminance(data.themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
-    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-    await setDoc(settingsRef, {
+    const settingsRef = db.collection("clubs").doc(clubId).collection("settings").doc("config");
+    await settingsRef.set({
         themeColor: data.themeColor,
         themeColorForeground: foregroundColor,
         logoUrl: null
     }, { merge: true });
 
     // Step 5: Create the checkout session document in the user's subcollection
-    const checkoutSessionsRef = collection(userDocRef, 'checkout_sessions');
-    const checkoutDocRef = await addDoc(checkoutSessionsRef, {
+    const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
+    const checkoutDocRef = await checkoutSessionsRef.add({
       price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/register?subscription=cancelled`,
@@ -76,7 +79,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
 
     // Step 6: Wait for the extension to write the sessionId
     const sessionId = await new Promise<string>((resolve, reject) => {
-      const unsubscribe = onSnapshot(checkoutDocRef, (snap) => {
+      const unsubscribe = checkoutDocRef.onSnapshot((snap) => {
         const { error, sessionId } = snap.data() as {
           error?: { message: string };
           sessionId?: string;
@@ -121,10 +124,10 @@ export async function requestDataUpdateAction({
 
   try {
     const collectionName = memberType === 'player' ? 'players' : 'coaches';
-    const batch = writeBatch(db);
+    const batch = db.batch();
     
     members.forEach(member => {
-        const memberRef = doc(db, "clubs", clubId, collectionName, member.id);
+        const memberRef = db.collection("clubs").doc(clubId).collection(collectionName).doc(member.id);
         batch.update(memberRef, { updateRequestActive: true });
     });
     
@@ -135,9 +138,9 @@ export async function requestDataUpdateAction({
     const emailRecipients = members.map(m => ({ email: m.email, name: m.name }));
     let emailsSent = 0;
     
-    const clubDocRef = doc(db, "clubs", clubId);
-    const clubDocSnap = await getDoc(clubDocRef);
-    const clubName = clubDocSnap.exists() ? clubDocSnap.data().name : 'Tu Club';
+    const clubDocRef = db.collection("clubs").doc(clubId);
+    const clubDocSnap = await clubDocRef.get();
+    const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
 
     for (const recipient of emailRecipients) {
         if (!recipient.email) continue;
@@ -168,8 +171,8 @@ export async function requestDataUpdateAction({
             emailsSent++;
         } else {
             console.warn(`Failed to send email to ${recipient.email}: ${emailResult.error}`);
-            const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
-            await updateDoc(memberRef, { updateRequestActive: false });
+            const memberRef = db.collection("clubs").doc(clubId).collection(collectionName).doc(memberId);
+            await memberRef.update({ updateRequestActive: false });
         }
     }
 
@@ -198,18 +201,18 @@ export async function importDataAction({
     }
     
     try {
-        const batch = writeBatch(db);
+        const batch = db.batch();
         const collectionName = importerType;
-        const collectionRef = collection(db, "clubs", clubId, collectionName);
+        const collectionRef = db.collection("clubs").doc(clubId).collection(collectionName);
 
         let teams: { id: string, name: string }[] = [];
         if (collectionName === 'players' || collectionName === 'coaches') {
-            const teamsSnapshot = await getDocs(collection(db, "clubs", clubId, "teams"));
+            const teamsSnapshot = await db.collection("clubs").doc(clubId).collection("teams").get();
             teams = teamsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
         }
 
         data.forEach(item => {
-            const docRef = doc(collectionRef);
+            const docRef = collectionRef.doc();
             
             if ((collectionName === 'players' || collectionName === 'coaches') && item.teamName) {
                 const team = teams.find(t => t.name.toLowerCase() === item.teamName.toLowerCase());
@@ -250,14 +253,14 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 
   try {
-    const batch = writeBatch(db);
-    const batchRef = doc(collection(db, 'fileRequestBatches'));
+    const batch = db.batch();
+    const batchRef = db.collection('fileRequestBatches').doc();
     
     batch.set(batchRef, {
       clubId,
       documentTitle,
       totalSent: members.filter(m => m.email).length,
-      createdAt: Timestamp.now()
+      createdAt: FieldValue.serverTimestamp()
     });
 
     const requestsToSend: { recipient: {email: string, name: string}, url: string }[] = [];
@@ -265,7 +268,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
     for (const member of members) {
       if (!member.email) continue;
       
-      const requestRef = doc(collection(db, "fileRequests"));
+      const requestRef = db.collection("fileRequests").doc();
       const token = requestRef.id;
       const userType = member.type === 'Jugador' ? 'players' : member.type === 'Entrenador' ? 'coaches' : 'staff';
 
@@ -278,7 +281,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
         documentTitle,
         message,
         status: 'pending',
-        createdAt: Timestamp.now(),
+        createdAt: FieldValue.serverTimestamp(),
       });
       
       requestsToSend.push({
@@ -289,9 +292,9 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 
     await batch.commit();
 
-    const clubDocRef = doc(db, "clubs", clubId);
-    const clubDocSnap = await getDoc(clubDocRef);
-    const clubName = clubDocSnap.exists() ? clubDocSnap.data().name : 'Tu Club';
+    const clubDocRef = db.collection("clubs").doc(clubId);
+    const clubDocSnap = await clubDocRef.get();
+    const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
     let emailsSent = 0;
 
     for (const request of requestsToSend) {
@@ -326,18 +329,20 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-    const user = adminAuth().currentUser;
+    const app = getApp();
+    const auth = getAuth(app);
+    const user = auth.currentUser;
     if (!user) throw new Error("User not authenticated");
 
-    const userDocRef = doc(db, "users", user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-    if (!userDocSnap.exists()) throw new Error("User document not found.");
+    const userDocRef = db.collection("users").doc(user.uid);
+    const userDocSnap = await userDocRef.get();
+    if (!userDocSnap.exists) throw new Error("User document not found.");
 
-    const customerId = userDocSnap.data().stripeId;
+    const customerId = userDocSnap.data()!.stripeId;
     if (!customerId) throw new Error("Stripe Customer ID not found.");
     
-    const functions = (await import('firebase-functions/v2')).getFunctions(adminAuth().app);
-    const createPortalLink = (await import('firebase-functions/v2')).httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+    const functions = getFunctions(getApp());
+    const createPortalLink = functions.httpsCallable('ext-firestore-stripe-payments-createPortalLink');
 
     const { data } = await createPortalLink({
         customerId: customerId,
