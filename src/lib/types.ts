@@ -247,6 +247,7 @@ export type FormSubmission = {
     submittedAt: Timestamp;
     data: Record<string, any>;
     paymentStatus?: 'paid' | 'pending' | 'not_applicable';
+    stripeSessionId?: string;
 }
 
 export type CalendarEvent = {

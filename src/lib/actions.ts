@@ -294,3 +294,35 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
     return { success: false, error: error.message };
   }
 }
+
+export async function createCheckoutSessionAction(data: {formId: string, submissionId: string, clubId: string}) {
+    'use server';
+    const {formId, submissionId, clubId} = data;
+    try {
+        const checkoutSessionsRef = collection(db, 'clubs', clubId, 'users');
+        const docRef = await addDoc(checkoutSessionsRef, {
+            price: 'price_1PQR7RRx41P1V5sKqmTqaodk',
+            success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: window.location.href,
+        });
+
+        return new Promise<{id: string}>((resolve, reject) => {
+            const unsubscribe = onSnapshot(docRef, (snap) => {
+              const { error, url } = snap.data() as {
+                error?: { message: string };
+                url?: string;
+              };
+              if (error) {
+                unsubscribe();
+                reject(new Error(error.message));
+              }
+              if (url) {
+                unsubscribe();
+                resolve(url);
+              }
+            });
+          });
+    } catch(e) {
+        console.log(e);
+    }
+}

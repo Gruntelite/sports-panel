@@ -18,6 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
+import { createCheckoutSessionAction } from "@/lib/actions";
+import { loadStripe } from "@stripe/stripe-js";
 
 
 const buildSchema = (fields: RegistrationForm['fields']) => {
@@ -49,7 +51,6 @@ const buildSchema = (fields: RegistrationForm['fields']) => {
     });
     return z.object(shape);
 };
-
 
 export default function PublicFormPage() {
     const params = useParams();
@@ -145,7 +146,7 @@ export default function PublicFormPage() {
         setSubmitting(true);
         try {
             const formRef = doc(db, "clubs", formDef.clubId, "registrationForms", formId);
-            await addDoc(collection(formRef, "submissions"), {
+            const submissionRef = await addDoc(collection(formRef, "submissions"), {
                 submittedAt: Timestamp.now(),
                 data: data,
                 paymentStatus: formDef.price > 0 ? 'pending' : 'not_applicable'
@@ -155,11 +156,19 @@ export default function PublicFormPage() {
               submissionCount: (formDef.submissionCount || 0) + 1,
             });
 
-            setSubmitted(true);
-            toast({
-                title: "¡Inscripción Enviada!",
-                description: "Gracias por registrarte. Hemos recibido tus datos correctamente.",
-            });
+            if (formDef.price > 0) {
+                 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
+                 const stripe = await stripePromise;
+                 const sessionId = await createCheckoutSessionAction({formId, submissionId: submissionRef.id, clubId: formDef.clubId}) as string;
+                 await stripe?.redirectToCheckout({ sessionId });
+            } else {
+                 setSubmitted(true);
+                toast({
+                    title: "¡Inscripción Enviada!",
+                    description: "Gracias por registrarte. Hemos recibido tus datos correctamente.",
+                });
+            }
+
         } catch (error) {
             console.error("Error submitting form:", error);
             toast({
@@ -223,9 +232,6 @@ export default function PublicFormPage() {
                      {formDef.price > 0 && (
                         <div className="pt-4 text-left">
                             <p className="font-semibold text-lg">Precio: {formDef.price}€</p>
-                            {formDef.paymentIBAN && (
-                                <p className="text-sm text-muted-foreground">Realiza la transferencia al siguiente IBAN: <span className="font-semibold text-foreground">{formDef.paymentIBAN}</span></p>
-                            )}
                         </div>
                     )}
                 </CardHeader>
@@ -260,7 +266,7 @@ export default function PublicFormPage() {
                         ))}
                         <Button type="submit" className="w-full" disabled={submitting}>
                             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Enviar Inscripción
+                            {formDef.price > 0 ? `Inscribirse y Pagar ${formDef.price}€` : "Enviar Inscripción"}
                         </Button>
                     </form>
                 </CardContent>
