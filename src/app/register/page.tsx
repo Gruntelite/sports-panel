@@ -26,6 +26,8 @@ import { createClubAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
 import { Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 
 
 const registerSchema = z.object({
@@ -65,6 +67,10 @@ export default function RegisterPage() {
         title: "¡Ya casi estamos!",
         description: "Ahora serás redirigido para completar tu suscripción de prueba.",
       });
+      
+      // Sign in the user on the client before redirecting
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+
       const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
       const stripe = await stripePromise;
       if (stripe) {
