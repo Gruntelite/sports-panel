@@ -280,16 +280,26 @@ export default function LandingPage() {
 
         <section className="w-full bg-gray-800 text-white py-12 md:py-16">
             <div className="container px-4 md:px-6">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-8 text-center">
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-5xl font-bold text-turquesa">7h+</span>
                         <p className="font-semibold text-lg">Ahorro Semanal</p>
-                        <p className="text-sm text-gray-300">Es el tiempo medio que nuestros clubs ahorran en tareas administrativas.</p>
+                        <p className="text-sm text-gray-300">Tiempo medio que nuestros clubs ahorran en tareas administrativas.</p>
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-5xl font-bold text-turquesa">85%</span>
                         <p className="font-semibold text-lg">Tasa de Retención</p>
-                        <p className="text-sm text-gray-300">De los clubs que prueban SportsPanel, la gran mayoría se queda con nosotros.</p>
+                        <p className="text-sm text-gray-300">De los clubs que prueban SportsPanel, la gran mayoría se queda.</p>
+                    </div>
+                     <div className="flex flex-col items-center gap-2">
+                        <span className="text-5xl font-bold text-turquesa">100%</span>
+                        <p className="font-semibold text-lg">Mejora Organizativa</p>
+                        <p className="text-sm text-gray-300">De los clubs que afirman haber mejorado su organización interna.</p>
+                    </div>
+                    <div className="flex flex-col items-center gap-2">
+                        <span className="text-5xl font-bold text-turquesa">75%</span>
+                        <p className="font-semibold text-lg">Valor Percibido</p>
+                        <p className="text-sm text-gray-300">De clubs dispuestos a pagar más por el valor que aporta la plataforma.</p>
                     </div>
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-5xl font-bold text-turquesa">98%</span>
