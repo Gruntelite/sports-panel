@@ -26,8 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import type { CustomFieldDef } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
-import { createCheckoutSessionAction } from "@/lib/actions";
-import { loadStripe } from "@stripe/stripe-js";
+
 
 function getLuminance(hex: string): number {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
@@ -39,10 +38,6 @@ function getLuminance(hex: string): number {
     
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
-
-const pricing = {
-    pro: { id: "price_1S0TMLPXxsPnWGkZFXrjSAaw", monthly: 39.93, yearly: Math.round(39.93 * 12 * 0.9) },
-};
 
 
 export default function ClubSettingsPage() {
@@ -279,22 +274,6 @@ export default function ClubSettingsPage() {
             setSaving(false);
         }
     };
-    
-    const handleSubscribe = async () => {
-        setSaving(true);
-        try {
-            const sessionId = await createCheckoutSessionAction({ priceId: pricing.pro.id }) as string;
-            const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-            const stripe = await stripePromise;
-            await stripe?.redirectToCheckout({ sessionId });
-        } catch (error: any) {
-            console.error("Error creating checkout session:", error);
-            toast({ variant: "destructive", title: "Error de Pago", description: "No se pudo iniciar el proceso de pago. " + error.message });
-        } finally {
-            setSaving(false);
-        }
-    };
-
 
     if (loading) {
         return (
@@ -307,10 +286,9 @@ export default function ClubSettingsPage() {
     return (
         <div className="flex flex-col gap-6">
             <Tabs defaultValue="settings" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4"/>Ajustes</TabsTrigger>
                     <TabsTrigger value="customization">Campos</TabsTrigger>
-                    <TabsTrigger value="subscription"><CreditCard className="mr-2 h-4 w-4"/>Suscripción</TabsTrigger>
                 </TabsList>
                 <TabsContent value="settings" className="mt-6">
                     <div className="space-y-6">
@@ -466,58 +444,6 @@ export default function ClubSettingsPage() {
                             ) : (
                                 <p className="text-center text-muted-foreground py-8">No has creado ningún campo personalizado.</p>
                             )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                <TabsContent value="subscription" className="mt-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Plan de Suscripción</CardTitle>
-                            <CardDescription>
-                                Estás en el plan único con todas las funcionalidades y miembros ilimitados.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
-                           <div className="flex items-center space-x-2 justify-center">
-                              <Label htmlFor="billing-cycle">Mensual</Label>
-                              <Switch id="billing-cycle" checked={isYearly} onCheckedChange={setIsYearly} />
-                              <Label htmlFor="billing-cycle">Anual</Label>
-                              <Badge variant="secondary" className="bg-green-100 text-green-800">Ahorra 10%</Badge>
-                            </div>
-                            <div className="flex justify-center">
-                                <Card className="relative flex flex-col p-6 text-center border-primary ring-2 ring-primary max-w-sm">
-                                    <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>Plan Único</div>
-                                    <h3 className="text-2xl font-bold font-headline">SportsPanel Completo</h3>
-                                    <p className="text-muted-foreground mt-1">Fichas <b>ilimitadas</b></p>
-                                    <div className="mt-4 flex items-baseline justify-center gap-2">
-                                       {isYearly ? (
-                                         <>
-                                           <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
-                                           <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
-                                           <span className="text-muted-foreground self-end">/año</span>
-                                         </>
-                                       ) : (
-                                         <>
-                                           <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                                           <span className="text-muted-foreground self-end">/mes</span>
-                                         </>
-                                       )}
-                                    </div>
-                                    <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros</span></li>
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de equipos</span></li>
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y cuotas</span></li>
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación con las familias</span></li>
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Portal para familias</span></li>
-                                        <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
-                                    </ul>
-                                    <Button onClick={handleSubscribe} className="mt-6 w-full" disabled={saving}>
-                                        {saving && <Loader2 className="animate-spin mr-2"/>}
-                                        Suscribirse Ahora
-                                    </Button>
-                                </Card>
-                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

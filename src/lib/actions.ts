@@ -1,9 +1,9 @@
 
-"use client";
+'use server';
 
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc, onSnapshot } from "firebase/firestore";
 import { db, auth } from './firebase'; // Use client SDK
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 
@@ -23,7 +23,7 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, clubId?: string}> {
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
     const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
     const user = userCredential.user;
@@ -51,14 +51,44 @@ export async function createClubAction(data: { clubName: string, adminName: stri
 
     const settingsRef = doc(db, "clubs", clubId, "settings", "config");
     batch.set(settingsRef, {
-        billingPlan: 'basic',
+        billingPlan: 'pro',
         themeColor: data.themeColor,
         themeColorForeground: foregroundColor
     });
 
     await batch.commit();
+    
+    // Now that club is created, log in to create the checkout session
+    await signInWithEmailAndPassword(auth, data.email, data.password);
 
-    return { success: true, clubId };
+    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
+    const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
+
+    const checkoutDocRef = await addDoc(checkoutSessionsRef, {
+        price: priceId,
+        success_url: `${window.location.origin}/dashboard?subscription=success`,
+        cancel_url: `${window.location.origin}/register?subscription=cancelled`,
+    });
+    
+    const sessionId = await new Promise<string>((resolve, reject) => {
+        const unsubscribe = onSnapshot(checkoutDocRef, (snap) => {
+          const { error, sessionId } = snap.data() as {
+            error?: { message: string };
+            sessionId?: string;
+          };
+          if (error) {
+            unsubscribe();
+            reject(new Error(error.message));
+          }
+          if (sessionId) {
+            unsubscribe();
+            resolve(sessionId);
+          }
+        });
+    });
+
+    return { success: true, sessionId };
+
   } catch (error: any) {
     console.error("Error creating club and user:", error);
     let errorMessage = "Ocurrió un error inesperado durante el registro.";
@@ -295,34 +325,43 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 }
 
-export async function createCheckoutSessionAction(data: { priceId: string }) {
-    'use server';
-    const { priceId } = data;
+export async function createCheckoutSessionAction(data: { priceId: string, formId?: string, submissionId?: string, clubId?: string }) {
+    const { priceId, formId, submissionId, clubId } = data;
     try {
         const user = auth.currentUser;
         if (!user) throw new Error("User not authenticated");
 
         const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
 
-        const docRef = await addDoc(checkoutSessionsRef, {
+        const docData: any = {
             price: priceId,
-            success_url: `${window.location.origin}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: window.location.href,
-        });
+            success_url: formId ? `${window.location.origin}/form/${formId}?subscription=success` : `${window.location.origin}/dashboard?subscription=success`,
+            cancel_url: formId ? `${window.location.origin}/form/${formId}?subscription=cancelled` : window.location.origin,
+        };
+
+        if (formId) {
+            docData.metadata = {
+                formId,
+                submissionId,
+                clubId
+            };
+        }
+
+        const docRef = await addDoc(checkoutSessionsRef, docData);
 
         return new Promise((resolve, reject) => {
             const unsubscribe = onSnapshot(docRef, (snap) => {
-              const { error, url } = snap.data() as {
+              const { error, sessionId } = snap.data() as {
                 error?: { message: string };
-                url?: string;
+                sessionId?: string;
               };
               if (error) {
                 unsubscribe();
                 reject(new Error(error.message));
               }
-              if (url) {
+              if (sessionId) {
                 unsubscribe();
-                resolve(url);
+                resolve(sessionId);
               }
             });
           });
