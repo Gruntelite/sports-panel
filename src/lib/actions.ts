@@ -68,6 +68,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         price: priceId,
         success_url: `${window.location.origin}/dashboard?subscription=success`,
         cancel_url: `${window.location.origin}/register?subscription=cancelled`,
+        trial_period_days: 20,
     });
     
     const sessionId = await new Promise<string>((resolve, reject) => {
@@ -369,4 +370,33 @@ export async function createCheckoutSessionAction(data: { priceId: string, formI
         console.log(e);
         throw e;
     }
+}
+
+
+export async function createPortalLinkAction(clubId: string): Promise<string> {
+    const user = auth.currentUser;
+    if (!user) throw new Error("User not authenticated");
+    
+    // This is a simplified version. In a real app, you would call a Cloud Function.
+    // We simulate this by constructing the URL, but the actual portal link generation
+    // happens on Stripe's side and requires a backend call.
+    // For this prototype, we'll link to Stripe's billing portal page.
+    
+    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+    const settingsSnap = await getDoc(settingsRef);
+
+    if (settingsSnap.exists() && settingsSnap.data().stripeCustomerId) {
+         // In a real scenario, this would be a call to a serverless function
+        // that uses the Stripe Node.js SDK to create a portal session.
+        // const portalSession = await stripe.billingPortal.sessions.create({
+        //   customer: customerId,
+        //   return_url: `${window.location.origin}/dashboard`,
+        // });
+        // return portalSession.url;
+
+        // For now, we link to the generic customer portal.
+        return `https://billing.stripe.com/p/login/test_7sI5kX5gYg2a8G4eUU`;
+    }
+    
+    throw new Error("Stripe Customer ID not found.");
 }
