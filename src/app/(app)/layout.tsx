@@ -6,9 +6,11 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, query, where } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+
+const DEV_CLUB_ID = "VWxHRR6HzumBnSdLfTtP"; // Club de pruebas
 
 export default function AppLayout({
   children,
@@ -23,18 +25,34 @@ export default function AppLayout({
       if (user) {
         try {
           const userDocRef = doc(db, "users", user.uid);
-          const subscriptionsQuery = query(
-            collection(userDocRef, "subscriptions"),
-            where("status", "in", ["trialing", "active"])
-          );
-          const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
+          const userDocSnap = await getDoc(userDocRef);
 
-          if (subscriptionsSnapshot.empty) {
-            // No active or trialing subscription found
-            router.push('/subscribe');
+          if (userDocSnap.exists()) {
+            const userData = userDocSnap.data();
+            const clubId = userData.clubId;
+
+            // Si es el club de desarrollo, saltar la comprobación de suscripción
+            if (clubId === DEV_CLUB_ID) {
+              setLoading(false);
+              return;
+            }
+
+            const subscriptionsQuery = query(
+              collection(userDocRef, "subscriptions"),
+              where("status", "in", ["trialing", "active"])
+            );
+            const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
+
+            if (subscriptionsSnapshot.empty) {
+              // No active or trialing subscription found
+              router.push('/subscribe');
+            } else {
+              // User has a valid subscription
+              setLoading(false);
+            }
           } else {
-            // User has a valid subscription
-            setLoading(false);
+             // User document doesn't exist, maybe still in creation process
+             router.push('/login');
           }
         } catch (error) {
           console.error("Error verifying subscription:", error);
