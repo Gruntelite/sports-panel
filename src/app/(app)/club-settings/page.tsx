@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2, ExternalLink } from "lucide-react";
+import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2, ExternalLink, FilePlus2, ListPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, db, storage } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove } from "firebase/firestore";
@@ -293,8 +293,8 @@ export default function ClubSettingsPage() {
             <Tabs defaultValue="settings" className="w-full">
                 <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4"/>Ajustes</TabsTrigger>
-                    <TabsTrigger value="customization">Campos</TabsTrigger>
-                    <TabsTrigger value="subscription">Suscripción</TabsTrigger>
+                    <TabsTrigger value="customization"><ListPlus className="mr-2 h-4 w-4"/>Campos Personalizados</TabsTrigger>
+                    <TabsTrigger value="subscription"><CreditCard className="mr-2 h-4 w-4"/>Suscripción</TabsTrigger>
                 </TabsList>
                 <TabsContent value="settings" className="mt-6">
                     <div className="space-y-6">
@@ -477,3 +477,5 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
+
+    

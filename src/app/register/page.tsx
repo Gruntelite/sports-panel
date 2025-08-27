@@ -24,7 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 import { createClubAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
-import { Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -104,11 +104,16 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4">
+    <div className="flex items-center justify-center min-h-screen bg-background p-4 relative">
+       <Button variant="outline" size="icon" className="absolute top-4 left-4" asChild>
+        <Link href="/">
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+      </Button>
       <Card className="mx-auto max-w-md w-full shadow-xl border">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-            <Logo />
+            <Logo withText={true} />
           </div>
           <CardTitle className="text-2xl font-bold font-headline">
             Crea tu Club
@@ -228,3 +233,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    

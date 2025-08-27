@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
+import { ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -58,11 +59,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <div className="flex items-center justify-center min-h-screen bg-background relative">
+       <Button variant="outline" size="icon" className="absolute top-4 left-4" asChild>
+        <Link href="/">
+          <ArrowLeft className="h-4 w-4" />
+        </Link>
+      </Button>
       <Card className="mx-auto max-w-sm w-full shadow-xl border">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-            <Logo />
+            <Logo withText={true} />
           </div>
           <CardTitle className="text-2xl font-bold font-headline">
             Iniciar Sesión
@@ -95,3 +101,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+    
