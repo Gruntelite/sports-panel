@@ -14,7 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { auth, db, storage, functions } from "@/lib/firebase";
+import { auth, db, storage } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,6 @@ import { Switch } from "@/components/ui/switch";
 import type { CustomFieldDef } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
-import { httpsCallable } from "firebase/functions";
 
 
 function getLuminance(hex: string): number {
@@ -225,18 +224,8 @@ export default function ClubSettingsPage() {
         }
     };
     
-    const handleManageSubscription = async () => {
-        setLoadingPortal(true);
-        try {
-            const createPortalLink = httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
-            const { data } = await createPortalLink({ returnUrl: window.location.origin + "/club-settings" });
-            window.location.assign((data as any).url);
-        } catch (error: any) {
-            console.error("Error creating Stripe portal link:", error);
-            toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });
-        } finally {
-            setLoadingPortal(false);
-        }
+    const handleManageSubscription = () => {
+      window.open("https://billing.stripe.com/p/login/5kQdRbehRgQHdIHbQy8k800", "_blank");
     };
 
     const handleAddCustomField = async () => {
