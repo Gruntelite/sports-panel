@@ -1,7 +1,7 @@
 
 "use client";
 
-import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc, onSnapshot } from "firebase/firestore";
 import { db, auth } from './firebase'; // Use client SDK
 import { createUserWithEmailAndPassword } from "firebase/auth";
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
@@ -299,14 +299,19 @@ export async function createCheckoutSessionAction(data: {formId: string, submiss
     'use server';
     const {formId, submissionId, clubId} = data;
     try {
-        const checkoutSessionsRef = collection(db, 'clubs', clubId, 'users');
+        const user = auth.currentUser;
+        if (!user) throw new Error("User not authenticated");
+
+        // The collection is at the root, so we reference it directly.
+        const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
+
         const docRef = await addDoc(checkoutSessionsRef, {
             price: 'price_1PQR7RRx41P1V5sKqmTqaodk',
             success_url: `${window.location.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
             cancel_url: window.location.href,
         });
 
-        return new Promise<{id: string}>((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             const unsubscribe = onSnapshot(docRef, (snap) => {
               const { error, url } = snap.data() as {
                 error?: { message: string };
@@ -324,5 +329,6 @@ export async function createCheckoutSessionAction(data: {formId: string, submiss
           });
     } catch(e) {
         console.log(e);
+        throw e;
     }
 }
