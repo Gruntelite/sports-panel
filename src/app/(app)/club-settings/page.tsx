@@ -12,7 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2 } from "lucide-react";
+import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, db, storage } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove } from "firebase/firestore";
@@ -26,6 +26,7 @@ import { Switch } from "@/components/ui/switch";
 import type { CustomFieldDef } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { createPortalLinkAction } from "@/lib/actions";
 
 
 function getLuminance(hex: string): number {
@@ -46,6 +47,7 @@ export default function ClubSettingsPage() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [savingSecurity, setSavingSecurity] = useState(false);
+    const [loadingPortal, setLoadingPortal] = useState(false);
 
     const [clubName, setClubName] = useState('');
     const [themeColor, setThemeColor] = useState('#2563eb');
@@ -222,6 +224,18 @@ export default function ClubSettingsPage() {
             setSavingSecurity(false);
         }
     };
+    
+    const handleManageSubscription = async () => {
+        setLoadingPortal(true);
+        try {
+          const portalUrl = await createPortalLinkAction();
+          window.location.href = portalUrl;
+        } catch (error: any) {
+          toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });
+        } finally {
+          setLoadingPortal(false);
+        }
+    };
 
     const handleAddCustomField = async () => {
         if (!clubId || !newFieldName.trim() || newFieldAppliesTo.length === 0) {
@@ -286,9 +300,10 @@ export default function ClubSettingsPage() {
     return (
         <div className="flex flex-col gap-6">
             <Tabs defaultValue="settings" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                     <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4"/>Ajustes</TabsTrigger>
                     <TabsTrigger value="customization">Campos</TabsTrigger>
+                    <TabsTrigger value="subscription">Suscripción</TabsTrigger>
                 </TabsList>
                 <TabsContent value="settings" className="mt-6">
                     <div className="space-y-6">
@@ -447,6 +462,26 @@ export default function ClubSettingsPage() {
                         </CardContent>
                     </Card>
                 </TabsContent>
+                 <TabsContent value="subscription" className="mt-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Suscripción y Pagos</CardTitle>
+                            <CardDescription>
+                                Gestiona tu plan, consulta tus facturas y actualiza tu método de pago.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="space-y-4">
+                                <p>Para gestionar tu suscripción, serás redirigido al portal seguro de nuestro proveedor de pagos, Stripe.</p>
+                                <Button onClick={handleManageSubscription} disabled={loadingPortal}>
+                                    {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                    <ExternalLink className="mr-2 h-4 w-4"/>
+                                    Ir al Portal de Cliente
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                 </TabsContent>
             </Tabs>
         </div>
     );

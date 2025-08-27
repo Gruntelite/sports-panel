@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,37 +12,16 @@ import {
 } from "@/components/ui/card";
 import { Loader2, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { createPortalLinkAction } from "@/lib/actions";
 
 export default function SubscribePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [clubId, setClubId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const fetchClubId = async () => {
-      const user = auth.currentUser;
-      if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          setClubId(userDocSnap.data().clubId);
-        }
-      }
-    };
-    fetchClubId();
-  }, []);
 
   const handleManageSubscription = async () => {
-    if (!clubId) {
-      toast({ variant: "destructive", title: "Error", description: "No se pudo encontrar la información de tu club." });
-      return;
-    }
     setLoading(true);
     try {
-      const portalUrl = await createPortalLinkAction(clubId);
+      const portalUrl = await createPortalLinkAction();
       window.location.href = portalUrl;
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });

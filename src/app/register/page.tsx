@@ -62,8 +62,8 @@ export default function RegisterPage() {
 
     if (result.success && result.sessionId) {
       toast({
-        title: "¡Club creado!",
-        description: "Ahora serás redirigido a la pasarela de pago para completar tu suscripción.",
+        title: "¡Ya casi estamos!",
+        description: "Ahora serás redirigido para completar tu suscripción de prueba.",
       });
       const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
       const stripe = await stripePromise;
@@ -71,6 +71,7 @@ export default function RegisterPage() {
           await stripe.redirectToCheckout({ sessionId: result.sessionId });
       } else {
           toast({ variant: "destructive", title: "Error de Stripe", description: "No se pudo cargar la pasarela de pago." });
+           setLoading(false);
       }
     } else {
       toast({
@@ -193,7 +194,7 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Creando tu club...' : 'Empieza tu prueba gratuita'}
+                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba gratuita'}
               </Button>
             </form>
           </Form>

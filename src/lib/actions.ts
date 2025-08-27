@@ -2,7 +2,8 @@
 'use server';
 
 import { doc, getDoc, updateDoc, collection, query, getDocs, writeBatch, Timestamp, setDoc, addDoc, onSnapshot } from "firebase/firestore";
-import { db, auth } from './firebase'; // Use client SDK
+import { db, auth as clientAuth } from './firebase'; // Use client SDK
+import { auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from "firebase/auth";
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
@@ -25,50 +26,24 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
-    const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-    const user = userCredential.user;
-
-    const clubRef = doc(collection(db, "clubs"));
-    const clubId = clubRef.id;
-
-    const batch = writeBatch(db);
-
-    batch.set(clubRef, {
-        name: data.clubName,
-        sport: data.sport,
-        createdAt: Timestamp.now(),
-        ownerId: user.uid,
-    });
-
-    const rootUserRef = doc(db, "users", user.uid);
-    batch.set(rootUserRef, {
-        clubId: clubId,
-        email: data.email,
-    });
-    
-    const luminance = getLuminance(data.themeColor);
-    const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
-
-    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-    batch.set(settingsRef, {
-        billingPlan: 'pro',
-        themeColor: data.themeColor,
-        themeColorForeground: foregroundColor
-    });
-
-    await batch.commit();
-    
-    // Now that club is created, log in to create the checkout session
-    await signInWithEmailAndPassword(auth, data.email, data.password);
-
-    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
-    const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
+    // We create the checkout session first. The user & club will be created via webhook after successful payment/trial.
+    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw"; // Your actual price ID
+    const checkoutSessionsRef = collection(db, 'checkout_sessions');
 
     const checkoutDocRef = await addDoc(checkoutSessionsRef, {
         price: priceId,
-        success_url: `${window.location.origin}/dashboard?subscription=success`,
-        cancel_url: `${window.location.origin}/register?subscription=cancelled`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/register?subscription=cancelled`,
         trial_period_days: 20,
+        metadata: {
+            clubName: data.clubName,
+            adminName: data.adminName,
+            sport: data.sport,
+            email: data.email,
+            password: data.password, // This is not ideal, but necessary for webhook creation. It's temporary.
+            themeColor: data.themeColor,
+        },
+        // We will create the Stripe Customer on the fly
     });
     
     const sessionId = await new Promise<string>((resolve, reject) => {
@@ -91,15 +66,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     return { success: true, sessionId };
 
   } catch (error: any) {
-    console.error("Error creating club and user:", error);
-    let errorMessage = "Ocurrió un error inesperado durante el registro.";
-    if (error.code === 'auth/email-already-in-use') {
-        errorMessage = "Este correo electrónico ya está en uso por otra cuenta.";
-    } else if (error.code === 'auth/weak-password') {
-        errorMessage = "La contraseña es demasiado débil. Debe tener al menos 6 caracteres.";
-    } else if (error.code === 'auth/invalid-email') {
-        errorMessage = "El formato del correo electrónico no es válido.";
-    }
+    console.error("Error creating checkout session:", error);
+    let errorMessage = "Ocurrió un error inesperado al iniciar el registro.";
     return { success: false, error: errorMessage };
   }
 }
@@ -145,7 +113,7 @@ export async function requestDataUpdateAction({
         const memberId = members.find(m => m.email === recipient.email)?.id;
         if (!memberId) continue;
 
-        const updateUrl = `${window.location.origin}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
+        const updateUrl = `${process.env.NEXT_PUBLIC_APP_URL}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
         
         const formData = new FormData();
         formData.append('clubId', clubId);
@@ -168,7 +136,6 @@ export async function requestDataUpdateAction({
             emailsSent++;
         } else {
             console.warn(`Failed to send email to ${recipient.email}: ${emailResult.error}`);
-            // Optionally rollback the updateRequestActive flag for this user
             const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
             await updateDoc(memberRef, { updateRequestActive: false });
         }
@@ -210,7 +177,7 @@ export async function importDataAction({
         }
 
         data.forEach(item => {
-            const docRef = doc(collectionRef); // Creates a new document with a random ID
+            const docRef = doc(collectionRef);
             
             if ((collectionName === 'players' || collectionName === 'coaches') && item.teamName) {
                 const team = teams.find(t => t.name.toLowerCase() === item.teamName.toLowerCase());
@@ -284,7 +251,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
       
       requestsToSend.push({
         recipient: { email: member.email, name: member.name },
-        url: `${window.location.origin}/upload/${token}`,
+        url: `${process.env.NEXT_PUBLIC_APP_URL}/upload/${token}`,
       });
     }
 
@@ -329,15 +296,15 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 export async function createCheckoutSessionAction(data: { priceId: string, formId?: string, submissionId?: string, clubId?: string }) {
     const { priceId, formId, submissionId, clubId } = data;
     try {
-        const user = auth.currentUser;
+        const user = clientAuth.currentUser;
         if (!user) throw new Error("User not authenticated");
 
         const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
 
         const docData: any = {
             price: priceId,
-            success_url: formId ? `${window.location.origin}/form/${formId}?subscription=success` : `${window.location.origin}/dashboard?subscription=success`,
-            cancel_url: formId ? `${window.location.origin}/form/${formId}?subscription=cancelled` : window.location.origin,
+            success_url: formId ? `${process.env.NEXT_PUBLIC_APP_URL}/form/${formId}?subscription=success` : `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
+            cancel_url: formId ? `${process.env.NEXT_PUBLIC_APP_URL}/form/${formId}?subscription=cancelled` : process.env.NEXT_PUBLIC_APP_URL,
         };
 
         if (formId) {
@@ -350,7 +317,7 @@ export async function createCheckoutSessionAction(data: { priceId: string, formI
 
         const docRef = await addDoc(checkoutSessionsRef, docData);
 
-        return new Promise((resolve, reject) => {
+        return new Promise<string>((resolve, reject) => {
             const unsubscribe = onSnapshot(docRef, (snap) => {
               const { error, sessionId } = snap.data() as {
                 error?: { message: string };
@@ -373,30 +340,24 @@ export async function createCheckoutSessionAction(data: { priceId: string, formI
 }
 
 
-export async function createPortalLinkAction(clubId: string): Promise<string> {
-    const user = auth.currentUser;
+export async function createPortalLinkAction(): Promise<string> {
+    const user = clientAuth.currentUser;
     if (!user) throw new Error("User not authenticated");
-    
-    // This is a simplified version. In a real app, you would call a Cloud Function.
-    // We simulate this by constructing the URL, but the actual portal link generation
-    // happens on Stripe's side and requires a backend call.
-    // For this prototype, we'll link to Stripe's billing portal page.
-    
-    const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-    const settingsSnap = await getDoc(settingsRef);
 
-    if (settingsSnap.exists() && settingsSnap.data().stripeCustomerId) {
-         // In a real scenario, this would be a call to a serverless function
-        // that uses the Stripe Node.js SDK to create a portal session.
-        // const portalSession = await stripe.billingPortal.sessions.create({
-        //   customer: customerId,
-        //   return_url: `${window.location.origin}/dashboard`,
-        // });
-        // return portalSession.url;
+    const userDocRef = doc(db, "users", user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+    if (!userDocSnap.exists()) throw new Error("User document not found.");
 
-        // For now, we link to the generic customer portal.
-        return `https://billing.stripe.com/p/login/test_7sI5kX5gYg2a8G4eUU`;
-    }
+    const customerId = userDocSnap.data().stripeId;
+    if (!customerId) throw new Error("Stripe Customer ID not found.");
     
-    throw new Error("Stripe Customer ID not found.");
+    const functions = (await import('firebase/functions')).getFunctions((await import('../firebase')).app);
+    const createPortalLink = (await import('firebase/functions')).httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
+
+    const { data } = await createPortalLink({
+        customerId: customerId,
+        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL}/club-settings`,
+    });
+
+    return (data as any).url;
 }
