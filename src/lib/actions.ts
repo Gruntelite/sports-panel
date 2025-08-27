@@ -125,7 +125,7 @@ export async function requestDataUpdateAction({
         const memberId = members.find(m => m.email === recipient.email)?.id;
         if (!memberId) continue;
         
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://sportspanel.net`;
+        const appUrl = `https://sportspanel.net`;
         const updateUrl = `${appUrl}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
         
         const formData = new FormData();
@@ -262,7 +262,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
         createdAt: FieldValue.serverTimestamp(),
       });
       
-      const appUrl = process.env.NEXT_PUBLIC_APP_URL || `https://sportspanel.net`;
+      const appUrl = `https://sportspanel.net`;
       requestsToSend.push({
         recipient: { email: member.email, name: member.name },
         url: `${appUrl}/upload/${token}`,
@@ -307,16 +307,12 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 }
 
-export async function createPortalLinkAction(): Promise<string> {
-    const app = getApp();
-    const functions = getFunctions(app, "europe-west1"); // Asegúrate de que la región es correcta
-    
-    const user = adminAuth.currentUser;
-    if (!user) {
+export async function createPortalLinkAction(uid: string): Promise<string> {
+    if (!uid) {
         throw new Error("Usuario no autenticado.");
     }
     
-    const userDocRef = db.collection('users').doc(user.uid);
+    const userDocRef = db.collection('users').doc(uid);
     const userDocSnap = await userDocRef.get();
     if (!userDocSnap.exists) {
         throw new Error("No se encontró el documento del usuario.");
@@ -326,10 +322,13 @@ export async function createPortalLinkAction(): Promise<string> {
     if (!stripeId) {
         throw new Error("ID de cliente de Stripe no encontrado.");
     }
-
-    const { data } = await getFunctions(getApp(), "https://europe-west1-sportspanel.cloudfunctions.net/ext-firestore-stripe-payments-createPortalLink")({
+    
+    const functions = getFunctions(getApp(), "europe-west1");
+    const callable = getFunctions(getApp(), "ext-firestore-stripe-payments-createPortalLink");
+    
+    const { data } = await callable({
         customerId: stripeId,
-        returnUrl: `${process.env.NEXT_PUBLIC_APP_URL || `https://sportspanel.net`}/club-settings`,
+        returnUrl: `https://sportspanel.net/club-settings`,
         locale: 'es',
     });
 

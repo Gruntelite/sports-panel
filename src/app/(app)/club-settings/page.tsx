@@ -227,8 +227,15 @@ export default function ClubSettingsPage() {
     
     const handleManageSubscription = async () => {
         setLoadingPortal(true);
+        const user = auth.currentUser;
+        if (!user) {
+            toast({ variant: "destructive", title: "Error", description: "Debes estar autenticado." });
+            setLoadingPortal(false);
+            return;
+        }
+        
         try {
-          const portalUrl = await createPortalLinkAction();
+          const portalUrl = await createPortalLinkAction(user.uid);
           window.location.href = portalUrl;
         } catch (error: any) {
           toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });
