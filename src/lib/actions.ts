@@ -351,7 +351,7 @@ export async function createPortalLinkAction(): Promise<string> {
     const customerId = userDocSnap.data().stripeId;
     if (!customerId) throw new Error("Stripe Customer ID not found.");
     
-    const functions = (await import('firebase/functions')).getFunctions((await import('../firebase')).app);
+    const functions = (await import('firebase/functions')).getFunctions((await import('./firebase')).app);
     const createPortalLink = (await import('firebase/functions')).httpsCallable(functions, 'ext-firestore-stripe-payments-createPortalLink');
 
     const { data } = await createPortalLink({
