@@ -262,7 +262,7 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <Button asChild size="lg">
                   <Link href="/register" prefetch={false}>
-                    Empieza tu prueba gratuita
+                    Empieza tu prueba de 20 días
                   </Link>
                 </Button>
               </div>
@@ -431,7 +431,7 @@ export default function LandingPage() {
                            <span className="text-xl font-medium text-muted-foreground line-through">{Math.round(pricing.pro.monthly * 12)}€</span>
                            <div className="relative">
                                 <span className="text-4xl font-bold">{pricing.pro.yearly}€</span>
-                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-black">+IVA</span>
+                                <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+ IVA</span>
                            </div>
                            <span className="text-muted-foreground self-end">/año</span>
                          </>
@@ -439,7 +439,7 @@ export default function LandingPage() {
                          <>
                            <div className="relative">
                             <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
-                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-black">+IVA</span>
+                            <span className="absolute top-0 -right-1.5 -translate-y-full text-xs font-medium text-muted-foreground">+ IVA</span>
                            </div>
                            <span className="text-muted-foreground self-end">/mes</span>
                          </>
