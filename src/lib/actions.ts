@@ -292,12 +292,14 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 }
 
-export async function createCheckoutSessionAction(data: { priceId: string, formId?: string, submissionId?: string, clubId?: string }) {
-    const { priceId, formId, submissionId, clubId } = data;
+export async function createCheckoutSessionAction(data: { formId?: string, submissionId?: string, clubId?: string }) {
+    const { formId, submissionId, clubId } = data;
     try {
         const user = clientAuth.currentUser;
         if (!user) throw new Error("User not authenticated");
-
+        
+        const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw"; // Hardcoded price ID for subscription
+        
         const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
 
         const docData: any = {
