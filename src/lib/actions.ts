@@ -3,12 +3,9 @@
 
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from 'firebase-admin/auth';
-import { getApp } from "firebase-admin/app";
-import { getFunctions } from "firebase-admin/functions";
 import { db, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
-import * as https from 'https';
 
 
 type VerificationInput = {
@@ -324,54 +321,24 @@ export async function createPortalLinkAction(uid: string): Promise<string> {
         throw new Error("ID de cliente de Stripe no encontrado.");
     }
     
-    const app = getApp();
-    const projectId = app.options.projectId;
-    const location = "europe-west1"; 
-    const extensionId = "firestore-stripe-payments";
-
-    const url = `https://${location}-${projectId}.cloudfunctions.net/ext-${extensionId}-createPortalLink`;
-
-    const requestData = JSON.stringify({
-        data: {
-            customerId: stripeId,
-            returnUrl: "https://sportspanel.net/club-settings",
-            locale: "es",
-        },
+    const portalLinkRef = userDocRef.collection('portal_links').doc();
+    
+    await portalLinkRef.set({
+        return_url: "https://sportspanel.net/club-settings",
+        locale: "es",
     });
 
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': Buffer.byteLength(requestData),
-        },
-    };
-    
     return new Promise((resolve, reject) => {
-        const req = https.request(url, options, (res) => {
-            let responseData = '';
-            res.on('data', (chunk) => {
-                responseData += chunk;
-            });
-            res.on('end', () => {
-                try {
-                    const jsonResponse = JSON.parse(responseData);
-                    if (jsonResponse.result && jsonResponse.result.url) {
-                        resolve(jsonResponse.result.url);
-                    } else {
-                        reject(new Error(jsonResponse.error?.message || "La respuesta de la función no contenía una URL."));
-                    }
-                } catch (e) {
-                    reject(new Error(`Error al procesar la respuesta de la función: ${e instanceof Error ? e.message : String(e)}`));
-                }
-            });
+        const unsubscribe = portalLinkRef.onSnapshot((snap) => {
+            const data = snap.data();
+            if (data?.url) {
+                unsubscribe();
+                resolve(data.url);
+            }
+            if (data?.error) {
+                unsubscribe();
+                reject(new Error(data.error.message));
+            }
         });
-
-        req.on('error', (e) => {
-            reject(new Error(`Error al llamar a la función: ${e.message}`));
-        });
-
-        req.write(requestData);
-        req.end();
     });
 }
