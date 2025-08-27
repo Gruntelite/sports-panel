@@ -57,7 +57,7 @@ type MonthlyCategorySummary = {
 };
 
 
-function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths }: { 
+function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions }: { 
     players: Player[], 
     oneTimePayments: OneTimePayment[], 
     coaches: Coach[], 
@@ -66,6 +66,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
     oneOffExpenses: OneOffExpense[],
     feeExcludedMonths: number[],
     coachFeeExcludedMonths: number[],
+    formsWithSubmissions: FormWithSubmissions[],
 }) {
     const [year, setYear] = useState<number>(new Date().getFullYear());
     const [chartData, setChartData] = useState<any[]>([]);
@@ -107,6 +108,18 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                     monthlyData[0].Ingresos += s.amount;
                 }
             });
+             formsWithSubmissions.forEach(form => {
+                if (form.price > 0) {
+                    form.submissions.forEach(sub => {
+                        const subDate = sub.submittedAt.toDate();
+                        if (getYear(subDate) === year && sub.paymentStatus === 'paid') {
+                            const subMonth = getMonth(subDate);
+                            monthlyData[subMonth].Ingresos += form.price;
+                        }
+                    });
+                }
+            });
+
 
             // Expenses
             coaches.forEach(c => {
@@ -141,7 +154,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             setChartData(formattedData);
         };
         processData();
-    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths]);
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions]);
 
     const chartConfig: ChartConfig = {
         Ingresos: { label: "Ingresos", color: "hsl(var(--chart-1))" },
@@ -895,6 +908,7 @@ export function TreasuryDashboard() {
             oneOffExpenses={oneOffExpenses}
             feeExcludedMonths={clubSettings.feeExcludedMonths || []}
             coachFeeExcludedMonths={clubSettings.coachFeeExcludedMonths || []}
+            formsWithSubmissions={formsWithSubmissions}
         />
         
       <Tabs defaultValue="accounting" value={activeTab} onValueChange={setActiveTab}>
