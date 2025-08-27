@@ -26,7 +26,6 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, sessionId?: string}> {
   try {
-    // 1. Create the user in Firebase Auth first to ensure the email is not already in use
     const userCredential = await createUserWithEmailAndPassword(clientAuth, data.email, data.password);
     const user = userCredential.user;
 
@@ -34,12 +33,10 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         throw new Error("No se pudo crear el usuario.");
     }
       
-    // 2. Now that we have a user UID, create the checkout session document under that user
-    const priceId = "price_1S0TMLPXxsPnWGkZFXrjSAaw";
-    const checkoutSessionRef = collection(db, 'checkout_sessions');
+    const checkoutSessionsRef = collection(db, 'users', user.uid, 'checkout_sessions');
 
-    const checkoutDocRef = await addDoc(checkoutSessionRef, {
-        price: priceId,
+    const checkoutDocRef = await addDoc(checkoutSessionsRef, {
+        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
         success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
         cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/register?subscription=cancelled`,
         trial_period_days: 20,
@@ -49,12 +46,10 @@ export async function createClubAction(data: { clubName: string, adminName: stri
             sport: data.sport,
             email: data.email,
             themeColor: data.themeColor,
-            // We pass the UID so the webhook can find the user
             firebaseUid: user.uid, 
         },
     });
     
-    // 3. Wait for the extension to create the session ID
     const sessionId = await new Promise<string>((resolve, reject) => {
         const unsubscribe = onSnapshot(checkoutDocRef, (snap) => {
           const { error, sessionId } = snap.data() as {
@@ -375,3 +370,5 @@ export async function createPortalLinkAction(): Promise<string> {
 
     return (data as any).url;
 }
+
+    

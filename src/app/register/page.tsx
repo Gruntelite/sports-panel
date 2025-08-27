@@ -68,7 +68,11 @@ export default function RegisterPage() {
       const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
       const stripe = await stripePromise;
       if (stripe) {
-          await stripe.redirectToCheckout({ sessionId: result.sessionId });
+          const { error } = await stripe.redirectToCheckout({ sessionId: result.sessionId });
+          if(error) {
+              toast({ variant: "destructive", title: "Error de Redirección", description: error.message });
+              setLoading(false);
+          }
       } else {
           toast({ variant: "destructive", title: "Error de Stripe", description: "No se pudo cargar la pasarela de pago." });
            setLoading(false);
@@ -208,3 +212,5 @@ export default function RegisterPage() {
     </div>
   );
 }
+
+    
