@@ -12,12 +12,30 @@ interface Attachment {
   contentType: string;
 }
 
-export async function sendEmailWithSmtpAction(formData: FormData) {
-    const clubId = formData.get('clubId') as string;
-    const recipients = JSON.parse(formData.get('recipients') as string) as { email: string, name: string }[];
-    const subject = formData.get('subject') as string;
-    const htmlContent = formData.get('htmlContent') as string;
-    const files = formData.getAll('attachments') as File[];
+type EmailPayload = {
+    clubId: string;
+    recipients: { email: string, name: string }[];
+    subject: string;
+    htmlContent: string;
+    attachments?: File[];
+}
+
+export async function sendEmailWithSmtpAction(payload: EmailPayload | FormData) {
+    let clubId: string, recipients: { email: string, name: string }[], subject: string, htmlContent: string, files: File[] = [];
+
+    if (payload instanceof FormData) {
+        clubId = payload.get('clubId') as string;
+        recipients = JSON.parse(payload.get('recipients') as string);
+        subject = payload.get('subject') as string;
+        htmlContent = payload.get('htmlContent') as string;
+        files = payload.getAll('attachments') as File[];
+    } else {
+        clubId = payload.clubId;
+        recipients = payload.recipients;
+        subject = payload.subject;
+        htmlContent = payload.htmlContent;
+        files = payload.attachments || [];
+    }
 
     if (!clubId || recipients.length === 0 || !subject || !htmlContent) {
         return { success: false, error: "Faltan parámetros para enviar el correo." };
