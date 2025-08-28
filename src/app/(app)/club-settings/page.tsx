@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2, ExternalLink, FilePlus2, ListPlus } from "lucide-react";
+import { CheckCircle, Star, Palette, Save, Loader2, Upload, KeyRound, Mail, Settings, CreditCard, PlusCircle, Trash2, ExternalLink, FilePlus2, ListPlus, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { auth, db, storage } from "@/lib/firebase";
 import { doc, getDoc, updateDoc, setDoc, arrayUnion, arrayRemove } from "firebase/firestore";
@@ -313,6 +314,14 @@ export default function ClubSettingsPage() {
                                     <div className="flex items-center gap-4">
                                         <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
                                         <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
+                                        <div className="ml-auto">
+                                          <Button asChild>
+                                            <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
+                                              <Download className="mr-2 h-4 w-4" />
+                                              Descargar Guía de Uso
+                                            </Link>
+                                          </Button>
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="space-y-2">
@@ -477,5 +486,3 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
-
-    

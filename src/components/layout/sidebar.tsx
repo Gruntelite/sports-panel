@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -53,19 +53,19 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
         e.preventDefault();
         setIsSending(true);
         
-        const htmlContent = `
-            <p><strong>Club ID:</strong> ${clubId}</p>
-            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
-            <hr>
-            <p>${message.replace(/\n/g, '<br>')}</p>
-        `;
-        
-        const result = await sendEmailWithSmtpAction({
+        const payload = {
             clubId: clubId,
             recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Soporte SportsPanel' }],
             subject: `Consulta de Soporte: ${subject}`,
-            htmlContent
-        });
+            htmlContent: `
+                <p><strong>Club ID:</strong> ${clubId}</p>
+                <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+                <hr>
+                <p>${message.replace(/\n/g, '<br>')}</p>
+            `,
+        };
+
+        const result = await sendEmailWithSmtpAction(payload);
 
         if (result.success) {
             toast({ title: "Mensaje Enviado", description: "Hemos recibido tu consulta. Te responderemos lo antes posible."});
@@ -117,22 +117,22 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
         }
         setIsSending(true);
         
-        const htmlContent = `
-            <h2>Nueva Reseña de SportsPanel</h2>
-            <p><strong>Club ID:</strong> ${clubId}</p>
-            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
-            <hr>
-            <h3>Puntuación: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</h3>
-            <h3>Comentario:</h3>
-            <p>${comment.replace(/\n/g, '<br>') || '<em>Sin comentario.</em>'}</p>
-        `;
-        
-        const result = await sendEmailWithSmtpAction({
+        const payload = {
             clubId: clubId,
             recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Reseñas SportsPanel' }],
             subject: `Nueva Reseña de ${rating} Estrellas de ${userProfile.name}`,
-            htmlContent
-        });
+            htmlContent: `
+                <h2>Nueva Reseña de SportsPanel</h2>
+                <p><strong>Club ID:</strong> ${clubId}</p>
+                <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+                <hr>
+                <h3>Puntuación: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</h3>
+                <h3>Comentario:</h3>
+                <p>${comment.replace(/\n/g, '<br>') || '<em>Sin comentario.</em>'}</p>
+            `,
+        };
+        
+        const result = await sendEmailWithSmtpAction(payload);
 
         if (result.success) {
             toast({ title: "¡Gracias por tu reseña!", description: "Tu opinión nos ayuda a mejorar."});
@@ -290,6 +290,12 @@ export function Sidebar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" align="end">
+                             <DropdownMenuItem asChild>
+                                <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    <span>Descargar Guía de Uso</span>
+                                </Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => setIsReviewOpen(true)}>
                                 <Star className="mr-2 h-4 w-4" />
                                 <span>Dejar una reseña</span>
