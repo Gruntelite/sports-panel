@@ -67,49 +67,34 @@ const features = [
 
 const testimonials = [
     {
-        name: "Carlos Sánchez",
-        role: "Presidente, Club Deportivo Águilas",
-        quote: "SportsPanel ha revolucionado nuestra gestión. Hemos reducido el tiempo administrativo a la mitad y la comunicación con las familias es ahora instantánea. ¡Imprescindible!",
+        name: "Javier García",
+        role: "Presidente, C.D. Móstoles",
+        quote: "Desde que usamos SportsPanel, la administración del club es otra. La función de solicitar actualización de datos a las familias nos ahorra semanas de trabajo al inicio de cada temporada. Es un cambio brutal.",
     },
     {
-        name: "Laura Jiménez",
-        role: "Coordinadora, Unión Deportiva Norte",
-        quote: "La gestión de horarios y calendarios es increíblemente intuitiva. Tener toda la información de los equipos en un solo lugar nos ha ahorrado incontables horas de trabajo y emails.",
+        name: "Elena Ruiz",
+        role: "Coordinadora, A.D. Alcorcón F.S.",
+        quote: "Organizar los horarios de los 15 equipos era una locura. Ahora, con el calendario de horarios, todo el mundo sabe dónde y cuándo entrena. Y si hay un cambio, se enteran al momento.",
     },
     {
-        name: "Miguel Ángel Roca",
-        role: "Tesorero, Academia de Fútbol Central",
-        quote: "La función de tesorería es fantástica. Por fin tenemos un control claro sobre las cuotas y los gastos. La planificación financiera ahora es mucho más sencilla y transparente para la directiva.",
+        name: "Marcos Herrero",
+        role: "Tesorero, Club Baloncesto Fuenlabrada",
+        quote: "La sección de tesorería nos da una visión clara de la salud financiera del club. Controlar las cuotas, los gastos recurrentes y los patrocinios nunca había sido tan sencillo y visual.",
     },
      {
-        name: "Sofía Navarro",
-        role: "Entrenadora, CF Femenino Rayo",
-        quote: "Como entrenadora, valoro poder comunicarme directamente con los padres de mis jugadoras a través de la plataforma. Es rápido, seguro y todo queda registrado. ¡Un gran acierto!",
+        name: "Sofía Moreno",
+        role: "Secretaria, C.V. Leganés",
+        quote: "Los formularios de inscripción online son una maravilla. Gestionamos el campus de verano y las captaciones sin papeleo, recogiendo los datos y los pagos de forma automática. ¡Profesionaliza mucho al club!",
     },
     {
-        name: "Javier Moreno",
-        role: "Director Deportivo, Titanes Baloncesto",
-        quote: "El portal para familias ha mejorado muchísimo la relación con los padres. Ahora ellos mismos pueden actualizar los datos de sus hijos, lo que nos ahorra una cantidad de trabajo enorme al inicio de temporada."
+        name: "David Alonso",
+        role: "Director Deportivo, U.D. San Sebastián de los Reyes",
+        quote: "La comunicación con los entrenadores es mucho más fluida. Podemos enviarles comunicados específicos o a todo el cuerpo técnico con un par de clics. Se acabó el caos de los grupos de WhatsApp.",
     },
     {
-        name: "Isabel Torres",
-        role: "Secretaria, Club de Voleibol Fénix",
-        quote: "El almacén de documentos es una maravilla. Tenemos todas las licencias, autorizaciones y normativas centralizadas y accesibles desde cualquier lugar. Se acabaron las carpetas físicas y los papeles perdidos."
-    },
-    {
-        name: "Adrián Castillo",
-        role: "Coordinador de Cantera, Halcones Rugby Club",
-        quote: "Poder gestionar todos los equipos, desde los más pequeños hasta los juveniles, en una única plataforma no tiene precio. La visión global que nos da SportsPanel es fundamental para la planificación deportiva."
-    },
-    {
-        name: "Elena Vidal",
-        role: "Madre de jugador, Club Patinaje Artístico Piruetas",
-        quote: "La app es muy fácil de usar. Consulto el calendario de competiciones y entrenamientos de mi hija directamente desde el móvil. Recibir las notificaciones del club al instante me da mucha tranquilidad."
-    },
-    {
-        name: "Marcos Alonso",
-        role: "Delegado de equipo, Escudería Velocidad",
-        quote: "Utilizamos los formularios de inscripción para nuestros eventos y es un cambio radical. Recogemos los datos y los pagos online, de forma automática y sin errores. La organización es mucho más profesional."
+        name: "Isabel Jiménez",
+        role: "Administrativa, Club Patinaje Getafe",
+        quote: "El importador de CSV nos salvó la vida. Pudimos cargar los datos de más de 300 socios en una tarde, sin tener que introducirlos uno a uno. La puesta en marcha fue increíblemente rápida gracias a eso."
     }
 ]
 
@@ -132,7 +117,7 @@ const benefits = [
         title: "Comunicación Directa y Eficaz",
         subtitle: "Mantén a todos informados sin esfuerzo.",
         points: [
-            "Envía comunicados a equipos específicos o a todo el club.",
+            "Envía comunicados a equipos específicos o a toda la administración.",
             "Notifica cambios de horario o cancelaciones al instante.",
             "Solicita la subida de documentos con un solo clic.",
         ],
@@ -146,7 +131,7 @@ const benefits = [
         title: "Un Portal para tu Club",
         subtitle: "Un portal único para la administración del club.",
         points: [
-            "Las familias reciben enlaces para actualizar sus datos.",
+            "Las familias reciben enlaces para actualizar sus datos o subir archivos.",
             "Los entrenadores reciben la información que necesitan por email.",
             "La administración tiene una visión global de todo el club.",
         ],
