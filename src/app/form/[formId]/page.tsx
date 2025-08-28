@@ -18,8 +18,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
-import { createCheckoutSessionAction } from "@/lib/actions";
-import { loadStripe } from "@stripe/stripe-js";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Banknote } from "lucide-react";
 
 
 const buildSchema = (fields: RegistrationForm['fields']) => {
@@ -146,7 +146,7 @@ export default function PublicFormPage() {
         setSubmitting(true);
         try {
             const formRef = doc(db, "clubs", formDef.clubId, "registrationForms", formId);
-            const submissionRef = await addDoc(collection(formRef, "submissions"), {
+            await addDoc(collection(formRef, "submissions"), {
                 submittedAt: Timestamp.now(),
                 data: data,
                 paymentStatus: formDef.price > 0 ? 'pending' : 'not_applicable'
@@ -156,18 +156,11 @@ export default function PublicFormPage() {
               submissionCount: (formDef.submissionCount || 0) + 1,
             });
 
-            if (formDef.price > 0) {
-                 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!);
-                 const stripe = await stripePromise;
-                 const sessionId = await createCheckoutSessionAction({formId, submissionId: submissionRef.id, clubId: formDef.clubId}) as string;
-                 await stripe?.redirectToCheckout({ sessionId });
-            } else {
-                 setSubmitted(true);
-                toast({
-                    title: "¡Inscripción Enviada!",
-                    description: "Gracias por registrarte. Hemos recibido tus datos correctamente.",
-                });
-            }
+            setSubmitted(true);
+            toast({
+                title: "¡Inscripción Enviada!",
+                description: "Gracias por registrarte. Hemos recibido tus datos correctamente.",
+            });
 
         } catch (error) {
             console.error("Error submitting form:", error);
@@ -212,7 +205,7 @@ export default function PublicFormPage() {
                     <CardHeader>
                         {clubInfo?.logoUrl && <Image src={clubInfo.logoUrl} alt={clubInfo.name} width={80} height={80} className="mx-auto rounded-md"/>}
                         <CardTitle className="text-2xl pt-2">{clubInfo?.name || '¡Inscripción completada!'}</CardTitle>
-                        <CardDescription>Gracias por registrarte en {formDef.title}. Hemos recibido tus datos correctamente.</CardDescription>
+                        <CardDescription>Gracias por registrarte en {formDef.title}. Hemos recibido tus datos correctamente. {formDef.price > 0 && 'Recuerda realizar la transferencia para confirmar tu plaza.'}</CardDescription>
                     </CardHeader>
                 </Card>
             </div>
@@ -229,10 +222,16 @@ export default function PublicFormPage() {
                     {formDef.description && (
                         <CardDescription>{formDef.description}</CardDescription>
                     )}
-                     {formDef.price > 0 && (
-                        <div className="pt-4 text-left">
-                            <p className="font-semibold text-lg">Precio: {formDef.price}€</p>
-                        </div>
+                     {formDef.price > 0 && formDef.paymentIBAN && (
+                        <Alert className="mt-4 text-left">
+                            <Banknote className="h-4 w-4" />
+                            <AlertTitle>Información de Pago</AlertTitle>
+                            <AlertDescription>
+                                <p>Para completar tu inscripción, realiza una transferencia de <strong>{formDef.price}€</strong> a la siguiente cuenta:</p>
+                                <p className="font-mono bg-muted p-2 rounded-md my-2 text-center">{formDef.paymentIBAN}</p>
+                                <p>Asegúrate de indicar el nombre del participante en el concepto.</p>
+                            </AlertDescription>
+                        </Alert>
                     )}
                 </CardHeader>
                 <CardContent>
@@ -266,7 +265,7 @@ export default function PublicFormPage() {
                         ))}
                         <Button type="submit" className="w-full" disabled={submitting}>
                             {submitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            {formDef.price > 0 ? `Inscribirse y Pagar ${formDef.price}€` : "Enviar Inscripción"}
+                            Enviar Inscripción
                         </Button>
                     </form>
                 </CardContent>
