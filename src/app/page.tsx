@@ -143,12 +143,12 @@ const benefits = [
         }
     },
      {
-        title: "Una App para Todos",
-        subtitle: "Un portal único para directivos, entrenadores y familias.",
+        title: "Un Portal para tu Club",
+        subtitle: "Un portal único para la administración del club.",
         points: [
-            "Las familias pueden consultar horarios y actualizar sus datos.",
-            "Los entrenadores gestionan sus equipos y la asistencia.",
-            "La directiva tiene una visión global de todo el club.",
+            "Las familias reciben enlaces para actualizar sus datos.",
+            "Los entrenadores reciben la información que necesitan por email.",
+            "La administración tiene una visión global de todo el club.",
         ],
         image: {
             src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(15).png?alt=media&token=0984a6c9-c0ff-4e96-9612-72dd2726eaa4",
