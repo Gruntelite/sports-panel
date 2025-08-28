@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -17,6 +16,8 @@ import {
   Save,
   Send,
   Columns,
+  Calendar,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,9 +78,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { requestDataUpdateAction } from "@/lib/actions";
 import { cn } from "@/lib/utils";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 
-const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }];
+const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'payment', label: 'Pago' }];
 const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
+const MONTHS = [
+    { label: "Enero", value: 0 }, { label: "Febrero", value: 1 }, { label: "Marzo", value: 2 },
+    { label: "Abril", value: 3 }, { label: "Mayo", value: 4 }, { label: "Junio", value: 5 },
+    { label: "Julio", value: 6 }, { label: "Agosto", value: 7 }, { label: "Septiembre", value: 8 },
+    { label: "Octubre", value: 9 }, { label: "Noviembre", value: 10 }, { label: "Diciembre", value: 11 }
+];
 
 
 export default function StaffPage() {
@@ -102,7 +111,7 @@ export default function StaffPage() {
   const [newImage, setNewImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const [visibleStaffColumns, setVisibleStaffColumns] = useState<Set<string>>(new Set(['name', 'role', 'email', 'phone']));
+  const [visibleStaffColumns, setVisibleStaffColumns] = useState<Set<string>>(new Set(['name', 'role', 'email', 'payment']));
   const [visibleSocioColumns, setVisibleSocioColumns] = useState<Set<string>>(new Set(['name', 'socioNumber', 'email', 'fee']));
 
   useEffect(() => {
@@ -192,11 +201,11 @@ export default function StaffPage() {
     setModalMode(mode);
     setModalType(type);
     if(type === 'staff') {
-      setStaffData(mode === 'edit' && member ? (member as Staff) : {});
-      setSocioData({});
+      setStaffData(mode === 'edit' && member ? (member as Staff) : { paymentFrequency: 'monthly', excludedMonths: [] });
+      setSocioData({ paymentType: 'monthly', fee: 0, excludedMonths: [] });
     } else {
-      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0 });
-      setStaffData({});
+      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0, excludedMonths: [] });
+      setStaffData({ paymentFrequency: 'monthly', excludedMonths: [] });
     }
     setIsModalOpen(true);
     setNewImage(null);
@@ -235,6 +244,7 @@ export default function StaffPage() {
       const dataToSave = {
         ...staffData,
         avatar: imageUrl || staffData.avatar || `https://placehold.co/40x40.png?text=${(staffData.name || '').charAt(0)}`,
+        payment: (staffData.payment === '' || staffData.payment === undefined || staffData.payment === null) ? null : Number(staffData.payment),
       };
 
       if (modalMode === 'edit' && staffData.id) {
@@ -368,6 +378,7 @@ export default function StaffPage() {
   const getStaffCellContent = (member: Staff, columnId: string) => {
     const value = member[columnId as keyof Staff];
      if (columnId === 'name') return `${member.name} ${member.lastName}`;
+     if (columnId === 'payment') return `${member.payment || 0}€ / ${member.paymentFrequency === 'monthly' ? 'mes' : 'año'}`;
     return value === null || value === undefined || value === '' ? 'N/A' : String(value);
   }
 
@@ -683,16 +694,62 @@ export default function StaffPage() {
                                <Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} />
                            </div>
                       </div>
-                       <div className="space-y-2">
-                          <Label htmlFor="sex">Sexo</Label>
-                          <Select value={staffData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                              <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                              <SelectContent>
-                                  <SelectItem value="masculino">Masculino</SelectItem>
-                                  <SelectItem value="femenino">Femenino</SelectItem>
-                              </SelectContent>
-                          </Select>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="payment">Pago (€)</Label>
+                            <Input id="payment" type="number" value={staffData.payment || ''} onChange={handleInputChange} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="paymentFrequency">Frecuencia de Pago</Label>
+                            <Select value={staffData.paymentFrequency} onValueChange={(value) => handleSelectChange('paymentFrequency', value)}>
+                                <SelectTrigger><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="monthly">Mensual</SelectItem>
+                                    <SelectItem value="annual">Anual</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
                       </div>
+                      {staffData.paymentFrequency === 'monthly' && (
+                        <div className="space-y-2">
+                            <Label>Meses sin pago</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start font-normal">
+                                        <Calendar className="mr-2 h-4 w-4"/>
+                                        {staffData.excludedMonths && staffData.excludedMonths.length > 0
+                                            ? `${staffData.excludedMonths.length} mese(s) seleccionado(s)`
+                                            : "Seleccionar meses..."}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0">
+                                    <Command>
+                                        <CommandList>
+                                            <CommandGroup>
+                                                {MONTHS.map(month => (
+                                                    <CommandItem
+                                                        key={month.value}
+                                                        onSelect={() => {
+                                                            const newSelection = new Set(staffData.excludedMonths || []);
+                                                            if (newSelection.has(month.value)) {
+                                                                newSelection.delete(month.value);
+                                                            } else {
+                                                                newSelection.add(month.value);
+                                                            }
+                                                            setStaffData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));
+                                                        }}
+                                                    >
+                                                         <Check className={cn("mr-2 h-4 w-4", staffData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                        {month.label}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                      )}
                   </div>
                 ) : (
                   <div className="space-y-6">
@@ -742,6 +799,46 @@ export default function StaffPage() {
                             <Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} />
                         </div>
                       </div>
+                      {socioData.paymentType === 'monthly' && (
+                        <div className="space-y-2">
+                            <Label>Meses sin cuota</Label>
+                             <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button variant="outline" className="w-full justify-start font-normal">
+                                        <Calendar className="mr-2 h-4 w-4"/>
+                                        {socioData.excludedMonths && socioData.excludedMonths.length > 0
+                                            ? `${socioData.excludedMonths.length} mese(s) seleccionado(s)`
+                                            : "Seleccionar meses..."}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0">
+                                    <Command>
+                                        <CommandList>
+                                            <CommandGroup>
+                                                {MONTHS.map(month => (
+                                                    <CommandItem
+                                                        key={month.value}
+                                                        onSelect={() => {
+                                                            const newSelection = new Set(socioData.excludedMonths || []);
+                                                            if (newSelection.has(month.value)) {
+                                                                newSelection.delete(month.value);
+                                                            } else {
+                                                                newSelection.add(month.value);
+                                                            }
+                                                            setSocioData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));
+                                                        }}
+                                                    >
+                                                         <Check className={cn("mr-2 h-4 w-4", socioData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                        {month.label}
+                                                    </CommandItem>
+                                                ))}
+                                            </CommandGroup>
+                                        </CommandList>
+                                    </Command>
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                      )}
                   </div>
                 )}
             </div>
@@ -774,4 +871,3 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
-

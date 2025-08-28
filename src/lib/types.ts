@@ -136,6 +136,9 @@ export type Staff = {
     staffId?: string;
     updateRequestActive?: boolean;
     customFields?: Record<string, any>;
+    payment?: number;
+    paymentFrequency?: 'monthly' | 'annual';
+    excludedMonths?: number[];
 }
 
 export type Socio = {
@@ -149,7 +152,8 @@ export type Socio = {
     fee: number;
     avatar?: string;
     socioNumber?: string;
-    customFields?: Record<string, any>;
+    customFields?: Record<string-any>;
+    excludedMonths?: number[];
 }
 
 export type TeamMember = {
@@ -166,8 +170,8 @@ export type ClubMember = {
     id: string;
     name: string;
     email?: string;
-    type: 'Jugador' | 'Entrenador' | 'Staff';
-    data: Player | Coach | Staff;
+    type: 'Jugador' | 'Entrenador' | 'Staff' | 'Socio';
+    data: Player | Coach | Staff | Socio;
     teamId?: string;
 };
 
@@ -198,6 +202,7 @@ export type OneTimePayment = {
     issueDate: string;
     targetTeamIds: string[];
     targetUserIds: string[];
+    isEvent?: boolean;
 }
 
 export type TemplateHistoryItem = {

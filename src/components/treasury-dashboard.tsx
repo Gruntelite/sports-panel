@@ -23,7 +23,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Loader2, CircleDollarSign, AlertTriangle, CheckCircle2, FileText, PlusCircle, MoreHorizontal, Edit, Link, Trash2, Save, Settings, Handshake, TrendingUp, TrendingDown, Repeat, Calendar as CalendarIcon, User, ChevronDown, ChevronLeft, ChevronRight, BookUser } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, where, addDoc, updateDoc, deleteDoc, orderBy } from "firebase/firestore";
-import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings, RegistrationForm, FormSubmission, FormWithSubmissions } from "@/lib/types";
+import type { Player, Team, OneTimePayment, User as AppUser, Sponsorship, Coach, RecurringExpense, OneOffExpense, ClubSettings, RegistrationForm, FormSubmission, FormWithSubmissions, Staff, Socio } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
@@ -45,7 +45,7 @@ type FeeMember = {
     id: string;
     name: string;
     teamName?: string;
-    role: 'Jugador' | 'Entrenador';
+    role: 'Jugador' | 'Entrenador' | 'Socio' | 'Staff';
     fee?: number;
     payment?: number;
 };
@@ -57,7 +57,7 @@ type MonthlyCategorySummary = {
 };
 
 
-function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions }: { 
+function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions, staff, socios }: { 
     players: Player[], 
     oneTimePayments: OneTimePayment[], 
     coaches: Coach[], 
@@ -67,6 +67,8 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
     feeExcludedMonths: number[],
     coachFeeExcludedMonths: number[],
     formsWithSubmissions: FormWithSubmissions[],
+    staff: Staff[],
+    socios: Socio[]
 }) {
     const [year, setYear] = useState<number>(new Date().getFullYear());
     const [chartData, setChartData] = useState<any[]>([]);
@@ -89,12 +91,26 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                     }
                 }
             });
+            socios.forEach(s => {
+                if (s.paymentType === 'monthly') {
+                    for(let i=0; i<12; i++) {
+                        if (!s.excludedMonths?.includes(i)) {
+                            monthlyData[i].Ingresos += s.fee;
+                        }
+                    }
+                } else { // annual
+                    monthlyData[0].Ingresos += s.fee;
+                }
+            });
             oneTimePayments.forEach(p => {
                 const pDate = parseISO(p.issueDate);
                 if(getYear(pDate) === year) {
                     const pMonth = getMonth(pDate);
-                    const numTargets = (p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0);
-                    monthlyData[pMonth].Ingresos += Number(p.amount) * numTargets;
+                    let amount = Number(p.amount);
+                    if (!p.isEvent) {
+                       amount *= ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
+                    }
+                    monthlyData[pMonth].Ingresos += amount;
                 }
             });
             sponsorships.forEach(s => {
@@ -131,6 +147,17 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                     }
                 }
             });
+            staff.forEach(s => {
+                if(s.payment && s.paymentFrequency === 'monthly') {
+                   for(let i=0; i<12; i++) {
+                       if (!s.excludedMonths?.includes(i)) {
+                          monthlyData[i].Gastos += s.payment;
+                       }
+                   }
+                } else if (s.payment && s.paymentFrequency === 'annual') {
+                    monthlyData[0].Gastos += s.payment;
+                }
+            });
             recurringExpenses.forEach(e => {
                 for (let i = 0; i < 12; i++) {
                     if (!e.excludedMonths?.includes(i)) {
@@ -154,7 +181,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             setChartData(formattedData);
         };
         processData();
-    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions]);
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions, staff, socios]);
 
     const chartConfig: ChartConfig = {
         Ingresos: { label: "Ingresos", color: "hsl(var(--chart-1))" },
@@ -237,6 +264,8 @@ export function TreasuryDashboard() {
   
   const [players, setPlayers] = useState<Player[]>([]);
   const [coaches, setCoaches] = useState<Coach[]>([]);
+  const [staff, setStaff] = useState<Staff[]>([]);
+  const [socios, setSocios] = useState<Socio[]>([]);
   const [users, setUsers] = useState<AppUser[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [oneTimePayments, setOneTimePayments] = useState<OneTimePayment[]>([]);
@@ -311,20 +340,11 @@ export function TreasuryDashboard() {
 
   useEffect(() => {
     let combinedMembers: FeeMember[] = [];
-    players.forEach(p => combinedMembers.push({
-        id: p.id,
-        name: `${p.name} ${p.lastName}`,
-        teamName: p.teamName,
-        role: 'Jugador',
-        fee: p.monthlyFee,
-    }));
-    coaches.forEach(c => combinedMembers.push({
-        id: c.id,
-        name: `${c.name} ${c.lastName}`,
-        teamName: c.teamName,
-        role: 'Entrenador',
-        payment: c.monthlyPayment,
-    }));
+    players.forEach(p => combinedMembers.push({ id: p.id, name: `${p.name} ${p.lastName}`, teamName: p.teamName, role: 'Jugador', fee: p.monthlyFee }));
+    coaches.forEach(c => combinedMembers.push({ id: c.id, name: `${c.name} ${c.lastName}`, teamName: c.teamName, role: 'Entrenador', payment: c.monthlyPayment }));
+    staff.forEach(s => combinedMembers.push({ id: s.id, name: `${s.name} ${s.lastName}`, role: 'Staff', payment: s.payment }));
+    socios.forEach(s => combinedMembers.push({ id: s.id, name: `${s.name} ${s.lastName}`, role: 'Socio', fee: s.fee }));
+
     
     let currentMembers = [...combinedMembers];
     if (selectedTeam !== "all") {
@@ -335,7 +355,7 @@ export function TreasuryDashboard() {
     }
 
     setFilteredMembers(currentMembers);
-  }, [selectedTeam, selectedRole, players, coaches, teams]);
+  }, [selectedTeam, selectedRole, players, coaches, teams, staff, socios]);
 
   useEffect(() => {
     const originalFee = clubSettings.feeExcludedMonths || [];
@@ -364,7 +384,13 @@ export function TreasuryDashboard() {
         if (!localFeeExcluded.includes(month)) {
             const totalFees = players.reduce((acc, p) => acc + (p.monthlyFee || 0), 0);
             if (totalFees > 0) addOrUpdate("Cuotas de Jugadores", totalFees, 'income');
+            
+            const totalSocioFees = socios
+                .filter(s => s.paymentType === 'monthly' && !s.excludedMonths?.includes(month))
+                .reduce((acc, s) => acc + s.fee, 0);
+            if(totalSocioFees > 0) addOrUpdate("Cuotas de Socios", totalSocioFees, 'income');
         }
+         socios.filter(s => s.paymentType === 'annual' && month === 0).forEach(s => addOrUpdate("Cuotas de Socios (Anual)", s.fee, 'income'));
 
         sponsorships.forEach(s => {
             if (s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
@@ -377,7 +403,10 @@ export function TreasuryDashboard() {
         oneTimePayments
             .filter(p => getYear(parseISO(p.issueDate)) === year && getMonth(parseISO(p.issueDate)) === month)
             .forEach(p => {
-                const amount = Number(p.amount) * ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
+                let amount = Number(p.amount);
+                if (!p.isEvent) {
+                    amount *= ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
+                }
                 addOrUpdate(`Pago Puntual: ${p.concept}`, amount, 'income');
             });
         
@@ -401,6 +430,14 @@ export function TreasuryDashboard() {
             const totalCoachPayments = coaches.reduce((acc, c) => acc + (c.monthlyPayment || 0), 0);
              if (totalCoachPayments > 0) addOrUpdate("Nóminas Cuerpo Técnico", totalCoachPayments, 'expense');
         }
+        staff
+            .filter(s => s.paymentFrequency === 'monthly' && !s.excludedMonths?.includes(month))
+            .forEach(s => addOrUpdate(`Nómina: ${s.name} ${s.lastName}`, s.payment || 0, 'expense'));
+
+        staff
+            .filter(s => s.paymentFrequency === 'annual' && month === 0)
+            .forEach(s => addOrUpdate(`Nómina: ${s.name} ${s.lastName} (Anual)`, s.payment || 0, 'expense'));
+
 
         recurringExpenses
             .filter(e => !e.excludedMonths?.includes(month))
@@ -425,7 +462,7 @@ export function TreasuryDashboard() {
     if (!loading) {
         calculateMonthlySummary();
     }
-}, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading]);
+}, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading, staff, socios]);
 
 
   const fetchData = async (clubId: string) => {
@@ -447,6 +484,16 @@ export function TreasuryDashboard() {
       const coachesSnapshot = await getDocs(coachesQuery);
       const coachesList = coachesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data()} as Coach));
       setCoaches(coachesList);
+
+      const staffQuery = query(collection(db, "clubs", clubId, "staff"));
+      const staffSnapshot = await getDocs(staffQuery);
+      const staffList = staffSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data()} as Staff));
+      setStaff(staffList);
+
+      const sociosQuery = query(collection(db, "clubs", clubId, "socios"));
+      const sociosSnapshot = await getDocs(sociosQuery);
+      const sociosList = sociosSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data()} as Socio));
+      setSocios(sociosList);
 
       const playersQuery = query(collection(db, "clubs", clubId, "players"));
       const playersSnapshot = await getDocs(playersQuery);
@@ -817,6 +864,9 @@ export function TreasuryDashboard() {
   }
 
   const getCombinedTargetNames = (payment: OneTimePayment): string => {
+      if (payment.isEvent) {
+          return payment.concept;
+      }
       const teamNames = getTargetTeamNames(payment.targetTeamIds || []);
       const userNames = getTargetUserNames(payment.targetUserIds || []);
 
@@ -836,6 +886,21 @@ export function TreasuryDashboard() {
   }
 
   const timeRangeLabel = timeRange === 'monthly' ? 'Mes' : 'Año';
+  const eventPayments = formsWithSubmissions
+    .filter(form => form.price > 0 && form.submissions.length > 0)
+    .map(form => {
+        const totalAmount = form.submissions.filter(s => s.paymentStatus === 'paid').length * form.price;
+        return {
+            id: form.id,
+            concept: `Ingresos ${form.title}`,
+            amount: totalAmount,
+            issueDate: form.createdAt.toDate().toISOString(),
+            isEvent: true
+        } as OneTimePayment;
+    });
+
+  const allDisplayPayments = [...oneTimePayments, ...eventPayments];
+
 
   return (
     <>
@@ -889,12 +954,12 @@ export function TreasuryDashboard() {
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pagos a Cuerpo Técnico ({timeRangeLabel})</CardTitle>
+                    <CardTitle className="text-sm font-medium">Pagos a Personal ({timeRangeLabel})</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.coachPayments.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de todos los pagos a cuerpo técnico.</p>
+                    <p className="text-xs text-muted-foreground">Suma de todos los pagos al cuerpo técnico y staff.</p>
                 </CardContent>
             </Card>
         </div>
@@ -909,6 +974,8 @@ export function TreasuryDashboard() {
             feeExcludedMonths={clubSettings.feeExcludedMonths || []}
             coachFeeExcludedMonths={clubSettings.coachFeeExcludedMonths || []}
             formsWithSubmissions={formsWithSubmissions}
+            staff={staff}
+            socios={socios}
         />
         
       <Tabs defaultValue="accounting" value={activeTab} onValueChange={setActiveTab}>
@@ -988,7 +1055,7 @@ export function TreasuryDashboard() {
                 <div className="grid md:grid-cols-2 gap-6 mb-4">
                     <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
                         <div className="space-y-2 flex-1">
-                            <Label>Meses sin cobro de cuota (Jugadores)</Label>
+                            <Label>Meses sin cobro de cuota (Jugadores y Socios)</Label>
                         </div>
                         <Popover>
                             <PopoverTrigger asChild>
@@ -1020,7 +1087,7 @@ export function TreasuryDashboard() {
                     </div>
                     <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
                         <div className="space-y-2 flex-1">
-                            <Label>Meses sin pago a entrenadores</Label>
+                            <Label>Meses sin pago a personal (Entrenadores y Staff)</Label>
                         </div>
                         <Popover>
                             <PopoverTrigger asChild>
@@ -1069,6 +1136,8 @@ export function TreasuryDashboard() {
                                 <SelectItem value="all">Todos los roles</SelectItem>
                                 <SelectItem value="Jugador">Jugadores</SelectItem>
                                 <SelectItem value="Entrenador">Entrenadores</SelectItem>
+                                <SelectItem value="Staff">Staff</SelectItem>
+                                <SelectItem value="Socio">Socios</SelectItem>
                             </SelectContent>
                         </Select>
                         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
@@ -1101,7 +1170,7 @@ export function TreasuryDashboard() {
                             <TableCell className="font-medium">{member.name}</TableCell>
                             <TableCell>{member.teamName || 'N/A'}</TableCell>
                             <TableCell>
-                                <Badge variant={member.role === 'Jugador' ? 'outline' : 'secondary'}>
+                                <Badge variant={member.role === 'Jugador' || member.role === 'Socio' ? 'outline' : 'secondary'}>
                                     <User className="mr-1 h-3 w-3"/>
                                     {member.role}
                                 </Badge>
@@ -1267,8 +1336,8 @@ export function TreasuryDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {oneTimePayments.length > 0 ? (
-                    oneTimePayments.map((payment) => {
+                  {allDisplayPayments.length > 0 ? (
+                    allDisplayPayments.map((payment) => {
                       return (
                         <TableRow key={payment.id}>
                           <TableCell className="font-medium">{payment.concept}</TableCell>
@@ -1278,7 +1347,7 @@ export function TreasuryDashboard() {
                           <TableCell className="text-right">
                              <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                  <Button size="icon" variant="ghost">
+                                  <Button size="icon" variant="ghost" disabled={payment.isEvent}>
                                     <MoreHorizontal className="h-4 w-4" />
                                   </Button>
                                 </DropdownMenuTrigger>
