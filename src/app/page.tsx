@@ -258,7 +258,7 @@ export default function LandingPage() {
                   Simplifica y digitaliza las operaciones de tu club con una plataforma centralizada, moderna e intuitiva.
                 </p>
               </div>
-              <div className="space-y-4 text-center">
+              <div className="flex flex-col items-center gap-4 sm:flex-row">
                 <Button asChild size="lg">
                   <Link href="/register" prefetch={false}>
                     Empieza tu prueba gratuita de 20 días
