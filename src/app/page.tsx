@@ -134,7 +134,7 @@ const benefits = [
         points: [
             "Envía comunicados a equipos específicos o a todo el club.",
             "Notifica cambios de horario o cancelaciones al instante.",
-            "Simplifica el proceso de actualización de información.",
+            "Solicita la subida de documentos con un solo clic.",
         ],
         image: {
             src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(14).png?alt=media&token=dd1084fa-8dcb-479c-a014-55dad3a26415",
