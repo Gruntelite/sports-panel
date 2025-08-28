@@ -261,7 +261,12 @@ export default function LandingPage() {
               <div className="space-y-2">
                 <Button asChild size="lg">
                   <Link href="/register" prefetch={false}>
-                    Empieza tu prueba de 20 días
+                    Empieza tu prueba gratuita de 20 días
+                  </Link>
+                </Button>
+                 <Button asChild variant="link" className="text-muted-foreground">
+                  <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
+                    Descargar Guía de Uso
                   </Link>
                 </Button>
               </div>
@@ -468,7 +473,7 @@ export default function LandingPage() {
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Registro de incidencias</span></li>
                         <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
                     </ul>
-                    <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empezar Prueba de 20 Días</Link></Button>
+                    <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empieza tu prueba gratuita de 20 días</Link></Button>
                 </div>
             </div>
           </div>
