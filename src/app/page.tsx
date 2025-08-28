@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle, UserCheck, Database, ClipboardList, AlertTriangle } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle, UserCheck, Database, ClipboardList, AlertTriangle, Download } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -258,7 +258,7 @@ export default function LandingPage() {
                   Simplifica y digitaliza las operaciones de tu club con una plataforma centralizada, moderna e intuitiva.
                 </p>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-4 text-center">
                 <Button asChild size="lg">
                   <Link href="/register" prefetch={false}>
                     Empieza tu prueba gratuita de 20 días
@@ -266,6 +266,7 @@ export default function LandingPage() {
                 </Button>
                  <Button asChild variant="link" className="text-muted-foreground">
                   <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
+                    <Download className="mr-2 h-4 w-4" />
                     Descargar Guía de Uso
                   </Link>
                 </Button>
