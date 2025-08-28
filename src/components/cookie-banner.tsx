@@ -4,20 +4,25 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import Script from 'next/script';
 
 export function CookieBanner() {
   const [showBanner, setShowBanner] = useState(false);
+  const [consentGiven, setConsentGiven] = useState(false);
 
   useEffect(() => {
     const consent = localStorage.getItem('cookie_consent');
-    // Only show the banner if consent has not been given
-    if (!consent) {
+    if (consent === 'true') {
+      setConsentGiven(true);
+      setShowBanner(false);
+    } else if (!consent) {
       setShowBanner(true);
     }
   }, []);
 
   const handleAccept = () => {
     localStorage.setItem('cookie_consent', 'true');
+    setConsentGiven(true);
     setShowBanner(false);
   };
   
@@ -27,7 +32,32 @@ export function CookieBanner() {
   }
 
   if (!showBanner) {
-    return null;
+    return consentGiven ? (
+        <>
+        <Script id="meta-pixel" strategy="afterInteractive">
+          {`
+            !function(f,b,e,v,n,t,s)
+            {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+            n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+            if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+            n.queue=[];t=b.createElement(e);t.async=!0;
+            t.src=v;s=b.getElementsByTagName(e)[0];
+            s.parentNode.insertBefore(t,s)}(window, document,'script',
+            'https://connect.facebook.net/en_US/fbevents.js');
+            fbq('init', '1404443150662262');
+            fbq('track', 'PageView');
+          `}
+        </Script>
+        <noscript>
+          <img
+            height="1"
+            width="1"
+            style={{ display: 'none' }}
+            src="https://www.facebook.com/tr?id=1404443150662262&ev=PageView&noscript=1"
+          />
+        </noscript>
+      </>
+    ) : null;
   }
 
   return (
