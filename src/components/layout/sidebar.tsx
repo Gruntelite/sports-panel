@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -102,6 +102,88 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
     )
 }
 
+function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserProfile}) {
+    const { toast } = useToast();
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [comment, setComment] = useState("");
+    const [isSending, setIsSending] = useState(false);
+    
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (rating === 0) {
+            toast({ variant: "destructive", title: "Puntuación requerida", description: "Por favor, selecciona una puntuación antes de enviar." });
+            return;
+        }
+        setIsSending(true);
+        
+        const htmlContent = `
+            <h2>Nueva Reseña de SportsPanel</h2>
+            <p><strong>Club ID:</strong> ${clubId}</p>
+            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+            <hr>
+            <h3>Puntuación: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</h3>
+            <h3>Comentario:</h3>
+            <p>${comment.replace(/\n/g, '<br>') || '<em>Sin comentario.</em>'}</p>
+        `;
+        
+        const result = await sendEmailWithSmtpAction({
+            clubId: clubId,
+            recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Reseñas SportsPanel' }],
+            subject: `Nueva Reseña de ${rating} Estrellas de ${userProfile.name}`,
+            htmlContent
+        });
+
+        if (result.success) {
+            toast({ title: "¡Gracias por tu reseña!", description: "Tu opinión nos ayuda a mejorar."});
+            setRating(0);
+            setComment("");
+        } else {
+            toast({ variant: "destructive", title: "Error al enviar", description: result.error});
+        }
+        
+        setIsSending(false);
+    }
+    
+    return (
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="space-y-2">
+                <Label>Tu Puntuación</Label>
+                <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                            key={star}
+                            className={cn(
+                                "h-8 w-8 cursor-pointer transition-colors",
+                                (hoverRating || rating) >= star
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-300"
+                            )}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                            onClick={() => setRating(star)}
+                        />
+                    ))}
+                </div>
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="comment">Tu Comentario (Opcional)</Label>
+                <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} className="min-h-[150px]"/>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="ghost">Cancelar</Button>
+                </DialogClose>
+                <Button type="submit" disabled={isSending}>
+                    {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    <Send className="mr-2 h-4 w-4"/>
+                    Enviar Reseña
+                </Button>
+            </DialogFooter>
+        </form>
+    )
+}
+
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
@@ -111,6 +193,7 @@ export function Sidebar() {
     const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
 
 
     useEffect(() => {
@@ -207,6 +290,10 @@ export function Sidebar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" align="end">
+                            <DropdownMenuItem onSelect={() => setIsReviewOpen(true)}>
+                                <Star className="mr-2 h-4 w-4" />
+                                <span>Dejar una reseña</span>
+                            </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => setIsHelpOpen(true)}>
                                 <HelpCircle className="mr-2 h-4 w-4" />
                                 <span>Ayuda y Soporte</span>
@@ -229,6 +316,19 @@ export function Sidebar() {
                         </DialogHeader>
                         {clubId && userProfile && (
                             <HelpForm clubId={clubId} userProfile={userProfile} />
+                        )}
+                    </DialogContent>
+                </Dialog>
+                <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Deja tu Reseña</DialogTitle>
+                            <DialogDescription>
+                                Tu opinión es muy importante para nosotros. ¡Gracias por ayudarnos a mejorar!
+                            </DialogDescription>
+                        </DialogHeader>
+                        {clubId && userProfile && (
+                            <ReviewForm clubId={clubId} userProfile={userProfile} />
                         )}
                     </DialogContent>
                 </Dialog>
