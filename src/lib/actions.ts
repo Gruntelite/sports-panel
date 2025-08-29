@@ -372,6 +372,14 @@ export async function sendServerEventAction(eventData: { eventName: string; emai
       },
     ],
   };
+  
+  if (eventName === 'Purchase') {
+      payload.data[0].custom_data = {
+          currency: 'EUR',
+          value: 33.00,
+      }
+  }
+
 
   try {
     const response = await fetch(url, {
