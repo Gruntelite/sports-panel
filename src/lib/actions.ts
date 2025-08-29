@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
@@ -60,12 +61,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         themeColorForeground: foregroundColor,
         logoUrl: null
     }, { merge: true });
-    
-    // Server-side event for registration
-    await sendServerEventAction({ 
-        eventName: 'CompleteRegistration', 
-        email: data.email,
-    });
 
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({

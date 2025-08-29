@@ -62,6 +62,9 @@ export default function RegisterPage() {
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     setLoading(true);
     
+    // Send StartTrial event to Meta Conversions API
+    await sendServerEventAction({ eventName: 'StartTrial', email: values.email });
+
     const result = await createClubAction(values);
 
     if (result.success && result.userId && result.checkoutSessionId) {
@@ -69,9 +72,6 @@ export default function RegisterPage() {
         title: "¡Ya casi estamos!",
         description: "Ahora serás redirigido para completar tu suscripción de prueba.",
       });
-      
-      // Send event to Meta Conversions API
-      await sendServerEventAction({ eventName: 'CompleteRegistration', email: values.email });
       
       const { userId, checkoutSessionId } = result;
       const userDocRef = doc(db, "users", userId);
@@ -237,3 +237,4 @@ export default function RegisterPage() {
     </div>
   );
 }
+
