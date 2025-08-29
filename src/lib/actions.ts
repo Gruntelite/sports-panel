@@ -6,7 +6,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { db, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
-import { createHmac } from 'crypto';
+import { createHmac }from 'crypto';
 
 
 type VerificationInput = {
@@ -65,6 +65,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     await sendServerEventAction({ 
         eventName: 'StartTrial', 
         email: data.email, 
+        name: data.adminName,
         eventId: data.eventId,
         eventSourceUrl: data.eventSourceUrl,
         clientUserAgent: data.clientUserAgent,
@@ -351,12 +352,13 @@ export async function createPortalLinkAction(): Promise<string> {
 // Meta Conversions API Action
 export async function sendServerEventAction(eventData: { 
     eventName: string; 
-    email: string; 
+    email: string;
+    name?: string; 
     eventId?: string;
     eventSourceUrl?: string;
     clientUserAgent?: string;
 }) {
-  const { eventName, email, eventId, eventSourceUrl, clientUserAgent } = eventData;
+  const { eventName, email, name, eventId, eventSourceUrl, clientUserAgent } = eventData;
 
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_ACCESS_TOKEN;
@@ -370,8 +372,13 @@ export async function sendServerEventAction(eventData: {
   const url = `https://graph.facebook.com/${apiVersion}/${pixelId}/events?access_token=${accessToken}`;
   const eventTime = Math.floor(new Date().getTime() / 1000);
 
-  // Hash the email using SHA-256
-  const hashedEmail = createHmac('sha256', '').update(email).digest('hex');
+  // Helper to hash strings
+  const hash = (str: string) => createHmac('sha256', '').update(str.toLowerCase()).digest('hex');
+  
+  const nameParts = name?.split(' ') || [];
+  const firstName = nameParts.length > 0 ? nameParts[0] : '';
+  const lastName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : '';
+
 
   const payload = {
     data: [
@@ -382,7 +389,9 @@ export async function sendServerEventAction(eventData: {
         event_id: eventId,
         event_source_url: eventSourceUrl,
         user_data: {
-          em: [hashedEmail],
+          em: [hash(email)],
+          fn: [hash(firstName)],
+          ln: [hash(lastName)],
           client_user_agent: clientUserAgent,
         },
         custom_data: {}
