@@ -70,7 +70,7 @@ export default function RegisterPage() {
     const eventId = uuidv4();
 
     if (window.fbq) {
-      window.fbq('track', 'StartTrial', {}, { eventID: eventId });
+      window.fbq('track', 'StartTrial', {}, {eventID: eventId});
     }
     
     const result = await createClubAction({ ...values, eventId });
@@ -100,8 +100,13 @@ export default function RegisterPage() {
 
         if (url) {
           unsubscribe();
-          await signInWithEmailAndPassword(auth, values.email, values.password);
-          window.location.assign(url);
+          try {
+            await signInWithEmailAndPassword(auth, values.email, values.password);
+          } catch(e) {
+            console.warn("Sign in after registration failed, user will need to log in manually.", e)
+          } finally {
+            window.location.assign(url);
+          }
         }
       });
       
