@@ -1,5 +1,4 @@
 
-
 'use server';
 
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
@@ -342,8 +341,8 @@ export async function createPortalLinkAction(): Promise<string> {
 }
 
 // Meta Conversions API Action
-export async function sendServerEventAction(eventData: { eventName: string; email: string }) {
-  const { eventName, email } = eventData;
+export async function sendServerEventAction(eventData: { eventName: string; email: string; eventId?: string }) {
+  const { eventName, email, eventId } = eventData;
 
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_ACCESS_TOKEN;
@@ -366,6 +365,7 @@ export async function sendServerEventAction(eventData: { eventName: string; emai
         event_name: eventName,
         event_time: eventTime,
         action_source: 'website',
+        event_id: eventId, // Include the event_id for deduplication
         user_data: {
           em: [hashedEmail],
         },

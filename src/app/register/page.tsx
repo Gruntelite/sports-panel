@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -30,7 +29,13 @@ import { loadStripe } from "@stripe/stripe-js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
+import { v4 as uuidv4 } from 'uuid';
 
+declare global {
+    interface Window {
+        fbq: (...args: any[]) => void;
+    }
+}
 
 const registerSchema = z.object({
   clubName: z.string().min(3, { message: "El nombre del club debe tener al menos 3 caracteres." }),
@@ -62,8 +67,15 @@ export default function RegisterPage() {
   const onSubmit = async (values: z.infer<typeof registerSchema>) => {
     setLoading(true);
     
-    // Send StartTrial event to Meta Conversions API
-    await sendServerEventAction({ eventName: 'StartTrial', email: values.email });
+    const eventId = uuidv4();
+
+    // 1. Send Pixel Event with event_id
+    if (window.fbq) {
+      window.fbq('track', 'StartTrial', {}, { event_id: eventId });
+    }
+    
+    // 2. Send Server Event with the same event_id
+    await sendServerEventAction({ eventName: 'StartTrial', email: values.email, eventId: eventId });
 
     const result = await createClubAction(values);
 
@@ -237,4 +249,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
