@@ -68,12 +68,19 @@ export default function RegisterPage() {
     setLoading(true);
     
     const eventId = uuidv4();
+    const eventSourceUrl = window.location.href;
+    const clientUserAgent = navigator.userAgent;
 
     if (window.fbq) {
-      window.fbq('track', 'StartTrial', {}, {eventID: eventId});
+      window.fbq('track', 'StartTrial', {}, {event_id: eventId});
     }
     
-    const result = await createClubAction({ ...values, eventId });
+    const result = await createClubAction({ 
+        ...values, 
+        eventId,
+        eventSourceUrl,
+        clientUserAgent
+    });
 
     if (result.success && result.userId && result.checkoutSessionId) {
       toast({

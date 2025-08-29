@@ -24,7 +24,7 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string }): Promise<{success: boolean, error?: string, userId?: string, checkoutSessionId?: string}> {
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string, checkoutSessionId?: string}> {
   let uid: string;
   try {
     const userRecord = await adminAuth.createUser({
@@ -62,7 +62,13 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     }, { merge: true });
 
     // Send the server-side event to Meta
-    await sendServerEventAction({ eventName: 'StartTrial', email: data.email, eventId: data.eventId });
+    await sendServerEventAction({ 
+        eventName: 'StartTrial', 
+        email: data.email, 
+        eventId: data.eventId,
+        eventSourceUrl: data.eventSourceUrl,
+        clientUserAgent: data.clientUserAgent,
+    });
     
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
@@ -343,8 +349,14 @@ export async function createPortalLinkAction(): Promise<string> {
 }
 
 // Meta Conversions API Action
-export async function sendServerEventAction(eventData: { eventName: string; email: string; eventId?: string }) {
-  const { eventName, email, eventId } = eventData;
+export async function sendServerEventAction(eventData: { 
+    eventName: string; 
+    email: string; 
+    eventId?: string;
+    eventSourceUrl?: string;
+    clientUserAgent?: string;
+}) {
+  const { eventName, email, eventId, eventSourceUrl, clientUserAgent } = eventData;
 
   const pixelId = process.env.META_PIXEL_ID;
   const accessToken = process.env.META_ACCESS_TOKEN;
@@ -367,9 +379,11 @@ export async function sendServerEventAction(eventData: { eventName: string; emai
         event_name: eventName,
         event_time: eventTime,
         action_source: 'website',
-        event_id: eventId, // Include the event_id for deduplication
+        event_id: eventId,
+        event_source_url: eventSourceUrl,
         user_data: {
           em: [hashedEmail],
+          client_user_agent: clientUserAgent,
         },
         custom_data: {}
       },
