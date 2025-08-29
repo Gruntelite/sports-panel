@@ -69,7 +69,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       trial_period_days: 20,
       allow_promotion_codes: true,
       mode: 'subscription',
-      // Send purchase event on successful payment
       automatic_tax: { enabled: true },
       metadata: {
         userId: uid,
@@ -369,6 +368,7 @@ export async function sendServerEventAction(eventData: { eventName: string; emai
         user_data: {
           em: [hashedEmail],
         },
+        custom_data: {}
       },
     ],
   };

@@ -69,12 +69,10 @@ export default function RegisterPage() {
     
     const eventId = uuidv4();
 
-    // 1. Send Pixel Event with event_id
     if (window.fbq) {
       window.fbq('track', 'StartTrial', {}, { event_id: eventId });
     }
     
-    // 2. Send Server Event with the same event_id
     await sendServerEventAction({ eventName: 'StartTrial', email: values.email, eventId: eventId });
 
     const result = await createClubAction(values);
