@@ -22,7 +22,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
-import { createClubAction, sendServerEventAction } from "@/lib/actions";
+import { createClubAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -70,12 +70,10 @@ export default function RegisterPage() {
     const eventId = uuidv4();
 
     if (window.fbq) {
-      window.fbq('track', 'StartTrial', {}, { event_id: eventId });
+      window.fbq('track', 'StartTrial', {}, { eventID: eventId });
     }
     
-    await sendServerEventAction({ eventName: 'StartTrial', email: values.email, eventId: eventId });
-
-    const result = await createClubAction(values);
+    const result = await createClubAction({ ...values, eventId });
 
     if (result.success && result.userId && result.checkoutSessionId) {
       toast({

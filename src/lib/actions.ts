@@ -24,7 +24,7 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string }): Promise<{success: boolean, error?: string, userId?: string, checkoutSessionId?: string}> {
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string }): Promise<{success: boolean, error?: string, userId?: string, checkoutSessionId?: string}> {
   let uid: string;
   try {
     const userRecord = await adminAuth.createUser({
@@ -61,6 +61,9 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         logoUrl: null
     }, { merge: true });
 
+    // Send the server-side event to Meta
+    await sendServerEventAction({ eventName: 'StartTrial', email: data.email, eventId: data.eventId });
+    
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
       price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
