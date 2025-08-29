@@ -6,6 +6,7 @@ import { getAuth } from 'firebase-admin/auth';
 import { db, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
+import { createHmac } from 'crypto';
 
 
 type VerificationInput = {
@@ -302,5 +303,88 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   } catch (error: any) {
     console.error("Error requesting files:", error);
     return { success: false, error: error.message };
+  }
+}
+
+export async function createPortalLinkAction(): Promise<string> {
+    const user = adminAuth.currentUser;
+    if (!user) {
+        throw new Error('User not authenticated');
+    }
+
+    const customerPortalRef = db.collection('customers').doc(user.uid).collection('portals').doc();
+    
+    await customerPortalRef.set({
+        return_url: "https://sportspanel.net/dashboard"
+    });
+
+    return new Promise((resolve, reject) => {
+        const unsubscribe = customerPortalRef.onSnapshot(snap => {
+            const data = snap.data();
+            if (data?.url) {
+                unsubscribe();
+                resolve(data.url);
+            }
+            if (data?.error) {
+                unsubscribe();
+                reject(new Error(data.error.message));
+            }
+        });
+    });
+}
+
+// Meta Conversions API Action
+export async function sendServerEventAction(eventData: { eventName: string; email: string }) {
+  const { eventName, email } = eventData;
+
+  const pixelId = process.env.META_PIXEL_ID;
+  const accessToken = process.env.META_ACCESS_TOKEN;
+  const apiVersion = 'v20.0';
+
+  if (!pixelId || !accessToken) {
+    console.error('Meta Pixel ID or Access Token is not configured.');
+    return { success: false, error: 'Server configuration error.' };
+  }
+
+  const url = `https://graph.facebook.com/${apiVersion}/${pixelId}/events?access_token=${accessToken}`;
+  const eventTime = Math.floor(new Date().getTime() / 1000);
+
+  // Hash the email using SHA-256
+  const hashedEmail = createHmac('sha256', '').update(email).digest('hex');
+
+  const payload = {
+    data: [
+      {
+        event_name: eventName,
+        event_time: eventTime,
+        action_source: 'website',
+        user_data: {
+          em: [hashedEmail],
+        },
+      },
+    ],
+  };
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const responseData = await response.json();
+
+    if (!response.ok) {
+      console.error('Meta API Error:', responseData);
+      return { success: false, error: 'Failed to send event to Meta.' };
+    }
+
+    console.log('Event sent to Meta successfully:', responseData);
+    return { success: true };
+  } catch (error) {
+    console.error('Error sending server event:', error);
+    return { success: false, error: 'An unexpected error occurred.' };
   }
 }

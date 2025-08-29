@@ -23,7 +23,7 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
-import { createClubAction } from "@/lib/actions";
+import { createClubAction, sendServerEventAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
@@ -69,6 +69,9 @@ export default function RegisterPage() {
         title: "¡Ya casi estamos!",
         description: "Ahora serás redirigido para completar tu suscripción de prueba.",
       });
+      
+      // Send event to Meta Conversions API
+      await sendServerEventAction({ eventName: 'CompleteRegistration', email: values.email });
       
       const { userId, checkoutSessionId } = result;
       const userDocRef = doc(db, "users", userId);
@@ -234,5 +237,3 @@ export default function RegisterPage() {
     </div>
   );
 }
-
-    

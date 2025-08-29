@@ -19,6 +19,8 @@ runConfig:
     - FIREBASE_MEASUREMENT_ID
     - STRIPE_SECRET_KEY
     - STRIPE_WEBHOOK_SECRET
+    - META_PIXEL_ID
+    - META_ACCESS_TOKEN
 
 # Defines a scheduled job that will be triggered by Cloud Scheduler.
 # The job will send a POST request to the specified path.
