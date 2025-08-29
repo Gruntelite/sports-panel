@@ -60,6 +60,12 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         themeColorForeground: foregroundColor,
         logoUrl: null
     }, { merge: true });
+    
+    // Server-side event for registration
+    await sendServerEventAction({ 
+        eventName: 'CompleteRegistration', 
+        email: data.email,
+    });
 
     const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
@@ -69,6 +75,13 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       trial_period_days: 20,
       allow_promotion_codes: true,
       mode: 'subscription',
+      // Send purchase event on successful payment
+      automatic_tax: { enabled: true },
+      metadata: {
+        userId: uid,
+        userEmail: data.email,
+        eventName: 'Purchase', // Event to trigger on success
+      },
     });
 
     return { success: true, userId: uid, checkoutSessionId: checkoutDocRef.id };
