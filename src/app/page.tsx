@@ -344,7 +344,7 @@ export default function LandingPage() {
                   />
                 </div>
                  <div className="pt-8">
-                    <Button asChild variant="secondary" size="lg">
+                    <Button asChild size="lg" className="bg-white/80 text-foreground hover:bg-white hover:scale-105 transition-transform duration-200 shadow-lg backdrop-blur-sm">
                         <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
                         <Download className="mr-2 h-4 w-4" />
                         Descarga nuestra guía y empieza paso a paso
