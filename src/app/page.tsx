@@ -255,7 +255,13 @@ export default function LandingPage() {
       <div className="flex flex-col min-h-dvh bg-background text-foreground">
         <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
           <Link href="#" className="flex items-center justify-center gap-2" prefetch={false}>
-            <Logo width={32} height={32}/>
+            <Image
+                src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba"
+                alt="SportsPanel Logo"
+                width={32}
+                height={32}
+                className="rounded-lg"
+            />
             <span className="text-xl font-bold font-headline">SportsPanel</span>
           </Link>
           <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
