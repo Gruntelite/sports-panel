@@ -396,7 +396,7 @@ export default function LandingPage() {
               </div>
           </section>
 
-          <section id="features" className="w-full py-12 md:py-16 lg:py-20 xl:py-24">
+          <section id="features" className="w-full py-12 md:py-16 lg:py-24">
             <div className="container px-4 md:px-6">
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
                 <div className="space-y-2">
@@ -427,7 +427,7 @@ export default function LandingPage() {
                 <p className="text-muted-foreground mt-2 mb-6">Únete a los clubs que ya han optimizado su gestión.</p>
                 <Button asChild size="lg">
                     <Link href="/register" prefetch={false}>
-                    Digitaliza tu club. Ahorra tiempo. <ArrowRight className="ml-2 h-5 w-5" />
+                    Empieza a optimizar tu club <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                 </Button>
             </div>
