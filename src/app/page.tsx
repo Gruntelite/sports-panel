@@ -396,7 +396,7 @@ export default function LandingPage() {
               </div>
           </section>
 
-          <section id="features" className="w-full py-6 md:py-8">
+          <section id="features" className="w-full py-12 md:py-16 lg:py-20 xl:py-24">
             <div className="container px-4 md:px-6">
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
                 <div className="space-y-2">
