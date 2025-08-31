@@ -322,10 +322,10 @@ export default function LandingPage() {
               <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
                   <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    La Gestión de tu Club, <br /> Simplificada al Máximo
+                    ¿Cuántas horas pierde tu club cada semana en gestión?
                   </h1>
                   <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                    Simplifica y digitaliza las operaciones de tu club con una plataforma centralizada, moderna e intuitiva.
+                    Centraliza la tesorería, jugadores, entrenadores, documentación, inscripciones y comunicación con familias: todo en un mismo panel.
                   </p>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center gap-4">
