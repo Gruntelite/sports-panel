@@ -275,7 +275,7 @@ export default function LandingPage() {
               Iniciar Sesión
             </Link>
             <Button asChild>
-              <Link href="/register" prefetch={false}>Crear Cuenta</Link>
+              <Link href="/register" prefetch={false}>Crea tu club</Link>
             </Button>
           </nav>
           <div className="ml-auto md:hidden">
@@ -309,7 +309,7 @@ export default function LandingPage() {
                             Iniciar Sesión
                         </Link>
                         <Button asChild size="lg">
-                            <Link href="/register" prefetch={false}>Crear Cuenta</Link>
+                            <Link href="/register" prefetch={false}>Crea tu club</Link>
                         </Button>
                     </div>
                   </SheetContent>
@@ -331,7 +331,7 @@ export default function LandingPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-4">
                   <Button asChild size="lg">
                     <Link href="/register" prefetch={false}>
-                      Empieza tu prueba gratuita de 20 días
+                      Prueba gratis 20 días y olvídate del papeleo
                     </Link>
                   </Button>
                   <Button asChild variant="link" className="text-muted-foreground">
