@@ -334,12 +334,6 @@ export default function LandingPage() {
                       Prueba gratis 20 días y olvídate del papeleo
                     </Link>
                   </Button>
-                  <Button asChild variant="link" className="text-muted-foreground">
-                    <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
-                      <Download className="mr-2 h-4 w-4" />
-                      Descargar Guía de Uso
-                    </Link>
-                  </Button>
                 </div>
                 <div className="mt-8">
                   <Image
@@ -348,6 +342,14 @@ export default function LandingPage() {
                     width={1890}
                     height={1063}
                   />
+                </div>
+                 <div className="pt-8">
+                    <Button asChild variant="link" className="text-muted-foreground">
+                        <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
+                        <Download className="mr-2 h-4 w-4" />
+                        Descargar Guía de Uso
+                        </Link>
+                    </Button>
                 </div>
               </div>
             </div>
