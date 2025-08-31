@@ -1,6 +1,8 @@
+
 "use client";
 
 import * as React from 'react';
+import { useState } from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -267,9 +269,9 @@ export default function LandingPage() {
               Planes
             </Link>
             <DialogTrigger asChild>
-              <Link href="#" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
+              <Button variant="ghost" className="text-sm font-medium hover:underline underline-offset-4" >
                 Contacto
-              </Link>
+              </Button>
             </DialogTrigger>
             <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
               Iniciar Sesión
@@ -298,9 +300,9 @@ export default function LandingPage() {
                               Planes
                           </Link>
                            <DialogTrigger asChild>
-                            <Link href="#" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            <Button variant="ghost" className="text-lg font-medium hover:underline underline-offset-4 justify-start p-0">
                               Contacto
-                            </Link>
+                            </Button>
                            </DialogTrigger>
                           <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                               Iniciar Sesión
