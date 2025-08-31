@@ -290,7 +290,7 @@ export default function LandingPage() {
                   </SheetTrigger>
                   <SheetContent side="right">
                     <SheetHeader>
-                        <SheetTitle className="text-lg font-semibold">Menú</SheetTitle>
+                        <SheetTitle>Menú</SheetTitle>
                     </SheetHeader>
                     <div className="grid gap-4 py-4">
                         <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
@@ -345,7 +345,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mt-8">
                   <Image
-                    src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(8).png?alt=media&token=7ff6bc8b-5f5b-4e08-87e1-bcfa062bdb0a"
+                    src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=d2cab28b-6661-4f1c-8af9-b488f0e2ece6"
                     alt="SportsPanel App Screenshot"
                     width={1890}
                     height={1063}
