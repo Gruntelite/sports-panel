@@ -254,7 +254,16 @@ export default function LandingPage() {
       <div className="flex flex-col min-h-dvh bg-background text-foreground">
         <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
           <Link href="#" className="flex items-center justify-center" prefetch={false}>
-            <Logo withText={true} />
+            <div className="flex items-center gap-2">
+                <Image
+                src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel_logo_no_fondo.png?alt=media&token=d692cb56-60b1-4f00-a886-dd1cf340d043"
+                alt="SportsPanel Logo"
+                width={42}
+                height={42}
+                className="rounded-lg"
+                />
+                <span className="text-xl font-bold font-headline">SportsPanel</span>
+            </div>
           </Link>
           <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
@@ -413,6 +422,15 @@ export default function LandingPage() {
                   </div>
                 ))}
               </div>
+               <div className="text-center mt-8">
+                <h3 className="text-2xl font-bold font-headline tracking-tight">Digitaliza tu club. Ahorra tiempo.</h3>
+                <p className="text-muted-foreground mt-2 mb-6">Únete a los clubs que ya han optimizado su gestión.</p>
+                <Button asChild size="lg">
+                    <Link href="/register" prefetch={false}>
+                    Quiero olvidarme del papeleo <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                </Button>
+            </div>
             </div>
           </section>
 
