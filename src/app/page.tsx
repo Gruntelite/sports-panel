@@ -8,7 +8,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle, UserCheck, Database, ClipboardList, AlertTriangle, Download, Send } from "lucide-react";
 import { Logo } from "@/components/logo";
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
@@ -289,28 +289,31 @@ export default function LandingPage() {
                       </Button>
                   </SheetTrigger>
                   <SheetContent side="right">
-                      <div className="grid gap-4 p-4">
-                          <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                              Características
-                          </Link>
-                          <Link href="#benefits" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                              Beneficios
-                          </Link>
-                          <Link href="#pricing" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                              Planes
-                          </Link>
-                           <DialogTrigger asChild>
-                            <Button variant="ghost" className="text-lg font-medium hover:underline underline-offset-4 justify-start p-0">
-                              Contacto
-                            </Button>
-                           </DialogTrigger>
-                          <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                              Iniciar Sesión
-                          </Link>
-                          <Button asChild size="lg">
-                              <Link href="/register" prefetch={false}>Crear Cuenta</Link>
-                          </Button>
-                      </div>
+                    <SheetHeader>
+                        <SheetTitle className="text-lg font-semibold">Menú</SheetTitle>
+                    </SheetHeader>
+                    <div className="grid gap-4 py-4">
+                        <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Características
+                        </Link>
+                        <Link href="#benefits" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Beneficios
+                        </Link>
+                        <Link href="#pricing" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Planes
+                        </Link>
+                        <DialogTrigger asChild>
+                        <Button variant="ghost" className="text-lg font-medium hover:underline underline-offset-4 justify-start p-0">
+                            Contacto
+                        </Button>
+                        </DialogTrigger>
+                        <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                            Iniciar Sesión
+                        </Link>
+                        <Button asChild size="lg">
+                            <Link href="/register" prefetch={false}>Crear Cuenta</Link>
+                        </Button>
+                    </div>
                   </SheetContent>
               </Sheet>
           </div>
