@@ -8,7 +8,7 @@ export function Logo({ width = 42, height = 42, withText = false, className }: {
     return (
       <div className={cn("flex items-center gap-2", className)}>
         <Image
-          src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba"
+          src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel_logo_no_fondo.png?alt=media&token=d692cb56-60b1-4f00-a886-dd1cf340d043"
           alt="SportsPanel Logo"
           width={width}
           height={height}
@@ -20,7 +20,7 @@ export function Logo({ width = 42, height = 42, withText = false, className }: {
   }
   return (
     <Image
-      src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba"
+      src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel_logo_no_fondo.png?alt=media&token=d692cb56-60b1-4f00-a886-dd1cf340d043"
       alt="SportsPanel Logo"
       width={width}
       height={height}
@@ -28,5 +28,3 @@ export function Logo({ width = 42, height = 42, withText = false, className }: {
     />
   );
 }
-
-    

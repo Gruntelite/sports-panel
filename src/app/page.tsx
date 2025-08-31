@@ -2,7 +2,6 @@
 "use client";
 
 import * as React from 'react';
-import { useState } from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -180,10 +179,10 @@ const faqs = [
 
 function ContactForm() {
     const { toast } = useToast();
-    const [name, setName] = useState("");
-    const [email, setEmail] = useState("");
-    const [message, setMessage] = useState("");
-    const [isSending, setIsSending] = useState(false);
+    const [name, setName] = React.useState("");
+    const [email, setEmail] = React.useState("");
+    const [message, setMessage] = React.useState("");
+    const [isSending, setIsSending] = React.useState(false);
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -254,15 +253,8 @@ export default function LandingPage() {
     <Dialog>
       <div className="flex flex-col min-h-dvh bg-background text-foreground">
         <header className="px-4 lg:px-6 h-16 flex items-center bg-background/95 backdrop-blur-sm sticky top-0 z-50">
-          <Link href="#" className="flex items-center justify-center gap-2" prefetch={false}>
-            <Image
-                src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba"
-                alt="SportsPanel Logo"
-                width={32}
-                height={32}
-                className="rounded-lg"
-            />
-            <span className="text-xl font-bold font-headline">SportsPanel</span>
+          <Link href="#" className="flex items-center justify-center" prefetch={false}>
+            <Logo withText={true} />
           </Link>
           <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
