@@ -323,7 +323,8 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-    const user = adminAuth.currentUser;
+    const user = await getAuth().verifyIdToken(adminAuth.currentUser.getIdToken(true));
+    
     if (!user) {
         throw new Error('User not authenticated');
     }
@@ -345,9 +346,13 @@ export async function createPortalLinkAction(): Promise<string> {
                 unsubscribe();
                 reject(new Error(data.error.message));
             }
+        }, err => {
+            unsubscribe();
+            reject(err);
         });
     });
 }
+
 
 // Meta Conversions API Action
 export async function sendServerEventAction(eventData: { 

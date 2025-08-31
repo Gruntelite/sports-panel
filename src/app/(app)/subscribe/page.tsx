@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,25 +13,39 @@ import {
 import { Loader2, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createPortalLinkAction } from "@/lib/actions";
+import { auth, db } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function SubscribePage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+            setUserEmail(user.email);
+        }
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleManageSubscription = async () => {
     setLoading(true);
     try {
-      const portalUrl = await createPortalLinkAction();
-      window.location.href = portalUrl;
+        if (!auth.currentUser) throw new Error("User not authenticated.");
+        
+        const portalUrl = await createPortalLinkAction();
+        window.location.href = portalUrl;
+
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });
-    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-muted/40">
+    <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <Card className="w-full max-w-md text-center">
         <CardHeader>
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 text-destructive mb-4">

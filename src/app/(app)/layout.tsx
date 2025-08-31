@@ -6,9 +6,10 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, query, where } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
+import { onSnapshot } from 'firebase/firestore';
 
 const DEV_CLUB_ID = "VWxHRR6HzumBnSdLfTtP"; // Club de pruebas
 
@@ -31,7 +32,6 @@ export default function AppLayout({
             const userData = userDocSnap.data();
             const clubId = userData.clubId;
 
-            // Si es el club de desarrollo, saltar la comprobación de suscripción
             if (clubId === DEV_CLUB_ID) {
               setLoading(false);
               return;
@@ -44,23 +44,40 @@ export default function AppLayout({
             const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
 
             if (subscriptionsSnapshot.empty) {
-              // No active or trialing subscription found
-              router.push('/subscribe');
+                // No active subscription, check for a pending checkout session
+                const checkoutSessionsQuery = query(
+                    collection(userDocRef, 'checkout_sessions'),
+                    orderBy('created', 'desc'),
+                    limit(1)
+                );
+                const checkoutSnapshot = await getDocs(checkoutSessionsQuery);
+
+                if (!checkoutSnapshot.empty) {
+                    const latestCheckoutRef = checkoutSnapshot.docs[0].ref;
+                    const unsubscribeCheckout = onSnapshot(latestCheckoutRef, (snap) => {
+                         const { error, url } = snap.data() as { error?: { message: string }, url?: string };
+                         if(url) {
+                            unsubscribeCheckout();
+                            window.location.assign(url);
+                         } else if (error) {
+                             unsubscribeCheckout();
+                             router.push('/subscribe');
+                         }
+                    });
+                } else {
+                     router.push('/subscribe');
+                }
             } else {
-              // User has a valid subscription
               setLoading(false);
             }
           } else {
-             // User document doesn't exist, maybe still in creation process
              router.push('/login');
           }
         } catch (error) {
           console.error("Error verifying subscription:", error);
-          // Redirect to an error page or login page as a fallback
           router.push('/login');
         }
       } else {
-        // No user is signed in.
         router.push('/login');
       }
     });
