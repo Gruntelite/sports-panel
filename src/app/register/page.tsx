@@ -64,7 +64,7 @@ export default function RegisterPage() {
     },
   });
 
-  const onSubmit = async (values: z.infer<typeof registerSchema>) => {
+  async function onSubmit(values: z.infer<typeof registerSchema>) {
     setLoading(true);
     
     const eventId = uuidv4();
@@ -245,6 +245,9 @@ export default function RegisterPage() {
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                 {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días'}
               </Button>
+               <p className="text-xs text-muted-foreground text-center">
+                No se realizará ningún cargo hasta que finalicen los 20 días de prueba.
+              </p>
             </form>
           </Form>
         </CardContent>
