@@ -337,12 +337,15 @@ export default function LandingPage() {
                     Centraliza la tesorería, jugadores, entrenadores, documentación, inscripciones y comunicación con familias: todo en un mismo panel.
                   </p>
                 </div>
-                <div className="flex flex-col sm:flex-row items-center gap-4">
+                <div className="flex flex-col items-center gap-2">
                   <Button asChild size="lg">
                     <Link href="/register" prefetch={false}>
                       Prueba gratis 20 días y olvídate del papeleo
                     </Link>
                   </Button>
+                   <p className="text-xs text-muted-foreground">
+                    No se realizará ningún cargo hasta que finalicen los 20 días de prueba.
+                  </p>
                 </div>
                 <div className="mt-8">
                   <Image
