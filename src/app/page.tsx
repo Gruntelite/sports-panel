@@ -344,7 +344,7 @@ export default function LandingPage() {
                     </Link>
                   </Button>
                    <p className="text-xs text-muted-foreground">
-                    No se realizará ningún cargo hasta que finalicen los 20 días de prueba.
+                    No se realizará ningún cargo durante el periodo de prueba
                   </p>
                 </div>
                 <div className="mt-8">

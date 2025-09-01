@@ -125,7 +125,7 @@ export default function RegisterPage() {
       });
       setLoading(false);
     }
-  };
+  }
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-background p-4 relative">
@@ -246,7 +246,7 @@ export default function RegisterPage() {
                 {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días'}
               </Button>
                <p className="text-xs text-muted-foreground text-center">
-                No se realizará ningún cargo hasta que finalicen los 20 días de prueba.
+                No se realizará ningún cargo durante el periodo de prueba
               </p>
             </form>
           </Form>
