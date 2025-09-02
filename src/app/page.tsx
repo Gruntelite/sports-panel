@@ -328,10 +328,10 @@ export default function LandingPage() {
         <main className="flex-1">
           <section className="w-full py-12 md:py-16 lg:py-20">
             <div className="container px-4 md:px-6">
-              <div className="mx-auto flex max-w-4xl flex-col items-center space-y-6 text-center">
+              <div className="mx-auto flex max-w-5xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
                   <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    ¿Cuántas horas pierde tu club cada semana en gestión?
+                    El Software que Organiza tu Club y te Ahorra Horas de Gestión cada Semana
                   </h1>
                   <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
                     Centraliza la tesorería, jugadores, entrenadores, documentación, inscripciones y comunicación con familias: todo en un mismo panel.
@@ -340,12 +340,9 @@ export default function LandingPage() {
                 <div className="flex flex-col items-center gap-2">
                   <Button asChild size="lg">
                     <Link href="/register" prefetch={false}>
-                      Prueba gratis 20 días y olvídate del papeleo
+                      Empieza ahora tu prueba gratuita de 20 días
                     </Link>
                   </Button>
-                   <p className="text-xs text-muted-foreground">
-                    No se realizará ningún cargo durante el periodo de prueba
-                  </p>
                 </div>
                 <div className="mt-8">
                   <Image

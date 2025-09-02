@@ -243,10 +243,10 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días'}
+                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días GRATIS'}
               </Button>
                <p className="text-xs text-muted-foreground text-center">
-                No se realizará ningún cargo durante el periodo de prueba
+                No se te cobrará nada durante la prueba. Te avisaremos antes de que termine y podrás cancelar en un clic.
               </p>
             </form>
           </Form>
