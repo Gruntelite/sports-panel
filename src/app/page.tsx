@@ -338,7 +338,7 @@ export default function LandingPage() {
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2">
-                  <Button asChild size="lg">
+                  <Button asChild size="lg" className="text-lg px-8 py-6">
                     <Link href="/register" prefetch={false}>
                       Empieza ahora tu prueba gratuita de 20 días
                     </Link>
