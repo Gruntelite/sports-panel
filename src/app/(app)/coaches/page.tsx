@@ -635,6 +635,7 @@ export default function CoachesPage() {
   }
   
   const isAllSelected = filteredCoaches.length > 0 && selectedCoaches.length === filteredCoaches.length;
+  const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
 
   return (
     <TooltipProvider>
@@ -1080,7 +1081,7 @@ export default function CoachesPage() {
                     </TabsContent>
                      <TabsContent value="custom" className="pt-6">
                         <div className="space-y-6">
-                            {customFields.length > 0 ? customFields.map(field => (
+                            {coachCustomFields.length > 0 ? coachCustomFields.map(field => (
                                 <div key={field.id} className="space-y-2">
                                     <Label htmlFor={field.id}>{field.name}</Label>
                                     <Input 
@@ -1149,7 +1150,7 @@ export default function CoachesPage() {
             <DialogDescription>Elige qué información quieres que actualicen los entrenadores.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <FieldSelector fields={coachFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
+            <FieldSelector fields={coachFields} customFields={coachCustomFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
           </div>
           <DialogFooter>
             <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
