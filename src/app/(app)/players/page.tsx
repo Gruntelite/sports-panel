@@ -111,13 +111,6 @@ const playerFields = {
     ]
 };
 
-const allColumnFields = [
-    ...playerFields.personal,
-    ...playerFields.contact,
-    ...playerFields.sports
-];
-
-
 export default function PlayersPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -147,6 +140,16 @@ export default function PlayersPage() {
 
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'monthlyFee', 'tutorEmail']));
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
+
+  const allColumnFields = [
+    ...playerFields.personal,
+    ...playerFields.contact,
+    ...playerFields.sports
+  ];
+
+  const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
+
+  const allPossibleColumns = [...allColumnFields, ...playerCustomFields];
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -604,17 +607,22 @@ export default function PlayersPage() {
   };
 
   const getCellContent = (player: Player, columnId: string) => {
-        const value = player[columnId as keyof Player];
-        switch (columnId) {
-            case 'name':
-                return `${player.name} ${player.lastName}`;
-            case 'monthlyFee':
-                return value === null || value === undefined ? 'N/A' : `${value} €`;
-            case 'teamName':
-                return <Badge variant="outline">{player.teamName || "Sin equipo"}</Badge>;
-            default:
-                 return value === null || value === undefined || value === '' ? 'N/A' : String(value);
-        }
+      const customFieldDef = playerCustomFields.find(f => f.id === columnId);
+      if (customFieldDef) {
+        return player.customFields?.[columnId] || 'N/A';
+      }
+
+      const value = player[columnId as keyof Player];
+      switch (columnId) {
+          case 'name':
+              return `${player.name} ${player.lastName}`;
+          case 'monthlyFee':
+              return value === null || value === undefined ? 'N/A' : `${value} €`;
+          case 'teamName':
+              return <Badge variant="outline">{player.teamName || "Sin equipo"}</Badge>;
+          default:
+              return value === null || value === undefined || value === '' ? 'N/A' : String(value);
+      }
   };
 
 
@@ -627,8 +635,7 @@ export default function PlayersPage() {
   }
   
   const isAllSelected = filteredPlayers.length > 0 && selectedPlayers.length === filteredPlayers.length;
-  const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
-
+  
   return (
     <TooltipProvider>
       <Card>
@@ -667,6 +674,18 @@ export default function PlayersPage() {
                             disabled={field.id === 'name'}
                           >
                             {field.label}
+                          </DropdownMenuCheckboxItem>
+                      ))}
+                      {playerCustomFields.length > 0 && <DropdownMenuSeparator />}
+                      {playerCustomFields.map(field => (
+                          <DropdownMenuCheckboxItem
+                            key={field.id}
+                            className="capitalize"
+                            checked={visibleColumns.has(field.id)}
+                            onCheckedChange={() => toggleColumnVisibility(field.id)}
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            {field.name}
                           </DropdownMenuCheckboxItem>
                       ))}
                     </DropdownMenuContent>
@@ -732,13 +751,13 @@ export default function PlayersPage() {
                     className="translate-y-[2px]"
                   />
                 </TableHead>
-                 {allColumnFields.map(field => (
+                 {allPossibleColumns.map(field => (
                     visibleColumns.has(field.id) && 
                     <TableHead 
                       key={field.id}
                       className={cn(field.id === 'name' && 'font-medium')}
                     >
-                        {field.label}
+                        {(field as CustomFieldDef).name || (field as {label: string}).label}
                     </TableHead>
                  ))}
                 <TableHead className="w-[4rem]">
@@ -756,7 +775,7 @@ export default function PlayersPage() {
                       aria-label={`Seleccionar a ${player.name}`}
                     />
                   </TableCell>
-                  {allColumnFields.map(field => (
+                  {allPossibleColumns.map(field => (
                     visibleColumns.has(field.id) && (
                         <TableCell 
                           key={field.id} 

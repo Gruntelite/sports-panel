@@ -118,6 +118,12 @@ export default function StaffPage() {
   const [visibleStaffColumns, setVisibleStaffColumns] = useState<Set<string>>(new Set(['name', 'role', 'email', 'payment']));
   const [visibleSocioColumns, setVisibleSocioColumns] = useState<Set<string>>(new Set(['name', 'socioNumber', 'email', 'fee']));
 
+  const staffCustomFields = customFields.filter(f => f.appliesTo.includes('staff'));
+  const allPossibleStaffColumns = [...staffFields, ...staffCustomFields];
+
+  const socioCustomFields = customFields.filter(f => f.appliesTo.includes('socio'));
+  const allPossibleSocioColumns = [...socioFields, ...socioCustomFields];
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -394,6 +400,11 @@ export default function StaffPage() {
   };
 
   const getStaffCellContent = (member: Staff, columnId: string) => {
+    const customFieldDef = staffCustomFields.find(f => f.id === columnId);
+    if (customFieldDef) {
+      return member.customFields?.[columnId] || 'N/A';
+    }
+
     const value = member[columnId as keyof Staff];
      if (columnId === 'name') return `${member.name} ${member.lastName}`;
      if (columnId === 'payment') return `${member.payment || 0}€ / ${member.paymentFrequency === 'monthly' ? 'mes' : 'año'}`;
@@ -401,6 +412,10 @@ export default function StaffPage() {
   }
 
   const getSocioCellContent = (member: Socio, columnId: string) => {
+    const customFieldDef = socioCustomFields.find(f => f.id === columnId);
+    if (customFieldDef) {
+      return member.customFields?.[columnId] || 'N/A';
+    }
     if (columnId === 'name') return `${member.name} ${member.lastName}`;
     if (columnId === 'fee') return `${member.fee}€ / ${member.paymentType === 'monthly' ? 'mes' : 'año'}`;
     const value = member[columnId as keyof Socio];
@@ -468,6 +483,18 @@ export default function StaffPage() {
                                     {field.label}
                                   </DropdownMenuCheckboxItem>
                               ))}
+                              {staffCustomFields.length > 0 && <DropdownMenuSeparator />}
+                              {staffCustomFields.map(field => (
+                                  <DropdownMenuCheckboxItem
+                                    key={field.id}
+                                    className="capitalize"
+                                    checked={visibleStaffColumns.has(field.id)}
+                                    onCheckedChange={() => toggleStaffColumnVisibility(field.id)}
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    {field.name}
+                                  </DropdownMenuCheckboxItem>
+                              ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <Button onClick={() => handleOpenModal('add', 'staff')} className="h-9">
@@ -482,9 +509,9 @@ export default function StaffPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {staffFields.map(field => (
+                          {allPossibleStaffColumns.map(field => (
                               visibleStaffColumns.has(field.id) && 
-                              <TableHead key={field.id} className="min-w-[150px]">{field.label}</TableHead>
+                              <TableHead key={field.id} className="min-w-[150px]">{(field as CustomFieldDef).name || (field as {label: string}).label}</TableHead>
                           ))}
                           <TableHead>
                             <span className="sr-only">Acciones</span>
@@ -494,7 +521,7 @@ export default function StaffPage() {
                       <TableBody>
                         {staff.map(member => (
                           <TableRow key={member.id}>
-                            {staffFields.map(field => (
+                            {allPossibleStaffColumns.map(field => (
                               visibleStaffColumns.has(field.id) && (
                                   <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
                                       {field.id === 'name' ? (
@@ -589,6 +616,18 @@ export default function StaffPage() {
                                     {field.label}
                                   </DropdownMenuCheckboxItem>
                               ))}
+                              {socioCustomFields.length > 0 && <DropdownMenuSeparator />}
+                              {socioCustomFields.map(field => (
+                                  <DropdownMenuCheckboxItem
+                                    key={field.id}
+                                    className="capitalize"
+                                    checked={visibleSocioColumns.has(field.id)}
+                                    onCheckedChange={() => toggleSocioColumnVisibility(field.id)}
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    {field.name}
+                                  </DropdownMenuCheckboxItem>
+                              ))}
                             </DropdownMenuContent>
                           </DropdownMenu>
                         <Button onClick={() => handleOpenModal('add', 'socio')} className="h-9">
@@ -603,9 +642,9 @@ export default function StaffPage() {
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          {socioFields.map(field => (
+                          {allPossibleSocioColumns.map(field => (
                               visibleSocioColumns.has(field.id) && 
-                              <TableHead key={field.id} className="min-w-[150px]">{field.label}</TableHead>
+                              <TableHead key={field.id} className="min-w-[150px]">{(field as CustomFieldDef).name || (field as {label: string}).label}</TableHead>
                           ))}
                           <TableHead>
                             <span className="sr-only">Acciones</span>
@@ -615,7 +654,7 @@ export default function StaffPage() {
                       <TableBody>
                         {socios.map(socio => (
                           <TableRow key={socio.id}>
-                            {socioFields.map(field => (
+                            {allPossibleSocioColumns.map(field => (
                               visibleSocioColumns.has(field.id) && (
                                   <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
                                       {field.id === 'name' ? (

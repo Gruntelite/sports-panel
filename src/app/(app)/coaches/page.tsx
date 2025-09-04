@@ -125,11 +125,6 @@ const coachFields = {
     ]
 };
 
-const allColumnFields = [
-    ...coachFields.personal,
-    ...coachFields.contact,
-    ...coachFields.payment
-];
 
 export default function CoachesPage() {
   const { toast } = useToast();
@@ -160,6 +155,17 @@ export default function CoachesPage() {
   
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'role', 'teamName', 'email']));
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
+
+  const allColumnFields = [
+    ...coachFields.personal,
+    ...coachFields.contact,
+    ...coachFields.payment
+  ];
+  
+  const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
+  
+  const allPossibleColumns = [...allColumnFields, ...coachCustomFields];
+
 
   const calculateAge = (birthDate: string | undefined): number | null => {
     if (!birthDate) return null;
@@ -611,19 +617,24 @@ export default function CoachesPage() {
   };
 
   const getCellContent = (coach: Coach, columnId: string) => {
-        const value = coach[columnId as keyof Coach];
-        switch (columnId) {
-            case 'name':
-                return `${coach.name} ${coach.lastName}`;
-            case 'role':
-                 return <Badge variant="secondary">{coach.role || 'Sin cargo'}</Badge>;
-            case 'teamName':
-                return coach.teamName;
-            case 'monthlyPayment':
-                return value === null || value === undefined ? 'N/A' : `${value} €`;
-            default:
-                 return value === null || value === undefined || value === '' ? 'N/A' : String(value);
-        }
+      const customFieldDef = coachCustomFields.find(f => f.id === columnId);
+      if (customFieldDef) {
+        return coach.customFields?.[columnId] || 'N/A';
+      }
+
+      const value = coach[columnId as keyof Coach];
+      switch (columnId) {
+          case 'name':
+              return `${coach.name} ${coach.lastName}`;
+          case 'role':
+                return <Badge variant="secondary">{coach.role || 'Sin cargo'}</Badge>;
+          case 'teamName':
+              return coach.teamName;
+          case 'monthlyPayment':
+              return value === null || value === undefined ? 'N/A' : `${value} €`;
+          default:
+                return value === null || value === undefined || value === '' ? 'N/A' : String(value);
+      }
   };
 
   if (loading && !coaches.length) {
@@ -635,7 +646,6 @@ export default function CoachesPage() {
   }
   
   const isAllSelected = filteredCoaches.length > 0 && selectedCoaches.length === filteredCoaches.length;
-  const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
 
   return (
     <TooltipProvider>
@@ -675,6 +685,18 @@ export default function CoachesPage() {
                             disabled={field.id === 'name'}
                           >
                             {field.label}
+                          </DropdownMenuCheckboxItem>
+                      ))}
+                      {coachCustomFields.length > 0 && <DropdownMenuSeparator />}
+                      {coachCustomFields.map(field => (
+                          <DropdownMenuCheckboxItem
+                            key={field.id}
+                            className="capitalize"
+                            checked={visibleColumns.has(field.id)}
+                            onCheckedChange={() => toggleColumnVisibility(field.id)}
+                            onSelect={(e) => e.preventDefault()}
+                          >
+                            {field.name}
                           </DropdownMenuCheckboxItem>
                       ))}
                     </DropdownMenuContent>
@@ -743,13 +765,13 @@ export default function CoachesPage() {
                       aria-label="Seleccionar todo"
                     />
                   </TableHead>
-                  {allColumnFields.map(field => (
+                  {allPossibleColumns.map(field => (
                       visibleColumns.has(field.id) && 
                       <TableHead 
                         key={field.id}
                         className={cn(field.id === 'name' && 'font-medium', 'min-w-[150px]')}
                       >
-                          {field.label}
+                          {(field as CustomFieldDef).name || (field as {label: string}).label}
                       </TableHead>
                   ))}
                   <TableHead>
@@ -767,7 +789,7 @@ export default function CoachesPage() {
                         aria-label={`Seleccionar a ${coach.name}`}
                       />
                     </TableCell>
-                    {allColumnFields.map(field => (
+                    {allPossibleColumns.map(field => (
                       visibleColumns.has(field.id) && (
                           <TableCell 
                             key={field.id} 
