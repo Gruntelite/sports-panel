@@ -152,7 +152,7 @@ export type Socio = {
     fee: number;
     avatar?: string;
     socioNumber?: string;
-    customFields?: Record<string-any>;
+    customFields?: Record<string, any>;
     excludedMonths?: number[];
 }
 
