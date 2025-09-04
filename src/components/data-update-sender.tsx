@@ -350,7 +350,7 @@ export function FieldSelector({ fields, customFields, selectedFields, onFieldSel
     );
 }
 
-function FieldCheckbox({ field, selectedFields, onFieldSelect }: { field: { id: string, label: string }, selectedFields: string[], onFieldSelect: (id: string, selected: boolean) => void}) {
+function FieldCheckbox({ field, selectedFields, onFieldSelect }: { field: { id: string, label?: string, name?: string }, selectedFields: string[], onFieldSelect: (id: string, selected: boolean) => void}) {
     return (
          <div className="flex items-center space-x-2 p-2 border-b">
             <Checkbox
@@ -358,7 +358,7 @@ function FieldCheckbox({ field, selectedFields, onFieldSelect }: { field: { id: 
                 checked={selectedFields.includes(field.id)}
                 onCheckedChange={(checked) => onFieldSelect(field.id, checked as boolean)}
             />
-            <Label htmlFor={field.id} className="font-normal flex-1">{field.label}</Label>
+            <Label htmlFor={field.id} className="font-normal flex-1">{field.label || field.name}</Label>
         </div>
     )
 }
