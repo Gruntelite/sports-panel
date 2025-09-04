@@ -867,8 +867,7 @@ export default function PlayersPage() {
                         <TabsTrigger value="custom">Otros Datos</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
-                      <div className="min-h-[280px]">
-                       <div className="space-y-6">
+                      <div className="space-y-6">
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
@@ -977,11 +976,9 @@ export default function PlayersPage() {
                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(playerData)}</span></p>
                         </div>
                        </div>
-                       </div>
                     </TabsContent>
                     <TabsContent value="contact" className="pt-6">
-                      <div className="min-h-[280px]">
-                        <div className="space-y-6">
+                      <div className="space-y-6">
                           <div className="flex items-center space-x-2">
                               <Checkbox 
                                 id="isOwnTutor" 
@@ -1026,11 +1023,9 @@ export default function PlayersPage() {
                                 <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                             </div>
                         </div>
-                      </div>
                     </TabsContent>
                     <TabsContent value="sports" className="pt-6">
-                      <div className="min-h-[280px]">
-                        <div className="space-y-6">
+                      <div className="space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="teamId">Equipo</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
@@ -1064,10 +1059,9 @@ export default function PlayersPage() {
                                <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
                              </div>
                         </div>
-                      </div>
                     </TabsContent>
                     <TabsContent value="custom" className="pt-6">
-                        <div className="min-h-[280px] space-y-6">
+                        <div className="space-y-6">
                             {customFields.length > 0 ? customFields.map(field => (
                                 <div key={field.id} className="space-y-2">
                                     <Label htmlFor={field.id}>{field.name}</Label>

@@ -984,8 +984,7 @@ export default function EditTeamPage() {
                         )}
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
-                      <div className="min-h-[280px]">
-                       <div className="space-y-6">
+                      <div className="space-y-6">
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
@@ -1087,11 +1086,9 @@ export default function EditTeamPage() {
                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
                         </div>
                        </div>
-                       </div>
                     </TabsContent>
                     <TabsContent value="contact" className="pt-6">
-                      <div className="min-h-[280px]">
-                        <div className="space-y-6">
+                      <div className="space-y-6">
                            <div className="flex items-center space-x-2">
                               <Checkbox 
                                 id="isOwnTutor" 
@@ -1132,12 +1129,10 @@ export default function EditTeamPage() {
                                  </div>
                             </div>
                         </div>
-                      </div>
                     </TabsContent>
                     {modalType === 'player' && (
                         <TabsContent value="sports" className="pt-6">
-                            <div className="min-h-[280px]">
-                                <div className="space-y-6">
+                            <div className="space-y-6">
                                     <div className="space-y-2">
                                         <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
                                         <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
@@ -1178,13 +1173,11 @@ export default function EditTeamPage() {
                                          </div>
                                     </div>
                                 </div>
-                            </div>
                         </TabsContent>
                     )}
                      {modalType === 'coach' && (
                         <TabsContent value="payment" className="pt-6">
-                            <div className="min-h-[280px]">
-                                <div className="space-y-6">
+                            <div className="space-y-6">
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
                                             <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
@@ -1210,7 +1203,6 @@ export default function EditTeamPage() {
                                         </Select>
                                     </div>
                                 </div>
-                            </div>
                         </TabsContent>
                     )}
                 </Tabs>

@@ -857,8 +857,7 @@ export default function CoachesPage() {
                         <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>Cargo y Equipo</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
-                      <div className="min-h-[280px]">
-                       <div className="space-y-6">
+                      <div className="space-y-6">
                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                <div className="space-y-2">
                                    <Label htmlFor="name">Nombre</Label>
@@ -971,11 +970,9 @@ export default function CoachesPage() {
                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
                         </div>
                        </div>
-                       </div>
                     </TabsContent>
                     <TabsContent value="contact" className="pt-6">
-                      <div className="min-h-[280px]">
-                        <div className="space-y-6">
+                      <div className="space-y-6">
                            <div className="flex items-center space-x-2">
                               <Checkbox 
                                 id="isOwnTutor" 
@@ -1016,11 +1013,9 @@ export default function CoachesPage() {
                                  </div>
                             </div>
                         </div>
-                      </div>
                     </TabsContent>
                     <TabsContent value="payment" className="pt-6">
-                        <div className="min-h-[280px]">
-                            <div className="space-y-6">
+                        <div className="space-y-6">
                                  <div className="space-y-2">
                                     <Label htmlFor="role">Cargo</Label>
                                     <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
@@ -1061,7 +1056,6 @@ export default function CoachesPage() {
                                     </div>
                                 </div>
                             </div>
-                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
