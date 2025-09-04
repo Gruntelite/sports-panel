@@ -86,7 +86,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player, Coach, TeamMember, Interruption } from "@/lib/types";
+import type { Team, Player, Coach, TeamMember, Interruption, CustomFieldDef } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
@@ -107,6 +107,7 @@ export default function EditTeamPage() {
   const [team, setTeam] = useState<Partial<Team>>({});
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [allTeams, setAllTeams] = useState<Team[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -219,6 +220,12 @@ export default function EditTeamPage() {
   const fetchTeamData = async (currentClubId: string) => {
     setLoading(true);
     try {
+      const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        setCustomFields(settingsSnap.data().customFields || []);
+      }
+
       const teamDocRef = doc(db, "clubs", currentClubId, "teams", teamId);
       const teamDocSnap = await getDoc(teamDocRef);
 
@@ -937,6 +944,7 @@ export default function EditTeamPage() {
         <MemberDetailModal 
             member={viewingMember.member} 
             memberType={viewingMember.type}
+            customFieldDefs={customFields.filter(f => f.appliesTo.includes(viewingMember.type))}
             onClose={() => setViewingMember(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingMember.type, {id: viewingMember.member.id, name: `${viewingMember.member.name} ${viewingMember.member.lastName}`, role: viewingMember.member.role, data: viewingMember.member});

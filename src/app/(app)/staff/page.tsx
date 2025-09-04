@@ -72,7 +72,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
-import type { Staff, Socio } from "@/lib/types";
+import type { Staff, Socio, CustomFieldDef } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -100,6 +100,7 @@ export default function StaffPage() {
   
   const [staff, setStaff] = useState<Staff[]>([]);
   const [socios, setSocios] = useState<Socio[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -143,6 +144,12 @@ export default function StaffPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
+        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+            setCustomFields(settingsSnap.data().customFields || []);
+        }
+
         const staffCol = collection(db, "clubs", clubId, "staff");
         const staffSnapshot = await getDocs(staffCol);
         const staffList = staffSnapshot.docs.map(doc => {
@@ -178,6 +185,14 @@ export default function StaffPage() {
     }
   };
 
+  const handleCustomFieldChange = (fieldId: string, value: any) => {
+    if (modalType === 'staff') {
+        setStaffData(prev => ({ ...prev, customFields: { ...prev.customFields, [fieldId]: value } }));
+    } else {
+        setSocioData(prev => ({ ...prev, customFields: { ...prev.customFields, [fieldId]: value } }));
+    }
+  };
+
   const handleCheckboxChange = (id: keyof Socio, checked: boolean) => {
     if (modalType === 'socio') {
       setSocioData(prev => ({ ...prev, [id]: checked }));
@@ -204,11 +219,11 @@ export default function StaffPage() {
     setModalMode(mode);
     setModalType(type);
     if(type === 'staff') {
-      setStaffData(mode === 'edit' && member ? (member as Staff) : { paymentFrequency: 'monthly', excludedMonths: [] });
-      setSocioData({ paymentType: 'monthly', fee: 0, excludedMonths: [] });
+      setStaffData(mode === 'edit' && member ? (member as Staff) : { paymentFrequency: 'monthly', excludedMonths: [], customFields: {} });
+      setSocioData({ paymentType: 'monthly', fee: 0, excludedMonths: [], customFields: {} });
     } else {
-      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0, excludedMonths: [] });
-      setStaffData({ paymentFrequency: 'monthly', excludedMonths: [] });
+      setSocioData(mode === 'edit' && member ? (member as Socio) : { paymentType: 'monthly', fee: 0, excludedMonths: [], customFields: {} });
+      setStaffData({ paymentFrequency: 'monthly', excludedMonths: [], customFields: {} });
     }
     setIsModalOpen(true);
     setNewImage(null);
@@ -401,6 +416,7 @@ export default function StaffPage() {
   }
 
   const currentData = modalType === 'staff' ? staffData : socioData;
+  const currentCustomFields = customFields.filter(f => f.appliesTo.includes(modalType));
 
   return (
     <TooltipProvider>
@@ -650,6 +666,7 @@ export default function StaffPage() {
         <MemberDetailModal 
             member={viewingMember.member} 
             memberType={viewingMember.type}
+            customFieldDefs={customFields.filter(f => f.appliesTo.includes(viewingMember.type))}
             onClose={() => setViewingMember(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingMember.type, viewingMember.member);
@@ -858,6 +875,20 @@ export default function StaffPage() {
                       )}
                   </div>
                 )}
+                 {currentCustomFields.length > 0 && <Separator />}
+                 <div className="space-y-4">
+                     {currentCustomFields.map(field => (
+                        <div key={field.id} className="space-y-2">
+                            <Label htmlFor={field.id}>{field.name}</Label>
+                            <Input
+                                id={field.id}
+                                type={field.type}
+                                value={currentData.customFields?.[field.id] || ''}
+                                onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                            />
+                        </div>
+                    ))}
+                 </div>
             </div>
             <DialogFooter>
                 <DialogClose asChild>

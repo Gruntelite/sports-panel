@@ -834,6 +834,7 @@ export default function CoachesPage() {
         <MemberDetailModal 
             member={viewingCoach} 
             memberType="coach" 
+            customFieldDefs={customFields}
             onClose={() => setViewingCoach(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingCoach);

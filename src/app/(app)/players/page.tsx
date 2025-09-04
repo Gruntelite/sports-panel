@@ -823,7 +823,8 @@ export default function PlayersPage() {
       {viewingPlayer && (
         <MemberDetailModal 
             member={viewingPlayer} 
-            memberType="player" 
+            memberType="player"
+            customFieldDefs={customFields}
             onClose={() => setViewingPlayer(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingPlayer);
