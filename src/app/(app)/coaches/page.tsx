@@ -82,7 +82,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Coach, ClubMember, Interruption } from "@/lib/types";
+import type { Team, Coach, ClubMember, Interruption, CustomFieldDef } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
@@ -140,10 +140,12 @@ export default function CoachesPage() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
   const [filteredCoaches, setFilteredCoaches] = useState<Coach[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
+
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [] });
+  const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [], customFields: {} });
   const [coachToDelete, setCoachToDelete] = useState<Coach | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
@@ -243,6 +245,13 @@ export default function CoachesPage() {
   const fetchData = async (clubId: string) => {
     setLoading(true);
     try {
+      const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      if (settingsSnap.exists()) {
+        const clubCustomFields = settingsSnap.data().customFields || [];
+        setCustomFields(clubCustomFields.filter((f: CustomFieldDef) => f.appliesTo.includes('coach')));
+      }
+
       const teamsQuery = query(collection(db, "clubs", clubId, "teams"), orderBy("order"));
       const teamsSnapshot = await getDocs(teamsQuery);
       const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
@@ -280,6 +289,16 @@ export default function CoachesPage() {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
     setCoachData(prev => ({ ...prev, [id]: type === 'number' ? (value === '' ? null : Number(value)) : value }));
+  };
+
+  const handleCustomFieldChange = (fieldId: string, value: any) => {
+    setCoachData(prev => ({
+      ...prev,
+      customFields: {
+        ...prev.customFields,
+        [fieldId]: value,
+      }
+    }));
   };
 
   const handleCheckboxChange = (id: keyof Coach, checked: boolean) => {
@@ -323,7 +342,7 @@ export default function CoachesPage() {
 
   const handleOpenModal = (mode: 'add' | 'edit', coach?: Coach) => {
     setModalMode(mode);
-    setCoachData(mode === 'edit' && coach ? coach : { interruptions: [] });
+    setCoachData(mode === 'edit' && coach ? coach : { interruptions: [], customFields: {} });
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -851,10 +870,11 @@ export default function CoachesPage() {
                 </div>
                 
                  <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
+                    <TabsList className="grid w-full grid-cols-4">
                         <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
                         <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
                         <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>Cargo y Equipo</TabsTrigger>
+                        <TabsTrigger value="custom">Otros Datos</TabsTrigger>
                     </TabsList>
                     <TabsContent value="personal" className="pt-6">
                       <div className="space-y-6">
@@ -1056,6 +1076,23 @@ export default function CoachesPage() {
                                     </div>
                                 </div>
                             </div>
+                    </TabsContent>
+                     <TabsContent value="custom" className="pt-6">
+                        <div className="space-y-6">
+                            {customFields.length > 0 ? customFields.map(field => (
+                                <div key={field.id} className="space-y-2">
+                                    <Label htmlFor={field.id}>{field.name}</Label>
+                                    <Input 
+                                        id={field.id}
+                                        type={field.type}
+                                        value={coachData.customFields?.[field.id] || ''}
+                                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                    />
+                                </div>
+                            )) : (
+                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para entrenadores. Puedes añadirlos en Ajustes del Club.</p>
+                            )}
+                        </div>
                     </TabsContent>
                 </Tabs>
             </div>
