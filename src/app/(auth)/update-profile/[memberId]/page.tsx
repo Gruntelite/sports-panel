@@ -10,7 +10,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { db } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
-import type { Player, Coach, Staff } from "@/lib/types";
+import type { Player, Coach, Staff, CustomFieldDef } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -71,6 +71,7 @@ export default function UpdateProfilePage() {
     const [clubInfo, setClubInfo] = useState<{name: string, logoUrl: string | null} | null>(null);
     const [collectionName, setCollectionName] = useState<string | null>(null);
     const [editableFields, setEditableFields] = useState<string[]>([]);
+    const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
     
     const dynamicSchema = z.object(
         Object.fromEntries(
@@ -115,10 +116,12 @@ export default function UpdateProfilePage() {
                 if (clubDocSnap.exists()) {
                     const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                     const settingsSnap = await getDoc(settingsRef);
+                    const settingsData = settingsSnap.exists() ? settingsSnap.data() : {};
                     setClubInfo({
                         name: clubDocSnap.data().name || 'Club',
-                        logoUrl: settingsSnap.exists() ? settingsSnap.data().logoUrl : null,
+                        logoUrl: settingsData.logoUrl || null,
                     });
+                     setCustomFieldDefs(settingsData.customFields || []);
                 }
 
                 // Fetch Member Info
@@ -131,7 +134,8 @@ export default function UpdateProfilePage() {
                     
                     const defaultValues: any = {};
                     fields.forEach(field => {
-                        defaultValues[field] = data[field as keyof MemberData] || "";
+                        const fieldValue = data.customFields?.[field] ?? data[field as keyof MemberData];
+                        defaultValues[field] = fieldValue || "";
                     });
                     form.reset(defaultValues);
                 } else {
@@ -155,14 +159,24 @@ export default function UpdateProfilePage() {
         try {
             const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
             
-            const dataToUpdate: any = { ...data };
-            
-            ['birthDate', 'startDate', 'endDate'].forEach(dateField => {
-                if (data[dateField]) {
-                    dataToUpdate[dateField] = format(new Date(data[dateField]), "yyyy-MM-dd");
+            const dataToUpdate: any = {};
+            const customFieldsToUpdate: Record<string, any> = memberData?.customFields || {};
+
+            Object.entries(data).forEach(([key, value]) => {
+                if (key.startsWith('custom_')) {
+                    customFieldsToUpdate[key] = value;
+                } else {
+                    dataToUpdate[key] = value;
                 }
             });
 
+             ['birthDate', 'startDate', 'endDate'].forEach(dateField => {
+                if (dataToUpdate[dateField]) {
+                    dataToUpdate[dateField] = format(new Date(dataToUpdate[dateField]), "yyyy-MM-dd");
+                }
+            });
+            
+            dataToUpdate.customFields = customFieldsToUpdate;
             dataToUpdate.updateRequestActive = false;
 
             await updateDoc(memberRef, dataToUpdate);
@@ -186,8 +200,10 @@ export default function UpdateProfilePage() {
     
     const renderField = (fieldName: string) => {
         if (!editableFields.includes(fieldName)) return null;
-        
-        const fieldMap: { [key: string]: { label: string; type?: string, options?: {value: string, label: string}[] } } = {
+
+        let fieldConfig: { label: string; type?: string; options?: { value: string; label: string }[] };
+
+        const standardFieldMap: { [key: string]: { label: string; type?: string, options?: {value: string, label: string}[] } } = {
           name: { label: 'Nombre' },
           lastName: { label: 'Apellidos' },
           dni: { label: 'DNI/NIF' },
@@ -215,7 +231,16 @@ export default function UpdateProfilePage() {
           sex: { label: 'Sexo', type: 'select', options: [{value: 'masculino', label: 'Masculino'}, {value: 'femenino', label: 'Femenino'}] },
         };
         
-        const fieldConfig = fieldMap[fieldName] || { label: fieldName, type: 'text' };
+        if (standardFieldMap[fieldName]) {
+            fieldConfig = standardFieldMap[fieldName];
+        } else {
+            const customFieldDef = customFieldDefs.find(def => def.id === fieldName);
+            fieldConfig = {
+                label: customFieldDef?.name || fieldName,
+                type: customFieldDef?.type || 'text'
+            };
+        }
+        
         const { label, type, options } = fieldConfig;
 
         return (
@@ -333,3 +358,5 @@ const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithout
 FormLabel.displayName = 'FormLabel';
 const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({className, ...props}, ref) => <div ref={ref} className={className} {...props} />)
 FormControl.displayName = 'FormControl';
+
+    
