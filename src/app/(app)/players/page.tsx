@@ -662,6 +662,7 @@ export default function PlayersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                     <ScrollArea className="h-[400px]">
                       <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       {allColumnFields.map(field => (
@@ -688,6 +689,7 @@ export default function PlayersPage() {
                             {field.name}
                           </DropdownMenuCheckboxItem>
                       ))}
+                      </ScrollArea>
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <Select value={filterTeamId} onValueChange={setFilterTeamId}>

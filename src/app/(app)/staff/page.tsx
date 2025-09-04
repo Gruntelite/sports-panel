@@ -82,6 +82,7 @@ import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { MemberDetailModal } from "@/components/member-detail-modal";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'payment', label: 'Pago' }];
 const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
@@ -469,32 +470,34 @@ export default function StaffPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {staffFields.map(field => (
-                                  <DropdownMenuCheckboxItem
-                                    key={field.id}
-                                    className="capitalize"
-                                    checked={visibleStaffColumns.has(field.id)}
-                                    onCheckedChange={() => toggleStaffColumnVisibility(field.id)}
-                                    onSelect={(e) => e.preventDefault()}
-                                    disabled={field.id === 'name'}
-                                  >
-                                    {field.label}
-                                  </DropdownMenuCheckboxItem>
-                              ))}
-                              {staffCustomFields.length > 0 && <DropdownMenuSeparator />}
-                              {staffCustomFields.map(field => (
-                                  <DropdownMenuCheckboxItem
-                                    key={field.id}
-                                    className="capitalize"
-                                    checked={visibleStaffColumns.has(field.id)}
-                                    onCheckedChange={() => toggleStaffColumnVisibility(field.id)}
-                                    onSelect={(e) => e.preventDefault()}
-                                  >
-                                    {field.name}
-                                  </DropdownMenuCheckboxItem>
-                              ))}
+                              <ScrollArea className="h-[400px]">
+                                <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {staffFields.map(field => (
+                                    <DropdownMenuCheckboxItem
+                                      key={field.id}
+                                      className="capitalize"
+                                      checked={visibleStaffColumns.has(field.id)}
+                                      onCheckedChange={() => toggleStaffColumnVisibility(field.id)}
+                                      onSelect={(e) => e.preventDefault()}
+                                      disabled={field.id === 'name'}
+                                    >
+                                      {field.label}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                                {staffCustomFields.length > 0 && <DropdownMenuSeparator />}
+                                {staffCustomFields.map(field => (
+                                    <DropdownMenuCheckboxItem
+                                      key={field.id}
+                                      className="capitalize"
+                                      checked={visibleStaffColumns.has(field.id)}
+                                      onCheckedChange={() => toggleStaffColumnVisibility(field.id)}
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      {field.name}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                              </ScrollArea>
                             </DropdownMenuContent>
                           </DropdownMenu>
                           <Button onClick={() => handleOpenModal('add', 'staff')} className="h-9">
@@ -602,32 +605,34 @@ export default function StaffPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              {socioFields.map(field => (
-                                  <DropdownMenuCheckboxItem
-                                    key={field.id}
-                                    className="capitalize"
-                                    checked={visibleSocioColumns.has(field.id)}
-                                    onCheckedChange={() => toggleSocioColumnVisibility(field.id)}
-                                    onSelect={(e) => e.preventDefault()}
-                                    disabled={field.id === 'name'}
-                                  >
-                                    {field.label}
-                                  </DropdownMenuCheckboxItem>
-                              ))}
-                              {socioCustomFields.length > 0 && <DropdownMenuSeparator />}
-                              {socioCustomFields.map(field => (
-                                  <DropdownMenuCheckboxItem
-                                    key={field.id}
-                                    className="capitalize"
-                                    checked={visibleSocioColumns.has(field.id)}
-                                    onCheckedChange={() => toggleSocioColumnVisibility(field.id)}
-                                    onSelect={(e) => e.preventDefault()}
-                                  >
-                                    {field.name}
-                                  </DropdownMenuCheckboxItem>
-                              ))}
+                              <ScrollArea className="h-[400px]">
+                                <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {socioFields.map(field => (
+                                    <DropdownMenuCheckboxItem
+                                      key={field.id}
+                                      className="capitalize"
+                                      checked={visibleSocioColumns.has(field.id)}
+                                      onCheckedChange={() => toggleSocioColumnVisibility(field.id)}
+                                      onSelect={(e) => e.preventDefault()}
+                                      disabled={field.id === 'name'}
+                                    >
+                                      {field.label}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                                {socioCustomFields.length > 0 && <DropdownMenuSeparator />}
+                                {socioCustomFields.map(field => (
+                                    <DropdownMenuCheckboxItem
+                                      key={field.id}
+                                      className="capitalize"
+                                      checked={visibleSocioColumns.has(field.id)}
+                                      onCheckedChange={() => toggleSocioColumnVisibility(field.id)}
+                                      onSelect={(e) => e.preventDefault()}
+                                    >
+                                      {field.name}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                              </ScrollArea>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         <Button onClick={() => handleOpenModal('add', 'socio')} className="h-9">
