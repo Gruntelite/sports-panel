@@ -21,6 +21,7 @@ import {
   Send,
   Columns,
   Trash,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -90,6 +91,7 @@ import { requestDataUpdateAction } from "@/lib/actions";
 import { FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { MemberDetailModal } from "@/components/member-detail-modal";
 
 const technicalRoles = [
     "Entrenador",
@@ -148,6 +150,7 @@ export default function CoachesPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedCoaches, setSelectedCoaches] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+  const [viewingCoach, setViewingCoach] = useState<Coach | null>(null);
   
   const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
@@ -751,13 +754,13 @@ export default function CoachesPage() {
                             className={cn(field.id === 'name' && 'font-medium')}
                           >
                               {field.id === 'name' ? (
-                                  <div className="flex items-center gap-3">
+                                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingCoach(coach)}>
                                     <Avatar className="h-9 w-9">
                                       <AvatarImage src={coach.avatar} alt={coach.name} data-ai-hint="foto persona" />
                                       <AvatarFallback>{coach.name?.charAt(0)}{coach.lastName?.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div className="flex items-center gap-2">
-                                      <span>{getCellContent(coach, field.id)}</span>
+                                      <span className="hover:underline">{getCellContent(coach, field.id)}</span>
                                       {coach.hasMissingData && (
                                         <Tooltip>
                                             <TooltipTrigger>
@@ -786,6 +789,7 @@ export default function CoachesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setViewingCoach(coach)}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>
@@ -806,6 +810,18 @@ export default function CoachesPage() {
           </div>
         </CardFooter>
       </Card>
+      
+      {viewingCoach && (
+        <MemberDetailModal 
+            member={viewingCoach} 
+            memberType="coach" 
+            onClose={() => setViewingCoach(null)}
+            onEdit={() => {
+                handleOpenModal('edit', viewingCoach);
+                setViewingCoach(null);
+            }}
+        />
+      )}
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">

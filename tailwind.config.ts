@@ -21,7 +21,6 @@ export default {
       fontFamily: {
         body: ['Poppins', 'sans-serif'],
         headline: ['Poppins', 'sans-serif'],
-        code: ['monospace'],
       },
       textShadow: {
         sm: '0 1px 2px var(--tw-shadow-color)',

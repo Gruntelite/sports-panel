@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Trash,
+  Eye,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,6 +91,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
+import { MemberDetailModal } from "@/components/member-detail-modal";
 
 
 export default function EditTeamPage() {
@@ -109,6 +111,7 @@ export default function EditTeamPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [modalType, setModalType] = useState<'player' | 'coach'>('player');
+  const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
 
   const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [] });
   const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [] });
@@ -863,13 +866,13 @@ export default function EditTeamPage() {
                                             />
                                           </TableCell>
                                           <TableCell className="font-medium">
-                                            <div className="flex items-center gap-3">
+                                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member: member.data as Player | Coach, type: member.role === 'Jugador' ? 'player' : 'coach'})}>
                                               <Avatar className="h-9 w-9">
                                                 <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
                                                 <AvatarFallback>{member.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
                                               </Avatar>
                                               <div className="flex items-center gap-2">
-                                                <span>{member.name}</span>
+                                                <span className="hover:underline">{member.name}</span>
                                                 {member.hasMissingData && (
                                                   <Tooltip>
                                                       <TooltipTrigger>
@@ -900,6 +903,7 @@ export default function EditTeamPage() {
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => setViewingMember({member: member.data as Player | Coach, type: member.role === 'Jugador' ? 'player' : 'coach'})}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleOpenModal('edit', member.role === 'Jugador' ? 'player' : 'coach', member)}>Editar</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="text-destructive" onClick={() => setMemberToDelete(member)}>
@@ -928,6 +932,18 @@ export default function EditTeamPage() {
               </div>
           </div>
       </div>
+
+       {viewingMember && (
+        <MemberDetailModal 
+            member={viewingMember.member} 
+            memberType={viewingMember.type}
+            onClose={() => setViewingMember(null)}
+            onEdit={() => {
+                handleOpenModal('edit', viewingMember.type, {id: viewingMember.member.id, name: `${viewingMember.member.name} ${viewingMember.member.lastName}`, role: viewingMember.member.role, data: viewingMember.member});
+                setViewingMember(null);
+            }}
+        />
+      )}
 
       {/* --- Member Modal --- */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

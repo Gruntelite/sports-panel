@@ -18,6 +18,7 @@ import {
   Columns,
   Calendar,
   Check,
+  Eye,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -80,6 +81,7 @@ import { requestDataUpdateAction } from "@/lib/actions";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { MemberDetailModal } from "@/components/member-detail-modal";
 
 const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'payment', label: 'Pago' }];
 const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
@@ -102,6 +104,7 @@ export default function StaffPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [modalType, setModalType] = useState<'staff' | 'socio'>('staff');
+  const [viewingMember, setViewingMember] = useState<{member: Staff | Socio, type: 'staff' | 'socio'} | null>(null);
 
   const [staffData, setStaffData] = useState<Partial<Staff>>({});
   const [socioData, setSocioData] = useState<Partial<Socio>>({});
@@ -479,13 +482,13 @@ export default function StaffPage() {
                               visibleStaffColumns.has(field.id) && (
                                   <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
                                       {field.id === 'name' ? (
-                                          <div className="flex items-center gap-3">
+                                          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member, type: 'staff'})}>
                                             <Avatar className="h-9 w-9">
                                               <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
                                               <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div className="flex items-center gap-2">
-                                              <span>{getStaffCellContent(member, field.id)}</span>
+                                              <span className="hover:underline">{getStaffCellContent(member, field.id)}</span>
                                               {member.hasMissingData && (
                                                 <Tooltip>
                                                     <TooltipTrigger>
@@ -514,6 +517,7 @@ export default function StaffPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => setViewingMember({member, type: 'staff'})}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>Editar</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
                                     <Send className="mr-2 h-4 w-4" />
@@ -599,12 +603,12 @@ export default function StaffPage() {
                               visibleSocioColumns.has(field.id) && (
                                   <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
                                       {field.id === 'name' ? (
-                                          <div className="flex items-center gap-3">
+                                          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member: socio, type: 'socio'})}>
                                             <Avatar className="h-9 w-9">
                                               <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
                                               <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
                                             </Avatar>
-                                            <span>{getSocioCellContent(socio, field.id)}</span>
+                                            <span className="hover:underline">{getSocioCellContent(socio, field.id)}</span>
                                           </div>
                                       ) : (
                                           getSocioCellContent(socio, field.id)
@@ -622,6 +626,7 @@ export default function StaffPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => setViewingMember({member: socio, type: 'socio'})}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>Editar</DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
@@ -640,6 +645,18 @@ export default function StaffPage() {
         </TabsContent>
       </Tabs>
       </div>
+      
+      {viewingMember && (
+        <MemberDetailModal 
+            member={viewingMember.member} 
+            memberType={viewingMember.type}
+            onClose={() => setViewingMember(null)}
+            onEdit={() => {
+                handleOpenModal('edit', viewingMember.type, viewingMember.member);
+                setViewingMember(null);
+            }}
+        />
+      )}
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-xl">

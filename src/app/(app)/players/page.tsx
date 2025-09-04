@@ -20,6 +20,7 @@ import {
   Send,
   Columns,
   Trash,
+  Eye,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -86,9 +87,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
 import { requestDataUpdateAction } from "@/lib/actions";
-import { DataUpdateSender, FieldSelector } from "@/components/data-update-sender";
+import { FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { MemberDetailModal } from "@/components/member-detail-modal";
 
 const playerFields = {
     personal: [
@@ -135,6 +137,7 @@ export default function PlayersPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+  const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
   
   const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
@@ -761,13 +764,13 @@ export default function PlayersPage() {
                           )}
                         >
                              {field.id === 'name' ? (
-                                <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingPlayer(player)}>
                                   <Avatar className="h-9 w-9">
                                     <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
                                     <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
                                   </Avatar>
                                   <div className="flex items-center gap-2">
-                                    <span>{getCellContent(player, field.id)}</span>
+                                    <span className="hover:underline">{getCellContent(player, field.id)}</span>
                                     {player.hasMissingData && (
                                       <Tooltip>
                                           <TooltipTrigger>
@@ -796,6 +799,7 @@ export default function PlayersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => setViewingPlayer(player)}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
@@ -816,6 +820,18 @@ export default function PlayersPage() {
         </CardFooter>
       </Card>
       
+      {viewingPlayer && (
+        <MemberDetailModal 
+            member={viewingPlayer} 
+            memberType="player" 
+            onClose={() => setViewingPlayer(null)}
+            onEdit={() => {
+                handleOpenModal('edit', viewingPlayer);
+                setViewingPlayer(null);
+            }}
+        />
+      )}
+
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
