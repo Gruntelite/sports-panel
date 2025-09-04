@@ -4,11 +4,11 @@
 import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, query } from "firebase/firestore";
-import type { Player, Coach, ClubMember } from "@/lib/types";
+import type { Player, Coach, ClubMember, Team, CustomFieldDef } from "@/lib/types";
 import { Button } from "./ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "./ui/card";
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from "./ui/dialog";
-import { UserCheck, Loader2, User, Contact, Shield, CircleDollarSign, Briefcase } from "lucide-react";
+import { UserCheck, Loader2, User, Contact, Shield, CircleDollarSign, Briefcase, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "./ui/label";
 import { Checkbox } from "./ui/checkbox";
@@ -85,6 +85,7 @@ const memberFields = {
 export function DataUpdateSender() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
+    const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
     
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
@@ -120,6 +121,12 @@ export function DataUpdateSender() {
         setLoading(true);
         const members: ClubMember[] = [];
         try {
+             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            const settingsSnap = await getDoc(settingsRef);
+            if (settingsSnap.exists()) {
+                setCustomFieldDefs(settingsSnap.data().customFields || []);
+            }
+
             const playersSnap = await getDocs(collection(db, "clubs", clubId, "players"));
             playersSnap.forEach(doc => {
                 const data = doc.data() as Player;
@@ -201,6 +208,7 @@ export function DataUpdateSender() {
 
     const currentFields = memberType === 'player' ? memberFields.player : memberFields.coach;
     const currentMembers = allMembers.filter(m => (memberType === 'player' ? m.type === 'Jugador' : m.type === 'Entrenador'));
+    const currentCustomFields = customFieldDefs.filter(f => f.appliesTo.includes(memberType));
 
     return (
         <>
@@ -238,10 +246,10 @@ export function DataUpdateSender() {
                                 <TabsTrigger value="coach">Entrenadores</TabsTrigger>
                             </TabsList>
                             <TabsContent value="player" className="mt-4">
-                               <FieldSelector fields={currentFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
+                               <FieldSelector fields={currentFields} customFields={currentCustomFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
                             </TabsContent>
                              <TabsContent value="coach" className="mt-4">
-                               <FieldSelector fields={currentFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
+                               <FieldSelector fields={currentFields} customFields={currentCustomFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
                             </TabsContent>
                         </Tabs>
                     </div>
@@ -305,13 +313,14 @@ export function DataUpdateSender() {
     );
 }
 
-export function FieldSelector({ fields, selectedFields, onFieldSelect }: { fields: any, selectedFields: string[], onFieldSelect: (id: string, selected: boolean) => void }) {
+export function FieldSelector({ fields, customFields, selectedFields, onFieldSelect }: { fields: any, customFields: CustomFieldDef[], selectedFields: string[], onFieldSelect: (id: string, selected: boolean) => void }) {
     return (
         <Tabs defaultValue="personal" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Personales</TabsTrigger>
                 <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto</TabsTrigger>
                 <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Deportivos / Rol</TabsTrigger>
+                <TabsTrigger value="custom"><FileText className="mr-2 h-4 w-4" />Personalizados</TabsTrigger>
             </TabsList>
             <ScrollArea className="h-64 mt-4">
                 <TabsContent value="personal" className="pr-4">
@@ -328,6 +337,13 @@ export function FieldSelector({ fields, selectedFields, onFieldSelect }: { field
                      {(fields.sports || fields.payment).map((field: any) => (
                         <FieldCheckbox key={field.id} field={field} selectedFields={selectedFields} onFieldSelect={onFieldSelect}/>
                     ))}
+                </TabsContent>
+                 <TabsContent value="custom" className="pr-4">
+                     {customFields.length > 0 ? customFields.map((field: any) => (
+                        <FieldCheckbox key={field.id} field={field} selectedFields={selectedFields} onFieldSelect={onFieldSelect}/>
+                    )) : (
+                        <p className="text-center text-sm text-muted-foreground pt-10">No hay campos personalizados para este tipo de miembro.</p>
+                    )}
                 </TabsContent>
             </ScrollArea>
         </Tabs>

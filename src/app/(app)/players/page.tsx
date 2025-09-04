@@ -21,6 +21,7 @@ import {
   Columns,
   Trash,
   Eye,
+  FileText
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -130,7 +131,7 @@ export default function PlayersPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [] });
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
@@ -626,6 +627,7 @@ export default function PlayersPage() {
   }
   
   const isAllSelected = filteredPlayers.length > 0 && selectedPlayers.length === filteredPlayers.length;
+  const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
 
   return (
     <TooltipProvider>
@@ -824,7 +826,7 @@ export default function PlayersPage() {
         <MemberDetailModal 
             member={viewingPlayer} 
             memberType="player"
-            customFieldDefs={customFields}
+            customFieldDefs={playerCustomFields}
             onClose={() => setViewingPlayer(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingPlayer);
@@ -1063,7 +1065,7 @@ export default function PlayersPage() {
                     </TabsContent>
                     <TabsContent value="custom" className="pt-6">
                         <div className="space-y-6">
-                            {customFields.length > 0 ? customFields.map(field => (
+                            {playerCustomFields.length > 0 ? playerCustomFields.map(field => (
                                 <div key={field.id} className="space-y-2">
                                     <Label htmlFor={field.id}>{field.name}</Label>
                                     <Input 
@@ -1132,7 +1134,7 @@ export default function PlayersPage() {
             <DialogDescription>Elige qué información quieres que actualicen los jugadores.</DialogDescription>
           </DialogHeader>
           <div className="py-4">
-            <FieldSelector fields={playerFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
+            <FieldSelector fields={playerFields} customFields={playerCustomFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
           </div>
           <DialogFooter>
             <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
