@@ -113,43 +113,31 @@ export async function requestDataUpdateAction({
   if (members.length === 0) {
     return { success: false, error: "No se seleccionaron miembros." };
   }
+  if (fields.length === 0) {
+    return { success: false, error: "No se seleccionaron campos para actualizar."};
+  }
 
   try {
-    const collectionName = memberType === 'player' ? 'players' : 'coaches';
-    const batch = db.batch();
-    
-    members.forEach(member => {
-        const memberRef = db.collection("clubs").doc(clubId).collection(collectionName).doc(member.id);
-        batch.update(memberRef, { updateRequestActive: true });
-    });
-    
-    await batch.commit();
-
-    const fieldsQueryParam = fields.join(',');
-
-    const emailRecipients = members.map(m => ({ email: m.email, name: m.name }));
-    let emailsSent = 0;
-    
     const clubDocRef = db.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
     const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
-
-    for (const recipient of emailRecipients) {
-        if (!recipient.email) continue;
+    
+    let emailsSent = 0;
+    
+    for (const member of members) {
+        if (!member.email) continue;
         
-        const memberId = members.find(m => m.email === recipient.email)?.id;
-        if (!memberId) continue;
-        
+        const fieldsQueryParam = fields.join(',');
         const appUrl = `https://sportspanel.net`;
-        const updateUrl = `${appUrl}/update-profile/${memberId}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
+        const updateUrl = `${appUrl}/update-profile/${member.id}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
         
         const emailPayload = {
             clubId,
-            recipients: [recipient],
+            recipients: [{ email: member.email, name: member.name }],
             subject: `Actualiza tus datos en ${clubName}`,
             htmlContent: `
                 <h1>Actualización de Datos</h1>
-                <p>Hola ${recipient.name},</p>
+                <p>Hola ${member.name},</p>
                 <p>Por favor, ayúdanos a mantener tu información actualizada. Haz clic en el siguiente enlace para revisar y corregir los datos solicitados:</p>
                 <a href="${updateUrl}">Actualizar mis datos</a>
                 <p>Este enlace es de un solo uso.</p>
@@ -158,16 +146,11 @@ export async function requestDataUpdateAction({
             `,
         };
 
-
         const emailResult = await sendEmailWithSmtpAction(emailPayload);
-
         if (emailResult.success) {
             emailsSent++;
         } else {
-            console.warn(`Failed to send email to ${recipient.email}: ${emailResult.error}`);
-            // Revert the updateRequestActive flag if email fails
-            const memberRef = db.collection("clubs").doc(clubId).collection(collectionName).doc(memberId);
-            await memberRef.update({ updateRequestActive: false });
+            console.warn(`Failed to send email to ${member.email}: ${emailResult.error}`);
         }
     }
 

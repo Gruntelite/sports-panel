@@ -204,7 +204,7 @@ function DocumentsList() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     let filtered = documents;
