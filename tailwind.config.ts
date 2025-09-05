@@ -28,6 +28,7 @@ export default {
         lg: '0 8px 16px var(--tw-shadow-color)',
       },
       colors: {
+        'landing-dark': '#2c3e50',
         turquesa: '#14b8a6',
         'turquesa-dark': '#0f766e',
         border: 'hsl(var(--border))',

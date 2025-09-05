@@ -387,14 +387,14 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section id="stats-banner" className="w-full py-12 md:py-16 bg-gray-800 text-white">
+          <section id="stats-banner" className="w-full py-12 md:py-16 bg-landing-dark text-white">
               <div className="container px-4 md:px-6">
-                  <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 gap-x-6 sm:grid-cols-2 md:grid-cols-4 text-center">
+                  <div className="mx-auto grid max-w-6xl grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 md:grid-cols-4 text-center">
                     {stats.map((stat, index) => (
                       <div key={index} className="flex flex-col items-center">
                           <h3 className="text-4xl lg:text-5xl font-bold text-turquesa">{stat.value}</h3>
-                          <p className="mt-2 text-sm font-semibold tracking-wide uppercase">{stat.title}</p>
-                          <p className="mt-1 text-xs text-gray-300 max-w-[150px]">{stat.description}</p>
+                          <p className="mt-4 text-sm font-bold tracking-wider uppercase text-gray-200">{stat.title}</p>
+                          <p className="mt-2 text-sm text-gray-400 max-w-[200px]">{stat.description}</p>
                       </div>
                     ))}
                   </div>
