@@ -366,6 +366,7 @@ export default function LandingPage() {
                       Pruébalo gratis
                     </Link>
                   </Button>
+                  <p className="text-xs text-muted-foreground mt-2">No se necesita tarjeta de crédito · Cancela cuando quieras</p>
                 </div>
                 <div className="mt-8">
                   <Image
