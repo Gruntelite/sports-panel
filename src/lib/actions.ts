@@ -310,11 +310,12 @@ export async function createStripeCheckoutAction(uid: string): Promise<{ session
 
   try {
     const checkoutSessionRef = adminDb.collection('users').doc(uid).collection('checkout_sessions').doc();
+    const appUrl = "https://sportspanel.net";
     
     await checkoutSessionRef.set({
         price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe?subscription=cancelled`,
+        success_url: `${appUrl}/dashboard?subscription=success`,
+        cancel_url: `${appUrl}/dashboard?subscription=cancelled`,
         allow_promotion_codes: true,
         mode: 'subscription',
     });

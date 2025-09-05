@@ -6,11 +6,11 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, query, where, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
-import { onSnapshot } from 'firebase/firestore';
 import { createStripeCheckoutAction } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
 
 const DEV_CLUB_ID = "VWxHRR6HzumBnSdLfTtP"; // Club de pruebas
 
@@ -20,6 +20,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
   const [isRedirecting, setIsRedirecting] = React.useState(false);
 
@@ -28,8 +29,7 @@ export default function AppLayout({
       setIsRedirecting(true);
       const { sessionId, error } = await createStripeCheckoutAction(uid);
       if (error || !sessionId) {
-        console.error("Failed to create Stripe session:", error);
-        // Maybe show a toast message to the user
+        toast({ variant: "destructive", title: "Error", description: "No se pudo crear la sesión de pago."});
         setIsRedirecting(false);
         return;
       }
@@ -38,7 +38,7 @@ export default function AppLayout({
       const unsubscribe = onSnapshot(sessionRef, (snap) => {
         const { error, url } = snap.data() || {};
         if (error) {
-          console.error(`An error occurred: ${error.message}`);
+          toast({ variant: "destructive", title: "Error", description: `An error occurred: ${error.message}` });
           unsubscribe();
           setIsRedirecting(false);
         }
@@ -103,7 +103,7 @@ export default function AppLayout({
     });
 
     return () => unsubscribeAuth();
-  }, [router]);
+  }, [router, toast]);
 
   if (loading || isRedirecting) {
     return (
