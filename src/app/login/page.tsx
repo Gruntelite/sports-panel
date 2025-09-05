@@ -20,7 +20,8 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { Star, ArrowLeft } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -69,21 +70,18 @@ export default function LoginPage() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50"></div>
-        <div className="z-10 text-white max-w-md space-y-8">
-            <ul className="space-y-6">
-                 <li className="flex items-center gap-4">
-                    <Star className="h-8 w-8 flex-shrink-0 text-yellow-400 fill-yellow-400 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 text-3xl font-bold">+130 clubs ya confían en nosotros</span>
-                </li>
-                 <li className="flex items-center gap-4">
-                    <Star className="h-8 w-8 flex-shrink-0 text-yellow-400 fill-yellow-400 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 text-3xl font-bold">+9h de Ahorro Semanal</span>
-                </li>
-                 <li className="flex items-center gap-4">
-                    <Star className="h-8 w-8 flex-shrink-0 text-yellow-400 fill-yellow-400 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 text-3xl font-bold">95% Tasa de Retención</span>
-                </li>
-            </ul>
+        <div className="z-10 text-white max-w-md space-y-6">
+             <div className="text-center">
+                <p className="text-3xl font-bold text-shadow shadow-black/50">+130 clubs ya confían en nosotros</p>
+            </div>
+            <Separator className="bg-white/20" />
+            <div className="text-center">
+                <p className="text-3xl font-bold text-shadow shadow-black/50">+9h de Ahorro Semanal</p>
+            </div>
+            <Separator className="bg-white/20" />
+            <div className="text-center">
+                <p className="text-3xl font-bold text-shadow shadow-black/50">95% Tasa de Retención</p>
+            </div>
         </div>
       </div>
       <div className="relative flex items-center justify-center py-12">
