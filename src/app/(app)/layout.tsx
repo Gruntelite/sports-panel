@@ -50,10 +50,8 @@ export default function AppLayout({
                 }
             }
             
-            // If trial is over, check for an active Stripe subscription for paying customers
-            const customerDocRef = doc(db, "customers", user.uid);
             const subscriptionsQuery = query(
-              collection(customerDocRef, "subscriptions"),
+              collection(userDocRef, "subscriptions"),
               where("status", "in", ["trialing", "active"])
             );
             const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
@@ -64,11 +62,9 @@ export default function AppLayout({
                 return;
             }
             
-            // If no active subscription and trial is over, redirect to subscribe
             router.push('/subscribe');
 
           } else {
-             // This case might happen if user is authenticated but user doc is not found
              router.push('/login');
           }
         } catch (error) {
