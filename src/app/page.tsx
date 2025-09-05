@@ -347,9 +347,9 @@ export default function LandingPage() {
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl xl:text-5xl/none font-headline">
-                    Automatiza tu club. Dedica tiempo al deporte, no al papeleo
+                    Automatiza tu club y Ahorra Horas de Gestión
                   </h1>
-                  <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
+                  <p className="mx-auto max-w-[700px] text-muted-foreground text-sm md:text-lg">
                     Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
                   </p>
                 </div>
@@ -382,21 +382,26 @@ export default function LandingPage() {
 
           <section id="social-proof" className="w-full py-12 md:py-16 bg-gray-800 text-white">
               <div className="container px-4 md:px-6">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">+7h</span>
+                          <span className="text-5xl font-bold">+130</span>
+                          <p className="font-semibold text-lg">Clubs Activos</p>
+                          <p className="text-sm text-gray-300">ya confían en nosotros para gestionar su día a día.</p>
+                      </div>
+                       <div className="flex flex-col items-center gap-2">
+                          <span className="text-5xl font-bold">+9h</span>
                           <p className="font-semibold text-lg">Ahorro Semanal</p>
                           <p className="text-sm text-gray-300">Tiempo medio que nuestros clubs ahorran en tareas administrativas.</p>
                       </div>
                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">85%</span>
+                          <span className="text-5xl font-bold">95%</span>
                           <p className="font-semibold text-lg">Tasa de Retención</p>
                           <p className="text-sm text-gray-300">De los clubs que prueban SportsPanel, la gran mayoría se queda.</p>
                       </div>
                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">100%</span>
-                          <p className="font-semibold text-lg">Mejora Organizativa</p>
-                          <p className="text-sm text-gray-300">De los clubs que afirman haber mejorado su organización interna.</p>
+                          <span className="text-5xl font-bold">75%</span>
+                          <p className="font-semibold text-lg">Valor Percibido</p>
+                          <p className="text-sm text-gray-300">De clubs dispuestos a pagar más por el valor que aporta la plataforma.</p>
                       </div>
                   </div>
               </div>
