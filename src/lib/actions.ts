@@ -25,21 +25,32 @@ function getLuminance(hex: string): number {
 }
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string}> {
-  let uid: string;
+  console.log("Starting createClubAction for email:", data.email);
   try {
     // 1. Create Firebase Auth user
+    console.log("Step 1: Creating Firebase Auth user...");
     const userRecord = await adminAuth.createUser({
       email: data.email,
       password: data.password,
       displayName: data.adminName,
     });
-    uid = userRecord.uid;
+    const uid = userRecord.uid;
+    console.log("Step 1 SUCCESS: Auth user created with UID:", uid);
 
     // 2. Create the club document
+    console.log("Step 2: Creating club document in Firestore...");
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
+    await clubRef.set({
+      name: data.clubName,
+      sport: data.sport,
+      adminUid: uid,
+      createdAt: Timestamp.now(),
+    });
+    console.log("Step 2 SUCCESS: Club document created with ID:", clubId);
     
     // 3. Set the user document in the root 'users' collection
+    console.log("Step 3: Creating user document in root /users collection...");
     const userDocRef = adminDb.collection('users').doc(uid);
     await userDocRef.set({
         email: data.email,
@@ -47,16 +58,10 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         role: 'super-admin',
         clubId: clubId
     });
+    console.log("Step 3 SUCCESS: User document created in Firestore.");
 
-    // 4. Set the club document data
-    await clubRef.set({
-      name: data.clubName,
-      sport: data.sport,
-      adminUid: uid,
-      createdAt: Timestamp.now(),
-    });
-    
-    // 5. Create club settings
+    // 4. Create club settings
+    console.log("Step 4: Creating club settings...");
     const luminance = getLuminance(data.themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const trialEndDate = new Date();
@@ -69,8 +74,10 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         logoUrl: null,
         trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
+    console.log("Step 4 SUCCESS: Club settings created.");
 
-    // 6. Send server-side event to Meta
+    // 5. Send server-side event to Meta
+    console.log("Step 5: Sending server event to Meta...");
     await sendServerEventAction({ 
         eventName: 'StartTrial', 
         email: data.email, 
@@ -79,11 +86,13 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         eventSourceUrl: data.eventSourceUrl,
         clientUserAgent: data.clientUserAgent,
     });
-    
+    console.log("Step 5 SUCCESS: Meta event sent.");
+
+    console.log("createClubAction completed successfully for:", data.email);
     return { success: true, userId: uid };
 
   } catch (error: any) {
-    console.error("Error creating club:", error);
+    console.error("FATAL ERROR in createClubAction:", error);
     let errorMessage = "Ocurrió un error inesperado al iniciar el registro.";
      if (error.code === 'auth/email-already-exists') {
         errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
