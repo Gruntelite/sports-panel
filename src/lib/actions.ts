@@ -1,19 +1,11 @@
+
 'use server';
 
 import { Timestamp } from "firebase-admin/firestore";
 import { auth as adminAuth, db as adminDb } from './firebase-admin';
-import type { ClubSettings } from "./types";
+import type { ClubCreationData } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
-
-type ClubCreationData = {
-    clubName: string;
-    adminName: string;
-    sport: string;
-    email: string;
-    password: string;
-    themeColor: string;
-}
 
 function getLuminance(hex: string): number {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);

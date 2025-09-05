@@ -360,3 +360,12 @@ export type FileRequestBatch = {
     totalSent: number;
     createdAt: Timestamp;
 }
+
+export type ClubCreationData = {
+    clubName: string;
+    adminName: string;
+    sport: string;
+    email: string;
+    password: string;
+    themeColor: string;
+}
