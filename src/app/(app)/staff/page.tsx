@@ -83,6 +83,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { MemberDetailModal } from "@/components/member-detail-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "../ui/separator";
 
 const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'payment', label: 'Pago' }];
 const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
@@ -93,6 +94,7 @@ const MONTHS = [
     { label: "Octubre", value: 9 }, { label: "Noviembre", value: 10 }, { label: "Diciembre", value: 11 }
 ];
 
+type EditModalSection = 'data' | 'payment' | 'custom';
 
 export default function StaffPage() {
   const { toast } = useToast();
@@ -118,6 +120,8 @@ export default function StaffPage() {
 
   const [visibleStaffColumns, setVisibleStaffColumns] = useState<Set<string>>(new Set(['name', 'role', 'email', 'payment']));
   const [visibleSocioColumns, setVisibleSocioColumns] = useState<Set<string>>(new Set(['name', 'socioNumber', 'email', 'fee']));
+
+  const [modalSection, setModalSection] = useState<EditModalSection>('data');
 
   const staffCustomFields = customFields.filter(f => f.appliesTo.includes('staff'));
   const allPossibleStaffColumns = [...staffFields, ...staffCustomFields];
@@ -225,6 +229,7 @@ export default function StaffPage() {
   const handleOpenModal = (mode: 'add' | 'edit', type: 'staff' | 'socio', member?: Staff | Socio) => {
     setModalMode(mode);
     setModalType(type);
+    setModalSection('data');
     if(type === 'staff') {
       setStaffData(mode === 'edit' && member ? (member as Staff) : { paymentFrequency: 'monthly', excludedMonths: [], customFields: {} });
       setSocioData({ paymentType: 'monthly', fee: 0, excludedMonths: [], customFields: {} });
@@ -755,214 +760,123 @@ export default function StaffPage() {
                     Modifica la información del miembro.
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
-                <div className="flex flex-col items-center gap-4 pt-5">
-                    <Label>Foto</Label>
-                    <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || currentData?.avatar} />
-                        <AvatarFallback>
-                            {(currentData?.name || 'S').charAt(0)}
-                            {(currentData?.lastName || 'T').charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
-                     <Button asChild variant="outline" size="sm">
-                        <label htmlFor="member-image" className="cursor-pointer">
-                            <Upload className="mr-2 h-3 w-3"/>
-                            Subir
-                        </label>
-                    </Button>
-                    <Input id="member-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                </div>
-                
-                {modalType === 'staff' ? (
-                   <div className="space-y-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                              <Label htmlFor="name">Nombre</Label>
-                              <Input id="name" autoComplete="off" value={staffData.name || ''} onChange={handleInputChange} />
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="lastName">Apellidos</Label>
-                              <Input id="lastName" autoComplete="off" value={staffData.lastName || ''} onChange={handleInputChange} />
-                          </div>
-                      </div>
-                       <div className="space-y-2">
-                           <Label htmlFor="role">Cargo</Label>
-                           <Input id="role" placeholder="p.ej., Coordinador, Directivo" value={staffData.role || ''} onChange={handleInputChange} />
-                       </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <div className="space-y-2">
-                               <Label htmlFor="email">Email</Label>
-                               <Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} />
-                           </div>
-                           <div className="space-y-2">
-                               <Label htmlFor="phone">Teléfono</Label>
-                               <Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} />
-                           </div>
-                      </div>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="payment">Pago (€)</Label>
-                            <Input id="payment" type="number" value={staffData.payment || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="paymentFrequency">Frecuencia de Pago</Label>
-                            <Select value={staffData.paymentFrequency} onValueChange={(value) => handleSelectChange('paymentFrequency', value)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
+            <ScrollArea className="max-h-[70vh]">
+              <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6 pr-6">
+                  <div className="flex flex-col items-center gap-4 pt-5">
+                      <Label>Foto</Label>
+                      <Avatar className="h-32 w-32">
+                          <AvatarImage src={imagePreview || currentData?.avatar} />
+                          <AvatarFallback>
+                              {(currentData?.name || 'S').charAt(0)}
+                              {(currentData?.lastName || 'T').charAt(0)}
+                          </AvatarFallback>
+                      </Avatar>
+                      <Button asChild variant="outline" size="sm">
+                          <label htmlFor="member-image" className="cursor-pointer">
+                              <Upload className="mr-2 h-3 w-3"/>
+                              Subir
+                          </label>
+                      </Button>
+                      <Input id="member-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                  </div>
+                  
+                  <div>
+                        <div className="sm:hidden mb-4">
+                             <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar sección..." />
+                                </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="monthly">Mensual</SelectItem>
-                                    <SelectItem value="annual">Anual</SelectItem>
+                                    <SelectItem value="data">Datos</SelectItem>
+                                    <SelectItem value="payment">Pagos</SelectItem>
+                                    <SelectItem value="custom">Otros Datos</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
-                      </div>
-                      {staffData.paymentFrequency === 'monthly' && (
-                        <div className="space-y-2">
-                            <Label>Meses sin pago</Label>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start font-normal">
-                                        <Calendar className="mr-2 h-4 w-4"/>
-                                        {staffData.excludedMonths && staffData.excludedMonths.length > 0
-                                            ? `${staffData.excludedMonths.length} mese(s) seleccionado(s)`
-                                            : "Seleccionar meses..."}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0">
-                                    <Command>
-                                        <CommandList>
-                                            <CommandGroup>
-                                                {MONTHS.map(month => (
-                                                    <CommandItem
-                                                        key={month.value}
-                                                        onSelect={() => {
-                                                            const newSelection = new Set(staffData.excludedMonths || []);
-                                                            if (newSelection.has(month.value)) {
-                                                                newSelection.delete(month.value);
-                                                            } else {
-                                                                newSelection.add(month.value);
-                                                            }
-                                                            setStaffData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));
-                                                        }}
-                                                    >
-                                                         <Check className={cn("mr-2 h-4 w-4", staffData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
-                                                        {month.label}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
+                        <Tabs defaultValue="data" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
+                            <TabsList className="grid w-full grid-cols-3">
+                                <TabsTrigger value="data">Datos</TabsTrigger>
+                                <TabsTrigger value="payment">Pagos</TabsTrigger>
+                                <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
+                        <div className={cn("pt-6 space-y-6", modalSection !== 'data' && 'hidden sm:block')}>
+                           {modalType === 'staff' ? (
+                              <div className="space-y-6">
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="space-y-2"><Label htmlFor="name">Nombre</Label><Input id="name" autoComplete="off" value={staffData.name || ''} onChange={handleInputChange} /></div>
+                                      <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" autoComplete="off" value={staffData.lastName || ''} onChange={handleInputChange} /></div>
+                                  </div>
+                                  <div className="space-y-2"><Label htmlFor="role">Cargo</Label><Input id="role" placeholder="p.ej., Coordinador, Directivo" value={staffData.role || ''} onChange={handleInputChange} /></div>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                      <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} /></div>
+                                      <div className="space-y-2"><Label htmlFor="phone">Teléfono</Label><Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} /></div>
+                                  </div>
+                              </div>
+                            ) : (
+                              <div className="space-y-6">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2"><Label htmlFor="name">Nombre</Label><Input id="name" autoComplete="off" value={socioData.name || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" autoComplete="off" value={socioData.lastName || ''} onChange={handleInputChange} /></div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                  <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={socioData.email || ''} onChange={handleInputChange} /></div>
+                                  <div className="space-y-2"><Label htmlFor="phone">Teléfono</Label><Input id="phone" type="tel" value={socioData.phone || ''} onChange={handleInputChange} /></div>
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2"><Label htmlFor="dni">NIF</Label><Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="socioNumber">Número de Socio</Label><Input id="socioNumber" value={socioData.socioNumber || ''} onChange={handleInputChange} /></div>
+                                </div>
+                              </div>
+                            )}
                         </div>
-                      )}
+
+                        <div className={cn("pt-6 space-y-6", modalSection !== 'payment' && 'hidden sm:block')}>
+                           {modalType === 'staff' ? (
+                                <>
+                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2"><Label htmlFor="payment">Pago (€)</Label><Input id="payment" type="number" value={staffData.payment || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="paymentFrequency">Frecuencia de Pago</Label><Select value={staffData.paymentFrequency} onValueChange={(value) => handleSelectChange('paymentFrequency', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">Mensual</SelectItem><SelectItem value="annual">Anual</SelectItem></SelectContent></Select></div>
+                                </div>
+                                {staffData.paymentFrequency === 'monthly' && (
+                                    <div className="space-y-2"><Label>Meses sin pago</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{staffData.excludedMonths && staffData.excludedMonths.length > 0 ? `${staffData.excludedMonths.length} mese(s) seleccionado(s)`: "Seleccionar meses..."}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => { const newSelection = new Set(staffData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setStaffData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", staffData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
+                                )}
+                                </>
+                            ) : (
+                                <>
+                                 <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2"><Label htmlFor="paymentType">Tipo de Cuota</Label><Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">Mensual</SelectItem><SelectItem value="annual">Anual</SelectItem></SelectContent></Select></div>
+                                    <div className="space-y-2"><Label htmlFor="fee">Importe Cuota (€)</Label><Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} /></div>
+                                </div>
+                                {socioData.paymentType === 'monthly' && (
+                                <div className="space-y-2"><Label>Meses sin cuota</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{socioData.excludedMonths && socioData.excludedMonths.length > 0 ? `${socioData.excludedMonths.length} mese(s) seleccionado(s)` : "Seleccionar meses..."}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => {const newSelection = new Set(socioData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setSocioData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", socioData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
+                                )}
+                                </>
+                           )}
+                        </div>
+
+                         <div className={cn("pt-6 space-y-4", modalSection !== 'custom' && 'hidden sm:block')}>
+                            {currentCustomFields.length > 0 ? (
+                                currentCustomFields.map(field => (
+                                    <div key={field.id} className="space-y-2">
+                                        <Label htmlFor={field.id}>{field.name}</Label>
+                                        <Input
+                                            id={field.id}
+                                            type={field.type}
+                                            value={currentData.customFields?.[field.id] || ''}
+                                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-sm text-muted-foreground py-8">No hay campos personalizados para este tipo de miembro.</p>
+                            )}
+                        </div>
                   </div>
-                ) : (
-                  <div className="space-y-6">
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="space-y-2">
-                              <Label htmlFor="name">Nombre</Label>
-                              <Input id="name" autoComplete="off" value={socioData.name || ''} onChange={handleInputChange} />
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="lastName">Apellidos</Label>
-                              <Input id="lastName" autoComplete="off" value={socioData.lastName || ''} onChange={handleInputChange} />
-                          </div>
-                      </div>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="email">Email</Label>
-                            <Input id="email" type="email" value={socioData.email || ''} onChange={handleInputChange} />
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="phone">Teléfono</Label>
-                            <Input id="phone" type="tel" value={socioData.phone || ''} onChange={handleInputChange} />
-                        </div>
-                      </div>
-                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                           <div className="space-y-2">
-                              <Label htmlFor="dni">NIF</Label>
-                              <Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} />
-                          </div>
-                          <div className="space-y-2">
-                              <Label htmlFor="socioNumber">Número de Socio</Label>
-                              <Input id="socioNumber" value={socioData.socioNumber || ''} onChange={handleInputChange} />
-                          </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="paymentType">Tipo de Cuota</Label>
-                            <Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}>
-                                <SelectTrigger><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="monthly">Mensual</SelectItem>
-                                    <SelectItem value="annual">Anual</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="fee">Importe Cuota (€)</Label>
-                            <Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} />
-                        </div>
-                      </div>
-                      {socioData.paymentType === 'monthly' && (
-                        <div className="space-y-2">
-                            <Label>Meses sin cuota</Label>
-                             <Popover>
-                                <PopoverTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start font-normal">
-                                        <Calendar className="mr-2 h-4 w-4"/>
-                                        {socioData.excludedMonths && socioData.excludedMonths.length > 0
-                                            ? `${socioData.excludedMonths.length} mese(s) seleccionado(s)`
-                                            : "Seleccionar meses..."}
-                                    </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="p-0">
-                                    <Command>
-                                        <CommandList>
-                                            <CommandGroup>
-                                                {MONTHS.map(month => (
-                                                    <CommandItem
-                                                        key={month.value}
-                                                        onSelect={() => {
-                                                            const newSelection = new Set(socioData.excludedMonths || []);
-                                                            if (newSelection.has(month.value)) {
-                                                                newSelection.delete(month.value);
-                                                            } else {
-                                                                newSelection.add(month.value);
-                                                            }
-                                                            setSocioData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));
-                                                        }}
-                                                    >
-                                                         <Check className={cn("mr-2 h-4 w-4", socioData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />
-                                                        {month.label}
-                                                    </CommandItem>
-                                                ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
-                      )}
-                  </div>
-                )}
-                 {currentCustomFields.length > 0 && <Separator />}
-                 <div className="space-y-4">
-                     {currentCustomFields.map(field => (
-                        <div key={field.id} className="space-y-2">
-                            <Label htmlFor={field.id}>{field.name}</Label>
-                            <Input
-                                id={field.id}
-                                type={field.type}
-                                value={currentData.customFields?.[field.id] || ''}
-                                onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                            />
-                        </div>
-                    ))}
-                 </div>
-            </div>
-            <DialogFooter>
+              </div>
+            </ScrollArea>
+            <DialogFooter className="border-t pt-4">
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>

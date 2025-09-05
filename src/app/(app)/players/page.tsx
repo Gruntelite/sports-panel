@@ -111,6 +111,8 @@ const playerFields = {
     ]
 };
 
+type EditModalSection = 'personal' | 'contact' | 'sports' | 'custom';
+
 export default function PlayersPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -140,6 +142,8 @@ export default function PlayersPage() {
 
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'monthlyFee', 'tutorEmail']));
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
+  
+  const [modalSection, setModalSection] = useState<EditModalSection>('personal');
 
   const allColumnFields = [
     ...playerFields.personal,
@@ -333,6 +337,7 @@ export default function PlayersPage() {
   const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
     setModalMode(mode);
     setPlayerData(mode === 'edit' && player ? player : { customFields: {}, interruptions: [] });
+    setModalSection('personal');
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -886,15 +891,30 @@ export default function PlayersPage() {
                         <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
-                    <Tabs defaultValue="personal" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
-                            <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
-                            <TabsTrigger value="custom">Otros Datos</TabsTrigger>
-                        </TabsList>
-                        <TabsContent value="personal" className="pt-6">
-                        <div className="space-y-6">
+                    <div>
+                        <div className="sm:hidden mb-4">
+                            <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Seleccionar sección..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="personal">Datos Personales</SelectItem>
+                                    <SelectItem value="contact">Contacto y Banco</SelectItem>
+                                    <SelectItem value="sports">Datos Deportivos</SelectItem>
+                                    <SelectItem value="custom">Otros Datos</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <Tabs defaultValue="personal" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
+                            <TabsList className="grid w-full grid-cols-4">
+                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
+                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
+                                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                                <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                            </TabsList>
+                        </Tabs>
+
+                        <div className={cn("pt-6 space-y-6", modalSection !== 'personal' && 'hidden sm:block')}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">Nombre</Label>
@@ -1003,9 +1023,8 @@ export default function PlayersPage() {
                             <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(playerData)}</span></p>
                             </div>
                         </div>
-                        </TabsContent>
-                        <TabsContent value="contact" className="pt-6">
-                        <div className="space-y-6">
+
+                        <div className={cn("pt-6 space-y-6", modalSection !== 'contact' && 'hidden sm:block')}>
                             <div className="flex items-center space-x-2">
                                 <Checkbox 
                                     id="isOwnTutor" 
@@ -1049,62 +1068,59 @@ export default function PlayersPage() {
                                     <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
                                     <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                                 </div>
+                        </div>
+
+                        <div className={cn("pt-6 space-y-6", modalSection !== 'sports' && 'hidden sm:block')}>
+                            <div className="space-y-2">
+                                <Label htmlFor="teamId">Equipo</Label>
+                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona un equipo" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                        {teams.map(team => (
+                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
                             </div>
-                        </TabsContent>
-                        <TabsContent value="sports" className="pt-6">
-                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="teamId">Equipo</Label>
-                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona un equipo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="unassigned">Sin equipo</SelectItem>
-                                            {teams.map(team => (
-                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                    <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                                 </div>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                        <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                        <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                        <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
-                                    </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
                                 </div>
-                                <div className="flex items-center space-x-2 pt-4">
-                                <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
-                                <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                                <div className="space-y-2">
+                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
                                 </div>
                             </div>
-                        </TabsContent>
-                        <TabsContent value="custom" className="pt-6">
-                            <div className="space-y-6">
-                                {playerCustomFields.length > 0 ? playerCustomFields.map(field => (
-                                    <div key={field.id} className="space-y-2">
-                                        <Label htmlFor={field.id}>{field.name}</Label>
-                                        <Input 
-                                            id={field.id}
-                                            type={field.type}
-                                            value={playerData.customFields?.[field.id] || ''}
-                                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                                        />
-                                    </div>
-                                )) : (
-                                    <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.</p>
-                                )}
+                            <div className="flex items-center space-x-2 pt-4">
+                            <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
+                            <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
                             </div>
-                        </TabsContent>
-                    </Tabs>
+                        </div>
+
+                        <div className={cn("pt-6 space-y-6", modalSection !== 'custom' && 'hidden sm:block')}>
+                            {playerCustomFields.length > 0 ? playerCustomFields.map(field => (
+                                <div key={field.id} className="space-y-2">
+                                    <Label htmlFor={field.id}>{field.name}</Label>
+                                    <Input 
+                                        id={field.id}
+                                        type={field.type}
+                                        value={playerData.customFields?.[field.id] || ''}
+                                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                    />
+                                </div>
+                            )) : (
+                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.</p>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">
