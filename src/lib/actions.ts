@@ -27,7 +27,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
   try {
     const { clubName, adminName, sport, email, password, themeColor } = data;
     
-    // 1. Create Firebase Auth user
+    // Step 1: Create Firebase Auth user
     const userRecord = await adminAuth.createUser({
       email: email,
       password: password,
@@ -35,13 +35,11 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     });
     const uid = userRecord.uid;
 
-    // 2. Create the club document
-    const clubRef = adminDb.collection("clubs").doc();
-    const clubId = clubRef.id;
-    
-    // Create all database writes in a batch for atomicity
     const batch = adminDb.batch();
 
+    // Step 2: Create the club document
+    const clubRef = adminDb.collection("clubs").doc();
+    const clubId = clubRef.id;
     batch.set(clubRef, {
       name: clubName,
       sport: sport,
@@ -49,7 +47,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       createdAt: Timestamp.now(),
     });
     
-    // 3. Set the user document in the root 'users' collection
+    // Step 3: Create the user document in the root 'users' collection
     const userDocRef = adminDb.collection('users').doc(uid);
     batch.set(userDocRef, {
         email: email,
@@ -58,7 +56,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         clubId: clubId
     });
 
-    // 4. Create club settings with trial period
+    // Step 4: Create club settings with trial period
     const luminance = getLuminance(themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const trialEndDate = new Date();
@@ -75,8 +73,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     // Commit all writes at once
     await batch.commit();
 
-
-    // 5. Send server-side event to Meta for analytics (optional and non-blocking)
+    // Step 5: Send server-side event to Meta for analytics (optional and non-blocking)
     try {
         if (process.env.META_PIXEL_ID && process.env.META_ACCESS_TOKEN) {
             await sendServerEventAction({ 
