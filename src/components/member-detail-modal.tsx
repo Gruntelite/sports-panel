@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, User, Contact, Shield, CircleDollarSign, Briefcase, FileText, Handshake } from "lucide-react";
+import { CheckCircle, XCircle, User, Contact, Shield, Briefcase, Handshake } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -49,11 +49,17 @@ const DetailItem = ({ label, value, isSubtitle }: { label: string; value?: strin
     );
 };
 
-export function MemberDetailModal({ member, memberType, customFieldDefs = [], onClose, onEdit }: MemberDetailModalProps) {
+export function MemberDetailModal({ member, memberType, customFieldDefs = [], onClose, onEdit }: {
+    member: Player | Coach | Staff | Socio | null;
+    memberType: 'player' | 'coach' | 'staff' | 'socio';
+    customFieldDefs: CustomFieldDef[];
+    onClose: () => void;
+    onEdit: () => void;
+}) {
     if (!member) return null;
 
     const getFieldGroups = () => {
-        const customFields = member.customFields || {};
+        const customFields = (member as any).customFields || {};
         const customFieldsItems = customFieldDefs
             .filter(def => customFields[def.id])
             .map(def => ({
@@ -130,8 +136,8 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
 
   return (
     <Dialog open={!!member} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
+      <DialogContent className="max-w-4xl max-h-[90vh] grid grid-rows-[auto_1fr_auto]">
+        <DialogHeader className="flex-shrink-0">
           <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <Avatar className="h-24 w-24 border">
               <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
@@ -150,8 +156,8 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
             </div>
           </div>
         </DialogHeader>
-        <ScrollArea className="pr-6 -mr-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+        <ScrollArea className="overflow-y-auto -mr-6 pr-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 py-4">
                {fieldGroups.map(group => group.fields.length > 0 && (
                    <div key={group.title} className="space-y-3">
                        <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
@@ -165,7 +171,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                ))}
             </div>
         </ScrollArea>
-        <DialogFooter className="mt-auto pt-4 border-t">
+        <DialogFooter className="pt-4 border-t flex-shrink-0">
           <Button variant="outline" onClick={onClose}>Cerrar</Button>
           <Button onClick={onEdit}>Editar Ficha</Button>
         </DialogFooter>
