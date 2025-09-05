@@ -37,21 +37,6 @@ export default function AppLayout({
               return;
             }
             
-            // First, check for an active Stripe subscription for paying customers
-            const customerDocRef = doc(db, "customers", user.uid);
-            const subscriptionsQuery = query(
-              collection(customerDocRef, "subscriptions"),
-              where("status", "in", ["trialing", "active"])
-            );
-            const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
-
-            if (!subscriptionsSnapshot.empty) {
-                // User has an active subscription.
-                setLoading(false);
-                return;
-            }
-            
-            // If no subscription, check for the internal trial period for new sign-ups
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             const settingsSnap = await getDoc(settingsRef);
 
@@ -63,6 +48,20 @@ export default function AppLayout({
                     setLoading(false); // User is within trial period, allow access.
                     return;
                 }
+            }
+            
+            // If trial is over, check for an active Stripe subscription for paying customers
+            const customerDocRef = doc(db, "customers", user.uid);
+            const subscriptionsQuery = query(
+              collection(customerDocRef, "subscriptions"),
+              where("status", "in", ["trialing", "active"])
+            );
+            const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
+
+            if (!subscriptionsSnapshot.empty) {
+                // User has an active subscription.
+                setLoading(false);
+                return;
             }
             
             // If no active subscription and trial is over, redirect to subscribe
