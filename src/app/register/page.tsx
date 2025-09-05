@@ -29,6 +29,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
 import { doc, onSnapshot } from "firebase/firestore";
 import { v4 as uuidv4 } from 'uuid';
+import Image from "next/image";
 
 declare global {
     interface Window {
@@ -128,27 +129,32 @@ export default function RegisterPage() {
 
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
-      <div className="hidden bg-blue-600 lg:flex items-center justify-center p-8 relative overflow-hidden">
-        <div className="absolute bg-blue-700/50 rounded-full w-[800px] h-[800px] -bottom-40 -left-40"></div>
-        <div className="absolute bg-blue-700/50 rounded-full w-[600px] h-[600px] -top-20 -right-40"></div>
+       <div className="hidden lg:flex items-center justify-center p-8 relative overflow-hidden">
+        <Image 
+          src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
+          alt="Jugadores celebrando"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-md space-y-8">
-            <h1 className="text-4xl font-bold">20 días de prueba gratis</h1>
+            <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
             <ul className="space-y-4 text-xl">
                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>Sin compromiso.</span>
+                    <CheckCircle2 className="h-7 w-7 mt-1 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50">Sin compromiso</span>
                 </li>
                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>Cancela cuando quieras.</span>
+                    <CheckCircle2 className="h-7 w-7 mt-1 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50">Cancela cuando quieras</span>
                 </li>
                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>Accede a todas las funcionalidades desde el primer día.</span>
+                    <CheckCircle2 className="h-7 w-7 mt-1 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades desde el primer día</span>
                 </li>
                  <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>No pagarás nada hoy.</span>
+                    <CheckCircle2 className="h-7 w-7 mt-1 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50">No pagarás nada hoy</span>
                 </li>
             </ul>
         </div>
