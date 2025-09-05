@@ -12,7 +12,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -24,7 +23,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 import { createClubAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { loadStripe } from "@stripe/stripe-js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
@@ -128,26 +127,42 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background p-4 relative">
-       <Button variant="outline" size="icon" className="absolute top-4 left-4" asChild>
-        <Link href="/">
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-      </Button>
-      <Card className="mx-auto max-w-md w-full shadow-xl border">
-        <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-            <Logo withText={true} />
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+      <div className="hidden bg-blue-600 lg:flex items-center justify-center p-8 relative overflow-hidden">
+        <div className="absolute bg-blue-700/50 rounded-full w-[800px] h-[800px] -bottom-40 -left-40"></div>
+        <div className="absolute bg-blue-700/50 rounded-full w-[600px] h-[600px] -top-20 -right-40"></div>
+        <div className="z-10 text-white max-w-md space-y-8">
+            <h1 className="text-4xl font-bold">15 días de prueba gratis</h1>
+            <ul className="space-y-4 text-xl">
+                <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
+                    <span>Sin ningún compromiso, cancela cuando quieras.</span>
+                </li>
+                 <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
+                    <span>Accede a todas las funcionalidades desde el primer día.</span>
+                </li>
+                 <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
+                    <span>Sin introducir tu tarjeta de crédito hasta el final de la prueba.</span>
+                </li>
+                 <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
+                    <span>No pagarás nada hoy, ni tendrás que cancelar nada.</span>
+                </li>
+            </ul>
+        </div>
+      </div>
+      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto grid w-full max-w-md gap-6">
+          <div className="grid gap-2 text-center">
+            <Logo withText={true} className="justify-center mb-4"/>
+            <h1 className="text-3xl font-bold font-headline">Crea tu Club</h1>
+            <p className="text-muted-foreground">
+              Empieza a gestionar tu club en minutos.
+            </p>
           </div>
-          <CardTitle className="text-2xl font-bold font-headline">
-            Crea tu Club
-          </CardTitle>
-          <CardDescription>
-            Empieza a gestionar tu club en minutos. Rellena los datos para comenzar.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
+            <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
@@ -203,7 +218,7 @@ export default function RegisterPage() {
                     name="themeColor"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Color Principal del Club</FormLabel>
+                        <FormLabel>Color Principal</FormLabel>
                         <FormControl>
                             <div className="flex items-center gap-2">
                                 <Input type="color" className="p-1 h-10 w-14" {...field} />
@@ -243,20 +258,18 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días GRATIS'}
+                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 15 días GRATIS'}
               </Button>
-               <p className="text-xs text-muted-foreground text-center">
-                No se te cobrará nada durante la prueba. Te avisaremos antes de que termine y podrás cancelar en un clic.
-              </p>
             </form>
           </Form>
-        </CardContent>
-        <CardFooter className="flex justify-center text-sm">
-          <p className="text-muted-foreground">
-            ¿Ya tienes una cuenta? <Link href="/login" className="text-primary hover:underline font-semibold">Inicia Sesión</Link>
-          </p>
-        </CardFooter>
-      </Card>
+          <div className="mt-4 text-center text-sm">
+            ¿Ya tienes una cuenta?{" "}
+            <Link href="/login" className="underline font-semibold">
+              Inicia Sesión
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
