@@ -3,7 +3,7 @@
 
 import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
 import { getAuth } from 'firebase-admin/auth';
-import { db, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
+import { db as adminDb, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
@@ -34,7 +34,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     });
     uid = userRecord.uid;
 
-    const clubRef = db.collection("clubs").doc();
+    const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
     
     await clubRef.set({
@@ -44,7 +44,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    const userDocRef = db.collection('users').doc(uid);
+    const userDocRef = adminDb.collection('users').doc(uid);
     await userDocRef.set({
         clubId: clubId,
         email: data.email,
@@ -57,7 +57,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + 20);
 
-    const settingsRef = db.collection("clubs").doc(clubId).collection("settings").doc("config");
+    const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
     await settingsRef.set({
         themeColor: data.themeColor,
         themeColorForeground: foregroundColor,
@@ -107,12 +107,14 @@ export async function requestDataUpdateAction({
   }
 
   try {
-    const clubDocRef = db.collection("clubs").doc(clubId);
+    const clubDocRef = adminDb.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
     const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
     
     let emailsSent = 0;
     
+    const batch = adminDb.batch();
+
     for (const member of members) {
         if (!member.email) continue;
         
@@ -120,6 +122,11 @@ export async function requestDataUpdateAction({
         const appUrl = `https://sportspanel.net`;
         const updateUrl = `${appUrl}/update-profile/${member.id}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
         
+        const collectionName = memberType === 'player' ? 'players' : 'coaches';
+        const memberRef = adminDb.collection("clubs").doc(clubId).collection(collectionName).doc(member.id);
+        batch.update(memberRef, { updateRequestActive: true });
+
+
         const emailPayload = {
             clubId,
             recipients: [{ email: member.email, name: member.name }],
@@ -142,6 +149,8 @@ export async function requestDataUpdateAction({
             console.warn(`Failed to send email to ${member.email}: ${emailResult.error}`);
         }
     }
+    
+    await batch.commit();
 
     if (emailsSent === 0 && members.length > 0) {
       return { success: false, error: 'No se pudo enviar ningún correo. Revisa la configuración SMTP y que los miembros tengan email.' };
@@ -168,13 +177,13 @@ export async function importDataAction({
     }
     
     try {
-        const batch = db.batch();
+        const batch = adminDb.batch();
         const collectionName = importerType;
-        const collectionRef = db.collection("clubs").doc(clubId).collection(collectionName);
+        const collectionRef = adminDb.collection("clubs").doc(clubId).collection(collectionName);
 
         let teams: { id: string, name: string }[] = [];
         if (collectionName === 'players' || collectionName === 'coaches') {
-            const teamsSnapshot = await db.collection("clubs").doc(clubId).collection("teams").get();
+            const teamsSnapshot = await adminDb.collection("clubs").doc(clubId).collection("teams").get();
             teams = teamsSnapshot.docs.map(doc => ({ id: doc.id, name: doc.data().name }));
         }
 
@@ -220,8 +229,8 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 
   try {
-    const batch = db.batch();
-    const batchRef = db.collection('fileRequestBatches').doc();
+    const batch = adminDb.batch();
+    const batchRef = adminDb.collection('fileRequestBatches').doc();
     
     batch.set(batchRef, {
       clubId,
@@ -235,7 +244,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
     for (const member of members) {
       if (!member.email) continue;
       
-      const requestRef = db.collection("fileRequests").doc();
+      const requestRef = adminDb.collection("fileRequests").doc();
       const token = requestRef.id;
       const userType = member.type === 'Jugador' ? 'players' : member.type === 'Entrenador' ? 'coaches' : 'staff';
 
@@ -260,7 +269,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 
     await batch.commit();
 
-    const clubDocRef = db.collection("clubs").doc(clubId);
+    const clubDocRef = adminDb.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
     const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
     let emailsSent = 0;
@@ -312,7 +321,7 @@ export async function createPortalLinkAction(): Promise<string> {
         throw new Error('User not authenticated');
     }
 
-    const customerDocRef = db.collection('customers').doc(user.uid);
+    const customerDocRef = adminDb.collection('customers').doc(user.uid);
     
     const checkoutSessionsRef = customerDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
