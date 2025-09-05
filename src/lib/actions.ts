@@ -27,6 +27,7 @@ function getLuminance(hex: string): number {
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string}> {
   let uid: string;
   try {
+    // 1. Create Firebase Auth user
     const userRecord = await adminAuth.createUser({
       email: data.email,
       password: data.password,
@@ -34,9 +35,18 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     });
     uid = userRecord.uid;
 
+    // 2. Create the user document in the root 'users' collection first
+    const userDocRef = adminDb.collection('users').doc(uid);
+    await userDocRef.set({
+        email: data.email,
+        name: data.adminName,
+        role: 'super-admin'
+        // clubId will be added in a moment
+    });
+
+    // 3. Create the club document
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
-    
     await clubRef.set({
       name: data.clubName,
       sport: data.sport,
@@ -44,14 +54,12 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       createdAt: FieldValue.serverTimestamp(),
     });
 
-    const userDocRef = adminDb.collection('users').doc(uid);
-    await userDocRef.set({
-        clubId: clubId,
-        email: data.email,
-        name: data.adminName,
-        role: 'super-admin'
+    // 4. Update the user document with the new clubId
+    await userDocRef.update({
+        clubId: clubId
     });
     
+    // 5. Create club settings
     const luminance = getLuminance(data.themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const trialEndDate = new Date();
@@ -65,7 +73,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
 
-    // Send the server-side event to Meta
+    // 6. Send server-side event to Meta
     await sendServerEventAction({ 
         eventName: 'StartTrial', 
         email: data.email, 
@@ -75,7 +83,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         clientUserAgent: data.clientUserAgent,
     });
     
-
     return { success: true, userId: uid };
 
   } catch (error: any) {
