@@ -179,10 +179,10 @@ const faqs = [
 ];
 
 const stats = [
-    { value: "9h+", title: "Ahorro Semanal", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
-    { value: "95%", title: "Tasa de Retención", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-    { value: "+130", title: "Clubs Deportivos", description: "Que ya confían en nuestra plataforma para su gestión diaria." },
-    { value: "98%", title: "Digitalización", description: "De los procesos internos del club que se pueden gestionar con nosotros." },
+    { value: "9h+", title: "AHORRO SEMANAL", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
+    { value: "95%", title: "TASA DE RETENCIÓN", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
+    { value: "+130", title: "CLUBS DEPORTIVOS", description: "Que ya confían en nuestra plataforma para su gestión diaria." },
+    { value: "98%", title: "DIGITALIZACIÓN", description: "De los procesos internos del club que se pueden gestionar con nosotros." },
 ];
 
 function ContactForm() {
@@ -354,7 +354,7 @@ export default function LandingPage() {
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl xl:text-5xl/none font-headline">
-                    El Software que Automatiza tu Club y Ahorra Horas de Gestión
+                    El Software que Automatiza tu Club y<br /> Ahorra Horas de Gestión
                   </h1>
                   <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
                     Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
@@ -391,9 +391,9 @@ export default function LandingPage() {
               <div className="container px-4 md:px-6">
                   <div className="mx-auto grid max-w-6xl grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 md:grid-cols-4 text-center">
                     {stats.map((stat, index) => (
-                      <div key={index} className="flex flex-col items-center">
+                      <div key={index} className="flex flex-col items-center text-center">
                           <h3 className="text-4xl lg:text-5xl font-bold text-turquesa">{stat.value}</h3>
-                          <p className="mt-4 text-sm font-bold tracking-wider uppercase text-gray-200">{stat.title}</p>
+                          <p className="mt-4 text-sm font-bold tracking-wider uppercase text-white">{stat.title}</p>
                           <p className="mt-2 text-sm text-gray-400 max-w-[200px]">{stat.description}</p>
                       </div>
                     ))}
