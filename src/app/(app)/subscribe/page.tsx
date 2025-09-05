@@ -17,7 +17,7 @@ import { doc, getDoc, collection, addDoc, onSnapshot } from "firebase/firestore"
 
 export default function SubscribePage() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   const handleManageSubscription = async () => {
     if (!auth.currentUser) {
@@ -25,6 +25,7 @@ export default function SubscribePage() {
       setLoading(false);
       return;
     }
+    
     setLoading(true);
 
     try {
@@ -32,9 +33,9 @@ export default function SubscribePage() {
       const checkoutSessionRef = collection(doc(db, 'users', user.uid), 'checkout_sessions');
 
       const sessionDocRef = await addDoc(checkoutSessionRef, {
-        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-        success_url: window.location.origin + "/dashboard?subscription=success",
-        cancel_url: window.location.origin + "/subscribe?subscription=cancelled",
+        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw", // Reemplaza con tu Price ID de Stripe
+        success_url: `${window.location.origin}/dashboard?subscription=success`,
+        cancel_url: `${window.location.origin}/subscribe?subscription=cancelled`,
         allow_promotion_codes: true,
         mode: 'subscription',
       });
@@ -42,7 +43,7 @@ export default function SubscribePage() {
       const unsubscribe = onSnapshot(sessionDocRef, (snap) => {
         const { error, url } = snap.data() as { error?: { message: string }, url?: string };
         if (error) {
-          toast({ variant: "destructive", title: "Error", description: error.message });
+          toast({ variant: "destructive", title: "Error al crear la sesión de pago", description: error.message });
           setLoading(false);
           unsubscribe();
         }
@@ -63,13 +64,13 @@ export default function SubscribePage() {
       if (user) {
         handleManageSubscription();
       } else {
-        // Handle case where user is not logged in, maybe redirect to login
         toast({ variant: "destructive", title: "Error", description: "No has iniciado sesión." });
+        setLoading(false);
       }
     });
 
     return () => unsubscribe();
-  }, []); // Empty dependency array ensures this runs once on mount
+  }, []);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
