@@ -353,10 +353,10 @@ export default function LandingPage() {
             <div className="container px-4 md:px-6">
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
-                  <h1 className="text-2xl font-bold tracking-tighter md:text-4xl xl:text-5xl/none font-headline">
-                    El Software que Automatiza tu Club y<br /> Ahorra Horas de Gestión
+                  <h1 className="text-3xl font-bold tracking-tighter md:text-4xl xl:text-5xl/none font-headline">
+                    El Software que Automatiza tu Club<br />y Ahorra Horas de Gestión
                   </h1>
-                  <p className="mx-auto max-w-[700px] text-md text-muted-foreground md:text-lg">
+                  <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-lg">
                     Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
                   </p>
                 </div>
