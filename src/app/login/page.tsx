@@ -73,6 +73,8 @@ export default function LoginPage() {
           src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
           alt="Jugadores celebrando"
           fill
+          priority
+          sizes="100vw"
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50"></div>
