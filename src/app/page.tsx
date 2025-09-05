@@ -349,7 +349,7 @@ export default function LandingPage() {
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl xl:text-5xl/none font-headline">
                     Automatiza tu club y Ahorra Horas de Gestión
                   </h1>
-                  <p className="mx-auto max-w-[700px] text-muted-foreground text-sm md:text-lg">
+                  <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
                     Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
                   </p>
                 </div>
@@ -380,31 +380,54 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section id="social-proof" className="w-full py-12 md:py-16 bg-gray-800 text-white">
-              <div className="container px-4 md:px-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 text-center">
-                      <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">+130</span>
-                          <p className="font-semibold text-lg">Clubs Activos</p>
-                          <p className="text-sm text-gray-300">ya confían en nosotros para gestionar su día a día.</p>
-                      </div>
-                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">+9h</span>
-                          <p className="font-semibold text-lg">Ahorro Semanal</p>
-                          <p className="text-sm text-gray-300">Tiempo medio que nuestros clubs ahorran en tareas administrativas.</p>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">95%</span>
-                          <p className="font-semibold text-lg">Tasa de Retención</p>
-                          <p className="text-sm text-gray-300">De los clubs que prueban SportsPanel, la gran mayoría se queda.</p>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold">75%</span>
-                          <p className="font-semibold text-lg">Valor Percibido</p>
-                          <p className="text-sm text-gray-300">De clubs dispuestos a pagar más por el valor que aporta la plataforma.</p>
+          <section id="testimonials" className="w-full py-12 md:py-16 bg-muted/30">
+            <div className="container px-4 md:px-6">
+                 <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
+                      <div className="space-y-2">
+                          <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
+                            La Confianza de los que Gestionan
+                          </h2>
+                          <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                              Clubs como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel.
+                          </p>
                       </div>
                   </div>
-              </div>
+                 <Carousel
+                    opts={{
+                        align: "start",
+                        loop: true,
+                    }}
+                    className="w-full max-w-6xl mx-auto"
+                    >
+                    <CarouselContent>
+                        {testimonials.map((testimonial, index) => (
+                        <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
+                            <div className="p-1 h-full">
+                            <Card className="flex flex-col h-full">
+                                <CardContent className="p-6 flex flex-col justify-between flex-grow">
+                                <div>
+                                    <div className="flex items-center gap-4 mb-4">
+                                        <Avatar>
+                                            <AvatarImage src={`https://i.pravatar.cc/150?u=${testimonial.name}`} />
+                                            <AvatarFallback>{testimonial.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="font-semibold">{testimonial.name}</p>
+                                            <p className="text-sm text-muted-foreground">{testimonial.role}</p>
+                                        </div>
+                                    </div>
+                                    <p className="text-muted-foreground">"{testimonial.quote}"</p>
+                                </div>
+                                </CardContent>
+                            </Card>
+                            </div>
+                        </CarouselItem>
+                        ))}
+                    </CarouselContent>
+                    <CarouselPrevious />
+                    <CarouselNext />
+                    </Carousel>
+            </div>
           </section>
 
           <section id="features" className="w-full py-12 md:py-16 lg:py-24">
