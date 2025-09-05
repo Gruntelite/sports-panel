@@ -13,24 +13,14 @@ import {
 import { Loader2, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, collection, addDoc } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc, onSnapshot } from "firebase/firestore";
 
 export default function SubscribePage() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-        if (user) {
-            setUserEmail(user.email);
-        }
-    });
-    return () => unsubscribe();
-  }, []);
-
   const handleManageSubscription = async () => {
-    setLoading(true);
     if (!auth.currentUser) {
         toast({ variant: "destructive", title: "Error", description: "Debes estar autenticado." });
         setLoading(false);
@@ -51,7 +41,7 @@ export default function SubscribePage() {
             mode: 'subscription',
         });
 
-        const unsubscribe = sessionDocRef.onSnapshot((snap) => {
+        const unsubscribe = onSnapshot(sessionDocRef, (snap) => {
             const { error, url } = snap.data() as { error?: { message: string }, url?: string };
             if (error) {
                 toast({ variant: "destructive", title: "Error", description: error.message });
@@ -70,6 +60,20 @@ export default function SubscribePage() {
     }
   };
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+        if (user) {
+            setUserEmail(user.email);
+            setLoading(false);
+            handleManageSubscription();
+        } else {
+            setLoading(false);
+        }
+    });
+    return () => unsubscribe();
+  }, []);
+
+
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
       <Card className="w-full max-w-md text-center">
@@ -83,22 +87,12 @@ export default function SubscribePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground mb-6">
-            Gestiona tu suscripción para seguir disfrutando de todas las ventajas de SportsPanel.
-          </p>
-          <Button onClick={handleManageSubscription} disabled={loading} className="w-full">
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Redirigiendo...
-              </>
-            ) : (
-              <>
-                <ExternalLink className="mr-2 h-4 w-4" />
-                Gestionar mi Suscripción
-              </>
-            )}
-          </Button>
+            <div className="flex flex-col items-center justify-center gap-4">
+                <Loader2 className="h-8 w-8 animate-spin" />
+                <p className="text-muted-foreground">
+                    Redirigiendo a nuestro portal de pago seguro...
+                </p>
+            </div>
         </CardContent>
       </Card>
     </div>
