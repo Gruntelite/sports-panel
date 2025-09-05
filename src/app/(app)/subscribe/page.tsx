@@ -53,12 +53,12 @@ export default function SubscribePage() {
           </div>
           <CardTitle className="text-2xl">Suscripción Requerida</CardTitle>
           <CardDescription>
-            Tu suscripción no está activa. Para acceder a tu panel, necesitas una suscripción válida.
+            Tu periodo de prueba ha finalizado o tu suscripción no está activa. Para continuar usando tu panel, necesitas una suscripción válida.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground mb-6">
-            Es posible que tu periodo de prueba haya finalizado o que la suscripción haya sido cancelada.
+            Gestiona tu suscripción para seguir disfrutando de todas las ventajas de SportsPanel.
           </p>
           <Button onClick={handleManageSubscription} disabled={loading} className="w-full">
             {loading ? (

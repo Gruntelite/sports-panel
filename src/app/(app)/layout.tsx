@@ -6,7 +6,7 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, query, where, orderBy, limit } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { onSnapshot } from 'firebase/firestore';
@@ -37,39 +37,37 @@ export default function AppLayout({
               return;
             }
 
+            // Check for an active Stripe subscription first
             const subscriptionsQuery = query(
               collection(userDocRef, "subscriptions"),
               where("status", "in", ["trialing", "active"])
             );
             const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
 
-            if (subscriptionsSnapshot.empty) {
-                // No active subscription, check for a pending checkout session
-                const checkoutSessionsQuery = query(
-                    collection(userDocRef, 'checkout_sessions'),
-                    orderBy('created', 'desc'),
-                    limit(1)
-                );
-                const checkoutSnapshot = await getDocs(checkoutSessionsQuery);
-
-                if (!checkoutSnapshot.empty) {
-                    const latestCheckoutRef = checkoutSnapshot.docs[0].ref;
-                    const unsubscribeCheckout = onSnapshot(latestCheckoutRef, (snap) => {
-                         const { error, url } = snap.data() as { error?: { message: string }, url?: string };
-                         if(url) {
-                            unsubscribeCheckout();
-                            window.location.assign(url);
-                         } else if (error) {
-                             unsubscribeCheckout();
-                             router.push('/subscribe');
-                         }
-                    });
-                } else {
-                     router.push('/subscribe');
-                }
-            } else {
+            if (!subscriptionsSnapshot.empty) {
+              // User has an active subscription, allow access.
               setLoading(false);
+              return;
             }
+            
+            // If no subscription, check for the internal trial period
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            const settingsSnap = await getDoc(settingsRef);
+
+            if (settingsSnap.exists()) {
+                const settingsData = settingsSnap.data();
+                const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
+                
+                if (trialEndDate && new Date() < trialEndDate) {
+                    // User is within the trial period, allow access.
+                    setLoading(false);
+                    return;
+                }
+            }
+            
+            // If no active subscription and trial is over, redirect to subscribe
+            router.push('/subscribe');
+
           } else {
              router.push('/login');
           }

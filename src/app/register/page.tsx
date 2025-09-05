@@ -24,10 +24,8 @@ import { Logo } from "@/components/logo";
 import { createClubAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
-import { loadStripe } from "@stripe/stripe-js";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth, db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
 import { v4 as uuidv4 } from 'uuid';
 import Image from "next/image";
 
@@ -82,41 +80,20 @@ export default function RegisterPage() {
         clientUserAgent
     });
 
-    if (result.success && result.userId && result.checkoutSessionId) {
-      toast({
-        title: "¡Ya casi estamos!",
-        description: "Ahora serás redirigido para completar tu suscripción de prueba.",
-      });
-      
-      const { userId, checkoutSessionId } = result;
-      const userDocRef = doc(db, "users", userId);
-
-      const checkoutSessionRef = doc(userDocRef, "checkout_sessions", checkoutSessionId);
-
-      const unsubscribe = onSnapshot(checkoutSessionRef, async (snap) => {
-        const { error, url } = snap.data() as {
-          error?: { message: string };
-          url?: string;
-        };
-
-        if (error) {
-          unsubscribe();
-          toast({ variant: "destructive", title: "Error de Pago", description: error.message });
-          setLoading(false);
-        }
-
-        if (url) {
-          unsubscribe();
-          try {
+    if (result.success && result.userId) {
+        toast({
+            title: "¡Club Creado!",
+            description: "Tu prueba de 20 días ha comenzado. ¡Bienvenido!",
+        });
+        
+        try {
             await signInWithEmailAndPassword(auth, values.email, values.password);
-          } catch(e) {
-            console.warn("Sign in after registration failed, user will need to log in manually.", e)
-          } finally {
-            window.location.assign(url);
-          }
+            router.push("/dashboard");
+        } catch(e) {
+            console.warn("Sign in after registration failed, user will need to log in manually.", e);
+            router.push("/login");
         }
-      });
-      
+
     } else {
       toast({
         variant: "destructive",
@@ -142,19 +119,19 @@ export default function RegisterPage() {
             <ul className="text-xl">
                  <li className="flex items-start gap-3 pb-4">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
-                    <span className="text-shadow shadow-black/50">Sin compromiso</span>
+                    <span className="text-shadow shadow-black/50">Sin compromiso de permanencia.</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
-                    <span className="text-shadow shadow-black/50">Cancela cuando quieras</span>
+                    <span className="text-shadow shadow-black/50">Cancela cuando quieras.</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
-                    <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades desde el primer día</span>
+                    <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades desde el primer día.</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
-                    <span className="text-shadow shadow-black/50">No pagarás nada hoy</span>
+                    <span className="text-shadow shadow-black/50">No necesitas tarjeta de crédito.</span>
                 </li>
             </ul>
         </div>
@@ -269,7 +246,7 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días GRATIS'}
+                {loading ? 'Creando tu club...' : 'Empezar Prueba Gratuita'}
               </Button>
             </form>
           </Form>

@@ -24,7 +24,7 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string, checkoutSessionId?: string}> {
+export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string}> {
   let uid: string;
   try {
     const userRecord = await adminAuth.createUser({
@@ -54,11 +54,15 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     
     const luminance = getLuminance(data.themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
+    const trialEndDate = new Date();
+    trialEndDate.setDate(trialEndDate.getDate() + 20);
+
     const settingsRef = db.collection("clubs").doc(clubId).collection("settings").doc("config");
     await settingsRef.set({
         themeColor: data.themeColor,
         themeColorForeground: foregroundColor,
-        logoUrl: null
+        logoUrl: null,
+        trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
 
     // Send the server-side event to Meta
@@ -71,23 +75,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         clientUserAgent: data.clientUserAgent,
     });
     
-    const checkoutSessionsRef = userDocRef.collection('checkout_sessions');
-    const checkoutDocRef = await checkoutSessionsRef.add({
-      price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-      success_url: "https://sportspanel.net/dashboard?subscription=success",
-      cancel_url: "https://sportspanel.net/register?subscription=cancelled",
-      trial_period_days: 20,
-      allow_promotion_codes: true,
-      mode: 'subscription',
-      automatic_tax: { enabled: true },
-      metadata: {
-        userId: uid,
-        userEmail: data.email,
-        eventName: 'Purchase', // Event to trigger on success
-      },
-    });
 
-    return { success: true, userId: uid, checkoutSessionId: checkoutDocRef.id };
+    return { success: true, userId: uid };
 
   } catch (error: any) {
     console.error("Error creating club:", error);
@@ -323,14 +312,25 @@ export async function createPortalLinkAction(): Promise<string> {
         throw new Error('User not authenticated');
     }
 
-    const customerPortalRef = db.collection('customers').doc(user.uid).collection('portals').doc();
+    const customerDocRef = db.collection('customers').doc(user.uid);
     
-    await customerPortalRef.set({
-        return_url: "https://sportspanel.net/dashboard"
+    const checkoutSessionsRef = customerDocRef.collection('checkout_sessions');
+    const checkoutDocRef = await checkoutSessionsRef.add({
+      price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
+      success_url: "https://sportspanel.net/dashboard?subscription=success",
+      cancel_url: "https://sportspanel.net/subscribe?subscription=cancelled",
+      allow_promotion_codes: true,
+      mode: 'subscription',
+      automatic_tax: { enabled: true },
+      metadata: {
+        userId: user.uid,
+        userEmail: user.email,
+        eventName: 'Purchase', // Event to trigger on success
+      },
     });
 
     return new Promise((resolve, reject) => {
-        const unsubscribe = customerPortalRef.onSnapshot(snap => {
+        const unsubscribe = checkoutDocRef.onSnapshot(snap => {
             const data = snap.data();
             if (data?.url) {
                 unsubscribe();

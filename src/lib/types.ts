@@ -322,6 +322,7 @@ export type ClubSettings = {
     smtpPassword?: string;
     smtpFromEmail?: string;
     customFields?: CustomFieldDef[];
+    trialEndDate?: Timestamp;
 }
 
 export type Incident = {
