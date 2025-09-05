@@ -24,7 +24,11 @@ interface MemberDetailModalProps {
   onEdit: () => void;
 }
 
-const DetailItem = ({ label, value }: { label: string; value?: string | number | null | boolean }) => {
+const DetailItem = ({ label, value, isSubtitle }: { label: string; value?: string | number | null | boolean; isSubtitle?: boolean }) => {
+    if (isSubtitle) {
+        return <h4 className="font-semibold text-primary pt-4 pb-2 border-b">{label}</h4>
+    }
+    
     if (value === undefined || value === null || value === '') return null;
     
     let displayValue: React.ReactNode = value;
@@ -42,15 +46,14 @@ const DetailItem = ({ label, value }: { label: string; value?: string | number |
                  displayValue = format(date, "d 'de' LLLL 'de' yyyy", { locale: es });
             }
         } catch (e) {
-            // Not a valid date string, display as is
             displayValue = value;
         }
      }
 
 
     return (
-        <div className="flex justify-between items-center py-2 border-b">
-            <dt className="text-sm text-muted-foreground">{label}</dt>
+        <div className="flex justify-between items-start py-2 border-b">
+            <dt className="text-sm text-muted-foreground pr-2">{label}</dt>
             <dd className="text-sm font-medium text-right">{displayValue}</dd>
         </div>
     );
@@ -78,10 +81,13 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                         { label: "NIF/NIE", value: p.dni }, { label: "Fecha de Nacimiento", value: p.birthDate }, { label: "Sexo", value: p.sex }, { label: "Nacionalidad", value: p.nationality }, { label: "Nº Tarjeta Sanitaria", value: p.healthCardNumber}, { label: "Dirección", value: `${p.address || ''}, ${p.postalCode || ''}, ${p.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: "Fecha de Alta", value: p.startDate },
                     ]},
                     { title: "Datos de Contacto", icon: Contact, fields: [
-                        { label: "Tutor/a Principal", value: p.isOwnTutor ? 'El propio jugador' : `${p.tutorName} ${p.tutorLastName}` }, { label: "Email de Contacto", value: p.tutorEmail }, { label: "Teléfono de Contacto", value: p.tutorPhone }, { label: "IBAN", value: p.iban },
+                        { label: "Tutor/a Principal", value: p.isOwnTutor ? 'El propio jugador' : `${p.tutorName} ${p.tutorLastName}` }, { label: "Email de Contacto", value: p.tutorEmail }, { label: "Teléfono de Contacto", value: p.tutorPhone },
+                        { label: "Datos de Pago", isSubtitle: true },
+                        { label: "IBAN", value: p.iban }, { label: "Cuota Mensual", value: p.monthlyFee ? `${p.monthlyFee}€` : 'N/A' },
                     ]},
                     { title: "Datos Deportivos", icon: Shield, fields: [
-                        { label: "Equipo", value: p.teamName }, { label: "Dorsal", value: p.jerseyNumber }, { label: "Posición", value: p.position }, { label: "Talla Equipación", value: p.kitSize }, { label: "Cuota Mensual", value: p.monthlyFee ? `${p.monthlyFee}€` : 'N/A' }, ...customFieldsItems,
+                        { label: "Equipo", value: p.teamName }, { label: "Dorsal", value: p.jerseyNumber }, { label: "Posición", value: p.position }, { label: "Talla Equipación", value: p.kitSize },
+                        ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
                     ]},
                 ];
                 return groups;
@@ -92,10 +98,13 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                         { label: "NIF/NIE", value: c.dni }, { label: "Fecha de Nacimiento", value: c.birthDate }, { label: "Sexo", value: c.sex }, { label: "Nacionalidad", value: c.nationality }, { label: "Dirección", value: `${c.address || ''}, ${c.postalCode || ''}, ${c.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: "Fecha de Alta", value: c.startDate },
                     ]},
                     { title: "Datos de Contacto", icon: Contact, fields: [
-                        { label: "Email", value: c.email }, { label: "Teléfono", value: c.phone }, { label: "IBAN", value: c.iban },
+                        { label: "Email", value: c.email }, { label: "Teléfono", value: c.phone },
+                        { label: "Datos de Pago", isSubtitle: true },
+                        { label: "IBAN", value: c.iban }, { label: "Pago Mensual", value: c.monthlyPayment ? `${c.monthlyPayment}€` : 'N/A' },
                     ]},
                     { title: "Datos Profesionales", icon: Briefcase, fields: [
-                        { label: "Cargo", value: c.role }, { label: "Equipo Asignado", value: c.teamName }, { label: "Talla Equipación", value: c.kitSize }, { label: "Pago Mensual", value: c.monthlyPayment ? `${c.monthlyPayment}€` : 'N/A' }, ...customFieldsItems
+                        { label: "Cargo", value: c.role }, { label: "Equipo Asignado", value: c.teamName }, { label: "Talla Equipación", value: c.kitSize },
+                        ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
                     ]},
                  ];
                  return groups;
@@ -103,14 +112,18 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                  const s = member as Staff;
                  groups = [
                       { title: "Datos Personales", icon: User, fields: [{ label: "Email", value: s.email }, { label: "Teléfono", value: s.phone } ]},
-                      { title: "Datos Profesionales", icon: Briefcase, fields: [{ label: "Cargo", value: s.role }, ...customFieldsItems]},
+                      { title: "Datos Profesionales", icon: Briefcase, fields: [{ label: "Cargo", value: s.role },
+                         ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
+                      ]},
                  ];
                  return groups;
             case 'socio':
                  const so = member as Socio;
                  groups = [
                      { title: "Datos Personales", icon: User, fields: [{ label: "Email", value: so.email }, { label: "Teléfono", value: so.phone }, { label: "NIF", value: so.dni } ]},
-                     { title: "Datos de Socio", icon: Handshake, fields: [{ label: "Número de Socio", value: so.socioNumber }, { label: "Tipo de Cuota", value: so.paymentType }, { label: "Importe Cuota", value: `${so.fee}€` }, ...customFieldsItems]},
+                     { title: "Datos de Socio", icon: Handshake, fields: [{ label: "Número de Socio", value: so.socioNumber }, { label: "Tipo de Cuota", value: so.paymentType }, { label: "Importe Cuota", value: `${so.fee}€` },
+                        ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
+                     ]},
                  ];
                  return groups;
         }
@@ -156,7 +169,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                            {group.title}
                        </h3>
                        <dl>
-                         {group.fields.map(field => <DetailItem key={field.label} label={field.label} value={field.value} />)}
+                         {group.fields.map((field, index) => <DetailItem key={`${field.label}-${index}`} label={field.label} value={(field as any).value} isSubtitle={(field as any).isSubtitle} />)}
                        </dl>
                    </div>
                ))}
