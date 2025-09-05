@@ -370,7 +370,7 @@ export default function LandingPage() {
                 </div>
                 <div className="mt-8">
                   <Image
-                    src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=d2cab28b-6661-4f1c-8af9-b488f0e2ece6"
+                    src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(4).png?alt=media&token=60a75fe3-81fa-48db-b7b6-bdaf036b8872"
                     alt="SportsPanel App Screenshot"
                     width={1890}
                     height={1063}
