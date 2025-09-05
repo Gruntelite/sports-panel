@@ -36,21 +36,20 @@ export default function AppLayout({
               setLoading(false);
               return;
             }
-
-            // Check for an active Stripe subscription first
+            
+            // First, check for an active Stripe subscription for paying customers
+            const customerDocRef = doc(db, "customers", user.uid);
             const subscriptionsQuery = query(
-              collection(userDocRef, "subscriptions"),
+              collection(customerDocRef, "subscriptions"),
               where("status", "in", ["trialing", "active"])
             );
             const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
-
             if (!subscriptionsSnapshot.empty) {
-              // User has an active subscription, allow access.
-              setLoading(false);
-              return;
+                setLoading(false);
+                return; // User has active subscription, allow access.
             }
             
-            // If no subscription, check for the internal trial period
+            // If no subscription, check for the internal trial period for new sign-ups
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             const settingsSnap = await getDoc(settingsRef);
 
@@ -59,8 +58,7 @@ export default function AppLayout({
                 const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
                 
                 if (trialEndDate && new Date() < trialEndDate) {
-                    // User is within the trial period, allow access.
-                    setLoading(false);
+                    setLoading(false); // User is within trial period, allow access.
                     return;
                 }
             }
@@ -69,10 +67,11 @@ export default function AppLayout({
             router.push('/subscribe');
 
           } else {
+             // This case might happen if user is authenticated but user doc is not found
              router.push('/login');
           }
         } catch (error) {
-          console.error("Error verifying subscription:", error);
+          console.error("Error verifying auth status:", error);
           router.push('/login');
         }
       } else {
