@@ -346,11 +346,11 @@ export default function LandingPage() {
             <div className="container px-4 md:px-6">
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                    El Software que Organiza tu Club y te Ahorra Horas de Gestión cada Semana
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl xl:text-5xl/none font-headline">
+                    Organiza tu Club y Ahorra Horas de Gestión
                   </h1>
                   <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-xl">
-                    Centraliza la tesorería, jugadores, entrenadores, documentación, inscripciones y comunicación con familias: todo en un mismo panel.
+                    Centraliza la tesorería, jugadores, entrenadores y comunicación con familias en un único panel.
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2">
@@ -372,7 +372,7 @@ export default function LandingPage() {
                     <Button asChild size="lg" className="bg-white/80 text-foreground hover:bg-white hover:scale-105 transition-transform duration-200 shadow-lg backdrop-blur-sm">
                         <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
                         <Download className="mr-2 h-4 w-4" />
-                        Descarga nuestra guía y empieza paso a paso
+                        Descargar Guía de Uso
                         </Link>
                     </Button>
                 </div>
