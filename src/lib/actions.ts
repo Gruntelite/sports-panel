@@ -303,38 +303,28 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
   }
 }
 
-export async function createPortalLinkAction(): Promise<string> {
-    const user = adminAuth.app.auth().currentUser;
-    if (!user) {
-        throw new Error('User not authenticated');
-    }
+export async function createStripeCheckoutAction(uid: string): Promise<{ sessionId?: string; error?: string }> {
+  if (!uid) {
+    return { error: 'User not authenticated.' };
+  }
+
+  try {
+    const checkoutSessionRef = adminDb.collection('users').doc(uid).collection('checkout_sessions').doc();
     
-    const customerDocRef = adminDb.collection('customers').doc(user.uid);
-    const customerSnap = await customerDocRef.get();
-
-    if (!customerSnap.exists) {
-        throw new Error('Customer not found');
-    }
-
-    const { stripeId } = customerSnap.data()!;
-
-    const response = await fetch('https://us-central1-sportspanel.cloudfunctions.net/createStripePortal', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ customerId: stripeId }),
+    await checkoutSessionRef.set({
+        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?subscription=success`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/subscribe?subscription=cancelled`,
+        allow_promotion_codes: true,
+        mode: 'subscription',
     });
 
-    if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to create portal session');
-    }
-
-    const { url } = await response.json();
-    return url;
+    return { sessionId: checkoutSessionRef.id };
+  } catch (error: any) {
+    console.error("Error creating Stripe checkout session:", error);
+    return { error: error.message };
+  }
 }
-
 
 // Meta Conversions API Action
 export async function sendServerEventAction(eventData: { 

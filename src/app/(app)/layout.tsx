@@ -6,10 +6,11 @@ import { Sidebar } from '@/components/layout/sidebar';
 import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { collection, doc, getDocs, getDoc, query, where, orderBy, limit, Timestamp } from 'firebase/firestore';
+import { collection, doc, getDocs, getDoc, query, where, Timestamp } from 'firebase/firestore';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { onSnapshot } from 'firebase/firestore';
+import { createStripeCheckoutAction } from '@/lib/actions';
 
 const DEV_CLUB_ID = "VWxHRR6HzumBnSdLfTtP"; // Club de pruebas
 
@@ -20,9 +21,35 @@ export default function AppLayout({
 }) {
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
+  const [isRedirecting, setIsRedirecting] = React.useState(false);
 
   React.useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const handleSubscriptionRedirect = async (uid: string) => {
+      setIsRedirecting(true);
+      const { sessionId, error } = await createStripeCheckoutAction(uid);
+      if (error || !sessionId) {
+        console.error("Failed to create Stripe session:", error);
+        // Maybe show a toast message to the user
+        setIsRedirecting(false);
+        return;
+      }
+
+      const sessionRef = doc(db, "users", uid, "checkout_sessions", sessionId);
+      const unsubscribe = onSnapshot(sessionRef, (snap) => {
+        const { error, url } = snap.data() || {};
+        if (error) {
+          console.error(`An error occurred: ${error.message}`);
+          unsubscribe();
+          setIsRedirecting(false);
+        }
+        if (url) {
+          window.location.assign(url);
+          unsubscribe();
+        }
+      });
+    };
+
+    const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
         try {
           const userDocRef = doc(db, "users", user.uid);
@@ -36,36 +63,35 @@ export default function AppLayout({
               setLoading(false);
               return;
             }
-            
+
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             const settingsSnap = await getDoc(settingsRef);
 
             if (settingsSnap.exists()) {
-                const settingsData = settingsSnap.data();
-                const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
-                
-                if (trialEndDate && new Date() < trialEndDate) {
-                    setLoading(false); // User is within trial period, allow access.
-                    return;
-                }
+              const settingsData = settingsSnap.data();
+              const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
+              if (trialEndDate && new Date() < trialEndDate) {
+                setLoading(false);
+                return;
+              }
             }
-            
+
             const subscriptionsQuery = query(
-              collection(userDocRef, "subscriptions"),
+              collection(db, "users", user.uid, "subscriptions"),
               where("status", "in", ["trialing", "active"])
             );
             const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
 
             if (!subscriptionsSnapshot.empty) {
-                // User has an active subscription.
-                setLoading(false);
-                return;
+              setLoading(false);
+              return;
             }
             
-            router.push('/subscribe');
+            // If trial is over and no active subscription, redirect
+            handleSubscriptionRedirect(user.uid);
 
           } else {
-             router.push('/login');
+            router.push('/login');
           }
         } catch (error) {
           console.error("Error verifying auth status:", error);
@@ -76,13 +102,16 @@ export default function AppLayout({
       }
     });
 
-    return () => unsubscribe();
+    return () => unsubscribeAuth();
   }, [router]);
 
-  if (loading) {
+  if (loading || isRedirecting) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-muted/40">
-        <Loader2 className="h-10 w-10 animate-spin text-primary" />
+        <div className="flex flex-col items-center gap-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+            {isRedirecting && <p className="text-muted-foreground">Redirigiendo al portal de pago...</p>}
+        </div>
       </div>
     );
   }
