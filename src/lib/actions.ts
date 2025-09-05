@@ -37,11 +37,18 @@ export async function createClubAction(data: { clubName: string, adminName: stri
 
     const batch = adminDb.batch();
 
-    // Step 2: Create the club document
+    // Step 2: Create the user document in the root 'users' collection first
+    const userDocRef = adminDb.collection('users').doc(uid);
+    batch.set(userDocRef, {
+        email: email,
+        name: adminName,
+        role: 'super-admin',
+    });
+
+    // Step 3: Create the club document
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
     
-    // Step 3: Set the club data, including the admin UID for reference
     batch.set(clubRef, {
       name: clubName,
       sport: sport,
@@ -49,14 +56,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       createdAt: Timestamp.now(),
     });
     
-    // Step 4: Create the user document in the root 'users' collection
-    const userDocRef = adminDb.collection('users').doc(uid);
-    batch.set(userDocRef, {
-        email: email,
-        name: adminName,
-        role: 'super-admin',
-        clubId: clubId
-    });
+    // Step 4: Update the user document with the new clubId
+    batch.update(userDocRef, { clubId: clubId });
 
     // Step 5: Create club settings with trial period
     const luminance = getLuminance(themeColor);
