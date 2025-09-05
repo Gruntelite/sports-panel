@@ -1,7 +1,7 @@
 
 "use client";
 import Link from "next/link";
-import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings } from "lucide-react";
@@ -53,14 +53,16 @@ export function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col p-0">
+                    <SheetHeader>
+                        <SheetTitle className="sr-only">Menú Principal</SheetTitle>
+                    </SheetHeader>
                      <nav className="flex flex-col h-full">
                         <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0 justify-between">
                              <Link
                                 href="/dashboard"
                                 className="flex items-center gap-3 text-lg font-semibold"
                             >
-                                <Logo width={32} height={32}/>
-                                <span className="font-headline text-lg font-bold">SportsPanel</span>
+                                <Logo withText={true}/>
                             </Link>
                              <SheetClose asChild>
                                 <Button variant="ghost" size="icon" className="rounded-full">
