@@ -112,35 +112,43 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
-            <ul className="text-xl space-y-4">
-                <li className="flex items-center justify-center gap-3">
+            <div className="space-y-4">
+                 <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 whitespace-nowrap">No necesitas tarjeta de crédito.</span>
-                </li>
-                 <li className="flex items-center justify-center gap-3">
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">No necesitas tarjeta de crédito.</span>
+                </div>
+                 <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 whitespace-nowrap">Sin compromiso de permanencia.</span>
-                </li>
-                 <li className="flex items-center justify-center gap-3">
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">Sin compromiso de permanencia.</span>
+                </div>
+                 <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 whitespace-nowrap">Cancela cuando quieras.</span>
-                </li>
-                 <li className="flex items-center justify-center gap-3">
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">Cancela cuando quieras.</span>
+                </div>
+                 <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 whitespace-nowrap">Accede a todas las funcionalidades.</span>
-                </li>
-            </ul>
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">Accede a todas las funcionalidades.</span>
+                </div>
+            </div>
         </div>
       </div>
-      <div className="relative flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="absolute top-8 left-8">
-            <Button variant="outline" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-            </Button>
-        </Link>
-        <Card className="mx-auto max-w-sm w-full">
+      <div className="relative flex flex-col items-center justify-center min-h-screen py-12 px-4 sm:px-6 lg:px-8">
+        <header className="absolute top-0 left-0 right-0 px-4 py-4 lg:px-8">
+            <div className="flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2">
+                    <Logo />
+                    <span className="font-bold text-lg">SportsPanel</span>
+                </Link>
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Link>
+                </Button>
+            </div>
+        </header>
+        
+        <Card className="mx-auto max-w-sm w-full border-none shadow-none lg:border lg:shadow-sm">
             <CardHeader className="space-y-2 text-center">
-                <Logo withText={true} className="justify-center mb-4"/>
                 <CardTitle className="text-2xl font-bold font-headline">Crea tu Club</CardTitle>
                 <CardDescription>Empieza a gestionar tu club en minutos.</CardDescription>
             </CardHeader>

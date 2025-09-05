@@ -20,7 +20,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 export default function LoginPage() {
@@ -70,31 +70,37 @@ export default function LoginPage() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50"></div>
-        <div className="z-10 text-white max-w-md space-y-6">
-             <div className="text-center">
-                <p className="text-3xl font-bold text-shadow shadow-black/50">+130 clubs ya confían en nosotros</p>
+        <div className="z-10 text-white max-w-lg space-y-6 text-center">
+            <div className="text-center">
+                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">+130 clubs ya confían en nosotros</p>
             </div>
             <Separator className="bg-white/20" />
             <div className="text-center">
-                <p className="text-3xl font-bold text-shadow shadow-black/50">+9h de Ahorro Semanal</p>
+                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">+9h de Ahorro Semanal</p>
             </div>
             <Separator className="bg-white/20" />
             <div className="text-center">
-                <p className="text-3xl font-bold text-shadow shadow-black/50">95% Tasa de Retención</p>
+                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">95% Tasa de Retención</p>
             </div>
         </div>
       </div>
-      <div className="relative flex items-center justify-center py-12">
-      <Link href="/" className="absolute top-8 left-8">
-        <Button variant="outline" size="icon">
-            <ArrowLeft className="h-4 w-4" />
-        </Button>
-      </Link>
-      <Card className="mx-auto max-w-sm w-full">
+      <div className="relative flex flex-col items-center justify-center h-screen">
+          <header className="absolute top-0 left-0 right-0 px-4 py-4 lg:px-8">
+            <div className="flex items-center justify-between">
+                <Link href="/" className="flex items-center gap-2">
+                    <Logo />
+                    <span className="font-bold text-lg">SportsPanel</span>
+                </Link>
+                <Button variant="ghost" size="icon" asChild>
+                    <Link href="/">
+                        <ArrowLeft className="h-4 w-4" />
+                    </Link>
+                </Button>
+            </div>
+        </header>
+
+      <Card className="mx-auto max-w-sm w-full border-none shadow-none lg:border lg:shadow-sm">
         <CardHeader className="space-y-2 text-center">
-          <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
-            <Logo withText={true} />
-          </div>
           <CardTitle className="text-2xl font-bold font-headline">
             Iniciar Sesión
           </CardTitle>
