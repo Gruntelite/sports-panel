@@ -142,7 +142,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
     <Dialog open={!!member} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <Avatar className="h-24 w-24 border">
               <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
               <AvatarFallback className="text-3xl">
@@ -152,7 +152,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
             </Avatar>
             <div className="space-y-1">
               <DialogTitle className="text-3xl font-bold font-headline">{member.name} {member.lastName}</DialogTitle>
-              <div className="flex items-center gap-4 text-muted-foreground">
+              <div className="flex items-center justify-center sm:justify-start gap-4 text-muted-foreground">
                 <Badge variant="secondary" className="text-base">{member.role || roleMap[memberType]}</Badge>
                 {(member as Player).jerseyNumber && <span>Nº {(member as Player).jerseyNumber}</span>}
                 {(member as Player).sex && <span>{(member as Player).sex}</span>}
@@ -161,7 +161,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
           </div>
         </DialogHeader>
         <div className="py-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                {fieldGroups.map(group => group.fields.length > 0 && (
                    <div key={group.title} className="space-y-3">
                        <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">

@@ -258,14 +258,14 @@ export default function TeamsPage() {
   return (
     <>
       <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <div>
             <h1 className="text-2xl font-bold font-headline tracking-tight">Equipos</h1>
             <p className="text-muted-foreground">
               Crea y gestiona los equipos de tu club.
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
              <Button 
                 variant={isOrdering ? "default" : "outline"} 
                 size="sm" 

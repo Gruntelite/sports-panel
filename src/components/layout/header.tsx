@@ -40,7 +40,7 @@ export function Header() {
         </header>
 
         {/* Floating Action Button for Mobile Menu */}
-        <div className="md:hidden fixed bottom-6 right-6 z-50">
+        <div className="md:hidden fixed bottom-6 right-6 z-40">
              <Sheet>
                 <SheetTrigger asChild>
                     <Button

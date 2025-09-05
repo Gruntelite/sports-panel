@@ -990,17 +990,15 @@ export function TreasuryDashboard() {
         </div>
         <TabsContent value="accounting" className="mt-4">
              <Card>
-                <CardHeader>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <CardTitle>Desglose de Contabilidad Mensual</CardTitle>
-                            <CardDescription>Resumen de todos los ingresos y gastos para el mes seleccionado.</CardDescription>
-                        </div>
-                        <div className="flex items-center gap-2">
-                             <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => subMonths(prev, 1))}><ChevronLeft className="h-4 w-4"/></Button>
-                             <span className="font-semibold text-lg w-36 text-center capitalize">{format(accountingDate, "LLLL yyyy", { locale: es })}</span>
-                             <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => addMonths(prev, 1))}><ChevronRight className="h-4 w-4"/></Button>
-                        </div>
+                <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-2">
+                    <div className="flex-1">
+                        <CardTitle>Desglose de Contabilidad Mensual</CardTitle>
+                        <CardDescription>Resumen de todos los ingresos y gastos para el mes seleccionado.</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                         <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => subMonths(prev, 1))}><ChevronLeft className="h-4 w-4"/></Button>
+                         <span className="font-semibold text-lg w-36 text-center capitalize">{format(accountingDate, "LLLL yyyy", { locale: es })}</span>
+                         <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => addMonths(prev, 1))}><ChevronRight className="h-4 w-4"/></Button>
                     </div>
                 </CardHeader>
                  <CardContent>
