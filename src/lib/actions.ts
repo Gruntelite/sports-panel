@@ -39,7 +39,10 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
     
-    await clubRef.set({
+    // Create all database writes in a batch for atomicity
+    const batch = adminDb.batch();
+
+    batch.set(clubRef, {
       name: clubName,
       sport: sport,
       adminUid: uid,
@@ -48,7 +51,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     
     // 3. Set the user document in the root 'users' collection
     const userDocRef = adminDb.collection('users').doc(uid);
-    await userDocRef.set({
+    batch.set(userDocRef, {
         email: email,
         name: adminName,
         role: 'super-admin',
@@ -62,12 +65,16 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     trialEndDate.setDate(trialEndDate.getDate() + 20);
 
     const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
-    await settingsRef.set({
+    batch.set(settingsRef, {
         themeColor: themeColor,
         themeColorForeground: foregroundColor,
         logoUrl: null,
         trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
+
+    // Commit all writes at once
+    await batch.commit();
+
 
     // 5. Send server-side event to Meta for analytics (optional and non-blocking)
     try {
@@ -324,45 +331,35 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-    const userRecord = await adminAuth.getUser(adminAuth.currentUser.uid);
-    
-    if (!userRecord) {
+    const user = auth.currentUser;
+    if (!user) {
         throw new Error('User not authenticated');
     }
-
-    const customerDocRef = adminDb.collection('customers').doc(userRecord.uid);
     
-    const checkoutSessionsRef = customerDocRef.collection('checkout_sessions');
-    const checkoutDocRef = await checkoutSessionsRef.add({
-      price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-      success_url: "https://sportspanel.net/dashboard?subscription=success",
-      cancel_url: "https://sportspanel.net/subscribe?subscription=cancelled",
-      allow_promotion_codes: true,
-      mode: 'subscription',
-      automatic_tax: { enabled: true },
-      metadata: {
-        userId: userRecord.uid,
-        userEmail: userRecord.email,
-        eventName: 'Purchase', // Event to trigger on success
-      },
+    const customerDocRef = adminDb.collection('customers').doc(user.uid);
+    const customerSnap = await customerDocRef.get();
+
+    if (!customerSnap.exists) {
+        throw new Error('Customer not found');
+    }
+
+    const { stripeId } = customerSnap.data()!;
+
+    const response = await fetch('https://us-central1-sportspanel.cloudfunctions.net/createStripePortal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ customerId: stripeId }),
     });
 
-    return new Promise((resolve, reject) => {
-        const unsubscribe = checkoutDocRef.onSnapshot(snap => {
-            const data = snap.data();
-            if (data?.url) {
-                unsubscribe();
-                resolve(data.url);
-            }
-            if (data?.error) {
-                unsubscribe();
-                reject(new Error(data.error.message));
-            }
-        }, err => {
-            unsubscribe();
-            reject(err);
-        });
-    });
+    if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to create portal session');
+    }
+
+    const { url } = await response.json();
+    return url;
 }
 
 

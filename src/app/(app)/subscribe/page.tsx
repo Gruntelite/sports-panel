@@ -12,9 +12,8 @@ import {
 } from "@/components/ui/card";
 import { Loader2, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createPortalLinkAction } from "@/lib/actions";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, addDoc } from "firebase/firestore";
 
 export default function SubscribePage() {
   const { toast } = useToast();
@@ -32,12 +31,39 @@ export default function SubscribePage() {
 
   const handleManageSubscription = async () => {
     setLoading(true);
-    try {
-        if (!auth.currentUser) throw new Error("User not authenticated.");
-        
-        const portalUrl = await createPortalLinkAction();
-        window.location.href = portalUrl;
+    if (!auth.currentUser) {
+        toast({ variant: "destructive", title: "Error", description: "Debes estar autenticado." });
+        setLoading(false);
+        return;
+    }
 
+    try {
+        const user = auth.currentUser;
+        const customerDocRef = doc(db, 'customers', user.uid);
+        
+        const checkoutSessionRef = collection(customerDocRef, 'checkout_sessions');
+
+        const sessionDocRef = await addDoc(checkoutSessionRef, {
+            price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
+            success_url: window.location.origin + "/dashboard?subscription=success",
+            cancel_url: window.location.origin + "/subscribe?subscription=cancelled",
+            allow_promotion_codes: true,
+            mode: 'subscription',
+        });
+
+        const unsubscribe = sessionDocRef.onSnapshot((snap) => {
+            const { error, url } = snap.data() as { error?: { message: string }, url?: string };
+            if (error) {
+                toast({ variant: "destructive", title: "Error", description: error.message });
+                setLoading(false);
+                unsubscribe();
+            }
+            if (url) {
+                window.location.assign(url);
+                unsubscribe();
+            }
+        });
+        
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });
       setLoading(false);
