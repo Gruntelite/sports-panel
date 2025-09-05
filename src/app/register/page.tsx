@@ -110,24 +110,24 @@ export default function RegisterPage() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50"></div>
-        <div className="z-10 text-white max-w-md space-y-6">
+        <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
             <ul className="text-xl space-y-4">
-                 <li className="flex items-center gap-3">
+                 <li className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50">No necesitas tarjeta de crédito.</span>
+                    <span className="text-shadow shadow-black/50 whitespace-nowrap">No necesitas tarjeta de crédito.</span>
                 </li>
-                 <li className="flex items-center gap-3">
+                 <li className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50">Sin compromiso de permanencia.</span>
+                    <span className="text-shadow shadow-black/50 whitespace-nowrap">Sin compromiso de permanencia.</span>
                 </li>
-                 <li className="flex items-center gap-3">
+                 <li className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50">Cancela cuando quieras.</span>
+                    <span className="text-shadow shadow-black/50 whitespace-nowrap">Cancela cuando quieras.</span>
                 </li>
-                 <li className="flex items-center gap-3">
+                 <li className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades.</span>
+                    <span className="text-shadow shadow-black/50 whitespace-nowrap">Accede a todas las funcionalidades.</span>
                 </li>
             </ul>
         </div>
