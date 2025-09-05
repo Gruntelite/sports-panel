@@ -92,6 +92,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
 import { useParams, useRouter } from "next/navigation";
 import { MemberDetailModal } from "@/components/member-detail-modal";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 
 export default function EditTeamPage() {
@@ -962,260 +963,262 @@ export default function EditTeamPage() {
                     Rellena la información para {modalMode === 'add' ? 'añadir un nuevo' : 'modificar el'} {modalType === 'player' ? 'jugador' : 'entrenador'} al club.
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
-                <div className="flex flex-col items-center gap-4 pt-5">
-                    <Label>Foto del {modalType === 'player' ? 'Jugador' : 'Entrenador'}</Label>
-                    <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || (modalType === 'player' ? playerData.avatar : coachData.avatar)} />
-                        <AvatarFallback>
-                            {(currentData.name || 'N').charAt(0)}
-                            {(currentData.lastName || 'J').charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
-                     <Button asChild variant="outline" size="sm">
-                        <label htmlFor="member-image-upload" className="cursor-pointer">
-                            <Upload className="mr-2 h-3 w-3"/>
-                            Subir
-                        </label>
-                    </Button>
-                    <Input id="member-image-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                </div>
-                
-                <Tabs defaultValue="personal" className="w-full">
-                     <TabsList className={`grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-3'}`}>
-                        <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
-                        {modalType === 'player' ? (
-                             <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
-                        ) : (
-                             <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
-                        )}
-                    </TabsList>
-                    <TabsContent value="personal" className="pt-6">
-                      <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" autoComplete="off" value={currentData.name || ''} onChange={handleMemberInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleMemberInputChange} />
-                               </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                               <div className="space-y-2">
-                                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-                                  <DatePicker 
-                                    date={currentData.birthDate ? parseISO(currentData.birthDate) : undefined} 
-                                    onDateChange={(date) => handleDateChange('birthDate', date)} 
-                                  />
-                                   {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="dni">NIF</Label>
-                                   <Input id="dni" value={currentData.dni || ''} onChange={handleMemberInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                    <Label htmlFor="sex">Sexo</Label>
-                                    <Select value={(currentData as any).sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                                        <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="masculino">Masculino</SelectItem>
-                                            <SelectItem value="femenino">Femenino</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                           </div>
-                            <div className="space-y-2">
-                               <Label htmlFor="address">Dirección</Label>
-                               <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
-                            </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={(currentData as any).city || ''} onChange={handleMemberInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleMemberInputChange} />
-                               </div>
-                           </div>
-                            <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label>Fecha de Alta</Label>
-                                  <DatePicker 
-                                    date={currentData.startDate ? parseISO(currentData.startDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('startDate', date)}
-                                  />
-                                </div>
-                                 <div className="space-y-2">
-                                  <Label>Fecha de Baja</Label>
-                                  <DatePicker 
-                                    date={currentData.endDate ? parseISO(currentData.endDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('endDate', date)}
-                                    disabled={currentData.currentlyActive}
-                                  />
-                                </div>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                               <Checkbox id="currentlyActive" checked={currentData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
-                               <Label htmlFor="currentlyActive">Actualmente de alta</Label>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                               <Checkbox id="hasInterruption" checked={(currentData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
-                                   if(checked) { handleAddInterruption() }
-                                   else { 
-                                      if(modalType === 'player') setPlayerData(prev => ({...prev, interruptions: []}))
-                                      else setCoachData(prev => ({...prev, interruptions: []}))
-                                    }
-                               }} />
-                               <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
-                           </div>
-                           {(currentData.interruptions?.length || 0) > 0 && (
-                               <div className="space-y-2 pl-6">
-                                   {currentData.interruptions?.map((interruption, index) => (
-                                       <div key={interruption.id} className="flex items-end gap-2">
-                                           <div className="space-y-1">
-                                               <Label>Inicio Interrupción</Label>
-                                                <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
-                                           </div>
-                                           <div className="space-y-1">
-                                               <Label>Fin Interrupción</Label>
-                                                <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
-                                           </div>
-                                           <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
-                                       </div>
-                                   ))}
-                                   <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
-                               </div>
-                           )}
-                           <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
-                        </div>
-                       </div>
-                    </TabsContent>
-                    <TabsContent value="contact" className="pt-6">
-                      <div className="space-y-6">
-                           <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="isOwnTutor" 
-                                checked={currentData.isOwnTutor || false}
-                                onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
-                              />
-                              <Label htmlFor="isOwnTutor" className="font-normal">{modalType === 'player' ? 'El jugador' : 'El entrenador'} es su propio tutor (mayor de 18 años)</Label>
-                          </div>
-                            
-                            {!(currentData.isOwnTutor) && (
-                                <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
-                                    <h4 className="font-medium">Datos del Tutor/a</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" autoComplete="off" value={(currentData as any).tutorName || ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" autoComplete="off" value={(currentData as any).tutorLastName || ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
-                                        <Input id="tutorDni" value={(currentData as any).tutorDni || ''} onChange={handleMemberInputChange} />
-                                    </div>
-                                </div>
+            <ScrollArea className="max-h-[70vh] p-0">
+                <div className="py-4 px-6 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
+                    <div className="flex flex-col items-center gap-4 pt-5">
+                        <Label>Foto del {modalType === 'player' ? 'Jugador' : 'Entrenador'}</Label>
+                        <Avatar className="h-32 w-32">
+                            <AvatarImage src={imagePreview || (modalType === 'player' ? playerData.avatar : coachData.avatar)} />
+                            <AvatarFallback>
+                                {(currentData.name || 'N').charAt(0)}
+                                {(currentData.lastName || 'J').charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <Button asChild variant="outline" size="sm">
+                            <label htmlFor="member-image-upload" className="cursor-pointer">
+                                <Upload className="mr-2 h-3 w-3"/>
+                                Subir
+                            </label>
+                        </Button>
+                        <Input id="member-image-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                    </div>
+                    
+                    <Tabs defaultValue="personal" className="w-full">
+                        <TabsList className={`grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-3'}`}>
+                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
+                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
+                            {modalType === 'player' ? (
+                                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                            ) : (
+                                <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
                             )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                                 <div className="space-y-2">
-                                     <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
-                                 </div>
-                                 <div className="space-y-2">
-                                     <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
-                                     <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleMemberInputChange} />
-                                 </div>
-                            </div>
-                        </div>
-                    </TabsContent>
-                    {modalType === 'player' && (
-                        <TabsContent value="sports" className="pt-6">
-                            <div className="space-y-6">
-                                    <div className="space-y-2">
-                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                        <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                        <div className="space-y-2">
-                                                <Label htmlFor="teamId">Equipo</Label>
-                                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Selecciona un equipo" />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        {allTeams.map(t => (
-                                                            <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                                <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleMemberInputChange} />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                                <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
-                                            </div>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                            <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                         <div className="flex items-end pb-1">
-                                           <div className="flex items-center space-x-2">
-                                              <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
-                                              <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
-                                            </div>
-                                         </div>
-                                    </div>
+                        </TabsList>
+                        <TabsContent value="personal" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="name">Nombre</Label>
+                                    <Input id="name" autoComplete="off" value={currentData.name || ''} onChange={handleMemberInputChange} />
                                 </div>
-                        </TabsContent>
-                    )}
-                     {modalType === 'coach' && (
-                        <TabsContent value="payment" className="pt-6">
-                            <div className="space-y-6">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                            <Input id="iban" value={coachData.iban || ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                            <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="teamId">Equipo Asignado</Label>
-                                        <Select onValueChange={(value) => handleSelectChange('teamId' as any, value)} value={coachData.teamId || 'unassigned'}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona un equipo" />
-                                            </SelectTrigger>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleMemberInputChange} />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                    <DatePicker 
+                                        date={currentData.birthDate ? parseISO(currentData.birthDate) : undefined} 
+                                        onDateChange={(date) => handleDateChange('birthDate', date)} 
+                                    />
+                                    {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dni">NIF</Label>
+                                    <Input id="dni" value={currentData.dni || ''} onChange={handleMemberInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                        <Label htmlFor="sex">Sexo</Label>
+                                        <Select value={(currentData as any).sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="unassigned">Sin equipo</SelectItem>
-                                                {allTeams.map(t => (
-                                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                                ))}
+                                                <SelectItem value="masculino">Masculino</SelectItem>
+                                                <SelectItem value="femenino">Femenino</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
+                            </div>
+                                <div className="space-y-2">
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
                                 </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Input id="city" value={(currentData as any).city || ''} onChange={handleMemberInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleMemberInputChange} />
+                                </div>
+                            </div>
+                                <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                    <Label>Fecha de Alta</Label>
+                                    <DatePicker 
+                                        date={currentData.startDate ? parseISO(currentData.startDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('startDate', date)}
+                                    />
+                                    </div>
+                                    <div className="space-y-2">
+                                    <Label>Fecha de Baja</Label>
+                                    <DatePicker 
+                                        date={currentData.endDate ? parseISO(currentData.endDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('endDate', date)}
+                                        disabled={currentData.currentlyActive}
+                                    />
+                                    </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="currentlyActive" checked={currentData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
+                                <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="hasInterruption" checked={(currentData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
+                                    if(checked) { handleAddInterruption() }
+                                    else { 
+                                        if(modalType === 'player') setPlayerData(prev => ({...prev, interruptions: []}))
+                                        else setCoachData(prev => ({...prev, interruptions: []}))
+                                        }
+                                }} />
+                                <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                            </div>
+                            {(currentData.interruptions?.length || 0) > 0 && (
+                                <div className="space-y-2 pl-6">
+                                    {currentData.interruptions?.map((interruption, index) => (
+                                        <div key={interruption.id} className="flex items-end gap-2">
+                                            <div className="space-y-1">
+                                                <Label>Inicio Interrupción</Label>
+                                                    <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label>Fin Interrupción</Label>
+                                                    <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
+                                        </div>
+                                    ))}
+                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                                </div>
+                            )}
+                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
+                            </div>
+                        </div>
                         </TabsContent>
-                    )}
-                </Tabs>
-            </div>
-            <DialogFooter>
+                        <TabsContent value="contact" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id="isOwnTutor" 
+                                    checked={currentData.isOwnTutor || false}
+                                    onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
+                                />
+                                <Label htmlFor="isOwnTutor" className="font-normal">{modalType === 'player' ? 'El jugador' : 'El entrenador'} es su propio tutor (mayor de 18 años)</Label>
+                            </div>
+                                
+                                {!(currentData.isOwnTutor) && (
+                                    <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
+                                        <h4 className="font-medium">Datos del Tutor/a</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tutorName">Nombre</Label>
+                                                <Input id="tutorName" autoComplete="off" value={(currentData as any).tutorName || ''} onChange={handleMemberInputChange} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tutorLastName">Apellidos</Label>
+                                                <Input id="tutorLastName" autoComplete="off" value={(currentData as any).tutorLastName || ''} onChange={handleMemberInputChange} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
+                                            <Input id="tutorDni" value={(currentData as any).tutorDni || ''} onChange={handleMemberInputChange} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                        <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                        <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleMemberInputChange} />
+                                    </div>
+                                </div>
+                            </div>
+                        </TabsContent>
+                        {modalType === 'player' && (
+                            <TabsContent value="sports" className="pt-6">
+                                <div className="space-y-6">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                            <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                                            <div className="space-y-2">
+                                                    <Label htmlFor="teamId">Equipo</Label>
+                                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Selecciona un equipo" />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            {allTeams.map(t => (
+                                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                                    <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleMemberInputChange} />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
+                                                </div>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                                <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleMemberInputChange} />
+                                            </div>
+                                            <div className="flex items-end pb-1">
+                                            <div className="flex items-center space-x-2">
+                                                <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
+                                                <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                            </TabsContent>
+                        )}
+                        {modalType === 'coach' && (
+                            <TabsContent value="payment" className="pt-6">
+                                <div className="space-y-6">
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                                <Input id="iban" value={coachData.iban || ''} onChange={handleMemberInputChange} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                                <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleMemberInputChange} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="teamId">Equipo Asignado</Label>
+                                            <Select onValueChange={(value) => handleSelectChange('teamId' as any, value)} value={coachData.teamId || 'unassigned'}>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder="Selecciona un equipo" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                                    {allTeams.map(t => (
+                                                        <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    </div>
+                            </TabsContent>
+                        )}
+                    </Tabs>
+                </div>
+            </ScrollArea>
+            <DialogFooter className="pt-4 border-t">
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>

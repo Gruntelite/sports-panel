@@ -864,246 +864,248 @@ export default function PlayersPage() {
                     {modalMode === 'add' ? 'Rellena la información para añadir un nuevo jugador al club.' : 'Modifica la información del jugador.'}
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
-                <div className="flex flex-col items-center gap-4 pt-5">
-                    <Label>Foto del Jugador</Label>
-                    <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || playerData.avatar} />
-                        <AvatarFallback>
-                            {(playerData.name || 'N').charAt(0)}
-                            {(playerData.lastName || 'J').charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
-                     <Button asChild variant="outline" size="sm">
-                        <label htmlFor="player-image" className="cursor-pointer">
-                            <Upload className="mr-2 h-3 w-3"/>
-                            Subir
-                        </label>
-                    </Button>
-                    <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                </div>
-                
-                <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
-                        <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
-                        <TabsTrigger value="custom">Otros Datos</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="personal" className="pt-6">
-                      <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" autoComplete="off" value={playerData.name || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" autoComplete="off" value={playerData.lastName || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                               <div className="space-y-2">
-                                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-                                  <DatePicker 
-                                    date={playerData.birthDate ? parseISO(playerData.birthDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('birthDate', date)}
-                                  />
-                                   {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="dni">NIF</Label>
-                                   <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
-                               </div>
+             <ScrollArea className="max-h-[70vh] p-0">
+                <div className="py-4 px-6 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
+                    <div className="flex flex-col items-center gap-4 pt-5">
+                        <Label>Foto del Jugador</Label>
+                        <Avatar className="h-32 w-32">
+                            <AvatarImage src={imagePreview || playerData.avatar} />
+                            <AvatarFallback>
+                                {(playerData.name || 'N').charAt(0)}
+                                {(playerData.lastName || 'J').charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <Button asChild variant="outline" size="sm">
+                            <label htmlFor="player-image" className="cursor-pointer">
+                                <Upload className="mr-2 h-3 w-3"/>
+                                Subir
+                            </label>
+                        </Button>
+                        <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                    </div>
+                    
+                    <Tabs defaultValue="personal" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
+                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
+                            <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                            <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="personal" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="sex">Sexo</Label>
-                                    <Select value={playerData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                                        <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                    <Label htmlFor="name">Nombre</Label>
+                                    <Input id="name" autoComplete="off" value={playerData.name || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Input id="lastName" autoComplete="off" value={playerData.lastName || ''} onChange={handleInputChange} />
+                                </div>
+                            </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                    <DatePicker 
+                                        date={playerData.birthDate ? parseISO(playerData.birthDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('birthDate', date)}
+                                    />
+                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="dni">NIF</Label>
+                                    <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
+                                </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sex">Sexo</Label>
+                                        <Select value={playerData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="masculino">Masculino</SelectItem>
+                                                <SelectItem value="femenino">Femenino</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="nationality">Nacionalidad</Label>
+                                        <Input id="nationality" value={playerData.nationality || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
+                                        <Input id="healthCardNumber" value={playerData.healthCardNumber || ''} onChange={handleInputChange} />
+                                    </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="address">Dirección</Label>
+                                <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
+                                </div>
+                            </div>
+                            <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                    <Label>Fecha de Alta</Label>
+                                    <DatePicker 
+                                        date={playerData.startDate ? parseISO(playerData.startDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('startDate', date)}
+                                    />
+                                    </div>
+                                    <div className="space-y-2">
+                                    <Label>Fecha de Baja</Label>
+                                    <DatePicker 
+                                        date={playerData.endDate ? parseISO(playerData.endDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('endDate', date)}
+                                        disabled={playerData.currentlyActive}
+                                    />
+                                    </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="currentlyActive" checked={playerData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
+                                <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="hasInterruption" checked={(playerData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
+                                    if(checked) { handleAddInterruption() }
+                                    else { setPlayerData(prev => ({...prev, interruptions: []}))}
+                                }} />
+                                <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                            </div>
+                            {(playerData.interruptions?.length || 0) > 0 && (
+                                <div className="space-y-2 pl-6">
+                                    {playerData.interruptions?.map((interruption, index) => (
+                                        <div key={interruption.id} className="flex items-end gap-2">
+                                            <div className="space-y-1">
+                                                <Label>Inicio Interrupción</Label>
+                                                    <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label>Fin Interrupción</Label>
+                                                    <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
+                                        </div>
+                                    ))}
+                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                                </div>
+                            )}
+                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(playerData)}</span></p>
+                            </div>
+                        </div>
+                        </TabsContent>
+                        <TabsContent value="contact" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id="isOwnTutor" 
+                                    checked={playerData.isOwnTutor || false}
+                                    onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
+                                />
+                                <Label htmlFor="isOwnTutor" className="font-normal">El jugador es su propio tutor (mayor de 18 años)</Label>
+                            </div>
+                                
+                                {!(playerData.isOwnTutor) && (
+                                    <div className="space-y-6 p-4 border rounded-md bg-muted/50">
+                                        <h4 className="font-medium">Datos del Tutor/a</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tutorName">Nombre</Label>
+                                                <Input id="tutorName" autoComplete="off" value={playerData.tutorName || ''} onChange={handleInputChange} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tutorLastName">Apellidos</Label>
+                                                <Input id="tutorLastName" autoComplete="off" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
+                                            <Input id="tutorDni" value={playerData.tutorDni || ''} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                        <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                        <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                    <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
+                                </div>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="sports" className="pt-6">
+                        <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <Label htmlFor="teamId">Equipo</Label>
+                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
+                                        <SelectTrigger>
+                                            <SelectValue placeholder="Selecciona un equipo" />
+                                        </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="masculino">Masculino</SelectItem>
-                                            <SelectItem value="femenino">Femenino</SelectItem>
+                                            <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                            {teams.map(team => (
+                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="nationality">Nacionalidad</Label>
-                                    <Input id="nationality" value={playerData.nationality || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
-                                    <Input id="healthCardNumber" value={playerData.healthCardNumber || ''} onChange={handleInputChange} />
-                                </div>
-                           </div>
-                           <div className="space-y-2">
-                               <Label htmlFor="address">Dirección</Label>
-                               <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                           <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label>Fecha de Alta</Label>
-                                  <DatePicker 
-                                    date={playerData.startDate ? parseISO(playerData.startDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('startDate', date)}
-                                  />
-                                </div>
-                                 <div className="space-y-2">
-                                  <Label>Fecha de Baja</Label>
-                                  <DatePicker 
-                                    date={playerData.endDate ? parseISO(playerData.endDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('endDate', date)}
-                                    disabled={playerData.currentlyActive}
-                                  />
-                                </div>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                               <Checkbox id="currentlyActive" checked={playerData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
-                               <Label htmlFor="currentlyActive">Actualmente de alta</Label>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                               <Checkbox id="hasInterruption" checked={(playerData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
-                                   if(checked) { handleAddInterruption() }
-                                   else { setPlayerData(prev => ({...prev, interruptions: []}))}
-                               }} />
-                               <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
-                           </div>
-                           {(playerData.interruptions?.length || 0) > 0 && (
-                               <div className="space-y-2 pl-6">
-                                   {playerData.interruptions?.map((interruption, index) => (
-                                       <div key={interruption.id} className="flex items-end gap-2">
-                                           <div className="space-y-1">
-                                               <Label>Inicio Interrupción</Label>
-                                                <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
-                                           </div>
-                                           <div className="space-y-1">
-                                               <Label>Fin Interrupción</Label>
-                                                <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
-                                           </div>
-                                           <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
-                                       </div>
-                                   ))}
-                                   <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
-                               </div>
-                           )}
-                           <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(playerData)}</span></p>
-                        </div>
-                       </div>
-                    </TabsContent>
-                    <TabsContent value="contact" className="pt-6">
-                      <div className="space-y-6">
-                          <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="isOwnTutor" 
-                                checked={playerData.isOwnTutor || false}
-                                onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
-                              />
-                              <Label htmlFor="isOwnTutor" className="font-normal">El jugador es su propio tutor (mayor de 18 años)</Label>
-                          </div>
-                            
-                            {!(playerData.isOwnTutor) && (
-                                <div className="space-y-6 p-4 border rounded-md bg-muted/50">
-                                    <h4 className="font-medium">Datos del Tutor/a</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" autoComplete="off" value={playerData.tutorName || ''} onChange={handleInputChange} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" autoComplete="off" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
-                                        </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                        <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
-                                        <Input id="tutorDni" value={playerData.tutorDni || ''} onChange={handleInputChange} />
+                                        <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                        <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                        <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                 <div className="space-y-2">
-                                     <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
-                                     <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
-                                 </div>
-                                 <div className="space-y-2">
-                                     <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
-                                     <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
-                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
-                            </div>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="sports" className="pt-6">
-                      <div className="space-y-6">
-                            <div className="space-y-2">
-                                <Label htmlFor="teamId">Equipo</Label>
-                                <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un equipo" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
-                                        {teams.map(team => (
-                                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
-                                    <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
-                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
+                                <div className="flex items-center space-x-2 pt-4">
+                                <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
+                                <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
                                 </div>
                             </div>
-                            <div className="flex items-center space-x-2 pt-4">
-                               <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
-                               <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
-                             </div>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="custom" className="pt-6">
-                        <div className="space-y-6">
-                            {playerCustomFields.length > 0 ? playerCustomFields.map(field => (
-                                <div key={field.id} className="space-y-2">
-                                    <Label htmlFor={field.id}>{field.name}</Label>
-                                    <Input 
-                                        id={field.id}
-                                        type={field.type}
-                                        value={playerData.customFields?.[field.id] || ''}
-                                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                                    />
-                                </div>
-                            )) : (
-                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.</p>
-                            )}
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
-            <DialogFooter>
+                        </TabsContent>
+                        <TabsContent value="custom" className="pt-6">
+                            <div className="space-y-6">
+                                {playerCustomFields.length > 0 ? playerCustomFields.map(field => (
+                                    <div key={field.id} className="space-y-2">
+                                        <Label htmlFor={field.id}>{field.name}</Label>
+                                        <Input 
+                                            id={field.id}
+                                            type={field.type}
+                                            value={playerData.customFields?.[field.id] || ''}
+                                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                        />
+                                    </div>
+                                )) : (
+                                    <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.</p>
+                                )}
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </ScrollArea>
+            <DialogFooter className="pt-4 border-t">
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>

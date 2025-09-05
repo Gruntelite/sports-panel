@@ -876,253 +876,255 @@ export default function CoachesPage() {
                     {modalMode === 'add' ? 'Rellena la información para añadir un nuevo miembro al equipo técnico.' : 'Modifica la información del miembro.'}
                 </DialogDescription>
             </DialogHeader>
-            <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
-                <div className="flex flex-col items-center gap-4 pt-5">
-                    <Label>Foto</Label>
-                    <Avatar className="h-32 w-32">
-                        <AvatarImage src={imagePreview || coachData.avatar} />
-                        <AvatarFallback>
-                            {(coachData.name || 'E').charAt(0)}
-                            {(coachData.lastName || 'T').charAt(0)}
-                        </AvatarFallback>
-                    </Avatar>
-                     <Button asChild variant="outline" size="sm">
-                        <label htmlFor="coach-image" className="cursor-pointer">
-                            <Upload className="mr-2 h-3 w-3"/>
-                            Subir
-                        </label>
-                    </Button>
-                    <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
-                </div>
-                
-                 <Tabs defaultValue="personal" className="w-full">
-                    <TabsList className="grid w-full grid-cols-4">
-                        <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                        <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
-                        <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>Cargo y Equipo</TabsTrigger>
-                        <TabsTrigger value="custom">Otros Datos</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="personal" className="pt-6">
-                      <div className="space-y-6">
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="name">Nombre</Label>
-                                   <Input id="name" autoComplete="off" value={coachData.name || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="lastName">Apellidos</Label>
-                                   <Input id="lastName" autoComplete="off" value={coachData.lastName || ''} onChange={handleInputChange} />
-                               </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <ScrollArea className="max-h-[70vh] p-0">
+                <div className="py-4 px-6 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
+                    <div className="flex flex-col items-center gap-4 pt-5">
+                        <Label>Foto</Label>
+                        <Avatar className="h-32 w-32">
+                            <AvatarImage src={imagePreview || coachData.avatar} />
+                            <AvatarFallback>
+                                {(coachData.name || 'E').charAt(0)}
+                                {(coachData.lastName || 'T').charAt(0)}
+                            </AvatarFallback>
+                        </Avatar>
+                        <Button asChild variant="outline" size="sm">
+                            <label htmlFor="coach-image" className="cursor-pointer">
+                                <Upload className="mr-2 h-3 w-3"/>
+                                Subir
+                            </label>
+                        </Button>
+                        <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                    </div>
+                    
+                    <Tabs defaultValue="personal" className="w-full">
+                        <TabsList className="grid w-full grid-cols-4">
+                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
+                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
+                            <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>Cargo y Equipo</TabsTrigger>
+                            <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="personal" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                  <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
-                                  <DatePicker 
-                                    date={coachData.birthDate ? parseISO(coachData.birthDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('birthDate', date)}
-                                  />
-                                   {coachData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(coachData.birthDate)} años</p>}
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="dni">NIF</Label>
-                                   <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
-                               </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="sex">Sexo</Label>
-                                    <Select value={coachData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                                        <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="masculino">Masculino</SelectItem>
-                                            <SelectItem value="femenino">Femenino</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                           </div>
-                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="nationality">Nacionalidad</Label>
-                                    <Input id="nationality" value={coachData.nationality || ''} onChange={handleInputChange} />
+                                    <Label htmlFor="name">Nombre</Label>
+                                    <Input id="name" autoComplete="off" value={coachData.name || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
-                                    <Input id="healthCardNumber" value={coachData.healthCardNumber || ''} onChange={handleInputChange} />
+                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Input id="lastName" autoComplete="off" value={coachData.lastName || ''} onChange={handleInputChange} />
                                 </div>
-                           </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="address">Dirección</Label>
-                                <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                               <div className="space-y-2">
-                                   <Label htmlFor="city">Ciudad</Label>
-                                   <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
-                               </div>
-                               <div className="space-y-2">
-                                   <Label htmlFor="postalCode">Código Postal</Label>
-                                   <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
-                               </div>
+                                    <div className="space-y-2">
+                                    <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                    <DatePicker 
+                                        date={coachData.birthDate ? parseISO(coachData.birthDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('birthDate', date)}
+                                    />
+                                    {coachData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(coachData.birthDate)} años</p>}
+                                </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
+                                    <Label htmlFor="dni">NIF</Label>
+                                    <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
                                 </div>
-                           </div>
-                            <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
-                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <Label>Fecha de Alta</Label>
-                                  <DatePicker 
-                                    date={coachData.startDate ? parseISO(coachData.startDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('startDate', date)}
-                                  />
-                                </div>
-                                 <div className="space-y-2">
-                                  <Label>Fecha de Baja</Label>
-                                  <DatePicker 
-                                    date={coachData.endDate ? parseISO(coachData.endDate) : undefined}
-                                    onDateChange={(date) => handleDateChange('endDate', date)}
-                                    disabled={coachData.currentlyActive}
-                                  />
-                                </div>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                               <Checkbox id="currentlyActive" checked={coachData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
-                               <Label htmlFor="currentlyActive">Actualmente de alta</Label>
-                           </div>
-                           <div className="flex items-center space-x-2">
-                               <Checkbox id="hasInterruption" checked={(coachData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
-                                   if(checked) { handleAddInterruption() }
-                                   else { setCoachData(prev => ({...prev, interruptions: []}))}
-                               }} />
-                               <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
-                           </div>
-                           {(coachData.interruptions?.length || 0) > 0 && (
-                               <div className="space-y-2 pl-6">
-                                   {coachData.interruptions?.map((interruption, index) => (
-                                       <div key={interruption.id} className="flex items-end gap-2">
-                                           <div className="space-y-1">
-                                               <Label>Inicio Interrupción</Label>
-                                                <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
-                                           </div>
-                                           <div className="space-y-1">
-                                               <Label>Fin Interrupción</Label>
-                                                <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
-                                           </div>
-                                           <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
-                                       </div>
-                                   ))}
-                                   <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
-                               </div>
-                           )}
-                           <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
-                        </div>
-                       </div>
-                    </TabsContent>
-                    <TabsContent value="contact" className="pt-6">
-                      <div className="space-y-6">
-                           <div className="flex items-center space-x-2">
-                              <Checkbox 
-                                id="isOwnTutor" 
-                                checked={coachData.isOwnTutor || false}
-                                onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
-                              />
-                              <Label htmlFor="isOwnTutor" className="font-normal">El miembro del staff es su propio tutor (mayor de 18 años)</Label>
-                          </div>
-                            
-                            {!(coachData.isOwnTutor) && (
-                                <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
-                                    <h4 className="font-medium">Datos del Tutor/a</h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tutorName">Nombre</Label>
-                                            <Input id="tutorName" autoComplete="off" value={coachData.tutorName || ''} onChange={handleInputChange} />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="tutorLastName">Apellidos</Label>
-                                            <Input id="tutorLastName" autoComplete="off" value={coachData.tutorLastName || ''} onChange={handleInputChange} />
-                                        </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="sex">Sexo</Label>
+                                        <Select value={coachData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
+                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="masculino">Masculino</SelectItem>
+                                                <SelectItem value="femenino">Femenino</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="nationality">Nacionalidad</Label>
+                                        <Input id="nationality" value={coachData.nationality || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
-                                        <Input id="tutorDni" value={coachData.tutorDni || ''} onChange={handleInputChange} />
+                                        <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
+                                        <Input id="healthCardNumber" value={coachData.healthCardNumber || ''} onChange={handleInputChange} />
                                     </div>
-                                </div>
-                            )}
-
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                                 <div className="space-y-2">
-                                     <Label htmlFor="email">Email</Label>
-                                     <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} />
-                                 </div>
-                                 <div className="space-y-2">
-                                     <Label htmlFor="phone">Teléfono</Label>
-                                     <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
-                                 </div>
                             </div>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="payment" className="pt-6">
-                        <div className="space-y-6">
-                                 <div className="space-y-2">
-                                    <Label htmlFor="role">Cargo</Label>
-                                    <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona un cargo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {technicalRoles.map(role => (
-                                                <SelectItem key={role} value={role}>{role}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                <div className="space-y-2">
+                                    <Label htmlFor="address">Dirección</Label>
+                                    <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="teamId">Equipo Asignado</Label>
-                                    <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId || 'unassigned'}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecciona un equipo" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="unassigned">Sin equipo</SelectItem>
-                                            <SelectItem value="club">Club (transversal)</SelectItem>
-                                            <DropdownMenuSeparator/>
-                                            {teams.map(team => (
-                                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
                                 </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                        <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
+                                    </div>
+                            </div>
+                                <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
-                                        <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                    <Label>Fecha de Alta</Label>
+                                    <DatePicker 
+                                        date={coachData.startDate ? parseISO(coachData.startDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('startDate', date)}
+                                    />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
-                                        <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
+                                    <Label>Fecha de Baja</Label>
+                                    <DatePicker 
+                                        date={coachData.endDate ? parseISO(coachData.endDate) : undefined}
+                                        onDateChange={(date) => handleDateChange('endDate', date)}
+                                        disabled={coachData.currentlyActive}
+                                    />
+                                    </div>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="currentlyActive" checked={coachData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
+                                <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <Checkbox id="hasInterruption" checked={(coachData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
+                                    if(checked) { handleAddInterruption() }
+                                    else { setCoachData(prev => ({...prev, interruptions: []}))}
+                                }} />
+                                <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                            </div>
+                            {(coachData.interruptions?.length || 0) > 0 && (
+                                <div className="space-y-2 pl-6">
+                                    {coachData.interruptions?.map((interruption, index) => (
+                                        <div key={interruption.id} className="flex items-end gap-2">
+                                            <div className="space-y-1">
+                                                <Label>Inicio Interrupción</Label>
+                                                    <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
+                                            </div>
+                                            <div className="space-y-1">
+                                                <Label>Fin Interrupción</Label>
+                                                    <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
+                                            </div>
+                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
+                                        </div>
+                                    ))}
+                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                                </div>
+                            )}
+                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
+                            </div>
+                        </div>
+                        </TabsContent>
+                        <TabsContent value="contact" className="pt-6">
+                        <div className="space-y-6">
+                            <div className="flex items-center space-x-2">
+                                <Checkbox 
+                                    id="isOwnTutor" 
+                                    checked={coachData.isOwnTutor || false}
+                                    onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
+                                />
+                                <Label htmlFor="isOwnTutor" className="font-normal">El miembro del staff es su propio tutor (mayor de 18 años)</Label>
+                            </div>
+                                
+                                {!(coachData.isOwnTutor) && (
+                                    <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
+                                        <h4 className="font-medium">Datos del Tutor/a</h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tutorName">Nombre</Label>
+                                                <Input id="tutorName" autoComplete="off" value={coachData.tutorName || ''} onChange={handleInputChange} />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label htmlFor="tutorLastName">Apellidos</Label>
+                                                <Input id="tutorLastName" autoComplete="off" value={coachData.tutorLastName || ''} onChange={handleInputChange} />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
+                                            <Input id="tutorDni" value={coachData.tutorDni || ''} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="email">Email</Label>
+                                        <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="phone">Teléfono</Label>
+                                        <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
                             </div>
-                    </TabsContent>
-                     <TabsContent value="custom" className="pt-6">
-                        <div className="space-y-6">
-                            {coachCustomFields.length > 0 ? coachCustomFields.map(field => (
-                                <div key={field.id} className="space-y-2">
-                                    <Label htmlFor={field.id}>{field.name}</Label>
-                                    <Input 
-                                        id={field.id}
-                                        type={field.type}
-                                        value={coachData.customFields?.[field.id] || ''}
-                                        onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
-                                    />
+                        </TabsContent>
+                        <TabsContent value="payment" className="pt-6">
+                            <div className="space-y-6">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="role">Cargo</Label>
+                                        <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un cargo" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {technicalRoles.map(role => (
+                                                    <SelectItem key={role} value={role}>{role}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="teamId">Equipo Asignado</Label>
+                                        <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId || 'unassigned'}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona un equipo" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                                <SelectItem value="club">Club (transversal)</SelectItem>
+                                                <DropdownMenuSeparator/>
+                                                {teams.map(team => (
+                                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                            <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                            <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
+                                        </div>
+                                    </div>
                                 </div>
-                            )) : (
-                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para entrenadores. Puedes añadirlos en Ajustes del Club.</p>
-                            )}
-                        </div>
-                    </TabsContent>
-                </Tabs>
-            </div>
-            <DialogFooter>
+                        </TabsContent>
+                        <TabsContent value="custom" className="pt-6">
+                            <div className="space-y-6">
+                                {coachCustomFields.length > 0 ? coachCustomFields.map(field => (
+                                    <div key={field.id} className="space-y-2">
+                                        <Label htmlFor={field.id}>{field.name}</Label>
+                                        <Input 
+                                            id={field.id}
+                                            type={field.type}
+                                            value={coachData.customFields?.[field.id] || ''}
+                                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                        />
+                                    </div>
+                                )) : (
+                                    <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para entrenadores. Puedes añadirlos en Ajustes del Club.</p>
+                                )}
+                            </div>
+                        </TabsContent>
+                    </Tabs>
+                </div>
+            </ScrollArea>
+            <DialogFooter className="pt-4 border-t">
                 <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancelar</Button>
                 </DialogClose>
