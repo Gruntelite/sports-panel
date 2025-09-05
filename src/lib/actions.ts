@@ -79,11 +79,9 @@ export async function createClubAction(data: { clubName: string, adminName: stri
                 eventSourceUrl: data.eventSourceUrl,
                 clientUserAgent: data.clientUserAgent,
             });
-        } else {
-            console.log("Skipping Meta event: Pixel ID or Access Token not configured.");
         }
     } catch(metaError) {
-        console.warn("Failed to send event to Meta, but club creation will proceed. Error:", metaError);
+        console.warn("Could not send event to Meta, but club creation will proceed. Error:", metaError);
     }
 
 
@@ -384,8 +382,8 @@ export async function sendServerEventAction(eventData: {
   const apiVersion = 'v20.0';
 
   if (!pixelId || !accessToken) {
-    console.error('Meta Pixel ID or Access Token is not configured.');
-    return { success: false, error: 'Server configuration error.' };
+    console.log('Meta Pixel ID or Access Token is not configured. Skipping event.');
+    return { success: true, message: 'Skipped Meta event: Configuration missing.' };
   }
 
   const url = `https://graph.facebook.com/${apiVersion}/${pixelId}/events?access_token=${accessToken}`;
