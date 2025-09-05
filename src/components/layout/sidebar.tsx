@@ -2,14 +2,14 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "../ui/dialog";
 import { useEffect, useState } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, Timestamp } from "firebase/firestore";
 import { signOut } from "firebase/auth";
 import { Skeleton } from "../ui/skeleton";
 import { Logo } from "../logo";
@@ -19,6 +19,7 @@ import { Textarea } from "../ui/textarea";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { differenceInDays, isFuture } from "date-fns";
 
 
 const menuItems = [
@@ -191,6 +192,7 @@ export function Sidebar() {
     const [clubId, setClubId] = useState<string | null>(null);
     const [clubName, setClubName] = useState<string | null>(null);
     const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
+    const [trialDaysLeft, setTrialDaysLeft] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
     const [isHelpOpen, setIsHelpOpen] = useState(false);
     const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -216,7 +218,16 @@ export function Sidebar() {
                         const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
                         const settingsSnap = await getDoc(settingsRef);
                         if(settingsSnap.exists()){
-                            setClubLogoUrl(settingsSnap.data().logoUrl || null);
+                            const settingsData = settingsSnap.data();
+                            setClubLogoUrl(settingsData.logoUrl || null);
+                            
+                            const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
+                            if (trialEndDate && isFuture(trialEndDate)) {
+                                const daysLeft = differenceInDays(trialEndDate, new Date());
+                                if (daysLeft <= 30) {
+                                    setTrialDaysLeft(daysLeft);
+                                }
+                            }
                         }
 
                         setUserProfile({
@@ -258,6 +269,14 @@ export function Sidebar() {
                         <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32 bg-white/20" />}</span>
                     </Link>
                 </div>
+                 {trialDaysLeft !== null && (
+                    <div className="px-4 lg:px-6 py-2 border-b border-primary-foreground/20 text-center">
+                        <p className="text-sm font-semibold flex items-center justify-center gap-2 bg-white/10 rounded-full py-1">
+                            <Sparkles className="h-4 w-4 text-yellow-300" />
+                            Te quedan {trialDaysLeft} días de prueba
+                        </p>
+                    </div>
+                )}
                 <div className="flex-1 overflow-y-auto pt-4">
                     <nav className="grid items-start px-2 font-medium lg:px-4">
                         {menuItems.map((item) => {

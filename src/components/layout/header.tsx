@@ -23,7 +23,7 @@ const menuItems = [
     { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
     { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
     { href: "/importer", label: "Importador de BBDD", icon: Database },
-    { href: "/club-settings", label: "Ajustes del Club", icon: UserCog},
+    { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
 ];
 
 
