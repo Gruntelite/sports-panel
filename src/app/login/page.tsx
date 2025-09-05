@@ -63,6 +63,12 @@ export default function LoginPage() {
   return (
     <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
        <div className="hidden lg:flex items-center justify-center p-8 relative overflow-hidden">
+         <div className="absolute top-4 left-4 z-10">
+            <Link href="/" className="flex items-center gap-2 text-white">
+                <Logo />
+                <span className="font-bold text-lg">SportsPanel</span>
+            </Link>
+        </div>
         <Image 
           src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
           alt="Jugadores celebrando"
@@ -85,7 +91,7 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="relative flex flex-col items-center justify-center h-screen">
-          <header className="absolute top-0 left-0 right-0 px-4 py-4 lg:px-8">
+          <header className="absolute top-0 left-0 right-0 px-4 py-4 lg:hidden">
             <div className="flex items-center justify-between">
                 <Link href="/" className="flex items-center gap-2">
                     <Logo />
