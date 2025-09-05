@@ -1,4 +1,3 @@
-
 'use server';
 
 import { Timestamp } from "firebase-admin/firestore";
@@ -19,37 +18,6 @@ type ClubCreationData = {
     clientUserAgent?: string;
 }
 
-export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
-    try {
-        const response = await fetch('https://createclub-prea6lqnoa-uc.a.run.app', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Internal-Call-Secret': process.env.INTERNAL_CALL_SECRET || 'your-secret-placeholder'
-            },
-            body: JSON.stringify(values),
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json();
-            console.error("Error from Cloud Function:", errorData);
-            return { success: false, error: errorData.error || "Error al conectar con el servicio de creación de clubes." };
-        }
-
-        const result = await response.json();
-        return result;
-
-    } catch (error: any) {
-        console.error("Error calling createClub function:", error);
-        return { success: false, error: "No se pudo conectar con el servidor para crear el club." };
-    }
-}
-
-
-type VerificationInput = {
-    clubId: string;
-}
-
 function getLuminance(hex: string): number {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return 0;
@@ -59,6 +27,64 @@ function getLuminance(hex: string): number {
     const b = parseInt(result[3], 16);
     
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+}
+
+export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
+    const { clubName, adminName, sport, email, password, themeColor, eventId, eventSourceUrl, clientUserAgent } = values;
+    
+    try {
+        const userRecord = await adminAuth.createUser({
+            email: email,
+            password: password,
+            displayName: adminName,
+        });
+        const uid = userRecord.uid;
+
+        const batch = adminDb.batch();
+
+        const clubRef = adminDb.collection("clubs").doc();
+        const clubId = clubRef.id;
+        
+        batch.set(clubRef, {
+            name: clubName,
+            sport: sport,
+            adminUid: uid,
+            createdAt: Timestamp.now(),
+        });
+
+        const userDocRef = adminDb.collection('users').doc(uid);
+        batch.set(userDocRef, {
+            email: email,
+            name: adminName,
+            role: 'super-admin',
+            clubId: clubId,
+        });
+        
+        const luminance = getLuminance(themeColor);
+        const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
+        const trialEndDate = new Date();
+        trialEndDate.setDate(trialEndDate.getDate() + 20);
+
+        const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
+        batch.set(settingsRef, {
+            themeColor: themeColor,
+            themeColorForeground: foregroundColor,
+            logoUrl: null,
+            trialEndDate: Timestamp.fromDate(trialEndDate),
+        }, { merge: true });
+
+        await batch.commit();
+        
+        return { success: true, userId: uid };
+        
+    } catch (error: any) {
+        console.error("Error in createClubAction:", error);
+        let errorMessage = "Ocurrió un error inesperado al crear el club.";
+        if (error.code === 'auth/email-already-exists') {
+            errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
+        }
+        return { success: false, error: errorMessage };
+    }
 }
 
 
