@@ -9,7 +9,6 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -19,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
-import { ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -59,13 +58,18 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background relative">
-       <Button variant="outline" size="icon" className="absolute top-4 left-4" asChild>
-        <Link href="/">
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
-      </Button>
-      <Card className="mx-auto max-w-sm w-full shadow-xl border">
+    <div className="w-full lg:grid lg:min-h-screen lg:grid-cols-2">
+       <div className="hidden lg:flex items-center justify-center p-8 relative overflow-hidden">
+        <Image 
+          src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
+          alt="Jugadores celebrando"
+          fill
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-black/50"></div>
+      </div>
+      <div className="flex items-center justify-center py-12">
+      <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
             <Logo withText={true} />
@@ -98,8 +102,7 @@ export default function LoginPage() {
             </p>
         </CardFooter>
       </Card>
+      </div>
     </div>
   );
 }
-
-    
