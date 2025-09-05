@@ -20,7 +20,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { CheckCircle2, ArrowLeft } from "lucide-react";
+import { Star, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -70,18 +70,18 @@ export default function LoginPage() {
         />
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-md space-y-8">
-            <ul className="text-xl space-y-6">
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 text-2xl font-bold">+130 clubs ya confían en nosotros</span>
+            <ul className="space-y-6">
+                 <li className="flex items-center gap-4">
+                    <Star className="h-8 w-8 flex-shrink-0 text-yellow-400 fill-yellow-400 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50 text-3xl font-bold">+130 clubs ya confían en nosotros</span>
                 </li>
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 text-2xl font-bold">+9h de Ahorro Semanal</span>
+                 <li className="flex items-center gap-4">
+                    <Star className="h-8 w-8 flex-shrink-0 text-yellow-400 fill-yellow-400 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50 text-3xl font-bold">+9h de Ahorro Semanal</span>
                 </li>
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-shadow shadow-black/50 text-2xl font-bold">95% Tasa de Retención</span>
+                 <li className="flex items-center gap-4">
+                    <Star className="h-8 w-8 flex-shrink-0 text-yellow-400 fill-yellow-400 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50 text-3xl font-bold">95% Tasa de Retención</span>
                 </li>
             </ul>
         </div>
