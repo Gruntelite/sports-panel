@@ -37,6 +37,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     // 2. Create the club document
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
+    
     await clubRef.set({
       name: data.clubName,
       sport: data.sport,
@@ -67,15 +68,24 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
 
-    // 5. Send server-side event to Meta for analytics
-    await sendServerEventAction({ 
-        eventName: 'StartTrial', 
-        email: data.email, 
-        name: data.adminName,
-        eventId: data.eventId,
-        eventSourceUrl: data.eventSourceUrl,
-        clientUserAgent: data.clientUserAgent,
-    });
+    // 5. Send server-side event to Meta for analytics (optional)
+    try {
+        if (process.env.META_PIXEL_ID && process.env.META_ACCESS_TOKEN) {
+            await sendServerEventAction({ 
+                eventName: 'StartTrial', 
+                email: data.email, 
+                name: data.adminName,
+                eventId: data.eventId,
+                eventSourceUrl: data.eventSourceUrl,
+                clientUserAgent: data.clientUserAgent,
+            });
+        } else {
+            console.log("Skipping Meta event: Pixel ID or Access Token not configured.");
+        }
+    } catch(metaError) {
+        console.warn("Failed to send event to Meta, but club creation will proceed. Error:", metaError);
+    }
+
 
     return { success: true, userId: uid };
 
