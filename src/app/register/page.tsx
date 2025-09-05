@@ -23,9 +23,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 import { sports } from "@/lib/sports";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
-import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
-import { getFunctions, httpsCallable } from 'firebase/functions';
-import { auth, functions } from "@/lib/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
+import { createClubAction } from "@/lib/actions";
 import { v4 as uuidv4 } from 'uuid';
 import Image from "next/image";
 
@@ -68,19 +68,20 @@ export default function RegisterPage() {
     const eventId = uuidv4();
     const eventSourceUrl = window.location.href;
     const clientUserAgent = navigator.userAgent;
+    
+    const payload = { 
+        ...values,
+        eventId,
+        eventSourceUrl,
+        clientUserAgent
+    };
 
     if (window.fbq) {
       window.fbq('track', 'StartTrial', {}, {event_id: eventId});
     }
 
     try {
-        const createClubCallable = httpsCallable(functions, 'createClub');
-        const result = (await createClubCallable({ 
-            ...values,
-            eventId,
-            eventSourceUrl,
-            clientUserAgent
-        })).data as { success: boolean; error?: string; userId?: string };
+        const result = await createClubAction(payload);
 
         if (result.success && result.userId) {
             toast({

@@ -1,7 +1,8 @@
+
 import { onObjectDeleted } from 'firebase-functions/v2/storage';
 import { getFirestore, Timestamp } from 'firebase-admin/firestore';
 import * as admin from 'firebase-admin';
-import { onCall } from 'firebase-functions/v2/https';
+import { onCall, HttpsError } from 'firebase-functions/v2/https';
 import { createHmac }from 'crypto';
 
 
@@ -25,7 +26,15 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export const createClub = onCall(async (request) => {
+export const createClub = onCall({ cors: true, allow: 'unauthenticated' }, async (request) => {
+    
+    const internalCallSecret = process.env.INTERNAL_CALL_SECRET || 'your-secret-placeholder';
+    const clientSecret = request.rawRequest.get('X-Internal-Call-Secret');
+    
+    if (clientSecret !== internalCallSecret) {
+        throw new HttpsError('unauthenticated', 'La llamada no está autorizada.');
+    }
+
     const { clubName, adminName, sport, email, password, themeColor, eventId, eventSourceUrl, clientUserAgent } = request.data;
     
     try {
@@ -77,7 +86,7 @@ export const createClub = onCall(async (request) => {
         if (error.code === 'auth/email-already-exists') {
             errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
         }
-        return { success: false, error: errorMessage };
+        throw new HttpsError('internal', errorMessage);
     }
 });
 

@@ -1,3 +1,4 @@
+
 'use server';
 
 import { Timestamp } from "firebase-admin/firestore";
@@ -5,6 +6,44 @@ import { auth as adminAuth, db as adminDb } from './firebase-admin';
 import type { ClubSettings } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
+
+type ClubCreationData = {
+    clubName: string;
+    adminName: string;
+    sport: string;
+    email: string;
+    password: string;
+    themeColor: string;
+    eventId?: string;
+    eventSourceUrl?: string;
+    clientUserAgent?: string;
+}
+
+export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
+    try {
+        const response = await fetch('https://createclub-prea6lqnoa-uc.a.run.app', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Internal-Call-Secret': process.env.INTERNAL_CALL_SECRET || 'your-secret-placeholder'
+            },
+            body: JSON.stringify(values),
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            console.error("Error from Cloud Function:", errorData);
+            return { success: false, error: errorData.error || "Error al conectar con el servicio de creación de clubes." };
+        }
+
+        const result = await response.json();
+        return result;
+
+    } catch (error: any) {
+        console.error("Error calling createClub function:", error);
+        return { success: false, error: "No se pudo conectar con el servidor para crear el club." };
+    }
+}
 
 
 type VerificationInput = {
