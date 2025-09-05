@@ -70,15 +70,18 @@ export default function LoginPage() {
         />
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-md space-y-8">
-            <h1 className="text-4xl font-bold text-shadow shadow-black/50">+130 clubs ya confían en nosotros</h1>
-            <ul className="text-xl">
-                 <li className="flex items-center gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
-                    <span className="text-shadow shadow-black/50">+9h de Ahorro Semanal</span>
+            <ul className="text-xl space-y-6">
+                 <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50 text-2xl font-bold">+130 clubs ya confían en nosotros</span>
                 </li>
-                 <li className="flex items-center gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
-                    <span className="text-shadow shadow-black/50">95% Tasa de Retención</span>
+                 <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50 text-2xl font-bold">+9h de Ahorro Semanal</span>
+                </li>
+                 <li className="flex items-center gap-3">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <span className="text-shadow shadow-black/50 text-2xl font-bold">95% Tasa de Retención</span>
                 </li>
             </ul>
         </div>
