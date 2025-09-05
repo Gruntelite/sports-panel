@@ -1,7 +1,7 @@
 
 'use server';
 
-import { getFirestore, Timestamp, FieldValue } from "firebase-admin/firestore";
+import { getFirestore, Timestamp } from "firebase-admin/firestore";
 import { getAuth } from 'firebase-admin/auth';
 import { db as adminDb, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
 import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
@@ -25,20 +25,16 @@ function getLuminance(hex: string): number {
 }
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string}> {
-  console.log("Starting createClubAction for email:", data.email);
   try {
     // 1. Create Firebase Auth user
-    console.log("Step 1: Creating Firebase Auth user...");
     const userRecord = await adminAuth.createUser({
       email: data.email,
       password: data.password,
       displayName: data.adminName,
     });
     const uid = userRecord.uid;
-    console.log("Step 1 SUCCESS: Auth user created with UID:", uid);
 
     // 2. Create the club document
-    console.log("Step 2: Creating club document in Firestore...");
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
     await clubRef.set({
@@ -47,10 +43,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       adminUid: uid,
       createdAt: Timestamp.now(),
     });
-    console.log("Step 2 SUCCESS: Club document created with ID:", clubId);
     
     // 3. Set the user document in the root 'users' collection
-    console.log("Step 3: Creating user document in root /users collection...");
     const userDocRef = adminDb.collection('users').doc(uid);
     await userDocRef.set({
         email: data.email,
@@ -58,10 +52,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         role: 'super-admin',
         clubId: clubId
     });
-    console.log("Step 3 SUCCESS: User document created in Firestore.");
 
-    // 4. Create club settings
-    console.log("Step 4: Creating club settings...");
+    // 4. Create club settings with trial period
     const luminance = getLuminance(data.themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const trialEndDate = new Date();
@@ -74,10 +66,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         logoUrl: null,
         trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
-    console.log("Step 4 SUCCESS: Club settings created.");
 
-    // 5. Send server-side event to Meta
-    console.log("Step 5: Sending server event to Meta...");
+    // 5. Send server-side event to Meta for analytics
     await sendServerEventAction({ 
         eventName: 'StartTrial', 
         email: data.email, 
@@ -86,14 +76,12 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         eventSourceUrl: data.eventSourceUrl,
         clientUserAgent: data.clientUserAgent,
     });
-    console.log("Step 5 SUCCESS: Meta event sent.");
 
-    console.log("createClubAction completed successfully for:", data.email);
     return { success: true, userId: uid };
 
   } catch (error: any) {
-    console.error("FATAL ERROR in createClubAction:", error);
-    let errorMessage = "Ocurrió un error inesperado al iniciar el registro.";
+    console.error("Error in createClubAction:", error);
+    let errorMessage = "Ocurrió un error inesperado al crear el club.";
      if (error.code === 'auth/email-already-exists') {
         errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
     }
@@ -249,7 +237,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
       clubId,
       documentTitle,
       totalSent: members.filter(m => m.email).length,
-      createdAt: FieldValue.serverTimestamp()
+      createdAt: Timestamp.now()
     });
 
     const requestsToSend: { recipient: {email: string, name: string}, url: string }[] = [];
@@ -270,7 +258,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
         documentTitle,
         message,
         status: 'pending',
-        createdAt: FieldValue.serverTimestamp(),
+        createdAt: Timestamp.now(),
       });
       
       const appUrl = `https://sportspanel.net`;
