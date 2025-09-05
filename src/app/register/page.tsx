@@ -132,11 +132,15 @@ export default function RegisterPage() {
         <div className="absolute bg-blue-700/50 rounded-full w-[800px] h-[800px] -bottom-40 -left-40"></div>
         <div className="absolute bg-blue-700/50 rounded-full w-[600px] h-[600px] -top-20 -right-40"></div>
         <div className="z-10 text-white max-w-md space-y-8">
-            <h1 className="text-4xl font-bold">15 días de prueba gratis</h1>
+            <h1 className="text-4xl font-bold">20 días de prueba gratis</h1>
             <ul className="space-y-4 text-xl">
-                <li className="flex items-start gap-3">
+                 <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>Sin ningún compromiso, cancela cuando quieras.</span>
+                    <span>Sin compromiso.</span>
+                </li>
+                 <li className="flex items-start gap-3">
+                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
+                    <span>Cancela cuando quieras.</span>
                 </li>
                  <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
@@ -144,11 +148,7 @@ export default function RegisterPage() {
                 </li>
                  <li className="flex items-start gap-3">
                     <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>Sin introducir tu tarjeta de crédito hasta el final de la prueba.</span>
-                </li>
-                 <li className="flex items-start gap-3">
-                    <CheckCircle2 className="h-7 w-7 mt-1 text-blue-300"/>
-                    <span>No pagarás nada hoy, ni tendrás que cancelar nada.</span>
+                    <span>No pagarás nada hoy.</span>
                 </li>
             </ul>
         </div>
@@ -258,7 +258,7 @@ export default function RegisterPage() {
               />
               <Button type="submit" className="w-full" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 15 días GRATIS'}
+                {loading ? 'Redirigiendo a pago...' : 'Empieza tu prueba de 20 días GRATIS'}
               </Button>
             </form>
           </Form>
