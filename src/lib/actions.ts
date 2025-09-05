@@ -1,10 +1,9 @@
 
 'use server';
 
-import { getFirestore, Timestamp } from "firebase-admin/firestore";
-import { getAuth } from 'firebase-admin/auth';
-import { db as adminDb, auth as adminAuth } from './firebase-admin'; // Use Admin SDK
-import type { ClubSettings, Player, Coach, Staff, Socio } from "./types";
+import { Timestamp } from "firebase-admin/firestore";
+import { auth as adminAuth, db as adminDb } from './firebase-admin';
+import type { ClubSettings } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
 
@@ -324,13 +323,13 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-    const user = await getAuth().verifyIdToken(adminAuth.currentUser.getIdToken(true));
+    const userRecord = await adminAuth.getUser(adminAuth.currentUser.uid);
     
-    if (!user) {
+    if (!userRecord) {
         throw new Error('User not authenticated');
     }
 
-    const customerDocRef = adminDb.collection('customers').doc(user.uid);
+    const customerDocRef = adminDb.collection('customers').doc(userRecord.uid);
     
     const checkoutSessionsRef = customerDocRef.collection('checkout_sessions');
     const checkoutDocRef = await checkoutSessionsRef.add({
@@ -341,8 +340,8 @@ export async function createPortalLinkAction(): Promise<string> {
       mode: 'subscription',
       automatic_tax: { enabled: true },
       metadata: {
-        userId: user.uid,
-        userEmail: user.email,
+        userId: userRecord.uid,
+        userEmail: userRecord.email,
         eventName: 'Purchase', // Event to trigger on success
       },
     });
