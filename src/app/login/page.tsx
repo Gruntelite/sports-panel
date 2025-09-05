@@ -80,7 +80,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <div className="text-center">
-                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">+130 Clubs nos Validan</p>
+                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">+130 Clubs nos Eligen cada Mes</p>
             </div>
             <Separator className="bg-white/20" />
             <div className="text-center">
