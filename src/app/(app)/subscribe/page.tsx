@@ -17,43 +17,41 @@ import { doc, getDoc, collection, addDoc, onSnapshot } from "firebase/firestore"
 
 export default function SubscribePage() {
   const { toast } = useToast();
-  const [loading, setLoading] = useState(true);
-  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleManageSubscription = async () => {
     if (!auth.currentUser) {
-        toast({ variant: "destructive", title: "Error", description: "Debes estar autenticado." });
-        setLoading(false);
-        return;
+      toast({ variant: "destructive", title: "Error", description: "Debes estar autenticado." });
+      setLoading(false);
+      return;
     }
+    setLoading(true);
 
     try {
-        const user = auth.currentUser;
-        const userDocRef = doc(db, 'users', user.uid);
-        
-        const checkoutSessionRef = collection(userDocRef, 'checkout_sessions');
+      const user = auth.currentUser;
+      const checkoutSessionRef = collection(doc(db, 'users', user.uid), 'checkout_sessions');
 
-        const sessionDocRef = await addDoc(checkoutSessionRef, {
-            price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
-            success_url: window.location.origin + "/dashboard?subscription=success",
-            cancel_url: window.location.origin + "/subscribe?subscription=cancelled",
-            allow_promotion_codes: true,
-            mode: 'subscription',
-        });
+      const sessionDocRef = await addDoc(checkoutSessionRef, {
+        price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
+        success_url: window.location.origin + "/dashboard?subscription=success",
+        cancel_url: window.location.origin + "/subscribe?subscription=cancelled",
+        allow_promotion_codes: true,
+        mode: 'subscription',
+      });
 
-        const unsubscribe = onSnapshot(sessionDocRef, (snap) => {
-            const { error, url } = snap.data() as { error?: { message: string }, url?: string };
-            if (error) {
-                toast({ variant: "destructive", title: "Error", description: error.message });
-                setLoading(false);
-                unsubscribe();
-            }
-            if (url) {
-                window.location.assign(url);
-                unsubscribe();
-            }
-        });
-        
+      const unsubscribe = onSnapshot(sessionDocRef, (snap) => {
+        const { error, url } = snap.data() as { error?: { message: string }, url?: string };
+        if (error) {
+          toast({ variant: "destructive", title: "Error", description: error.message });
+          setLoading(false);
+          unsubscribe();
+        }
+        if (url) {
+          window.location.assign(url);
+          unsubscribe();
+        }
+      });
+
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: `No se pudo redirigir al portal de facturación: ${error.message}` });
       setLoading(false);
@@ -62,17 +60,16 @@ export default function SubscribePage() {
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged((user) => {
-        if (user) {
-            setUserEmail(user.email);
-            setLoading(false);
-            handleManageSubscription();
-        } else {
-            setLoading(false);
-        }
+      if (user) {
+        handleManageSubscription();
+      } else {
+        // Handle case where user is not logged in, maybe redirect to login
+        toast({ variant: "destructive", title: "Error", description: "No has iniciado sesión." });
+      }
     });
-    return () => unsubscribe();
-  }, []);
 
+    return () => unsubscribe();
+  }, []); // Empty dependency array ensures this runs once on mount
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-muted/40 p-4">
@@ -87,12 +84,12 @@ export default function SubscribePage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <div className="flex flex-col items-center justify-center gap-4">
-                <Loader2 className="h-8 w-8 animate-spin" />
-                <p className="text-muted-foreground">
-                    Redirigiendo a nuestro portal de pago seguro...
-                </p>
-            </div>
+          <div className="flex flex-col items-center justify-center gap-4">
+            <Loader2 className="h-8 w-8 animate-spin" />
+            <p className="text-muted-foreground">
+              Redirigiendo a nuestro portal de pago seguro...
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
