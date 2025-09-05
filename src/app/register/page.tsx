@@ -141,11 +141,11 @@ export default function RegisterPage() {
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
             <ul className="text-xl">
                  <li className="flex items-start gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">Sin compromiso</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">Cancela cuando quieras</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
@@ -153,13 +153,18 @@ export default function RegisterPage() {
                     <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades desde el primer día</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">No pagarás nada hoy</span>
                 </li>
             </ul>
         </div>
       </div>
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="relative flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <Link href="/" className="absolute top-8 left-8">
+            <Button variant="outline" size="icon">
+                <ArrowLeft className="h-4 w-4" />
+            </Button>
+        </Link>
         <div className="mx-auto grid w-full max-w-md gap-6">
           <div className="grid gap-2 text-center">
             <Logo withText={true} className="justify-center mb-4"/>

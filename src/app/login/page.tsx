@@ -20,7 +20,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ArrowLeft } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -86,7 +86,12 @@ export default function LoginPage() {
             </ul>
         </div>
       </div>
-      <div className="flex items-center justify-center py-12">
+      <div className="relative flex items-center justify-center py-12">
+      <Link href="/" className="absolute top-8 left-8">
+        <Button variant="outline" size="icon">
+            <ArrowLeft className="h-4 w-4" />
+        </Button>
+      </Link>
       <Card className="mx-auto max-w-sm w-full">
         <CardHeader className="space-y-2 text-center">
           <div className="mx-auto inline-block bg-card text-primary p-3 rounded-full mb-4">
