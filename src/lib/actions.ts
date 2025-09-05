@@ -13,9 +13,6 @@ type ClubCreationData = {
     email: string;
     password: string;
     themeColor: string;
-    eventId?: string;
-    eventSourceUrl?: string;
-    clientUserAgent?: string;
 }
 
 function getLuminance(hex: string): number {
@@ -30,7 +27,7 @@ function getLuminance(hex: string): number {
 }
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
-    const { clubName, adminName, sport, email, password, themeColor, eventId, eventSourceUrl, clientUserAgent } = values;
+    const { clubName, adminName, sport, email, password, themeColor } = values;
     
     try {
         const userRecord = await adminAuth.createUser({

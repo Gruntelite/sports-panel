@@ -65,23 +65,12 @@ export default function RegisterPage() {
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setLoading(true);
     
-    const eventId = uuidv4();
-    const eventSourceUrl = window.location.href;
-    const clientUserAgent = navigator.userAgent;
-    
-    const payload = { 
-        ...values,
-        eventId,
-        eventSourceUrl,
-        clientUserAgent
-    };
-
     if (window.fbq) {
-      window.fbq('track', 'StartTrial', {}, {event_id: eventId});
+      window.fbq('track', 'StartTrial');
     }
 
     try {
-        const result = await createClubAction(payload);
+        const result = await createClubAction(values);
 
         if (result.success && result.userId) {
             toast({
