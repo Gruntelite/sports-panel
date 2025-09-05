@@ -1,4 +1,3 @@
-
 'use server';
 
 import { Timestamp } from "firebase-admin/firestore";
@@ -23,83 +22,6 @@ function getLuminance(hex: string): number {
     return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 }
 
-export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string}> {
-  try {
-    const { clubName, adminName, sport, email, password, themeColor } = data;
-    
-    // Step 1: Create Firebase Auth user
-    const userRecord = await adminAuth.createUser({
-      email: email,
-      password: password,
-      displayName: adminName,
-    });
-    const uid = userRecord.uid;
-
-    const batch = adminDb.batch();
-
-    // Step 2: Create the club document
-    const clubRef = adminDb.collection("clubs").doc();
-    const clubId = clubRef.id;
-    batch.set(clubRef, {
-      name: clubName,
-      sport: sport,
-      adminUid: uid,
-      createdAt: Timestamp.now(),
-    });
-
-    // Step 3: Create the user document in the root 'users' collection
-    const userDocRef = adminDb.collection('users').doc(uid);
-    batch.set(userDocRef, {
-        email: email,
-        name: adminName,
-        role: 'super-admin',
-        clubId: clubId,
-    });
-    
-    // Step 4: Create club settings with trial period
-    const luminance = getLuminance(themeColor);
-    const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
-    const trialEndDate = new Date();
-    trialEndDate.setDate(trialEndDate.getDate() + 20);
-
-    const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
-    batch.set(settingsRef, {
-        themeColor: themeColor,
-        themeColorForeground: foregroundColor,
-        logoUrl: null,
-        trialEndDate: Timestamp.fromDate(trialEndDate),
-    }, { merge: true });
-
-    // Commit all writes at once
-    await batch.commit();
-
-    // Step 5: Send server-side event to Meta for analytics (optional and non-blocking)
-    try {
-        if (process.env.META_PIXEL_ID && process.env.META_ACCESS_TOKEN) {
-            await sendServerEventAction({ 
-                eventName: 'StartTrial', 
-                email: data.email, 
-                name: data.adminName,
-                eventId: data.eventId,
-                eventSourceUrl: data.eventSourceUrl,
-                clientUserAgent: data.clientUserAgent,
-            });
-        }
-    } catch(metaError) {
-        console.warn("Could not send event to Meta, but club creation will proceed. Error:", metaError);
-    }
-
-    return { success: true, userId: uid };
-
-  } catch (error: any) {
-    console.error("Error in createClubAction:", error);
-    let errorMessage = "Ocurrió un error inesperado al crear el club.";
-     if (error.code === 'auth/email-already-exists') {
-        errorMessage = "Este correo electrónico ya está en uso. Por favor, utiliza otro o inicia sesión.";
-    }
-    return { success: false, error: errorMessage };
-  }
-}
 
 export async function requestDataUpdateAction({
   clubId,
@@ -328,7 +250,7 @@ export async function requestFilesAction(formData: FormData): Promise<{ success:
 }
 
 export async function createPortalLinkAction(): Promise<string> {
-    const user = auth.currentUser;
+    const user = adminAuth.app.auth().currentUser;
     if (!user) {
         throw new Error('User not authenticated');
     }

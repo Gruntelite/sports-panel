@@ -21,11 +21,11 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
-import { createClubAction } from "@/lib/actions";
 import { sports } from "@/lib/sports";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, db } from "@/lib/firebase";
+import { signInWithEmailAndPassword, getAuth } from "firebase/auth";
+import { getFunctions, httpsCallable } from 'firebase/functions';
+import { auth, functions } from "@/lib/firebase";
 import { v4 as uuidv4 } from 'uuid';
 import Image from "next/image";
 
@@ -72,35 +72,41 @@ export default function RegisterPage() {
     if (window.fbq) {
       window.fbq('track', 'StartTrial', {}, {event_id: eventId});
     }
-    
-    const result = await createClubAction({ 
-        ...values, 
-        eventId,
-        eventSourceUrl,
-        clientUserAgent
-    });
 
-    if (result.success && result.userId) {
-        toast({
-            title: "¡Club Creado!",
-            description: "Tu prueba de 20 días ha comenzado. ¡Bienvenido!",
-        });
-        
-        try {
+    try {
+        const createClubCallable = httpsCallable(functions, 'createClub');
+        const result = (await createClubCallable({ 
+            ...values,
+            eventId,
+            eventSourceUrl,
+            clientUserAgent
+        })).data as { success: boolean; error?: string; userId?: string };
+
+        if (result.success && result.userId) {
+            toast({
+                title: "¡Club Creado!",
+                description: "Tu prueba de 20 días ha comenzado. ¡Bienvenido!",
+            });
+            
             await signInWithEmailAndPassword(auth, values.email, values.password);
             router.push("/dashboard");
-        } catch(e) {
-            console.warn("Sign in after registration failed, user will need to log in manually.", e);
-            router.push("/login");
+
+        } else {
+            toast({
+                variant: "destructive",
+                title: "Fallo en el Registro",
+                description: result.error || "No se pudo completar el registro. Por favor, inténtalo de nuevo.",
+            });
         }
 
-    } else {
-      toast({
-        variant: "destructive",
-        title: "Fallo en el Registro",
-        description: result.error || "No se pudo completar el registro. Por favor, inténtalo de nuevo.",
-      });
-      setLoading(false);
+    } catch (error: any) {
+         toast({
+            variant: "destructive",
+            title: "Fallo en el Registro",
+            description: error.message || "Ocurrió un error inesperado al contactar con el servidor.",
+        });
+    } finally {
+        setLoading(false);
     }
   }
 

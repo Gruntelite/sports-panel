@@ -35,3 +35,5 @@ scheduledJobs:
 cloudFunctions:
   - entryPoint: onFileDelete
     source: src/functions/index.ts
+  - entryPoint: createClub
+    source: src/functions/index.ts
