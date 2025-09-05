@@ -138,121 +138,121 @@ export default function RegisterPage() {
                 <ArrowLeft className="h-4 w-4" />
             </Button>
         </Link>
-        <div className="mx-auto grid w-full max-w-md gap-6">
-          <div className="grid gap-2 text-center">
-            <Logo withText={true} className="justify-center mb-4"/>
-            <h1 className="text-3xl font-bold font-headline">Crea tu Club</h1>
-            <p className="text-muted-foreground">
-              Empieza a gestionar tu club en minutos.
-            </p>
-          </div>
+        <Card className="mx-auto max-w-sm w-full">
+            <CardHeader className="space-y-2 text-center">
+                <Logo withText={true} className="justify-center mb-4"/>
+                <CardTitle className="text-2xl font-bold font-headline">Crea tu Club</CardTitle>
+                <CardDescription>Empieza a gestionar tu club en minutos.</CardDescription>
+            </CardHeader>
+            <CardContent>
             <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="clubName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nombre del Club</FormLabel>
-                    <FormControl>
-                      <Input placeholder="p.ej., Club Deportivo Águilas" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-               <FormField
-                control={form.control}
-                name="adminName"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tu Nombre Completo</FormLabel>
-                    <FormControl>
-                      <Input placeholder="p.ej., Carlos Sánchez" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                     control={form.control}
-                    name="sport"
+                    name="clubName"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Deporte Principal</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona..." />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {sports.map(sport => (
-                                    <SelectItem key={sport.value} value={sport.value}>{sport.label}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="themeColor"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Color Principal</FormLabel>
+                        <FormLabel>Nombre del Club</FormLabel>
                         <FormControl>
-                            <div className="flex items-center gap-2">
-                                <Input type="color" className="p-1 h-10 w-14" {...field} />
-                                <Input type="text" value={field.value} onChange={field.onChange} placeholder="#2563eb" />
-                            </div>
+                        <Input placeholder="p.ej., Club Deportivo Águilas" {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
                     )}
                 />
-              </div>
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tu Correo Electrónico</FormLabel>
-                    <FormControl>
-                      <Input type="email" placeholder="tu@email.com" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
-                    <FormControl>
-                      <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                {loading ? 'Creando tu club...' : 'Empezar Prueba Gratuita'}
-              </Button>
-            </form>
-          </Form>
-          <div className="mt-4 text-center text-sm">
-            ¿Ya tienes una cuenta?{" "}
-            <Link href="/login" className="underline font-semibold">
-              Inicia Sesión
-            </Link>
-          </div>
-        </div>
+                <FormField
+                    control={form.control}
+                    name="adminName"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tu Nombre Completo</FormLabel>
+                        <FormControl>
+                        <Input placeholder="p.ej., Carlos Sánchez" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="sport"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Deporte Principal</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona..." />
+                                </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                    {sports.map(sport => (
+                                        <SelectItem key={sport.value} value={sport.value}>{sport.label}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="themeColor"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Color Principal</FormLabel>
+                            <FormControl>
+                                <div className="flex items-center gap-2">
+                                    <Input type="color" className="p-1 h-10 w-14" {...field} />
+                                    <Input type="text" value={field.value} onChange={field.onChange} placeholder="#2563eb" />
+                                </div>
+                            </FormControl>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Tu Correo Electrónico</FormLabel>
+                        <FormControl>
+                        <Input type="email" placeholder="tu@email.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="password"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Contraseña</FormLabel>
+                        <FormControl>
+                        <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <Button type="submit" className="w-full" disabled={loading}>
+                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    {loading ? 'Creando tu club...' : 'Empezar Prueba Gratuita'}
+                </Button>
+                </form>
+            </Form>
+            <div className="mt-4 text-center text-sm">
+                ¿Ya tienes una cuenta?{" "}
+                <Link href="/login" className="underline font-semibold">
+                Inicia Sesión
+                </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
