@@ -141,11 +141,11 @@ export default function RegisterPage() {
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
             <ul className="text-xl">
                  <li className="flex items-start gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
                     <span className="text-shadow shadow-black/50">Sin compromiso</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
                     <span className="text-shadow shadow-black/50">Cancela cuando quieras</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
@@ -153,7 +153,7 @@ export default function RegisterPage() {
                     <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades desde el primer día</span>
                 </li>
                  <li className="flex items-start gap-3 pb-4">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
                     <span className="text-shadow shadow-black/50">No pagarás nada hoy</span>
                 </li>
             </ul>
