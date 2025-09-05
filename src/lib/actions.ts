@@ -40,6 +40,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     // Step 2: Create the club document
     const clubRef = adminDb.collection("clubs").doc();
     const clubId = clubRef.id;
+    
+    // Step 3: Set the club data, including the admin UID for reference
     batch.set(clubRef, {
       name: clubName,
       sport: sport,
@@ -47,7 +49,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
       createdAt: Timestamp.now(),
     });
     
-    // Step 3: Create the user document in the root 'users' collection
+    // Step 4: Create the user document in the root 'users' collection
     const userDocRef = adminDb.collection('users').doc(uid);
     batch.set(userDocRef, {
         email: email,
@@ -56,7 +58,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
         clubId: clubId
     });
 
-    // Step 4: Create club settings with trial period
+    // Step 5: Create club settings with trial period
     const luminance = getLuminance(themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const trialEndDate = new Date();
@@ -73,7 +75,7 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     // Commit all writes at once
     await batch.commit();
 
-    // Step 5: Send server-side event to Meta for analytics (optional and non-blocking)
+    // Step 6: Send server-side event to Meta for analytics (optional and non-blocking)
     try {
         if (process.env.META_PIXEL_ID && process.env.META_ACCESS_TOKEN) {
             await sendServerEventAction({ 
