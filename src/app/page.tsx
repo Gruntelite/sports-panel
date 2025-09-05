@@ -179,11 +179,10 @@ const faqs = [
 ];
 
 const stats = [
-    { value: "7h+", title: "Ahorro Semanal", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
-    { value: "85%", title: "Tasa de Retención", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-    { value: "100%", title: "Mejora Organizativa", description: "De los clubs que afirman haber mejorado su organización interna." },
-    { value: "75%", title: "Valor Percibido", description: "De clubs dispuestos a pagar más por el valor que aporta la plataforma." },
-    { value: "98%", title: "Digitalización", description: "De los procesos de un club que se pueden digitalizar con nuestra plataforma." },
+    { value: "9h+", title: "Ahorro Semanal", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
+    { value: "95%", title: "Tasa de Retención", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
+    { value: "+130", title: "Clubs", description: "Que ya confían en nuestra plataforma para su gestión diaria." },
+    { value: "98%", title: "Digitalización", description: "De los procesos internos del club que se pueden gestionar con nosotros." },
 ];
 
 function ContactForm() {
@@ -390,7 +389,7 @@ export default function LandingPage() {
 
           <section id="stats-banner" className="w-full py-12 md:py-16 bg-gray-800 text-white">
               <div className="container px-4 md:px-6">
-                  <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 gap-x-6 sm:grid-cols-3 md:grid-cols-5 text-center">
+                  <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 gap-x-6 sm:grid-cols-2 md:grid-cols-4 text-center">
                     {stats.map((stat, index) => (
                       <div key={index} className="flex flex-col items-center">
                           <h3 className="text-4xl lg:text-5xl font-bold text-turquesa">{stat.value}</h3>
