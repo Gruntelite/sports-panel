@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -181,7 +180,7 @@ const faqs = [
 const stats = [
     { value: "9h+", title: "Ahorro Semanal", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
     { value: "95%", title: "Tasa de Retención", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-    { value: "+130", title: "Clubs", description: "Que ya confían en nuestra plataforma para su gestión diaria." },
+    { value: "+130", title: "Clubs Deportivos", description: "Que ya confían en nuestra plataforma para su gestión diaria." },
     { value: "98%", title: "Digitalización", description: "De los procesos internos del club que se pueden gestionar con nosotros." },
 ];
 
