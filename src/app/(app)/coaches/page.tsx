@@ -652,7 +652,7 @@ export default function CoachesPage() {
       <Card>
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
+            <div className="flex-1">
               <CardTitle>Equipo Técnico</CardTitle>
               <CardDescription>
                 Gestiona a todos los miembros del personal técnico de tu club.
@@ -743,14 +743,12 @@ export default function CoachesPage() {
                     </DropdownMenuContent>
                  </DropdownMenu>
               ) : (
-                <>
                   <Button size="sm" className="h-9 gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                         Añadir Miembro
                     </span>
                   </Button>
-                </>
               )}
             </div>
           </div>
@@ -768,10 +766,13 @@ export default function CoachesPage() {
                     />
                   </TableHead>
                   {allPossibleColumns.map(field => (
-                      visibleColumns.has(field.id) && 
                       <TableHead 
                         key={field.id}
-                        className={cn(field.id === 'name' && 'font-medium', 'min-w-[150px]')}
+                        className={cn(
+                            'min-w-[150px]',
+                            !visibleColumns.has(field.id) && 'hidden md:table-cell',
+                            field.id !== 'name' && field.id !== 'email' && 'hidden lg:table-cell'
+                        )}
                       >
                           {(field as CustomFieldDef).name || (field as {label: string}).label}
                       </TableHead>
@@ -792,10 +793,13 @@ export default function CoachesPage() {
                       />
                     </TableCell>
                     {allPossibleColumns.map(field => (
-                      visibleColumns.has(field.id) && (
                           <TableCell 
                             key={field.id} 
-                            className={cn(field.id === 'name' && 'font-medium')}
+                            className={cn(
+                                field.id === 'name' && 'font-medium',
+                                !visibleColumns.has(field.id) && 'hidden md:table-cell',
+                                field.id !== 'name' && field.id !== 'email' && 'hidden lg:table-cell'
+                            )}
                           >
                               {field.id === 'name' ? (
                                   <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingCoach(coach)}>
@@ -821,7 +825,6 @@ export default function CoachesPage() {
                                   getCellContent(coach, field.id)
                               )}
                           </TableCell>
-                      )
                     ))}
                     <TableCell>
                       <DropdownMenu>
