@@ -139,21 +139,21 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-md space-y-8">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
-            <ul className="space-y-4 text-xl">
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+            <ul className="text-xl">
+                 <li className="flex items-start gap-3 pb-4">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">Sin compromiso</span>
                 </li>
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                 <li className="flex items-start gap-3 pb-4">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">Cancela cuando quieras</span>
                 </li>
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                 <li className="flex items-start gap-3 pb-4">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">Accede a todas las funcionalidades desde el primer día</span>
                 </li>
-                 <li className="flex items-center gap-3">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                 <li className="flex items-start gap-3 pb-4">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
                     <span className="text-shadow shadow-black/50">No pagarás nada hoy</span>
                 </li>
             </ul>
