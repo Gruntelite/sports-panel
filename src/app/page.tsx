@@ -178,6 +178,14 @@ const faqs = [
   }
 ];
 
+const stats = [
+    { value: "7h+", title: "Ahorro Semanal", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
+    { value: "85%", title: "Tasa de Retención", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
+    { value: "100%", title: "Mejora Organizativa", description: "De los clubs que afirman haber mejorado su organización interna." },
+    { value: "75%", title: "Valor Percibido", description: "De clubs dispuestos a pagar más por el valor que aporta la plataforma." },
+    { value: "98%", title: "Digitalización", description: "De los procesos de un club que se pueden digitalizar con nuestra plataforma." },
+];
+
 function ContactForm() {
     const { toast } = useToast();
     const [name, setName] = React.useState("");
@@ -378,6 +386,20 @@ export default function LandingPage() {
                 </div>
               </div>
             </div>
+          </section>
+
+          <section id="stats-banner" className="w-full py-12 md:py-16 bg-gray-800 text-white">
+              <div className="container px-4 md:px-6">
+                  <div className="mx-auto grid max-w-6xl grid-cols-2 gap-y-10 gap-x-6 sm:grid-cols-3 md:grid-cols-5 text-center">
+                    {stats.map((stat, index) => (
+                      <div key={index} className="flex flex-col items-center">
+                          <h3 className="text-4xl lg:text-5xl font-bold text-turquesa">{stat.value}</h3>
+                          <p className="mt-2 text-sm font-semibold tracking-wide uppercase">{stat.title}</p>
+                          <p className="mt-1 text-xs text-gray-300 max-w-[150px]">{stat.description}</p>
+                      </div>
+                    ))}
+                  </div>
+              </div>
           </section>
 
           <section id="testimonials" className="w-full py-12 md:py-16 bg-muted/30">
