@@ -35,28 +35,25 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     });
     uid = userRecord.uid;
 
-    // 2. Create the user document in the root 'users' collection first
+    // 2. Create the club document
+    const clubRef = adminDb.collection("clubs").doc();
+    const clubId = clubRef.id;
+    
+    // 3. Set the user document in the root 'users' collection
     const userDocRef = adminDb.collection('users').doc(uid);
     await userDocRef.set({
         email: data.email,
         name: data.adminName,
-        role: 'super-admin'
-        // clubId will be added in a moment
+        role: 'super-admin',
+        clubId: clubId
     });
 
-    // 3. Create the club document
-    const clubRef = adminDb.collection("clubs").doc();
-    const clubId = clubRef.id;
+    // 4. Set the club document data
     await clubRef.set({
       name: data.clubName,
       sport: data.sport,
       adminUid: uid,
-      createdAt: FieldValue.serverTimestamp(),
-    });
-
-    // 4. Update the user document with the new clubId
-    await userDocRef.update({
-        clubId: clubId
+      createdAt: Timestamp.now(),
     });
     
     // 5. Create club settings
