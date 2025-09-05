@@ -346,17 +346,17 @@ export default function LandingPage() {
             <div className="container px-4 md:px-6">
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
-                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
+                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
                     El Software que Organiza tu Club y te Ahorra Horas de Gestión cada Semana
                   </h1>
-                  <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                  <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-xl">
                     Centraliza la tesorería, jugadores, entrenadores, documentación, inscripciones y comunicación con familias: todo en un mismo panel.
                   </p>
                 </div>
                 <div className="flex flex-col items-center gap-2">
                   <Button asChild size="lg" className="text-lg px-8 py-6">
                     <Link href="/register" prefetch={false}>
-                      Empieza ahora tu prueba gratuita de 20 días
+                      Pruébalo gratis
                     </Link>
                   </Button>
                 </div>
