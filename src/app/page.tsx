@@ -22,6 +22,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { sendEmailWithSmtpAction } from '@/lib/email';
 import { Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
 
 const features = [
@@ -297,29 +298,44 @@ export default function LandingPage() {
                   </SheetTrigger>
                   <SheetContent side="right">
                     <SheetHeader>
-                        <SheetTitle>Menú</SheetTitle>
+                         <Link href="#" className="flex items-center" prefetch={false}>
+                            <Logo withText={true}/>
+                         </Link>
                     </SheetHeader>
-                    <div className="grid gap-4 py-4">
-                        <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                            Características
-                        </Link>
+                    <div className="grid gap-4 py-6">
+                        <DialogClose asChild>
+                            <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
+                                Características
+                            </Link>
+                        </DialogClose>
+                        <DialogClose asChild>
                         <Link href="#benefits" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                             Beneficios
                         </Link>
+                        </DialogClose>
+                         <DialogClose asChild>
                         <Link href="#pricing" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                             Planes
                         </Link>
+                        </DialogClose>
                         <DialogTrigger asChild>
-                        <Button variant="ghost" className="text-lg font-medium hover:underline underline-offset-4 justify-start p-0">
-                            Contacto
-                        </Button>
+                         <DialogClose asChild>
+                            <Button variant="ghost" className="text-lg font-medium hover:underline underline-offset-4 justify-start p-0">
+                                Contacto
+                            </Button>
+                          </DialogClose>
                         </DialogTrigger>
+                        <Separator />
+                        <DialogClose asChild>
                         <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                             Iniciar Sesión
                         </Link>
+                        </DialogClose>
+                        <DialogClose asChild>
                         <Button asChild size="lg">
                             <Link href="/register" prefetch={false}>Crea tu club</Link>
                         </Button>
+                        </DialogClose>
                     </div>
                   </SheetContent>
               </Sheet>
@@ -496,10 +512,10 @@ export default function LandingPage() {
                   <div className="mx-auto grid max-w-6xl gap-8">
                       {benefits.map((benefit, index) => (
                           <div key={index} className={cn(
-                              "grid gap-10 lg:grid-cols-2 lg:gap-12 items-center p-8 rounded-2xl",
+                              "grid gap-10 md:grid-cols-2 md:gap-12 items-center p-6 md:p-8 rounded-2xl",
                               index % 2 === 0 ? "bg-gray-800 text-white" : "bg-white",
                           )}>
-                              <div className={cn("space-y-4", index % 2 !== 0 && "lg:order-last")}>
+                              <div className={cn("space-y-4", index % 2 !== 0 && "md:order-last")}>
                                   <h3 className="text-2xl font-bold font-headline tracking-tight">{benefit.title}</h3>
                                   <p className={cn(index % 2 === 0 ? "text-gray-300" : "text-muted-foreground")}>{benefit.subtitle}</p>
                                   <ul className="mt-6 space-y-4">
@@ -542,7 +558,7 @@ export default function LandingPage() {
                   </div>
               </div>
               <div className="mx-auto flex justify-center">
-                  <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-8 text-center max-w-md">
+                  <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 sm:p-8 text-center max-w-md w-full">
                       <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>Plan Único</div>
                       <h3 className="text-2xl font-bold font-headline">SportsPanel Completo</h3>
                       <p className="text-muted-foreground mt-1">Fichas <b>ilimitadas</b></p>
