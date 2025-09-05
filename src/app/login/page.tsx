@@ -20,6 +20,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
+import { CheckCircle2 } from "lucide-react";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -68,6 +69,19 @@ export default function LoginPage() {
           className="object-cover"
         />
         <div className="absolute inset-0 bg-black/50"></div>
+        <div className="z-10 text-white max-w-md space-y-8">
+            <h1 className="text-4xl font-bold text-shadow shadow-black/50">+130 clubs ya confían en nosotros</h1>
+            <ul className="text-xl">
+                 <li className="flex items-center gap-3 pb-4">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
+                    <span className="text-shadow shadow-black/50">+9h de Ahorro Semanal</span>
+                </li>
+                 <li className="flex items-center gap-3 pb-4">
+                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50 mt-1"/>
+                    <span className="text-shadow shadow-black/50">95% Tasa de Retención</span>
+                </li>
+            </ul>
+        </div>
       </div>
       <div className="flex items-center justify-center py-12">
       <Card className="mx-auto max-w-sm w-full">
