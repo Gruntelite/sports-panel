@@ -44,9 +44,11 @@ export default function AppLayout({
               where("status", "in", ["trialing", "active"])
             );
             const subscriptionsSnapshot = await getDocs(subscriptionsQuery);
+
             if (!subscriptionsSnapshot.empty) {
+                // User has an active subscription.
                 setLoading(false);
-                return; // User has active subscription, allow access.
+                return;
             }
             
             // If no subscription, check for the internal trial period for new sign-ups
