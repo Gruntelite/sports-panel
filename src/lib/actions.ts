@@ -25,11 +25,13 @@ function getLuminance(hex: string): number {
 
 export async function createClubAction(data: { clubName: string, adminName: string, sport: string, email: string, password: string, themeColor: string, eventId: string, eventSourceUrl: string, clientUserAgent: string }): Promise<{success: boolean, error?: string, userId?: string}> {
   try {
+    const { clubName, adminName, sport, email, password, themeColor } = data;
+    
     // 1. Create Firebase Auth user
     const userRecord = await adminAuth.createUser({
-      email: data.email,
-      password: data.password,
-      displayName: data.adminName,
+      email: email,
+      password: password,
+      displayName: adminName,
     });
     const uid = userRecord.uid;
 
@@ -38,8 +40,8 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     const clubId = clubRef.id;
     
     await clubRef.set({
-      name: data.clubName,
-      sport: data.sport,
+      name: clubName,
+      sport: sport,
       adminUid: uid,
       createdAt: Timestamp.now(),
     });
@@ -47,27 +49,27 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     // 3. Set the user document in the root 'users' collection
     const userDocRef = adminDb.collection('users').doc(uid);
     await userDocRef.set({
-        email: data.email,
-        name: data.adminName,
+        email: email,
+        name: adminName,
         role: 'super-admin',
         clubId: clubId
     });
 
     // 4. Create club settings with trial period
-    const luminance = getLuminance(data.themeColor);
+    const luminance = getLuminance(themeColor);
     const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + 20);
 
     const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
     await settingsRef.set({
-        themeColor: data.themeColor,
+        themeColor: themeColor,
         themeColorForeground: foregroundColor,
         logoUrl: null,
         trialEndDate: Timestamp.fromDate(trialEndDate),
     }, { merge: true });
 
-    // 5. Send server-side event to Meta for analytics (optional)
+    // 5. Send server-side event to Meta for analytics (optional and non-blocking)
     try {
         if (process.env.META_PIXEL_ID && process.env.META_ACCESS_TOKEN) {
             await sendServerEventAction({ 
@@ -82,7 +84,6 @@ export async function createClubAction(data: { clubName: string, adminName: stri
     } catch(metaError) {
         console.warn("Could not send event to Meta, but club creation will proceed. Error:", metaError);
     }
-
 
     return { success: true, userId: uid };
 
