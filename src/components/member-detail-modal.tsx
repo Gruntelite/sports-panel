@@ -61,16 +61,12 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
 
     const getFieldGroups = () => {
         const customFields = member.customFields || {};
-        const customFieldsGroup = {
-            title: "Otros Datos Personalizados",
-            icon: FileText,
-            fields: customFieldDefs
-                .filter(def => customFields[def.id])
-                .map(def => ({
-                    label: def.name,
-                    value: customFields[def.id]
-                }))
-        };
+        const customFieldsItems = customFieldDefs
+            .filter(def => customFields[def.id])
+            .map(def => ({
+                label: def.name,
+                value: customFields[def.id]
+            }));
 
         let groups = [];
         
@@ -82,16 +78,12 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                         { label: "NIF/NIE", value: p.dni }, { label: "Fecha de Nacimiento", value: p.birthDate }, { label: "Sexo", value: p.sex }, { label: "Nacionalidad", value: p.nationality }, { label: "Nº Tarjeta Sanitaria", value: p.healthCardNumber}, { label: "Dirección", value: `${p.address || ''}, ${p.postalCode || ''}, ${p.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: "Fecha de Alta", value: p.startDate },
                     ]},
                     { title: "Datos de Contacto", icon: Contact, fields: [
-                        { label: "Tutor/a Principal", value: p.isOwnTutor ? 'El propio jugador' : `${p.tutorName} ${p.tutorLastName}` }, { label: "Email de Contacto", value: p.tutorEmail }, { label: "Teléfono de Contacto", value: p.tutorPhone },
+                        { label: "Tutor/a Principal", value: p.isOwnTutor ? 'El propio jugador' : `${p.tutorName} ${p.tutorLastName}` }, { label: "Email de Contacto", value: p.tutorEmail }, { label: "Teléfono de Contacto", value: p.tutorPhone }, { label: "IBAN", value: p.iban },
                     ]},
                     { title: "Datos Deportivos", icon: Shield, fields: [
-                        { label: "Equipo", value: p.teamName }, { label: "Dorsal", value: p.jerseyNumber }, { label: "Posición", value: p.position }, { label: "Talla Equipación", value: p.kitSize },
+                        { label: "Equipo", value: p.teamName }, { label: "Dorsal", value: p.jerseyNumber }, { label: "Posición", value: p.position }, { label: "Talla Equipación", value: p.kitSize }, { label: "Cuota Mensual", value: p.monthlyFee ? `${p.monthlyFee}€` : 'N/A' }, ...customFieldsItems,
                     ]},
-                    { title: "Datos de Pago", icon: CircleDollarSign, fields: [
-                        { label: "IBAN", value: p.iban }, { label: "Cuota Mensual", value: p.monthlyFee ? `${p.monthlyFee}€` : 'N/A' },
-                    ]}
                 ];
-                if (customFieldsGroup.fields.length > 0) groups.push(customFieldsGroup);
                 return groups;
             case 'coach':
                  const c = member as Coach;
@@ -100,32 +92,26 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                         { label: "NIF/NIE", value: c.dni }, { label: "Fecha de Nacimiento", value: c.birthDate }, { label: "Sexo", value: c.sex }, { label: "Nacionalidad", value: c.nationality }, { label: "Dirección", value: `${c.address || ''}, ${c.postalCode || ''}, ${c.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: "Fecha de Alta", value: c.startDate },
                     ]},
                     { title: "Datos de Contacto", icon: Contact, fields: [
-                        { label: "Email", value: c.email }, { label: "Teléfono", value: c.phone },
+                        { label: "Email", value: c.email }, { label: "Teléfono", value: c.phone }, { label: "IBAN", value: c.iban },
                     ]},
                     { title: "Datos Profesionales", icon: Briefcase, fields: [
-                        { label: "Cargo", value: c.role }, { label: "Equipo Asignado", value: c.teamName }, { label: "Talla Equipación", value: c.kitSize },
-                    ]},
-                     { title: "Datos de Pago", icon: CircleDollarSign, fields: [
-                        { label: "IBAN", value: c.iban }, { label: "Pago Mensual", value: c.monthlyPayment ? `${c.monthlyPayment}€` : 'N/A' },
+                        { label: "Cargo", value: c.role }, { label: "Equipo Asignado", value: c.teamName }, { label: "Talla Equipación", value: c.kitSize }, { label: "Pago Mensual", value: c.monthlyPayment ? `${c.monthlyPayment}€` : 'N/A' }, ...customFieldsItems
                     ]},
                  ];
-                 if (customFieldsGroup.fields.length > 0) groups.push(customFieldsGroup);
                  return groups;
             case 'staff':
                  const s = member as Staff;
                  groups = [
                       { title: "Datos Personales", icon: User, fields: [{ label: "Email", value: s.email }, { label: "Teléfono", value: s.phone } ]},
-                      { title: "Datos Profesionales", icon: Briefcase, fields: [{ label: "Cargo", value: s.role }]},
+                      { title: "Datos Profesionales", icon: Briefcase, fields: [{ label: "Cargo", value: s.role }, ...customFieldsItems]},
                  ];
-                 if (customFieldsGroup.fields.length > 0) groups.push(customFieldsGroup);
                  return groups;
             case 'socio':
                  const so = member as Socio;
                  groups = [
                      { title: "Datos Personales", icon: User, fields: [{ label: "Email", value: so.email }, { label: "Teléfono", value: so.phone }, { label: "NIF", value: so.dni } ]},
-                     { title: "Datos de Socio", icon: Handshake, fields: [{ label: "Número de Socio", value: so.socioNumber }, { label: "Tipo de Cuota", value: so.paymentType }, { label: "Importe Cuota", value: `${so.fee}€` }]},
+                     { title: "Datos de Socio", icon: Handshake, fields: [{ label: "Número de Socio", value: so.socioNumber }, { label: "Tipo de Cuota", value: so.paymentType }, { label: "Importe Cuota", value: `${so.fee}€` }, ...customFieldsItems]},
                  ];
-                 if (customFieldsGroup.fields.length > 0) groups.push(customFieldsGroup);
                  return groups;
         }
     }
