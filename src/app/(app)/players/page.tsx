@@ -640,21 +640,21 @@ export default function PlayersPage() {
     <TooltipProvider>
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex-1">
               <CardTitle>Jugadores</CardTitle>
               <CardDescription>
                 Gestiona los jugadores de tu club y su información.
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
-              <Button onClick={() => setIsFieldsModalOpen(true)}>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+              <Button onClick={() => setIsFieldsModalOpen(true)} className="w-full sm:w-auto">
                   <Send className="mr-2 h-4 w-4" />
                   Solicitar Actualización
               </Button>
                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="h-8 gap-1">
+                      <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                         <Columns className="mr-2 h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                           Columnas
@@ -693,7 +693,7 @@ export default function PlayersPage() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                   <Select value={filterTeamId} onValueChange={setFilterTeamId}>
-                    <SelectTrigger className="h-8 w-[150px]">
+                    <SelectTrigger className="h-9 w-full sm:w-[150px]">
                       <SelectValue placeholder="Filtrar por equipo"/>
                     </SelectTrigger>
                     <SelectContent>
@@ -706,7 +706,7 @@ export default function PlayersPage() {
               {selectedPlayers.length > 0 ? (
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="outline" className="h-8 gap-1">
+                      <Button variant="outline" className="h-9 gap-1 w-full sm:w-auto">
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                            Acciones ({selectedPlayers.length})
                         </span>
@@ -729,112 +729,114 @@ export default function PlayersPage() {
                     </DropdownMenuContent>
                  </DropdownMenu>
               ) : (
-                <>
-                  <Button size="sm" className="h-8 gap-1" onClick={() => handleOpenModal('add')}>
+                  <Button size="sm" className="h-9 gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
                       <PlusCircle className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                           Añadir Jugador
                       </span>
                   </Button>
-                </>
               )}
             </div>
           </div>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[4rem]">
-                  <Checkbox
-                    checked={isAllSelected}
-                    onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                    aria-label="Seleccionar todo"
-                    className="translate-y-[2px]"
-                  />
-                </TableHead>
-                 {allPossibleColumns.map(field => (
-                    visibleColumns.has(field.id) && 
-                    <TableHead 
-                      key={field.id}
-                      className={cn(field.id === 'name' && 'font-medium')}
-                    >
-                        {(field as CustomFieldDef).name || (field as {label: string}).label}
-                    </TableHead>
-                 ))}
-                <TableHead className="w-[4rem]">
-                  <span className="sr-only">Acciones</span>
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredPlayers.map(player => (
-                <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
-                  <TableCell>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[80px]">
                     <Checkbox
-                      checked={selectedPlayers.includes(player.id)}
-                      onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
-                      aria-label={`Seleccionar a ${player.name}`}
+                      checked={isAllSelected}
+                      onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                      aria-label="Seleccionar todo"
                     />
-                  </TableCell>
-                  {allPossibleColumns.map(field => (
-                    visibleColumns.has(field.id) && (
-                        <TableCell 
-                          key={field.id} 
-                          className={cn(
+                  </TableHead>
+                   {allPossibleColumns.map(field => (
+                      <TableHead 
+                        key={field.id}
+                        className={cn(
                             'min-w-[150px]',
-                            field.id === 'name' && 'font-medium'
-                          )}
-                        >
-                             {field.id === 'name' ? (
-                                <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingPlayer(player)}>
-                                  <Avatar className="h-9 w-9">
-                                    <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
-                                    <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <div className="flex items-center gap-2">
-                                    <span className="hover:underline">{getCellContent(player, field.id)}</span>
-                                    {player.hasMissingData && (
-                                      <Tooltip>
-                                          <TooltipTrigger>
-                                            <AlertCircle className="h-4 w-4 text-destructive" />
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p>Faltan datos por rellenar</p>
-                                          </TooltipContent>
-                                      </Tooltip>
-                                    )}
-                                  </div>
-                                </div>
-                            ) : (
-                                getCellContent(player, field.id)
-                            )}
-                        </TableCell>
-                    )
-                  ))}
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                           <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Alternar menú</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => setViewingPlayer(player)}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
-                          Eliminar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
+                            !visibleColumns.has(field.id) && 'hidden md:table-cell',
+                            field.id !== 'name' && field.id !== 'tutorEmail' && 'hidden sm:table-cell'
+                        )}
+                      >
+                          {(field as CustomFieldDef).name || (field as {label: string}).label}
+                      </TableHead>
+                   ))}
+                  <TableHead>
+                    <span className="sr-only">Acciones</span>
+                  </TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {filteredPlayers.map(player => (
+                  <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
+                    <TableCell>
+                      <Checkbox
+                        checked={selectedPlayers.includes(player.id)}
+                        onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
+                        aria-label={`Seleccionar a ${player.name}`}
+                      />
+                    </TableCell>
+                    {allPossibleColumns.map(field => (
+                          <TableCell 
+                            key={field.id} 
+                            className={cn(
+                                'min-w-[150px]',
+                                !visibleColumns.has(field.id) && 'hidden md:table-cell',
+                                field.id !== 'name' && field.id !== 'tutorEmail' && 'hidden sm:table-cell',
+                                field.id === 'name' && 'font-medium'
+                            )}
+                          >
+                              {field.id === 'name' ? (
+                                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingPlayer(player)}>
+                                    <Avatar className="h-9 w-9">
+                                      <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
+                                      <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex items-center gap-2">
+                                      <span className="hover:underline">{getCellContent(player, field.id)}</span>
+                                      {player.hasMissingData && (
+                                        <Tooltip>
+                                            <TooltipTrigger>
+                                              <AlertCircle className="h-4 w-4 text-destructive" />
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                              <p>Faltan datos por rellenar</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                      )}
+                                    </div>
+                                  </div>
+                              ) : (
+                                  getCellContent(player, field.id)
+                              )}
+                          </TableCell>
+                    ))}
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                             <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Alternar menú</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setViewingPlayer(player)}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">

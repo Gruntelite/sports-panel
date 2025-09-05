@@ -453,7 +453,7 @@ export default function StaffPage() {
             <Card>
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle>Staff y Directiva</CardTitle>
                       <CardDescription>
                         Personal administrativo y directivo del club.
@@ -462,7 +462,7 @@ export default function StaffPage() {
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-9 gap-1">
+                              <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                                 <Columns className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                                   Columnas
@@ -500,7 +500,7 @@ export default function StaffPage() {
                               </ScrollArea>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                          <Button onClick={() => handleOpenModal('add', 'staff')} className="h-9">
+                          <Button onClick={() => handleOpenModal('add', 'staff')} className="h-9 w-full sm:w-auto">
                             <PlusCircle className="mr-2 h-4 w-4" />
                             Añadir Miembro
                           </Button>
@@ -513,8 +513,16 @@ export default function StaffPage() {
                       <TableHeader>
                         <TableRow>
                           {allPossibleStaffColumns.map(field => (
-                              visibleStaffColumns.has(field.id) && 
-                              <TableHead key={field.id} className="min-w-[150px]">{(field as CustomFieldDef).name || (field as {label: string}).label}</TableHead>
+                              <TableHead 
+                                key={field.id} 
+                                className={cn(
+                                  "min-w-[150px]",
+                                  !visibleStaffColumns.has(field.id) && 'hidden md:table-cell',
+                                  field.id !== 'name' && field.id !== 'role' && 'hidden sm:table-cell'
+                                )}
+                              >
+                                {(field as CustomFieldDef).name || (field as {label: string}).label}
+                              </TableHead>
                           ))}
                           <TableHead>
                             <span className="sr-only">Acciones</span>
@@ -525,8 +533,15 @@ export default function StaffPage() {
                         {staff.map(member => (
                           <TableRow key={member.id}>
                             {allPossibleStaffColumns.map(field => (
-                              visibleStaffColumns.has(field.id) && (
-                                  <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
+                                <TableCell 
+                                  key={field.id} 
+                                  className={cn(
+                                    "min-w-[150px]",
+                                    !visibleStaffColumns.has(field.id) && 'hidden md:table-cell',
+                                    field.id !== 'name' && field.id !== 'role' && 'hidden sm:table-cell',
+                                    field.id === 'name' && 'font-medium'
+                                  )}
+                                >
                                       {field.id === 'name' ? (
                                           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member, type: 'staff'})}>
                                             <Avatar className="h-9 w-9">
@@ -551,7 +566,6 @@ export default function StaffPage() {
                                           getStaffCellContent(member, field.id)
                                       )}
                                   </TableCell>
-                              )
                             ))}
                             <TableCell>
                               <DropdownMenu>
@@ -588,7 +602,7 @@ export default function StaffPage() {
           <Card>
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                    <div>
+                    <div className="flex-1">
                       <CardTitle>Socios</CardTitle>
                       <CardDescription>
                         Miembros del club que no son jugadores ni staff.
@@ -597,7 +611,7 @@ export default function StaffPage() {
                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                          <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm" className="h-9 gap-1">
+                              <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                                 <Columns className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
                                   Columnas
@@ -635,7 +649,7 @@ export default function StaffPage() {
                               </ScrollArea>
                             </DropdownMenuContent>
                           </DropdownMenu>
-                        <Button onClick={() => handleOpenModal('add', 'socio')} className="h-9">
+                        <Button onClick={() => handleOpenModal('add', 'socio')} className="h-9 w-full sm:w-auto">
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Añadir Socio
                         </Button>
@@ -648,8 +662,16 @@ export default function StaffPage() {
                       <TableHeader>
                         <TableRow>
                           {allPossibleSocioColumns.map(field => (
-                              visibleSocioColumns.has(field.id) && 
-                              <TableHead key={field.id} className="min-w-[150px]">{(field as CustomFieldDef).name || (field as {label: string}).label}</TableHead>
+                              <TableHead 
+                                key={field.id}
+                                className={cn(
+                                  "min-w-[150px]",
+                                  !visibleSocioColumns.has(field.id) && 'hidden md:table-cell',
+                                  field.id !== 'name' && field.id !== 'email' && 'hidden sm:table-cell'
+                                )}
+                              >
+                                {(field as CustomFieldDef).name || (field as {label: string}).label}
+                              </TableHead>
                           ))}
                           <TableHead>
                             <span className="sr-only">Acciones</span>
@@ -660,8 +682,15 @@ export default function StaffPage() {
                         {socios.map(socio => (
                           <TableRow key={socio.id}>
                             {allPossibleSocioColumns.map(field => (
-                              visibleSocioColumns.has(field.id) && (
-                                  <TableCell key={field.id} className={cn(field.id === 'name' && 'font-medium')}>
+                                <TableCell 
+                                  key={field.id}
+                                  className={cn(
+                                    "min-w-[150px]",
+                                    !visibleSocioColumns.has(field.id) && 'hidden md:table-cell',
+                                    field.id !== 'name' && field.id !== 'email' && 'hidden sm:table-cell',
+                                    field.id === 'name' && 'font-medium'
+                                  )}
+                                >
                                       {field.id === 'name' ? (
                                           <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member: socio, type: 'socio'})}>
                                             <Avatar className="h-9 w-9">
@@ -674,7 +703,6 @@ export default function StaffPage() {
                                           getSocioCellContent(socio, field.id)
                                       )}
                                   </TableCell>
-                              )
                             ))}
                             <TableCell>
                               <DropdownMenu>
