@@ -12,17 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, User, Contact, Shield, CircleDollarSign, Briefcase, FileText, Handshake } from "lucide-react";
 import { Separator } from "./ui/separator";
-
-type Member = Player | Coach | Staff | Socio;
-type MemberType = 'player' | 'coach' | 'staff' | 'socio';
-
-interface MemberDetailModalProps {
-  member: Member | null;
-  memberType: MemberType;
-  customFieldDefs?: CustomFieldDef[];
-  onClose: () => void;
-  onEdit: () => void;
-}
+import { ScrollArea } from "./ui/scroll-area";
 
 const DetailItem = ({ label, value, isSubtitle }: { label: string; value?: string | number | null | boolean; isSubtitle?: boolean }) => {
     if (isSubtitle) {
@@ -140,7 +130,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
 
   return (
     <Dialog open={!!member} onOpenChange={onClose}>
-      <DialogContent className="max-w-4xl">
+      <DialogContent className="max-w-4xl max-h-[90vh] flex flex-col">
         <DialogHeader>
           <div className="flex flex-col sm:flex-row items-center gap-6 text-center sm:text-left">
             <Avatar className="h-24 w-24 border">
@@ -160,7 +150,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
             </div>
           </div>
         </DialogHeader>
-        <div className="py-6">
+        <ScrollArea className="pr-6 -mr-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                {fieldGroups.map(group => group.fields.length > 0 && (
                    <div key={group.title} className="space-y-3">
@@ -174,8 +164,8 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                    </div>
                ))}
             </div>
-        </div>
-        <DialogFooter>
+        </ScrollArea>
+        <DialogFooter className="mt-auto pt-4 border-t">
           <Button variant="outline" onClick={onClose}>Cerrar</Button>
           <Button onClick={onEdit}>Editar Ficha</Button>
         </DialogFooter>
