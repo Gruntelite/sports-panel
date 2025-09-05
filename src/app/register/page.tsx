@@ -113,7 +113,7 @@ export default function RegisterPage() {
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
             <ul className="text-xl space-y-4">
-                 <li className="flex items-center justify-center gap-3">
+                <li className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
                     <span className="text-shadow shadow-black/50 whitespace-nowrap">No necesitas tarjeta de crédito.</span>
                 </li>
@@ -245,6 +245,9 @@ export default function RegisterPage() {
                 </Button>
                 </form>
             </Form>
+             <p className="text-center text-xs text-muted-foreground mt-4">
+                No se necesita tarjeta · 20 días de prueba gratis
+            </p>
             <div className="mt-4 text-center text-sm">
                 ¿Ya tienes una cuenta?{" "}
                 <Link href="/login" className="underline font-semibold">
