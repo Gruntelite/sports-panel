@@ -347,7 +347,7 @@ export default function LandingPage() {
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
                   <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl xl:text-5xl/none font-headline">
-                    Automatiza tu club y Ahorra Horas de Gestión
+                    Automatiza tu club. Dedica tiempo al deporte, no al papeleo
                   </h1>
                   <p className="mx-auto max-w-[700px] text-muted-foreground md:text-lg">
                     Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
@@ -380,33 +380,23 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section className="w-full bg-gray-800 text-white py-12 md:py-16">
+          <section id="social-proof" className="w-full py-12 md:py-16 bg-gray-800 text-white">
               <div className="container px-4 md:px-6">
-                  <div className="grid grid-cols-1 md:grid-cols-5 gap-8 text-center">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold text-turquesa">7h+</span>
+                          <span className="text-5xl font-bold">+7h</span>
                           <p className="font-semibold text-lg">Ahorro Semanal</p>
                           <p className="text-sm text-gray-300">Tiempo medio que nuestros clubs ahorran en tareas administrativas.</p>
                       </div>
                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold text-turquesa">85%</span>
+                          <span className="text-5xl font-bold">85%</span>
                           <p className="font-semibold text-lg">Tasa de Retención</p>
                           <p className="text-sm text-gray-300">De los clubs que prueban SportsPanel, la gran mayoría se queda.</p>
                       </div>
                       <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold text-turquesa">100%</span>
+                          <span className="text-5xl font-bold">100%</span>
                           <p className="font-semibold text-lg">Mejora Organizativa</p>
                           <p className="text-sm text-gray-300">De los clubs que afirman haber mejorado su organización interna.</p>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold text-turquesa">75%</span>
-                          <p className="font-semibold text-lg">Valor Percibido</p>
-                          <p className="text-sm text-gray-300">De clubs dispuestos a pagar más por el valor que aporta la plataforma.</p>
-                      </div>
-                      <div className="flex flex-col items-center gap-2">
-                          <span className="text-5xl font-bold text-turquesa">98%</span>
-                          <p className="font-semibold text-lg">Digitalización</p>
-                          <p className="text-sm text-gray-300">De los procesos de un club que se pueden digitalizar con nuestra plataforma.</p>
                       </div>
                   </div>
               </div>
@@ -449,53 +439,6 @@ export default function LandingPage() {
             </div>
             </div>
           </section>
-
-          <section id="testimonials" className="w-full py-12 md:py-16">
-              <div className="container px-4 md:px-6">
-                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
-                      <div className="space-y-2">
-                          <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                            Lo que dicen nuestros clubs
-                          </h2>
-                          <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                              Descubre por qué clubs de todos los tamaños confían en SportsPanel para su gestión diaria.
-                          </p>
-                      </div>
-                  </div>
-                  <Carousel
-                      opts={{
-                          align: "start",
-                          loop: true,
-                      }}
-                      className="w-full max-w-5xl mx-auto"
-                      >
-                      <CarouselContent>
-                          {testimonials.map((testimonial, index) => (
-                          <CarouselItem key={index} className="md:basis-1/2 lg:basis-1/3">
-                              <div className="p-1 h-full">
-                              <Card className="flex flex-col h-full overflow-hidden border">
-                                  <CardContent className="p-6 flex flex-col items-start gap-4 flex-grow">
-                                  <p className="text-lg font-medium leading-relaxed flex-grow">
-                                      "{testimonial.quote}"
-                                  </p>
-                                  <div className="w-full pt-4 mt-auto">
-                                      <div className="bg-turquesa/20 p-4 rounded-md">
-                                          <p className="font-semibold text-turquesa-dark">{testimonial.name}</p>
-                                          <p className="text-sm text-turquesa-dark/80">{testimonial.role}</p>
-                                      </div>
-                                  </div>
-                                  </CardContent>
-                              </Card>
-                              </div>
-                          </CarouselItem>
-                          ))}
-                      </CarouselContent>
-                      <CarouselPrevious className="-left-4 md:-left-12"/>
-                      <CarouselNext className="-right-4 md:-right-12"/>
-                  </Carousel>
-              </div>
-          </section>
-
 
           <section id="benefits" className="w-full py-6 md:py-8 bg-turquesa/20">
               <div className="container px-4 md:px-6">
