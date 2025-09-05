@@ -29,9 +29,9 @@ export default function SubscribePage() {
 
     try {
         const user = auth.currentUser;
-        const customerDocRef = doc(db, 'customers', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
         
-        const checkoutSessionRef = collection(customerDocRef, 'checkout_sessions');
+        const checkoutSessionRef = collection(userDocRef, 'checkout_sessions');
 
         const sessionDocRef = await addDoc(checkoutSessionRef, {
             price: "price_1S0TMLPXxsPnWGkZFXrjSAaw",
