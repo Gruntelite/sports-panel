@@ -368,14 +368,13 @@ export default function LandingPage() {
                   </Button>
                   <p className="text-xs text-muted-foreground mt-2">No se necesita tarjeta de crédito · Cancela cuando quieras</p>
                 </div>
-                <div className="mt-8">
-                  <Image
-                    src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(8).png?alt=media&token=ac6d42ce-58ad-43cb-94c3-42bf85088f65"
-                    alt="SportsPanel App Screenshot"
-                    width={1890}
-                    height={1063}
-                  />
-                </div>
+                <Image
+                  src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(8).png?alt=media&token=ac6d42ce-58ad-43cb-94c3-42bf85088f65"
+                  alt="SportsPanel App Screenshot"
+                  width={1890}
+                  height={1063}
+                  className="mt-8"
+                />
                  <div className="pt-8">
                     <Button asChild size="lg" className="bg-white/80 text-foreground hover:bg-white hover:scale-105 transition-transform duration-200 shadow-lg backdrop-blur-sm">
                         <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
