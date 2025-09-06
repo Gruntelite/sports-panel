@@ -369,7 +369,7 @@ export default function LandingPage() {
                   <p className="text-xs text-muted-foreground mt-2">No se necesita tarjeta de crédito · Cancela cuando quieras</p>
                 </div>
                 <Image
-                  src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(8).png?alt=media&token=ac6d42ce-58ad-43cb-94c3-42bf85088f65"
+                  src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(10).png?alt=media&token=1ac52a21-54aa-451d-b538-d159bd475484"
                   alt="SportsPanel App Screenshot"
                   width={1890}
                   height={1063}
