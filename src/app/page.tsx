@@ -349,7 +349,7 @@ export default function LandingPage() {
           </div>
         </header>
         <main className="flex-1">
-          <section className="w-full pt-8 md:pt-12 pb-12 md:pb-16 lg:pb-24">
+          <section className="w-full pt-8 md:pt-12 pb-8 md:pb-10 lg:pb-12">
             <div className="container px-4 md:px-6">
               <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:gap-16 items-center">
                   <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
@@ -391,7 +391,7 @@ export default function LandingPage() {
             </div>
           </section>
 
-          <section id="stats-banner" className="w-full py-12 md:py-16 bg-landing-dark text-white">
+          <section id="stats-banner" className="w-full py-8 md:py-10 bg-landing-dark text-white">
               <div className="container px-4 md:px-6">
                   <div className="mx-auto grid max-w-6xl grid-cols-1 gap-y-10 gap-x-6 sm:grid-cols-2 md:grid-cols-4 text-center">
                     {stats.map((stat, index) => (
