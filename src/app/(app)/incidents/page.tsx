@@ -613,6 +613,12 @@ function ProtocolsTab() {
 
 
 export default function IncidentsAndProtocolsPage() {
+    const [activeTab, setActiveTab] = useState("incidents");
+    const tabs = [
+        { id: "incidents", label: "Registro de Incidencias", icon: AlertTriangle },
+        { id: "protocols", label: "Protocolos del Club", icon: ClipboardList }
+    ];
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -621,25 +627,45 @@ export default function IncidentsAndProtocolsPage() {
           Gestiona incidencias y consulta los protocolos de actuación del club.
         </p>
       </div>
+      <div className="sm:hidden">
+        <Select value={activeTab} onValueChange={setActiveTab}>
+          <SelectTrigger>
+            <SelectValue placeholder="Seleccionar sección..." />
+          </SelectTrigger>
+          <SelectContent>
+            {tabs.map((tab) => (
+              <SelectItem key={tab.id} value={tab.id}>
+                <div className="flex items-center gap-2">
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                </div>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
-      <Tabs defaultValue="incidents" className="w-full">
+      <Tabs defaultValue="incidents" value={activeTab} onValueChange={setActiveTab} className="hidden sm:block">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="incidents">
-            <AlertTriangle className="mr-2 h-4 w-4" />
-            Registro de Incidencias
-          </TabsTrigger>
-          <TabsTrigger value="protocols">
-            <ClipboardList className="mr-2 h-4 w-4" />
-            Protocolos del Club
-          </TabsTrigger>
+            {tabs.map((tab) => (
+                <TabsTrigger key={tab.id} value={tab.id}>
+                    <tab.icon className="mr-2 h-4 w-4" />
+                    {tab.label}
+                </TabsTrigger>
+            ))}
         </TabsList>
-        <TabsContent value="incidents" className="mt-6">
-          <IncidentsTab />
-        </TabsContent>
-        <TabsContent value="protocols" className="mt-6">
-          <ProtocolsTab />
-        </TabsContent>
       </Tabs>
+      
+      {activeTab === 'incidents' && (
+        <div className="mt-6 sm:mt-0">
+          <IncidentsTab />
+        </div>
+      )}
+      {activeTab === 'protocols' && (
+        <div className="mt-6 sm:mt-0">
+          <ProtocolsTab />
+        </div>
+      )}
     </div>
   );
 }
