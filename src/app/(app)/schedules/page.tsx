@@ -576,17 +576,17 @@ function CalendarView() {
   return (
     <>
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between border-b sticky top-0 z-10 bg-card">
+      <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4 border-b sticky top-0 z-10 bg-card">
         <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button>
             <CardTitle className="text-xl capitalize min-w-[150px] text-center">{monthName} {year}</CardTitle>
             <Button variant="outline" size="icon" onClick={() => changeMonth(1)}><ChevronRight className="h-4 w-4" /></Button>
             <Button variant="outline" onClick={() => setCurrentDate(new Date())}>Hoy</Button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
           <Popover>
             <PopoverTrigger asChild>
-                <Button variant="outline" disabled={isUpdating || templates.length === 0} className="min-w-[180px]">
+                <Button variant="outline" disabled={isUpdating || templates.length === 0} className="w-full sm:w-[180px]">
                     {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                     {selectedTemplateName}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
@@ -619,7 +619,7 @@ function CalendarView() {
           {selectedDays.size > 0 ? (
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button className="gap-1" disabled={isUpdating}>
+                    <Button className="gap-1 w-full sm:w-auto" disabled={isUpdating}>
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         Acciones ({selectedDays.size})
                         <MoreHorizontal className="h-3.5 w-3.5" />
@@ -645,7 +645,7 @@ function CalendarView() {
                 </DropdownMenuContent>
              </DropdownMenu>
           ) : (
-            <Button className="gap-1" onClick={() => handleOpenModal('add')}>
+            <Button className="gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 Añadir Evento
             </Button>
@@ -807,7 +807,7 @@ function CalendarView() {
     </Dialog>
 
     <Dialog open={isDayModalOpen} onOpenChange={setIsDayModalOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-xl">
             <DialogHeader>
                 <DialogTitle className="capitalize">Eventos del {selectedDayDetails && format(selectedDayDetails.date, "eeee, d 'de' LLLL", { locale: es })}</DialogTitle>
             </DialogHeader>
@@ -1347,13 +1347,13 @@ export default function SchedulesPage() {
         </div>
       <Card>
         <CardHeader className="border-b">
-            <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 w-full md:w-auto">
                     <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
                     <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                            <Button variant="outline">
+                            <Button variant="outline" className="flex-1 md:flex-none">
                                 Plantilla: {displayTemplate?.name || "Seleccionar"}
                                 <MoreVertical className="ml-2 h-4 w-4" />
                             </Button>
