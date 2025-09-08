@@ -1265,7 +1265,7 @@ export function TreasuryDashboard() {
                 </CardContent>
             </Card>
         </TabsContent>
-        <TabsContent value="expenses" className="mt-4 grid gap-6 md:grid-cols-2">
+        <TabsContent value="expenses" className="mt-4 space-y-6">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
@@ -1569,7 +1569,7 @@ export function TreasuryDashboard() {
                         {MONTHS.map(month => (
                             <Button
                                 key={month.value}
-                                variant={sponsorshipData.excludedMonths?.includes(month.value) ? 'primary' : 'outline'}
+                                variant={sponsorshipData.excludedMonths?.includes(month.value) ? 'default' : 'outline'}
                                 onClick={() => {
                                     const newSelection = new Set(sponsorshipData.excludedMonths || []);
                                     if (newSelection.has(month.value)) {
@@ -1630,7 +1630,7 @@ export function TreasuryDashboard() {
                         {MONTHS.map(month => (
                             <Button
                                 key={month.value}
-                                variant={recurringExpenseData.excludedMonths?.includes(month.value) ? 'primary' : 'outline'}
+                                variant={recurringExpenseData.excludedMonths?.includes(month.value) ? 'default' : 'outline'}
                                 onClick={() => {
                                     const newSelection = new Set(recurringExpenseData.excludedMonths || []);
                                     if (newSelection.has(month.value)) {
