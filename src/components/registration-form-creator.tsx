@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, PlusCircle, Trash2, Info, Settings, FileText } from "lucide-react";
+import { Loader2, PlusCircle, Trash2, Info, Settings, FileText, Check, ChevronsUpDown } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { CustomRegistrationFormField, RegistrationForm } from "@/lib/types";
 import { Label } from "@/components/ui/label";
@@ -20,7 +20,8 @@ import { DialogFooter, DialogClose } from "./ui/dialog";
 import { DatePicker } from "./ui/date-picker";
 import { Switch } from "./ui/switch";
 import { cn } from "@/lib/utils";
-import { ScrollArea } from "./ui/scroll-area";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
 
 
 const initialFormFields: CustomRegistrationFormField[] = [
@@ -70,6 +71,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
   const [newFieldName, setNewFieldName] = useState("");
   const [newFieldType, setNewFieldType] = useState<CustomRegistrationFormField['type']>('text');
   const [activeTab, setActiveTab] = useState<ActiveTab>('general');
+  const [isFieldSelectOpen, setIsFieldSelectOpen] = useState(false);
 
 
   const form = useForm<FormData>({
@@ -348,83 +350,80 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
           </div>
           
           <div className={cn('mt-6', activeTab !== 'fields' && 'hidden')}>
-                <FormField
-                  control={form.control}
-                  name="selectedFieldIds"
-                  render={() => (
-                  <FormItem>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
-                          <div className="space-y-4">
-                              <h4 className="font-medium">Campos del Formulario</h4>
-                              <p className="text-sm text-muted-foreground">Activa los campos que necesites. Los obligatorios no se pueden desactivar.</p>
-                              <ScrollArea className="space-y-3 max-h-48 pr-4">
-                                  {allFields.map((item) => (
-                                  <FormField
-                                      key={item.id}
-                                      control={form.control}
-                                      name="selectedFieldIds"
-                                      render={({ field }) => {
-                                      return (
-                                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mb-3">
-                                              <div className="flex items-center gap-2">
-                                                  {item.custom && (
-                                                      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveCustomField(item.id)}>
-                                                      <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
-                                                  )}
-                                                  <FormLabel className="font-normal">{item.label}</FormLabel>
-                                              </div>
-                                          <FormControl>
-                                              <Switch
-                                              checked={field.value?.includes(item.id)}
-                                              onCheckedChange={(checked) => {
-                                                  if(item.required) return;
-                                                  return checked
-                                                  ? field.onChange([...field.value, item.id])
-                                                  : field.onChange(
-                                                      field.value?.filter(
-                                                          (value) => value !== item.id
-                                                      )
-                                                      )
-                                              }}
-                                              disabled={item.required}
-                                              />
-                                          </FormControl>
-                                          </FormItem>
-                                      )
-                                      }}
-                                  />
-                                  ))}
-                              </ScrollArea>
-                          </div>
-                            <div className="space-y-4">
-                              <h4 className="font-medium">Añadir Campo Personalizado</h4>
-                              <div className="space-y-2">
-                                  <Label htmlFor="new-field-name">Nombre del Campo</Label>
-                                  <Input id="new-field-name" placeholder="p.ej., Talla de camiseta" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} />
-                              </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="new-field-type">Tipo de Campo</Label>
-                                  <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomRegistrationFormField['type'])}>
-                                      <SelectTrigger id="new-field-type"><SelectValue placeholder="Tipo" /></SelectTrigger>
-                                      <SelectContent>
-                                      <SelectItem value="text">Texto Corto</SelectItem>
-                                      <SelectItem value="textarea">Texto Largo</SelectItem>
-                                      <SelectItem value="email">Email</SelectItem>
-                                      <SelectItem value="tel">Teléfono</SelectItem>
-                                      <SelectItem value="number">Número</SelectItem>
-                                      </SelectContent>
-                                  </Select>
-                                </div>
-                                <Button type="button" className="w-full" variant="outline" onClick={handleAddCustomField}>
-                                  <PlusCircle className="mr-2 h-4 w-4" />
-                                  Añadir Campo
-                              </Button>
-                            </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Campos del Formulario</h4>
+                     <FormField
+                        control={form.control}
+                        name="selectedFieldIds"
+                        render={({ field }) => (
+                          <FormItem>
+                            <Popover open={isFieldSelectOpen} onOpenChange={setIsFieldSelectOpen}>
+                                <PopoverTrigger asChild>
+                                <Button variant="outline" className="w-full justify-start font-normal">
+                                    {field.value?.length > 0 ? `${field.value.length} campo(s) seleccionado(s)` : "Seleccionar campos..."}
+                                    <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="p-0" align="start">
+                                <Command>
+                                    <CommandInput placeholder="Buscar campo..." />
+                                    <CommandList>
+                                        <CommandEmpty>No se encontró ningún campo.</CommandEmpty>
+                                        <CommandGroup>
+                                            {allFields.map(item => (
+                                                 <CommandItem
+                                                    key={item.id}
+                                                    value={item.label}
+                                                    onSelect={() => {
+                                                        if (item.required) return;
+                                                        const isSelected = field.value.includes(item.id);
+                                                        const newSelection = isSelected
+                                                            ? field.value.filter(id => id !== item.id)
+                                                            : [...field.value, item.id];
+                                                        field.onChange(newSelection);
+                                                    }}
+                                                 >
+                                                    <Check className={cn("mr-2 h-4 w-4", field.value.includes(item.id) ? "opacity-100" : "opacity-0")} />
+                                                    {item.label}
+                                                    {item.required && <span className="ml-2 text-xs text-muted-foreground">(Obligatorio)</span>}
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                                </PopoverContent>
+                            </Popover>
+                             <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                  </div>
+                   <div className="space-y-4">
+                      <h4 className="font-medium">Añadir Campo Personalizado</h4>
+                      <div className="space-y-2">
+                          <Label htmlFor="new-field-name">Nombre del Campo</Label>
+                          <Input id="new-field-name" placeholder="p.ej., Talla de camiseta" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} />
                       </div>
-                  </FormItem>
-                  )}
-              />
+                        <div className="space-y-2">
+                            <Label htmlFor="new-field-type">Tipo de Campo</Label>
+                          <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomRegistrationFormField['type'])}>
+                              <SelectTrigger id="new-field-type"><SelectValue placeholder="Tipo" /></SelectTrigger>
+                              <SelectContent>
+                              <SelectItem value="text">Texto Corto</SelectItem>
+                              <SelectItem value="textarea">Texto Largo</SelectItem>
+                              <SelectItem value="email">Email</SelectItem>
+                              <SelectItem value="tel">Teléfono</SelectItem>
+                              <SelectItem value="number">Número</SelectItem>
+                              </SelectContent>
+                          </Select>
+                        </div>
+                        <Button type="button" className="w-full" variant="outline" onClick={handleAddCustomField}>
+                          <PlusCircle className="mr-2 h-4 w-4" />
+                          Añadir Campo
+                      </Button>
+                    </div>
+              </div>
           </div>
 
           <DialogFooter>
@@ -447,3 +446,4 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
     </div>
   );
 }
+
