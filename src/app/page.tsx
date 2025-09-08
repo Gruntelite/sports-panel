@@ -281,7 +281,7 @@ export default function LandingPage() {
               Beneficios
             </Link>
             <Link href="#pricing" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-              Planes
+              Precios
             </Link>
             <DialogTrigger asChild>
               <Button variant="ghost" className="text-sm font-medium hover:underline underline-offset-4" >
@@ -322,7 +322,7 @@ export default function LandingPage() {
                         </DialogClose>
                          <DialogClose asChild>
                         <Link href="#pricing" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                            Planes
+                            Precios
                         </Link>
                         </DialogClose>
                         <DialogTrigger asChild>
