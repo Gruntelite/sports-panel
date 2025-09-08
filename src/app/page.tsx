@@ -565,6 +565,7 @@ export default function LandingPage() {
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y control de cuotas</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación integrada</span></li>
+                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta 500 emails diarios</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Importador de datos</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Solicitud de datos a familias</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Formularios de inscripción</span></li>
