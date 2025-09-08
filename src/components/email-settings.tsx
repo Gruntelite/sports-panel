@@ -235,20 +235,16 @@ export function EmailSettings() {
                     <AlertTitle>Guía para obtener la Contraseña de Aplicación de Gmail</AlertTitle>
                     <AlertDescription>
                         <ol className="list-decimal list-inside space-y-2 mt-2">
-                           <li>
-                              <b>Activa la Verificación en 2 Pasos:</b> Es obligatorio. Si no la tienes, actívala en la página de Seguridad de Google.
-                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">Ir a Seguridad de Google <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
-                           </li>
-                           <li>
-                              <b>Genera la contraseña:</b> Una vez activada la verificación, ve a la página de Contraseñas de Aplicaciones.
-                              <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">Ir a Contraseñas de Aplicaciones <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
-                           </li>
-                            <li>
-                              En "Seleccionar aplicación", elige "Otra (nombre personalizado)", escribe "SportsPanel" y haz clic en "Generar".
-                           </li>
-                           <li>
-                             Copia la contraseña de 16 letras que aparece y pégala en el campo de abajo.
-                           </li>
+                          <li>
+                            <b>Activa la Verificación en 2 Pasos</b> en tu cuenta de Google. Es un requisito obligatorio.
+                            <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">Ir a Seguridad de Google <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                          </li>
+                          <li>
+                            <b>Genera una contraseña de aplicación.</b>
+                            <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">Ir a Contraseñas de App <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                          </li>
+                          <li>En "Seleccionar aplicación", elige "Otra", escribe "SportsPanel" y pulsa "Generar".</li>
+                          <li>Copia la contraseña de 16 letras que aparece y pégala en el campo de abajo.</li>
                         </ol>
                     </AlertDescription>
                 </Alert>
