@@ -876,6 +876,14 @@ export function TreasuryDashboard() {
       return teamNames || userNames || 'N/A';
   }
 
+  const tabsConfig = [
+    { value: "accounting", label: "Contabilidad" },
+    { value: "fees", label: "Cuotas y Pagos" },
+    { value: "sponsorships", label: "Patrocinios" },
+    { value: "expenses", label: "Gastos" },
+    { value: "other", label: "Pagos Adicionales" },
+  ];
+
 
   if (loading) {
     return (
@@ -979,15 +987,23 @@ export function TreasuryDashboard() {
         />
         
       <Tabs defaultValue="accounting" value={activeTab} onValueChange={setActiveTab}>
-        <div className="flex items-center justify-between">
-            <TabsList>
-                <TabsTrigger value="accounting">Contabilidad</TabsTrigger>
-                <TabsTrigger value="fees">Cuotas y Pagos</TabsTrigger>
-                <TabsTrigger value="sponsorships">Patrocinios</TabsTrigger>
-                <TabsTrigger value="expenses">Gastos</TabsTrigger>
-                <TabsTrigger value="other">Pagos Adicionales</TabsTrigger>
-            </TabsList>
-        </div>
+          <div className="sm:hidden">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar sección..." />
+              </SelectTrigger>
+              <SelectContent>
+                {tabsConfig.map(tab => (
+                  <SelectItem key={tab.value} value={tab.value}>{tab.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <TabsList className="hidden sm:inline-flex">
+            {tabsConfig.map(tab => (
+              <TabsTrigger key={tab.value} value={tab.value}>{tab.label}</TabsTrigger>
+            ))}
+          </TabsList>
         <TabsContent value="accounting" className="mt-4">
              <Card>
                 <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-2">
