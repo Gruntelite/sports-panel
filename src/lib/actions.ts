@@ -52,7 +52,8 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
         const luminance = getLuminance(themeColor);
         const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 20);
+        trialEndDate.setDate(trialEndDate.getDate() + 21);
+        trialEndDate.setHours(0, 0, 0, 0);
 
         const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
         batch.set(settingsRef, {
