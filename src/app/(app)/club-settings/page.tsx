@@ -71,6 +71,13 @@ export default function ClubSettingsPage() {
     const [newFieldName, setNewFieldName] = useState('');
     const [newFieldType, setNewFieldType] = useState<CustomFieldDef['type']>('text');
     const [newFieldAppliesTo, setNewFieldAppliesTo] = useState<CustomFieldDef['appliesTo']>([]);
+    
+    const [activeTab, setActiveTab] = useState("settings");
+     const tabs = [
+        { id: "settings", label: "Ajustes", icon: Settings },
+        { id: "customization", label: "Campos Personalizados", icon: ListPlus },
+        { id: "subscription", label: "Suscripción", icon: CreditCard },
+    ];
 
 
     useEffect(() => {
@@ -291,198 +298,215 @@ export default function ClubSettingsPage() {
 
     return (
         <div className="flex flex-col gap-6">
-            <Tabs defaultValue="settings" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="settings"><Settings className="mr-2 h-4 w-4"/>Ajustes</TabsTrigger>
-                    <TabsTrigger value="customization"><ListPlus className="mr-2 h-4 w-4"/>Campos Personalizados</TabsTrigger>
-                    <TabsTrigger value="subscription"><CreditCard className="mr-2 h-4 w-4"/>Suscripción</TabsTrigger>
-                </TabsList>
-                <TabsContent value="settings" className="mt-6">
-                    <div className="space-y-6">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Ajustes Generales</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="clubName">Nombre del Club</Label>
-                                    <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
-                                    <p className="text-xs text-muted-foreground">Se recomienda un máximo de 30 caracteres para una correcta visualización.</p>
+            <div className="sm:hidden mb-4">
+                <Select value={activeTab} onValueChange={setActiveTab}>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Seleccionar sección..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {tabs.map((tab) => (
+                            <SelectItem key={tab.id} value={tab.id}>
+                                <div className="flex items-center gap-2">
+                                    <tab.icon className="h-4 w-4" />
+                                    {tab.label}
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="clubLogo">Logo del Club</Label>
-                                    <div className="flex items-center gap-4">
-                                        <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
-                                        <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
-                                        <div className="ml-auto">
-                                          <Button asChild>
-                                            <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
-                                              <Download className="mr-2 h-4 w-4" />
-                                              Descargar Guía de Uso
-                                            </Link>
-                                          </Button>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="clubColor">Color Principal del Club</Label>
-                                    <div className="flex items-center gap-2">
-                                        <Input
-                                            id="clubColor"
-                                            type="color"
-                                            value={themeColor}
-                                            onChange={(e) => setThemeColor(e.target.value)}
-                                            className="p-1 h-10 w-14"
-                                        />
-                                        <Input
-                                            type="text"
-                                            value={themeColor}
-                                            onChange={(e) => setThemeColor(e.target.value)}
-                                            placeholder="#2563eb"
-                                            className="w-full"
-                                        />
-                                    </div>
-                                </div>
-                                <Button onClick={handleSaveChanges} disabled={saving}>
-                                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    <Save className="mr-2 h-4 w-4" /> Guardar Cambios
-                                </Button>
-                            </CardContent>
-                        </Card>
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
 
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Seguridad de la Cuenta</CardTitle>
-                                <CardDescription>Cambia tu email de inicio de sesión o tu contraseña.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="space-y-2">
-                                    <Label htmlFor="newEmail">Correo Electrónico de Acceso</Label>
-                                    <Input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full hidden sm:block">
+                <TabsList className="grid w-full grid-cols-3">
+                     {tabs.map((tab) => (
+                        <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4"/>{tab.label}</TabsTrigger>
+                     ))}
+                </TabsList>
+            </Tabs>
+
+            <div className={cn('mt-6 space-y-6', activeTab !== 'settings' && 'hidden')}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Ajustes Generales</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="clubName">Nombre del Club</Label>
+                            <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
+                            <p className="text-xs text-muted-foreground">Se recomienda un máximo de 30 caracteres para una correcta visualización.</p>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="clubLogo">Logo del Club</Label>
+                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                                <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
+                                <div className="flex-1 w-full space-y-2">
+                                    <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
+                                    <Button asChild>
+                                        <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
+                                        <Download className="mr-2 h-4 w-4" />
+                                        Descargar Guía de Uso
+                                        </Link>
+                                    </Button>
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                                    <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Dejar en blanco para no cambiar"/>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirmNewPassword">Confirmar Nueva Contraseña</Label>
-                                    <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
-                                </div>
-                                <div className="space-y-2 pt-2 border-t">
-                                    <Label htmlFor="currentPassword">Contraseña Actual (para confirmar)</Label>
-                                    <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required/>
-                                </div>
-                                <Button onClick={handleSaveSecurityChanges} disabled={savingSecurity}>
-                                    {savingSecurity && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    <KeyRound className="mr-2 h-4 w-4" /> Guardar Cambios de Seguridad
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-                </TabsContent>
-                <TabsContent value="customization" className="mt-6">
-                    <Card>
-                        <CardHeader className="flex flex-row justify-between items-center">
-                            <div>
-                                <CardTitle>Campos Personalizados</CardTitle>
-                                <CardDescription>
-                                    Añade campos adicionales a las fichas de tus miembros.
-                                </CardDescription>
                             </div>
-                            <Dialog open={isFieldModalOpen} onOpenChange={setIsFieldModalOpen}>
-                                <DialogTrigger asChild>
-                                    <Button><PlusCircle className="mr-2 h-4 w-4" />Añadir Campo</Button>
-                                </DialogTrigger>
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Crear Campo Personalizado</DialogTitle>
-                                    </DialogHeader>
-                                    <div className="py-4 space-y-4">
-                                        <div className="space-y-2">
-                                            <Label htmlFor="newFieldName">Nombre del Campo</Label>
-                                            <Input id="newFieldName" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Ej: Nº Expediente" />
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label htmlFor="newFieldType">Tipo de Campo</Label>
-                                            <Select value={newFieldType} onValueChange={(v) => setNewFieldType(v as any)}>
-                                                <SelectTrigger><SelectValue/></SelectTrigger>
-                                                <SelectContent>
-                                                    <SelectItem value="text">Texto</SelectItem>
-                                                    <SelectItem value="number">Número</SelectItem>
-                                                    <SelectItem value="date">Fecha</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="space-y-2">
-                                            <Label>Aplica a</Label>
-                                            <div className="flex flex-col sm:flex-row gap-4">
-                                                {(['player', 'coach', 'staff'] as const).map(type => (
-                                                    <div key={type} className="flex items-center gap-2">
-                                                        <Switch
-                                                            id={`applies-${type}`}
-                                                            checked={newFieldAppliesTo.includes(type)}
-                                                            onCheckedChange={(checked) => {
-                                                                const updated = new Set(newFieldAppliesTo);
-                                                                if (checked) updated.add(type);
-                                                                else updated.delete(type);
-                                                                setNewFieldAppliesTo(Array.from(updated));
-                                                            }}
-                                                        />
-                                                        <Label htmlFor={`applies-${type}`} className="capitalize">{type === 'player' ? 'Jugadores' : type === 'coach' ? 'Entrenadores' : 'Staff'}</Label>
-                                                    </div>
-                                                ))}
-                                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="clubColor">Color Principal del Club</Label>
+                            <div className="flex items-center gap-2">
+                                <Input
+                                    id="clubColor"
+                                    type="color"
+                                    value={themeColor}
+                                    onChange={(e) => setThemeColor(e.target.value)}
+                                    className="p-1 h-10 w-14"
+                                />
+                                <Input
+                                    type="text"
+                                    value={themeColor}
+                                    onChange={(e) => setThemeColor(e.target.value)}
+                                    placeholder="#2563eb"
+                                    className="w-full"
+                                />
+                            </div>
+                        </div>
+                        <Button onClick={handleSaveChanges} disabled={saving}>
+                            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <Save className="mr-2 h-4 w-4" /> Guardar Cambios
+                        </Button>
+                    </CardContent>
+                </Card>
+
+                 <Card>
+                    <CardHeader>
+                        <CardTitle>Seguridad de la Cuenta</CardTitle>
+                        <CardDescription>Cambia tu email de inicio de sesión o tu contraseña.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="newEmail">Correo Electrónico de Acceso</Label>
+                            <Input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="newPassword">Nueva Contraseña</Label>
+                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Dejar en blanco para no cambiar"/>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="confirmNewPassword">Confirmar Nueva Contraseña</Label>
+                            <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
+                        </div>
+                        <div className="space-y-2 pt-2 border-t">
+                            <Label htmlFor="currentPassword">Contraseña Actual (para confirmar)</Label>
+                            <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required/>
+                        </div>
+                        <Button onClick={handleSaveSecurityChanges} disabled={savingSecurity}>
+                            {savingSecurity && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            <KeyRound className="mr-2 h-4 w-4" /> Guardar Cambios de Seguridad
+                        </Button>
+                    </CardContent>
+                </Card>
+            </div>
+            <div className={cn('mt-6 sm:mt-0', activeTab !== 'customization' && 'hidden')}>
+                <Card>
+                    <CardHeader className="flex flex-row justify-between items-center">
+                        <div>
+                            <CardTitle>Campos Personalizados</CardTitle>
+                            <CardDescription>
+                                Añade campos adicionales a las fichas de tus miembros.
+                            </CardDescription>
+                        </div>
+                        <Dialog open={isFieldModalOpen} onOpenChange={setIsFieldModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button><PlusCircle className="mr-2 h-4 w-4" />Añadir Campo</Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Crear Campo Personalizado</DialogTitle>
+                                </DialogHeader>
+                                <div className="py-4 space-y-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="newFieldName">Nombre del Campo</Label>
+                                        <Input id="newFieldName" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Ej: Nº Expediente" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="newFieldType">Tipo de Campo</Label>
+                                        <Select value={newFieldType} onValueChange={(v) => setNewFieldType(v as any)}>
+                                            <SelectTrigger><SelectValue/></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="text">Texto</SelectItem>
+                                                <SelectItem value="number">Número</SelectItem>
+                                                <SelectItem value="date">Fecha</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Aplica a</Label>
+                                        <div className="flex flex-col sm:flex-row gap-4">
+                                            {(['player', 'coach', 'staff'] as const).map(type => (
+                                                <div key={type} className="flex items-center gap-2">
+                                                    <Switch
+                                                        id={`applies-${type}`}
+                                                        checked={newFieldAppliesTo.includes(type)}
+                                                        onCheckedChange={(checked) => {
+                                                            const updated = new Set(newFieldAppliesTo);
+                                                            if (checked) updated.add(type);
+                                                            else updated.delete(type);
+                                                            setNewFieldAppliesTo(Array.from(updated));
+                                                        }}
+                                                    />
+                                                    <Label htmlFor={`applies-${type}`} className="capitalize">{type === 'player' ? 'Jugadores' : type === 'coach' ? 'Entrenadores' : 'Staff'}</Label>
+                                                </div>
+                                            ))}
                                         </div>
                                     </div>
-                                    <DialogFooter>
-                                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                        <Button onClick={handleAddCustomField} disabled={saving}>{saving && <Loader2 className="animate-spin mr-2"/>}Guardar</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                        </CardHeader>
-                        <CardContent>
-                            {customFields.length > 0 ? (
-                                <ul className="space-y-2">
-                                    {customFields.map(field => (
-                                        <li key={field.id} className="flex items-center justify-between p-3 border rounded-md">
-                                            <div>
-                                                <p className="font-medium">{field.name}</p>
-                                                <p className="text-xs text-muted-foreground">Tipo: {field.type} | Aplica a: {field.appliesTo.join(', ')}</p>
-                                            </div>
-                                            <Button variant="ghost" size="icon" onClick={() => handleRemoveCustomField(field.id)} disabled={saving}>
-                                                <Trash2 className="h-4 w-4 text-destructive"/>
-                                            </Button>
-                                        </li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-center text-muted-foreground py-8">No has creado ningún campo personalizado.</p>
-                            )}
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-                 <TabsContent value="subscription" className="mt-6">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Suscripción y Pagos</CardTitle>
-                            <CardDescription>
-                                Gestiona tu plan, consulta tus facturas y actualiza tu método de pago.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="space-y-4">
-                                <p>Para gestionar tu suscripción, serás redirigido al portal seguro de nuestro proveedor de pagos, Stripe.</p>
-                                <Button onClick={handleManageSubscription} disabled={loadingPortal}>
-                                    {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                    <ExternalLink className="mr-2 h-4 w-4"/>
-                                    Ir al Portal de Cliente
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
-                 </TabsContent>
-            </Tabs>
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                                    <Button onClick={handleAddCustomField} disabled={saving}>{saving && <Loader2 className="animate-spin mr-2"/>}Guardar</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                    </CardHeader>
+                    <CardContent>
+                        {customFields.length > 0 ? (
+                            <ul className="space-y-2">
+                                {customFields.map(field => (
+                                    <li key={field.id} className="flex items-center justify-between p-3 border rounded-md">
+                                        <div>
+                                            <p className="font-medium">{field.name}</p>
+                                            <p className="text-xs text-muted-foreground">Tipo: {field.type} | Aplica a: {field.appliesTo.join(', ')}</p>
+                                        </div>
+                                        <Button variant="ghost" size="icon" onClick={() => handleRemoveCustomField(field.id)} disabled={saving}>
+                                            <Trash2 className="h-4 w-4 text-destructive"/>
+                                        </Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-center text-muted-foreground py-8">No has creado ningún campo personalizado.</p>
+                        )}
+                    </CardContent>
+                </Card>
+            </div>
+             <div className={cn('mt-6 sm:mt-0', activeTab !== 'subscription' && 'hidden')}>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Suscripción y Pagos</CardTitle>
+                        <CardDescription>
+                            Gestiona tu plan, consulta tus facturas y actualiza tu método de pago.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="space-y-4">
+                            <p>Para gestionar tu suscripción, serás redirigido al portal seguro de nuestro proveedor de pagos, Stripe.</p>
+                            <Button onClick={handleManageSubscription} disabled={loadingPortal}>
+                                {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                <ExternalLink className="mr-2 h-4 w-4"/>
+                                Ir al Portal de Cliente
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+             </div>
         </div>
     );
 }
