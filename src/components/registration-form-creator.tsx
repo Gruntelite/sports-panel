@@ -20,6 +20,7 @@ import { DialogFooter, DialogClose } from "./ui/dialog";
 import { DatePicker } from "./ui/date-picker";
 import { Switch } from "./ui/switch";
 import { cn } from "@/lib/utils";
+import { ScrollArea } from "./ui/scroll-area";
 
 
 const initialFormFields: CustomRegistrationFormField[] = [
@@ -356,7 +357,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                           <div className="space-y-4">
                               <h4 className="font-medium">Campos del Formulario</h4>
                               <p className="text-sm text-muted-foreground">Activa los campos que necesites. Los obligatorios no se pueden desactivar.</p>
-                              <div className="space-y-3 max-h-72 overflow-y-auto pr-4">
+                              <ScrollArea className="space-y-3 max-h-72 pr-4">
                                   {allFields.map((item) => (
                                   <FormField
                                       key={item.id}
@@ -364,7 +365,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                                       name="selectedFieldIds"
                                       render={({ field }) => {
                                       return (
-                                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
+                                          <FormItem className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm mb-3">
                                               <div className="flex items-center gap-2">
                                                   {item.custom && (
                                                       <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveCustomField(item.id)}>
@@ -394,7 +395,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                                       }}
                                   />
                                   ))}
-                              </div>
+                              </ScrollArea>
                           </div>
                             <div className="space-y-4">
                               <h4 className="font-medium">Añadir Campo Personalizado</h4>
