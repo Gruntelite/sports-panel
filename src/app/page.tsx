@@ -349,7 +349,7 @@ export default function LandingPage() {
           </div>
         </header>
         <main className="flex-1">
-          <section className="w-full py-12 md:py-16 lg:py-20">
+          <section className="w-full py-8 md:py-12 lg:py-16">
             <div className="container px-4 md:px-6">
               <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:gap-16 items-center">
                   <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
@@ -367,22 +367,26 @@ export default function LandingPage() {
                           Pruébalo gratis
                         </Link>
                       </Button>
-                       <Button asChild size="lg" variant="outline">
-                            <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
-                            <Download className="mr-2 h-4 w-4" />
-                            Descargar Guía de Uso
-                            </Link>
-                        </Button>
                     </div>
                      <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">No necesitas tarjeta de crédito · Cancela cuando quieras</p>
                   </div>
-                   <Image
-                      src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(10).png?alt=media&token=1ac52a21-54aa-451d-b538-d159bd475484"
-                      alt="SportsPanel App Screenshot"
-                      width={1890}
-                      height={1063}
-                      className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
-                    />
+                   <div className="space-y-4">
+                        <Image
+                            src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(10).png?alt=media&token=1ac52a21-54aa-451d-b538-d159bd475484"
+                            alt="SportsPanel App Screenshot"
+                            width={1890}
+                            height={1063}
+                            className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full"
+                        />
+                        <div className="flex justify-center">
+                            <Button asChild size="lg" variant="outline">
+                                <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
+                                <Download className="mr-2 h-4 w-4" />
+                                Descargar Guía de Uso
+                                </Link>
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             </div>
           </section>
