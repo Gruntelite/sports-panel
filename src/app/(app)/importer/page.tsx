@@ -1,12 +1,15 @@
 
 "use client";
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Users, UserSquare, Briefcase, Handshake, Database, Copy } from "lucide-react";
 import { CsvImporter } from "@/components/csv-importer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 type ColumnInfo = {
     key: string;
@@ -104,11 +107,12 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
 
     return (
         <div className="space-y-4">
-            <Button onClick={handleCopyHeaders} variant="outline" size="sm">
+            <Button onClick={handleCopyHeaders} variant="outline" size="sm" className="w-full sm:w-auto">
                 <Copy className="mr-2 h-4 w-4" />
-                Copiar Cabeceras para Pegar en Hoja de Cálculo
+                <span className="sm:hidden">Copiar Cabeceras</span>
+                <span className="hidden sm:inline">Copiar Cabeceras para Hoja de Cálculo</span>
             </Button>
-            <ol className="list-decimal list-inside grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
+            <ol className="list-decimal list-inside grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 {columns.map(col => (
                     <li key={col.key}>
                         <span className="font-semibold text-foreground">{col.label}</span>
@@ -122,6 +126,15 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
 
 
 export default function ImporterPage() {
+    const [activeTab, setActiveTab] = useState("players");
+    
+    const tabs = [
+        { id: "players", label: "Jugadores", icon: Users, columns: playerColumns },
+        { id: "coaches", label: "Entrenadores", icon: UserSquare, columns: coachColumns },
+        { id: "staff", label: "Staff y Directiva", icon: Briefcase, columns: staffColumns },
+        { id: "socios", label: "Socios", icon: Handshake, columns: socioColumns },
+    ]
+
   return (
     <div className="flex flex-col gap-6">
        <div>
@@ -134,91 +147,55 @@ export default function ImporterPage() {
         </p>
       </div>
       
-       <Tabs defaultValue="players" className="w-full">
+       <div className="sm:hidden">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar tipo de importación..." />
+                </SelectTrigger>
+                <SelectContent>
+                {tabs.map((tab) => (
+                    <SelectItem key={tab.id} value={tab.id}>
+                        <div className="flex items-center gap-2">
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                        </div>
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+       </div>
+       
+       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full hidden sm:block">
         <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="players"><Users className="mr-2 h-4 w-4" />Jugadores</TabsTrigger>
-          <TabsTrigger value="coaches"><UserSquare className="mr-2 h-4 w-4" />Entrenadores</TabsTrigger>
-          <TabsTrigger value="staff"><Briefcase className="mr-2 h-4 w-4" />Staff y Directiva</TabsTrigger>
-          <TabsTrigger value="socios"><Handshake className="mr-2 h-4 w-4" />Socios</TabsTrigger>
+            {tabs.map(tab => (
+                 <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4" />{tab.label}</TabsTrigger>
+            ))}
         </TabsList>
-        
-        <TabsContent value="players" className="mt-6 space-y-6">
-            <CsvImporter 
-                importerType="players"
-                requiredColumns={playerColumns}
-                onImportSuccess={() => console.log('Players imported!')}
-            />
-            <Card>
-                <CardHeader>
-                    <CardTitle>Orden y Nombres de las Columnas para Jugadores</CardTitle>
-                    <CardDescription>
-                        Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
-                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ColumnList columns={playerColumns} />
-                </CardContent>
-            </Card>
-        </TabsContent>
-        <TabsContent value="coaches" className="mt-6 space-y-6">
-            <CsvImporter 
-                importerType="coaches"
-                requiredColumns={coachColumns}
-                onImportSuccess={() => console.log('Coaches imported!')}
-            />
-            <Card>
-                <CardHeader>
-                    <CardTitle>Orden de Columnas para Entrenadores</CardTitle>
-                     <CardDescription>
-                       Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
-                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <ColumnList columns={coachColumns} />
-                </CardContent>
-            </Card>
-        </TabsContent>
-         <TabsContent value="staff" className="mt-6 space-y-6">
-             <CsvImporter 
-                importerType="staff"
-                requiredColumns={staffColumns}
-                onImportSuccess={() => console.log('Staff imported!')}
-            />
-            <Card>
-                <CardHeader>
-                    <CardTitle>Orden de Columnas para Staff y Directiva</CardTitle>
-                     <CardDescription>
-                        Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
-                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <ColumnList columns={staffColumns} />
-                </CardContent>
-            </Card>
-        </TabsContent>
-         <TabsContent value="socios" className="mt-6 space-y-6">
-             <CsvImporter 
-                importerType="socios"
-                requiredColumns={socioColumns}
-                onImportSuccess={() => console.log('Socios imported!')}
-            />
-            <Card>
-                <CardHeader>
-                    <CardTitle>Orden de Columnas para Socios</CardTitle>
-                     <CardDescription>
-                        Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
-                        Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde. Para 'paymentType', los valores deben ser 'monthly' o 'annual'.
-                    </CardDescription>
-                </CardHeader>
-                <CardContent>
-                   <ColumnList columns={socioColumns} />
-                </CardContent>
-            </Card>
-        </TabsContent>
       </Tabs>
+
+        {tabs.map(tab => (
+            <div key={tab.id} className={activeTab === tab.id ? 'block' : 'hidden'}>
+                <div className="mt-6 space-y-6">
+                    <CsvImporter 
+                        importerType={tab.id as any}
+                        requiredColumns={tab.columns}
+                        onImportSuccess={() => console.log(`${tab.label} imported!`)}
+                    />
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Orden y Nombres de las Columnas para {tab.label}</CardTitle>
+                            <CardDescription>
+                                Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
+                                Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <ColumnList columns={tab.columns} />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        ))}
     </div>
   );
 }
