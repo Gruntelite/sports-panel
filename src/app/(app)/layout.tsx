@@ -59,6 +59,12 @@ export default function AppLayout({
             const userData = userDocSnap.data();
             const clubId = userData.clubId;
 
+            if (!clubId) {
+                toast({ variant: "destructive", title: "Error de configuración", description: "Tu usuario no está asociado a ningún club."});
+                router.push('/login');
+                return;
+            }
+
             if (clubId === DEV_CLUB_ID) {
               setLoading(false);
               return;
