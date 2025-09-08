@@ -353,7 +353,7 @@ export default function LandingPage() {
             <div className="container px-4 md:px-6">
               <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
                 <div className="space-y-4">
-                  <h1 className="text-3xl font-bold tracking-tighter md:text-4xl xl:text-5xl/none font-headline">
+                  <h1 className="text-3xl font-bold tracking-tighter md:text-5xl xl:text-6xl/none font-headline">
                     El Software que Automatiza tu Club<br />y Ahorra Horas de Gestión
                   </h1>
                   <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-lg">
