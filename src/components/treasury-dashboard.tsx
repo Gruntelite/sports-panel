@@ -114,7 +114,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                 }
             });
             sponsorships.forEach(s => {
-                if (s.frequency === 'monthly') {
+                if (s.frequency === 'monthly' && !s.excludedMonths?.includes(i)) {
                     for (let i = 0; i < 12; i++) {
                         if (!s.excludedMonths?.includes(i)) {
                             monthlyData[i].Ingresos += s.amount;
@@ -1067,13 +1067,11 @@ export function TreasuryDashboard() {
             </CardHeader>
             <CardContent>
                 <div className="grid md:grid-cols-2 gap-6 mb-4">
-                    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
-                        <div className="space-y-2 flex-1">
-                            <Label>Meses sin cobro de cuota (Jugadores y Socios)</Label>
-                        </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg bg-muted/50">
+                        <Label>Meses sin cobro de cuota (Jugadores y Socios)</Label>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                                <Button variant="outline" className="w-full sm:w-[200px] justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {localFeeExcluded.length ? `${localFeeExcluded.length} mese(s)` : 'Seleccionar...'}
                                 </Button>
@@ -1099,13 +1097,11 @@ export function TreasuryDashboard() {
                             </PopoverContent>
                         </Popover>
                     </div>
-                    <div className="flex items-center gap-4 p-4 border rounded-lg bg-muted/50">
-                        <div className="space-y-2 flex-1">
-                            <Label>Meses sin pago a personal (Entrenadores y Staff)</Label>
-                        </div>
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg bg-muted/50">
+                        <Label>Meses sin pago a personal (Entrenadores y Staff)</Label>
                         <Popover>
                             <PopoverTrigger asChild>
-                                <Button variant="outline" className="w-[200px] justify-start text-left font-normal">
+                                <Button variant="outline" className="w-full sm:w-[200px] justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
                                     {localCoachFeeExcluded.length ? `${localCoachFeeExcluded.length} mese(s)` : 'Seleccionar...'}
                                 </Button>
@@ -1141,9 +1137,9 @@ export function TreasuryDashboard() {
                     </div>
                  )}
                 {activeTab === 'fees' && (
-                    <div className="flex justify-end mb-4 gap-2">
+                    <div className="flex flex-col sm:flex-row justify-end mb-4 gap-2">
                         <Select value={selectedRole} onValueChange={setSelectedRole}>
-                            <SelectTrigger className="w-[180px]">
+                            <SelectTrigger className="w-full sm:w-[180px]">
                                 <SelectValue placeholder="Filtrar por rol" />
                             </SelectTrigger>
                             <SelectContent>
@@ -1155,7 +1151,7 @@ export function TreasuryDashboard() {
                             </SelectContent>
                         </Select>
                         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
-                            <SelectTrigger className="w-[220px]">
+                            <SelectTrigger className="w-full sm:w-[220px]">
                                 <SelectValue placeholder="Filtrar por equipo" />
                             </SelectTrigger>
                             <SelectContent>
