@@ -324,7 +324,7 @@ export default function ClubSettingsPage() {
                 </TabsList>
             </Tabs>
 
-            <div className={cn('mt-6 space-y-6', activeTab !== 'settings' && 'hidden')}>
+            <div className={cn(activeTab === 'settings' ? 'mt-6 space-y-6' : 'hidden')}>
                 <Card>
                     <CardHeader>
                         <CardTitle>Ajustes Generales</CardTitle>
@@ -405,10 +405,10 @@ export default function ClubSettingsPage() {
                     </CardContent>
                 </Card>
             </div>
-            <div className={cn('mt-6 sm:mt-0', activeTab !== 'customization' && 'hidden')}>
+            <div className={cn(activeTab === 'customization' ? 'mt-6 sm:mt-0' : 'hidden')}>
                 <Card>
-                    <CardHeader className="flex flex-row justify-between items-center">
-                        <div>
+                    <CardHeader className="flex flex-col sm:flex-row items-start justify-between gap-4">
+                        <div className="flex-1">
                             <CardTitle>Campos Personalizados</CardTitle>
                             <CardDescription>
                                 Añade campos adicionales a las fichas de tus miembros.
@@ -416,7 +416,7 @@ export default function ClubSettingsPage() {
                         </div>
                         <Dialog open={isFieldModalOpen} onOpenChange={setIsFieldModalOpen}>
                             <DialogTrigger asChild>
-                                <Button><PlusCircle className="mr-2 h-4 w-4" />Añadir Campo</Button>
+                                <Button className="w-full mt-2 sm:mt-0 sm:w-auto"><PlusCircle className="mr-2 h-4 w-4" />Añadir Campo</Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
