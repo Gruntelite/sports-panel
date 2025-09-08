@@ -576,7 +576,7 @@ function CalendarView() {
   return (
     <>
     <Card>
-      <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4 border-b sticky top-0 z-10 bg-card">
+      <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4 border-b">
         <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button>
             <CardTitle className="text-xl capitalize min-w-[150px] text-center">{monthName} {year}</CardTitle>
@@ -584,42 +584,45 @@ function CalendarView() {
             <Button variant="outline" onClick={() => setCurrentDate(new Date())}>Hoy</Button>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
-          <Popover>
-            <PopoverTrigger asChild>
-                <Button variant="outline" disabled={isUpdating || templates.length === 0} className="w-full sm:w-[180px]">
-                    {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                    {selectedTemplateName}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                 <Command>
-                    <CommandInput placeholder="Buscar plantilla..." />
-                    <CommandList>
-                      <CommandEmpty>No se encontró ninguna plantilla.</CommandEmpty>
-                      <CommandGroup>
-                        {templates.map((template) => (
-                          <CommandItem
-                            key={template.id}
-                            value={template.name}
-                            onSelect={() => handleSetDefaultTemplate(template.id)}
-                          >
-                            <Check
-                              className={cn( "mr-2 h-4 w-4", defaultTemplateId === template.id ? "opacity-100" : "opacity-0")}
-                            />
-                            {template.name}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-            </PopoverContent>
-          </Popover>
+            <div className="w-full sm:w-auto">
+                <Label>Plantilla por defecto</Label>
+                <Popover>
+                    <PopoverTrigger asChild>
+                        <Button variant="outline" disabled={isUpdating || templates.length === 0} className="w-full sm:w-[180px] justify-between mt-1">
+                            {isUpdating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : null}
+                            <span>{selectedTemplateName}</span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                        <Command>
+                            <CommandInput placeholder="Buscar plantilla..." />
+                            <CommandList>
+                            <CommandEmpty>No se encontró ninguna plantilla.</CommandEmpty>
+                            <CommandGroup>
+                                {templates.map((template) => (
+                                <CommandItem
+                                    key={template.id}
+                                    value={template.name}
+                                    onSelect={() => handleSetDefaultTemplate(template.id)}
+                                >
+                                    <Check
+                                    className={cn( "mr-2 h-4 w-4", defaultTemplateId === template.id ? "opacity-100" : "opacity-0")}
+                                    />
+                                    {template.name}
+                                </CommandItem>
+                                ))}
+                            </CommandGroup>
+                            </CommandList>
+                        </Command>
+                    </PopoverContent>
+                </Popover>
+          </div>
           
           {selectedDays.size > 0 ? (
              <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <Button className="gap-1 w-full sm:w-auto" disabled={isUpdating}>
+                    <Button className="gap-1 w-full sm:w-auto self-end" disabled={isUpdating}>
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         Acciones ({selectedDays.size})
                         <MoreHorizontal className="h-3.5 w-3.5" />
@@ -645,20 +648,20 @@ function CalendarView() {
                 </DropdownMenuContent>
              </DropdownMenu>
           ) : (
-            <Button className="gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
+            <Button className="gap-1 w-full sm:w-auto self-end" onClick={() => handleOpenModal('add')}>
                 <PlusCircle className="h-3.5 w-3.5" />
                 Añadir Evento
             </Button>
           )}
         </div>
       </CardHeader>
-      <div className="sticky top-[89px] z-10 bg-card">
-         <div className="grid grid-cols-7 border-b border-border">
-            {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
-                <div key={day} className="text-center font-semibold py-2 text-muted-foreground text-sm">{day}</div>
-            ))}
+        <div className="sticky top-0 z-10 bg-card">
+            <div className="grid grid-cols-7 border-b border-border">
+                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+                    <div key={day} className="text-center font-semibold py-2 text-muted-foreground text-sm">{day}</div>
+                ))}
+            </div>
         </div>
-      </div>
       <CardContent className="p-0">
         {(loading && !isUpdating) ? (
              <div className="flex items-center justify-center h-full py-20">
@@ -666,7 +669,7 @@ function CalendarView() {
             </div>
         ) : (
             <div className="grid grid-cols-7 gap-px bg-border">
-                {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[120px]"></div>)}
+                {placeholders.map(i => <div key={`placeholder-${i}`} className="bg-card min-h-[100px]"></div>)}
                 {days.map(day => {
                     const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
                     const dayStr = format(dayDate, "yyyy-MM-dd");
@@ -688,7 +691,7 @@ function CalendarView() {
                     return (
                     <div 
                         key={day} 
-                        className={cn("p-1 min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors border-t border-l border-border relative", dayBgClass, { "ring-2 ring-primary ring-inset z-10": isSelected, "hover:bg-muted/50": !isSelected })}
+                        className={cn("p-1 min-h-[100px] flex flex-col gap-1 cursor-pointer transition-colors border-t border-l border-border relative", dayBgClass, { "ring-2 ring-primary ring-inset z-10": isSelected, "hover:bg-muted/50": !isSelected })}
                         onClick={() => handleDayClick(day)}
                         onDoubleClick={() => handleShowDayDetails(day)}
                     >
@@ -1341,92 +1344,84 @@ export default function SchedulesPage() {
     <div className="flex flex-col gap-6 h-full">
         <Card>
             <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold font-headline tracking-tight">Planificación y Horarios</h1>
-                    <p className="text-muted-foreground">
-                        Crea plantillas, gestiona eventos y visualiza el calendario de tu club.
-                    </p>
-                </div>
-                <div className="flex items-center gap-2 self-start md:self-center">
-                    <div className="space-y-1">
-                        <Label>Plantilla</Label>
-                        <div className="flex items-center gap-2">
-                             <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
-                                <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                        <Button variant="outline" className="flex-1 md:flex-none">
-                                            {displayTemplate?.name || "Seleccionar"}
-                                            <MoreVertical className="ml-2 h-4 w-4" />
-                                        </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent>
-                                        <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
-                                            {scheduleTemplates.map(template => (
-                                                <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
-                                            ))}
-                                        </DropdownMenuRadioGroup>
-                                        <DropdownMenuSeparator />
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
-                                                setIsNewTemplateModalOpen(true);
-                                            }}>
-                                                <PlusCircle className="mr-2 h-4 w-4"/>
-                                                Crear Plantilla
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onSelect={(e) => {
-                                                e.preventDefault();
-                                                setEditedTemplateName(displayTemplate?.name || "");
-                                                setIsEditTemplateModalOpen(true);
-                                            }} disabled={!currentTemplateId}>
-                                                <Edit className="mr-2 h-4 w-4"/>
-                                                Renombrar
-                                            </DropdownMenuItem>
-                                        <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
-                                            <Trash2 className="mr-2 h-4 w-4"/>
-                                            Eliminar
+                 <div className="w-full md:w-auto">
+                    <Label>Plantilla seleccionada</Label>
+                    <div className="flex items-center gap-2 mt-1">
+                        <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
+                            <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" className="flex-1 md:flex-none">
+                                        {displayTemplate?.name || "Seleccionar"}
+                                        <MoreVertical className="ml-2 h-4 w-4" />
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent>
+                                    <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                                        {scheduleTemplates.map(template => (
+                                            <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                                        ))}
+                                    </DropdownMenuRadioGroup>
+                                    <DropdownMenuSeparator />
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            setIsNewTemplateModalOpen(true);
+                                        }}>
+                                            <PlusCircle className="mr-2 h-4 w-4"/>
+                                            Crear Plantilla
                                         </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                        <DropdownMenuItem onSelect={(e) => {
+                                            e.preventDefault();
+                                            setEditedTemplateName(displayTemplate?.name || "");
+                                            setIsEditTemplateModalOpen(true);
+                                        }} disabled={!currentTemplateId}>
+                                            <Edit className="mr-2 h-4 w-4"/>
+                                            Renombrar
+                                        </DropdownMenuItem>
+                                    <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
+                                        <Trash2 className="mr-2 h-4 w-4"/>
+                                        Eliminar
+                                    </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
 
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Renombrar Plantilla</DialogTitle>
-                                            <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
-                                        </DialogHeader>
-                                        <div className="py-4">
-                                            <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-                                            <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
-                                        </div>
-                                        <DialogFooter>
-                                            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                            <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
-                                
                                 <DialogContent>
                                     <DialogHeader>
-                                        <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
-                                        <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
+                                        <DialogTitle>Renombrar Plantilla</DialogTitle>
+                                        <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
                                     </DialogHeader>
                                     <div className="py-4">
-                                        <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
-                                        <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                                        <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                                        <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
                                     </div>
                                     <DialogFooter>
                                         <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                        <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
+                                        <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
-                            <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
-                                    {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
-                                </Button>
-                                <Button onClick={handleDownloadPdf} variant="outline" size="icon" disabled={isDownloading}>
-                                    {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
-                                </Button>
-                        </div>
+                            
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
+                                    <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
+                                    <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                                    <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
+                                {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
+                            </Button>
+                            <Button onClick={handleDownloadPdf} variant="outline" size="icon" disabled={isDownloading}>
+                                {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
+                            </Button>
                     </div>
                 </div>
             </CardHeader>
@@ -1458,120 +1453,122 @@ export default function SchedulesPage() {
 
         <TabsContent value="editor" className="pt-4 flex-grow">
           <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[420px_1fr] gap-6">
-              <Card>
-                  <CardHeader>
-                      <CardTitle>Configuración de Horarios</CardTitle>
-                      <CardDescription>Define recintos/pistas, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="flex flex-col gap-6">
-                      <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
-                        <AccordionItem value="settings">
-                          <AccordionTrigger className="text-base font-semibold">
-                            <div className="flex items-center gap-2">
-                              <Settings className="h-5 w-5" />
-                              Configuración General
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pt-4 space-y-4">
-                            <div className="space-y-2">
-                                <Label>Color de la Plantilla</Label>
-                                <div className="flex flex-wrap gap-2">
-                                    {TEMPLATE_COLORS.map(color => (
-                                        <button
-                                            key={color.name}
-                                            onClick={() => setTemplateColor(color.value)}
-                                            className={cn("h-8 w-8 rounded-full border-2 transition-transform", templateColor === color.value ? 'border-ring scale-110' : 'border-transparent')}
-                                            style={{backgroundColor: color.value}}
-                                        />
+              <div className="lg:col-span-3 xl:col-span-1">
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Configuración de Horarios</CardTitle>
+                        <CardDescription>Define recintos/pistas, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-6">
+                        <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
+                            <AccordionItem value="settings">
+                            <AccordionTrigger className="text-base font-semibold">
+                                <div className="flex items-center gap-2">
+                                <Settings className="h-5 w-5" />
+                                Configuración General
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 space-y-4">
+                                <div className="space-y-2">
+                                    <Label>Color de la Plantilla</Label>
+                                    <div className="flex flex-wrap gap-2">
+                                        {TEMPLATE_COLORS.map(color => (
+                                            <button
+                                                key={color.name}
+                                                onClick={() => setTemplateColor(color.value)}
+                                                className={cn("h-8 w-8 rounded-full border-2 transition-transform", templateColor === color.value ? 'border-ring scale-110' : 'border-transparent')}
+                                                style={{backgroundColor: color.value}}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                <Label>Recintos/Pistas de Entrenamiento</Label>
+                                <div className="flex items-center gap-2">
+                                    <Input placeholder="Nombre del nuevo recinto/pista" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
+                                    <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
+                                </div>
+                                <div className="space-y-2">
+                                    {venues.map(venue => (
+                                        <div key={venue.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded-md">
+                                            <span>{venue.name}</span>
+                                            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveVenue(venue.id)}>
+                                                <Trash2 className="h-4 w-4 text-destructive"/>
+                                            </Button>
+                                        </div>
                                     ))}
                                 </div>
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Recintos/Pistas de Entrenamiento</Label>
-                              <div className="flex items-center gap-2">
-                                  <Input placeholder="Nombre del nuevo recinto/pista" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
-                                  <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
-                              </div>
-                              <div className="space-y-2">
-                                  {venues.map(venue => (
-                                      <div key={venue.id} className="flex items-center justify-between text-sm bg-muted/50 p-2 rounded-md">
-                                          <span>{venue.name}</span>
-                                          <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => handleRemoveVenue(venue.id)}>
-                                              <Trash2 className="h-4 w-4 text-destructive"/>
-                                          </Button>
-                                      </div>
-                                  ))}
-                              </div>
-                            </div>
-                            <div className="grid grid-cols-2 gap-4 pt-4">
-                                <div className="space-y-2">
-                                    <Label htmlFor="start-time">Hora de Inicio</Label>
-                                    <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="end-time">Hora de Fin</Label>
-                                    <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-                                </div>
-                            </div>
-                          </AccordionContent>
-                        </AccordionItem>
-                        <AccordionItem value="assignments">
-                          <AccordionTrigger className="text-base font-semibold">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-5 w-5" />
-                              Asignaciones para el {currentDay}
-                            </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="pt-4 space-y-4">
-                            <div className="space-y-4">
-                              {pendingAssignments.map(assignment => (
-                                <div key={assignment.id} className="flex items-end gap-2 p-3 rounded-lg border bg-card shadow-sm">
-                                    <div className="grid grid-cols-1 gap-2 flex-1">
-                                      <div className="space-y-1">
-                                        <Label className="text-xs">Equipo</Label>
-                                        <Select value={assignment.teamId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'teamId', value)}>
-                                          <SelectTrigger className="h-8"><SelectValue placeholder="Equipo" /></SelectTrigger>
-                                          <SelectContent>
-                                            {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div className="space-y-1">
-                                        <Label className="text-xs">Recinto/Pista</Label>
-                                        <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
-                                          <SelectTrigger className="h-8"><SelectValue placeholder="Recinto/Pista" /></SelectTrigger>
-                                          <SelectContent>
-                                            {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div className="flex gap-2">
-                                        <div className="space-y-1 w-full">
-                                          <Label className="text-xs">Inicio</Label>
-                                          <Input type="time" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} className="h-8" />
-                                        </div>
-                                        <div className="space-y-1 w-full">
-                                          <Label className="text-xs">Fin</Label>
-                                          <Input type="time" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} className="h-8" />
-                                        </div>
-                                      </div>
+                                <div className="grid grid-cols-2 gap-4 pt-4">
+                                    <div className="space-y-2">
+                                        <Label htmlFor="start-time">Hora de Inicio</Label>
+                                        <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                                     </div>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveAssignment(assignment.id)}>
-                                    <Trash className="h-4 w-4 text-destructive"/>
-                                  </Button>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="end-time">Hora de Fin</Label>
+                                        <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+                                    </div>
                                 </div>
-                              ))}
-                            </div>
+                            </AccordionContent>
+                            </AccordionItem>
+                            <AccordionItem value="assignments">
+                            <AccordionTrigger className="text-base font-semibold">
+                                <div className="flex items-center gap-2">
+                                <Clock className="h-5 w-5" />
+                                Asignaciones para el {currentDay}
+                                </div>
+                            </AccordionTrigger>
+                            <AccordionContent className="pt-4 space-y-4">
+                                <div className="space-y-4">
+                                {pendingAssignments.map(assignment => (
+                                    <div key={assignment.id} className="flex items-end gap-2 p-3 rounded-lg border bg-card shadow-sm">
+                                        <div className="grid grid-cols-1 gap-2 flex-1">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Equipo</Label>
+                                            <Select value={assignment.teamId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'teamId', value)}>
+                                            <SelectTrigger className="h-8"><SelectValue placeholder="Equipo" /></SelectTrigger>
+                                            <SelectContent>
+                                                {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs">Recinto/Pista</Label>
+                                            <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
+                                            <SelectTrigger className="h-8"><SelectValue placeholder="Recinto/Pista" /></SelectTrigger>
+                                            <SelectContent>
+                                                {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
+                                            </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="flex gap-2">
+                                            <div className="space-y-1 w-full">
+                                            <Label className="text-xs">Inicio</Label>
+                                            <Input type="time" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} className="h-8" />
+                                            </div>
+                                            <div className="space-y-1 w-full">
+                                            <Label className="text-xs">Fin</Label>
+                                            <Input type="time" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} className="h-8" />
+                                            </div>
+                                        </div>
+                                        </div>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveAssignment(assignment.id)}>
+                                        <Trash className="h-4 w-4 text-destructive"/>
+                                    </Button>
+                                    </div>
+                                ))}
+                                </div>
 
-                            <Button variant="outline" className="w-full" onClick={handleAddAssignmentRow}>
-                              <PlusCircle className="mr-2 h-4 w-4"/>
-                              Añadir Asignación
-                            </Button>
-                          </AccordionContent>
-                        </AccordionItem>
-                      </Accordion>
-                  </CardContent>
-              </Card>
+                                <Button variant="outline" className="w-full" onClick={handleAddAssignmentRow}>
+                                <PlusCircle className="mr-2 h-4 w-4"/>
+                                Añadir Asignación
+                                </Button>
+                            </AccordionContent>
+                            </AccordionItem>
+                        </Accordion>
+                    </CardContent>
+                </Card>
+              </div>
               
               <Card className="sticky top-6 self-start flex flex-col lg:col-span-2 xl:col-span-1">
                   <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
