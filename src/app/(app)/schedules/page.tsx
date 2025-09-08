@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download, RefreshCw, Palette, MoreHorizontal, Check, ChevronsUpDown, Calendar as CalendarIcon } from "lucide-react";
+import { PlusCircle, ChevronLeft, ChevronRight, Clock, MapPin, Trash2, X, Loader2, MoreVertical, Edit, GripVertical, Settings, CalendarRange, Trash, Hourglass, Calendar, Eye, Download, RefreshCw, Palette, MoreHorizontal, Check, ChevronsUpDown, Calendar as CalendarIcon, UserSquare } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "@/components/ui/dropdown-menu";
@@ -24,6 +24,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parse, parseISO, addMonths } from "date-fns";
+import { es } from "date-fns/locale";
+import { Separator } from "../ui/separator";
 
 
 type Venue = {
@@ -271,9 +273,11 @@ function CalendarView() {
 
   const [selectedDays, setSelectedDays] = useState<Set<string>>(new Set());
   const [isUpdating, setIsUpdating] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEventModalOpen, setIsEventModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [eventData, setEventData] = useState<Partial<CalendarEvent>>({});
+  const [isDayModalOpen, setIsDayModalOpen] = useState(false);
+  const [selectedDayDetails, setSelectedDayDetails] = useState<{ date: Date, events: CalendarEvent[] } | null>(null);
   
   const fetchInitialData = useCallback(async (clubId: string) => {
     setLoading(true);
@@ -418,7 +422,7 @@ function CalendarView() {
     } else {
         setEventData(event || { color: EVENT_COLORS[0].value, type: "Evento" });
     }
-    setIsModalOpen(true);
+    setIsEventModalOpen(true);
   };
   
   const handleSaveEvent = async () => {
@@ -433,7 +437,7 @@ function CalendarView() {
             await addDoc(collection(db, "clubs", clubId, "calendarEvents"), eventData);
             toast({ title: "Evento creado"});
         }
-        setIsModalOpen(false);
+        setIsEventModalOpen(false);
         setCurrentDate(new Date(currentDate)); // Trigger refetch
     } catch(e) {
         console.error("Error saving event:", e);
@@ -449,7 +453,7 @@ function CalendarView() {
     try {
         await deleteDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
         toast({ title: "Evento Eliminado"});
-        setIsModalOpen(false);
+        setIsEventModalOpen(false);
         setCurrentDate(new Date(currentDate)); // Trigger refetch
     } catch(e) {
         console.error("Error deleting event:", e);
@@ -476,6 +480,21 @@ function CalendarView() {
     }
     setSelectedDays(newSelectedDays);
   }
+
+  const handleShowDayDetails = (day: number) => {
+    const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), day);
+    const dayStart = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 0, 0, 0, 0);
+    const dayEnd = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate(), 23, 59, 59, 999);
+    
+    const dayEvents = events.filter(e => {
+        const eventDate = e.start.toDate();
+        return eventDate >= dayStart && eventDate <= dayEnd;
+    }).sort((a, b) => a.start.toMillis() - b.start.toMillis());
+
+    setSelectedDayDetails({ date: dayDate, events: dayEvents });
+    setIsDayModalOpen(true);
+  };
+
 
   const handleSetDefaultTemplate = async (templateId: string) => {
     if (!clubId) return;
@@ -657,7 +676,7 @@ function CalendarView() {
                     const dayEvents = events.filter(e => {
                         const eventDate = e.start.toDate();
                         return eventDate >= dayStart && eventDate <= dayEnd;
-                    }).sort((a,b) => a.start.toMillis() - b.start.toMillis());
+                    });
                     
                     const override = overrides.get(dayStr);
                     const defaultTemplateColor = templates.find(t => t.id === defaultTemplateId)?.color;
@@ -668,29 +687,13 @@ function CalendarView() {
                     return (
                     <div 
                         key={day} 
-                        className={cn("p-1 min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors border-t border-l border-border", dayBgClass, { "ring-2 ring-primary ring-inset": isSelected, "hover:bg-muted/50": !isSelected })}
+                        className={cn("p-1 min-h-[120px] flex flex-col gap-1 cursor-pointer transition-colors border-t border-l border-border relative", dayBgClass, { "ring-2 ring-primary ring-inset z-10": isSelected, "hover:bg-muted/50": !isSelected })}
                         onClick={() => handleDayClick(day)}
+                        onDoubleClick={() => handleShowDayDetails(day)}
                     >
                         <span className="font-bold self-end text-sm pr-1">{day}</span>
-                        <div className="flex-grow space-y-1 overflow-y-auto">
-                            {dayEvents.map(event => {
-                                const startTime = format(parseISO(event.start.toDate().toISOString()), 'HH:mm');
-                                const endTime = format(parseISO(event.end.toDate().toISOString()), 'HH:mm');
-                                return (
-                                <div 
-                                    key={event.id} 
-                                    className={cn('text-xs p-1.5 rounded-md transition-shadow space-y-1', event.color, event.isTemplateBased ? 'cursor-default' : 'cursor-pointer hover:shadow-md')} 
-                                    onClick={(e) => { e.stopPropagation(); if(!event.isTemplateBased) handleOpenModal('edit', event); }}
-                                >
-                                    <p className="font-semibold truncate">
-                                        {event.title}
-                                    </p>
-                                    <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-90"><Clock className="h-3 w-3" />{startTime} - {endTime}</div>
-                                    {event.location && <div className="flex items-center gap-1 text-xs text-muted-foreground opacity-90"><MapPin className="h-3 w-3" />{event.location}</div>}
-                                </div>
-                                )
-                            })}
-                        </div>
+                        {dayEvents.length > 0 && <div className="absolute bottom-1 left-1/2 -translate-x-1/2 h-1.5 w-1.5 rounded-full bg-primary"></div>}
+                        <Button variant="ghost" size="icon" className="absolute top-0.5 left-0.5 h-6 w-6" onClick={(e) => {e.stopPropagation(); handleShowDayDetails(day)}}><Eye className="h-3.5 w-3.5"/></Button>
                     </div>
                     )
                 })}
@@ -699,7 +702,7 @@ function CalendarView() {
       </CardContent>
     </Card>
 
-    <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+    <Dialog open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Evento' : 'Editar Evento'}</DialogTitle>
@@ -801,6 +804,42 @@ function CalendarView() {
             </DialogFooter>
         </DialogContent>
     </Dialog>
+
+    <Dialog open={isDayModalOpen} onOpenChange={setIsDayModalOpen}>
+        <DialogContent className="max-w-xl">
+            <DialogHeader>
+                <DialogTitle className="capitalize">Eventos del {selectedDayDetails && format(selectedDayDetails.date, "eeee, d 'de' LLLL", { locale: es })}</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
+                <div className="space-y-3">
+                    {selectedDayDetails && selectedDayDetails.events.length > 0 ? (
+                        selectedDayDetails.events.map(event => (
+                            <div key={event.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", event.color)}>
+                                <div className="flex flex-col items-center w-16 md:w-20">
+                                    <span className="font-bold text-sm md:text-base">{format(event.start.toDate(), 'HH:mm')}</span>
+                                    <span className="text-xs text-muted-foreground">{format(event.end.toDate(), 'HH:mm')}</span>
+                                </div>
+                                <Separator orientation="vertical" className="h-10 w-1 rounded-full bg-current" />
+                                <div className="flex-1">
+                                    <p className="font-semibold text-sm md:text-base">{event.title}</p>
+                                    {event.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {event.location}</div>}
+                                    {event.type && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">{event.type === 'Entrenamiento' ? <UserSquare className="h-3.5 w-3.5"/> : <CalendarIcon className="h-3.5 w-3.5"/>} {event.type}</div>}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                        <p className="text-center text-muted-foreground py-8">No hay eventos para este día.</p>
+                    )}
+                </div>
+            </div>
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Cerrar</Button>
+                </DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     </>
   )
 }
