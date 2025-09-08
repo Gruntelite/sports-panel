@@ -349,7 +349,7 @@ export default function LandingPage() {
           </div>
         </header>
         <main className="flex-1">
-          <section className="w-full py-8 md:py-12 lg:py-16">
+          <section className="w-full pt-8 md:pt-12 lg:pt-16">
             <div className="container px-4 md:px-6">
               <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:gap-16 items-center">
                   <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
@@ -368,7 +368,7 @@ export default function LandingPage() {
                         </Link>
                       </Button>
                     </div>
-                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">No necesitas tarjeta de crédito · Cancela cuando quieras</p>
+                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">Sin tarjeta de crédito</p>
                   </div>
                    <div className="space-y-4">
                         <Image
@@ -569,7 +569,7 @@ export default function LandingPage() {
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y control de cuotas</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación integrada</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Hasta 500 emails diarios</span></li>
+                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>+14.000 emails al mes</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Importador de datos</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Solicitud de datos a familias</span></li>
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Formularios de inscripción</span></li>
