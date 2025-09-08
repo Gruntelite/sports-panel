@@ -57,18 +57,13 @@ export function Header() {
                         <SheetTitle className="sr-only">Menú Principal</SheetTitle>
                     </SheetHeader>
                      <nav className="flex flex-col h-full">
-                        <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0 justify-between">
+                        <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0">
                              <Link
                                 href="/dashboard"
                                 className="flex items-center gap-3 text-lg font-semibold"
                             >
                                 <Logo withText={true}/>
                             </Link>
-                             <SheetClose asChild>
-                                <Button variant="ghost" size="icon" className="rounded-full">
-                                    <X className="h-5 w-5" />
-                                </Button>
-                            </SheetClose>
                         </div>
                         <div className="flex-1 overflow-y-auto">
                              <div className="grid items-start p-4 gap-1">
