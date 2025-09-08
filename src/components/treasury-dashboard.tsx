@@ -114,7 +114,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                 }
             });
             sponsorships.forEach(s => {
-                if (s.frequency === 'monthly' && !s.excludedMonths?.includes(i)) {
+                if (s.frequency === 'monthly') {
                     for (let i = 0; i < 12; i++) {
                         if (!s.excludedMonths?.includes(i)) {
                             monthlyData[i].Ingresos += s.amount;
@@ -987,7 +987,7 @@ export function TreasuryDashboard() {
         />
         
       <Tabs defaultValue="accounting" value={activeTab} onValueChange={setActiveTab}>
-          <div className="sm:hidden">
+           <div className="sm:hidden">
             <Select value={activeTab} onValueChange={setActiveTab}>
               <SelectTrigger>
                 <SelectValue placeholder="Seleccionar sección..." />
@@ -1163,6 +1163,7 @@ export function TreasuryDashboard() {
                         </Select>
                     </div>
                 )}
+              <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -1196,6 +1197,7 @@ export function TreasuryDashboard() {
                   })}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1214,6 +1216,7 @@ export function TreasuryDashboard() {
                 </Button>
                 </CardHeader>
                 <CardContent>
+                <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
                     <TableRow>
@@ -1258,6 +1261,7 @@ export function TreasuryDashboard() {
                     )}
                     </TableBody>
                 </Table>
+                </div>
                 </CardContent>
             </Card>
         </TabsContent>
@@ -1270,7 +1274,7 @@ export function TreasuryDashboard() {
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleOpenRecurringExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                     <Table>
                         <TableHeader><TableRow><TableHead>Concepto</TableHead><TableHead>Importe</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader>
                         <TableBody>
@@ -1298,7 +1302,7 @@ export function TreasuryDashboard() {
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleOpenOneOffExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                     <Table>
                         <TableHeader><TableRow><TableHead>Concepto</TableHead><TableHead>Importe</TableHead><TableHead>Fecha</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader>
                         <TableBody>
@@ -1335,6 +1339,7 @@ export function TreasuryDashboard() {
               </Button>
             </CardHeader>
             <CardContent>
+               <div className="overflow-x-auto">
                <Table>
                 <TableHeader>
                   <TableRow>
@@ -1386,6 +1391,7 @@ export function TreasuryDashboard() {
                   )}
                 </TableBody>
               </Table>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
