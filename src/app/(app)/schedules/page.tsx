@@ -1339,95 +1339,96 @@ export default function SchedulesPage() {
 
   return (
     <div className="flex flex-col gap-6 h-full">
-       <div>
+       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
           <h1 className="text-2xl font-bold font-headline tracking-tight">Planificación y Horarios</h1>
           <p className="text-muted-foreground">
             Crea plantillas, gestiona eventos y visualiza el calendario de tu club.
           </p>
         </div>
-      <Card>
-        <CardHeader className="border-b">
-             <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-2 self-start md:self-center">
+             <div className="space-y-1">
+                <Label>Plantilla Seleccionada</Label>
+                <div className="flex items-center gap-2">
                     <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
-                    <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                            <Button variant="outline" className="flex-1 md:flex-none">
-                                Plantilla: {displayTemplate?.name || "Seleccionar"}
-                                <MoreVertical className="ml-2 h-4 w-4" />
-                            </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent>
-                            <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
-                                {scheduleTemplates.map(template => (
-                                    <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
-                                ))}
-                            </DropdownMenuRadioGroup>
-                            <DropdownMenuSeparator />
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    setIsNewTemplateModalOpen(true);
-                                }}>
-                                    <PlusCircle className="mr-2 h-4 w-4"/>
-                                    Crear Plantilla
+                        <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="flex-1 md:flex-none">
+                                    {displayTemplate?.name || "Seleccionar"}
+                                    <MoreVertical className="ml-2 h-4 w-4" />
+                                </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                                    {scheduleTemplates.map(template => (
+                                        <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                                    ))}
+                                </DropdownMenuRadioGroup>
+                                <DropdownMenuSeparator />
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setIsNewTemplateModalOpen(true);
+                                    }}>
+                                        <PlusCircle className="mr-2 h-4 w-4"/>
+                                        Crear Plantilla
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setEditedTemplateName(displayTemplate?.name || "");
+                                        setIsEditTemplateModalOpen(true);
+                                    }} disabled={!currentTemplateId}>
+                                        <Edit className="mr-2 h-4 w-4"/>
+                                        Renombrar
+                                    </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Eliminar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onSelect={(e) => {
-                                    e.preventDefault();
-                                    setEditedTemplateName(displayTemplate?.name || "");
-                                    setIsEditTemplateModalOpen(true);
-                                }} disabled={!currentTemplateId}>
-                                    <Edit className="mr-2 h-4 w-4"/>
-                                    Renombrar
-                                </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
-                                <Trash2 className="mr-2 h-4 w-4"/>
-                                Eliminar
-                            </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Renombrar Plantilla</DialogTitle>
+                                    <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
+                                </DialogHeader>
+                                <div className="py-4">
+                                    <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                                    <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+                                </div>
+                                <DialogFooter>
+                                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                                    <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
+                        
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Renombrar Plantilla</DialogTitle>
-                                <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
+                                <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
+                                <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
-                                <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-                                <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
+                                <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
+                                <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
                             </div>
                             <DialogFooter>
                                 <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                                <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
                             </DialogFooter>
-                        </DialogContent>
+                        </Dialog>
                     </Dialog>
-                    
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
-                            <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
-                        </DialogHeader>
-                        <div className="py-4">
-                            <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
-                            <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
-                        </div>
-                        <DialogFooter>
-                            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                            <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
-                        </DialogFooter>
-                    </DialogContent>
-                    </Dialog>
-                    <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
-                        {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
-                    </Button>
-                    <Button onClick={handleDownloadPdf} variant="outline" size="icon" disabled={isDownloading}>
-                        {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
-                    </Button>
+                     <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
+                            {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
+                        </Button>
+                        <Button onClick={handleDownloadPdf} variant="outline" size="icon" disabled={isDownloading}>
+                            {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
+                        </Button>
                 </div>
             </div>
-        </CardHeader>
-      </Card>
+        </div>
+      </div>
       
        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col flex-grow">
           <div className="sm:hidden mb-4">
