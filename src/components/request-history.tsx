@@ -7,7 +7,7 @@ import { collection, query, where, getDocs, orderBy, writeBatch, doc, getDoc } f
 import type { FileRequestBatch, FileRequest } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/card";
 import { Button } from "./ui/button";
-import { Loader2, FileClock, Trash2, Eye } from "lucide-react";
+import { Loader2, FileClock, Trash2, Eye, MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Progress } from "./ui/progress";
@@ -31,6 +31,12 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "./ui/scroll-area";
 
 
@@ -195,20 +201,30 @@ export function RequestHistory() {
               return (
                 <div key={batch.id} className="border p-4 rounded-lg space-y-3">
                   <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-semibold">{batch.documentTitle}</h3>
-                      <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 pr-4">
+                      <h3 className="font-semibold break-words">{batch.documentTitle}</h3>
+                      <p className="text-sm text-muted-foreground mt-1">
                         Solicitado el {format(batch.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: es })}
                       </p>
                     </div>
-                     <div className="flex items-center gap-1">
-                        <Button variant="outline" size="sm" onClick={() => handleShowDetails(batch)}>
-                            <Eye className="h-4 w-4 mr-2"/>
-                            Ver Detalles
-                        </Button>
-                        <Button variant="ghost" size="icon" className="text-destructive h-8 w-8" onClick={() => setBatchToDelete(batch)}>
-                            <Trash2 className="h-4 w-4" />
-                        </Button>
+                    <div className="flex-shrink-0">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => handleShowDetails(batch)}>
+                                    <Eye className="h-4 w-4 mr-2"/>
+                                    Ver Detalles
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onSelect={() => setBatchToDelete(batch)}>
+                                    <Trash2 className="h-4 w-4 mr-2"/>
+                                    Eliminar
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                   </div>
                   <Progress value={progress} />

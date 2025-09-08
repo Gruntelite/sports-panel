@@ -287,8 +287,10 @@ export function FileRequestSender() {
                         <Label>Destinatarios</Label>
                         <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" className="w-full md:w-[400px] justify-between font-normal">
-                                    {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : `Seleccionar de los ${filteredMembers.length} miembros filtrados...`}
+                                <Button variant="outline" className="w-full md:w-auto justify-start font-normal">
+                                    <span className="truncate pr-2">
+                                     {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : `Seleccionar de ${filteredMembers.length} filtrados...`}
+                                    </span>
                                     <UserPlus className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </DialogTrigger>
