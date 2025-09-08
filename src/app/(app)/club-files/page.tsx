@@ -493,7 +493,7 @@ function DocumentsList() {
                   {filteredDocuments.length > 0 ? (
                     filteredDocuments.map((doc) => (
                       <TableRow key={doc.id}>
-                        <TableCell className="font-medium flex items-center gap-2">
+                        <TableCell className="font-medium flex items-center justify-center gap-2">
                           <FileIcon className="h-4 w-4 text-muted-foreground"/>
                           {doc.name}
                         </TableCell>
