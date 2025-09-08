@@ -349,9 +349,9 @@ export default function LandingPage() {
           </div>
         </header>
         <main className="flex-1">
-          <section className="w-full pt-8 md:pt-12 pb-8 md:pb-10 lg:pb-12">
+          <section className="w-full pt-8 md:pt-12 pb-8 md:pb-10">
             <div className="container px-4 md:px-6">
-              <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:gap-16 items-center">
+              <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] lg:gap-12 xl:gap-16 items-center">
                   <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
                     <div className="space-y-4">
                       <h1 className="text-3xl font-bold tracking-tighter md:text-5xl xl:text-6xl/none font-headline">
