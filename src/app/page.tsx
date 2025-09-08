@@ -351,39 +351,39 @@ export default function LandingPage() {
         <main className="flex-1">
           <section className="w-full py-12 md:py-16 lg:py-20">
             <div className="container px-4 md:px-6">
-              <div className="mx-auto flex max-w-6xl flex-col items-center space-y-6 text-center">
-                <div className="space-y-4">
-                  <h1 className="text-3xl font-bold tracking-tighter md:text-5xl xl:text-6xl/none font-headline">
-                    El Software que Automatiza tu Club<br />y Ahorra Horas de Gestión
-                  </h1>
-                  <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-lg">
-                    Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
-                  </p>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                  <Button asChild size="lg" className="text-lg px-8 py-6">
-                    <Link href="/register" prefetch={false}>
-                      Pruébalo gratis
-                    </Link>
-                  </Button>
-                  <p className="text-xs text-muted-foreground mt-2">No se necesita tarjeta de crédito · Cancela cuando quieras</p>
-                </div>
-                <Image
-                  src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(10).png?alt=media&token=1ac52a21-54aa-451d-b538-d159bd475484"
-                  alt="SportsPanel App Screenshot"
-                  width={1890}
-                  height={1063}
-                  className="mt-8"
-                />
-                 <div className="pt-8">
-                    <Button asChild size="lg" className="bg-white/80 text-foreground hover:bg-white hover:scale-105 transition-transform duration-200 shadow-lg backdrop-blur-sm">
-                        <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
-                        <Download className="mr-2 h-4 w-4" />
-                        Descargar Guía de Uso
+              <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 xl:gap-16 items-center">
+                  <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
+                    <div className="space-y-4">
+                      <h1 className="text-3xl font-bold tracking-tighter md:text-5xl xl:text-6xl/none font-headline">
+                        El Software que Automatiza tu Club y Ahorra Horas de Gestión
+                      </h1>
+                      <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-lg lg:mx-0">
+                        Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 min-[400px]:flex-row lg:justify-start justify-center">
+                      <Button asChild size="lg">
+                        <Link href="/register" prefetch={false}>
+                          Pruébalo gratis
                         </Link>
-                    </Button>
+                      </Button>
+                       <Button asChild size="lg" variant="outline">
+                            <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
+                            <Download className="mr-2 h-4 w-4" />
+                            Descargar Guía de Uso
+                            </Link>
+                        </Button>
+                    </div>
+                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">No se necesita tarjeta de crédito · Cancela cuando quieras</p>
+                  </div>
+                   <Image
+                      src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(10).png?alt=media&token=1ac52a21-54aa-451d-b538-d159bd475484"
+                      alt="SportsPanel App Screenshot"
+                      width={1890}
+                      height={1063}
+                      className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last"
+                    />
                 </div>
-              </div>
             </div>
           </section>
 
