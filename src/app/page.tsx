@@ -374,7 +374,7 @@ export default function LandingPage() {
                             </Link>
                         </Button>
                     </div>
-                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">No se necesita tarjeta de crédito · Cancela cuando quieras</p>
+                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">No necesitas tarjeta de crédito · Cancela cuando quieras</p>
                   </div>
                    <Image
                       src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/%C2%A1Archivo%20Recibido!%20(10).png?alt=media&token=1ac52a21-54aa-451d-b538-d159bd475484"
