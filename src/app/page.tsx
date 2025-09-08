@@ -552,10 +552,10 @@ export default function LandingPage() {
                       <p className="text-muted-foreground mt-1">Fichas <b>ilimitadas</b></p>
                       <div className="mt-4 flex flex-col items-center justify-center gap-2">
                         <div className="flex items-baseline">
-                          <span className="text-4xl font-bold">{pricing.pro.monthly}€</span>
+                          <span className="text-5xl font-bold">{pricing.pro.monthly}€</span>
                           <span className="text-muted-foreground self-end">/mes</span>
                         </div>
-                          <span className="text-xs text-muted-foreground">+ IVA</span>
+                          <span className="text-xs text-muted-foreground">Cuota mensual sin IVA incluido</span>
                       </div>
                       <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
                           <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
