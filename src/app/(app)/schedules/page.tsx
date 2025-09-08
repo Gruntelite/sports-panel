@@ -818,7 +818,7 @@ function CalendarView() {
                 <div className="space-y-3">
                     {selectedDayDetails && selectedDayDetails.events.length > 0 ? (
                         selectedDayDetails.events.map(event => {
-                            const separatorColor = EVENT_COLORS.find(c => c.value === event.color)?.hex || 'hsl(var(--primary))';
+                             const separatorColor = event.isTemplateBased ? 'hsl(var(--primary))' : (EVENT_COLORS.find(c => c.value === event.color)?.hex || 'hsl(var(--primary))');
                             return (
                                 <div key={event.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", event.color)}>
                                     <div className="flex flex-col items-center w-16 md:w-20">
@@ -1342,90 +1342,99 @@ export default function SchedulesPage() {
 
   return (
     <div className="flex flex-col gap-6 h-full">
-        <Card>
-            <CardHeader className="flex flex-col md:flex-row items-center justify-between gap-4">
-                 <div className="w-full md:w-auto">
-                    <Label>Plantilla seleccionada</Label>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
-                            <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="flex-1 md:flex-none">
-                                        {displayTemplate?.name || "Seleccionar"}
-                                        <MoreVertical className="ml-2 h-4 w-4" />
-                                    </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent>
-                                    <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
-                                        {scheduleTemplates.map(template => (
-                                            <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
-                                        ))}
-                                    </DropdownMenuRadioGroup>
-                                    <DropdownMenuSeparator />
-                                        <DropdownMenuItem onSelect={(e) => {
-                                            e.preventDefault();
-                                            setIsNewTemplateModalOpen(true);
-                                        }}>
-                                            <PlusCircle className="mr-2 h-4 w-4"/>
-                                            Crear Plantilla
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onSelect={(e) => {
-                                            e.preventDefault();
-                                            setEditedTemplateName(displayTemplate?.name || "");
-                                            setIsEditTemplateModalOpen(true);
-                                        }} disabled={!currentTemplateId}>
-                                            <Edit className="mr-2 h-4 w-4"/>
-                                            Renombrar
-                                        </DropdownMenuItem>
-                                    <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
-                                        <Trash2 className="mr-2 h-4 w-4"/>
-                                        Eliminar
+       <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold font-headline tracking-tight">Planificación y Horarios</h1>
+          <p className="text-muted-foreground">Define tus plantillas de horarios y asígnalas a los días del calendario.</p>
+        </div>
+      </div>
+      <Card>
+          <CardHeader className="flex flex-col md:flex-row items-stretch md:items-center md:justify-between gap-4">
+                <div className="w-full md:w-auto">
+                  <Label>Plantilla seleccionada</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                      <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
+                        <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                <Button variant="outline" className="flex-1 md:flex-none">
+                                    {displayTemplate?.name || "Seleccionar"}
+                                    <MoreVertical className="ml-2 h-4 w-4" />
+                                </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent>
+                                <DropdownMenuRadioGroup value={currentTemplateId || ''} onValueChange={handleTemplateChange}>
+                                    {scheduleTemplates.map(template => (
+                                        <DropdownMenuRadioItem key={template.id} value={template.id}>{template.name}</DropdownMenuRadioItem>
+                                    ))}
+                                </DropdownMenuRadioGroup>
+                                <DropdownMenuSeparator />
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setIsNewTemplateModalOpen(true);
+                                    }}>
+                                        <PlusCircle className="mr-2 h-4 w-4"/>
+                                        Crear Plantilla
                                     </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                    <DropdownMenuItem onSelect={(e) => {
+                                        e.preventDefault();
+                                        setEditedTemplateName(displayTemplate?.name || "");
+                                        setIsEditTemplateModalOpen(true);
+                                    }} disabled={!currentTemplateId}>
+                                        <Edit className="mr-2 h-4 w-4"/>
+                                        Renombrar
+                                    </DropdownMenuItem>
+                                <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
+                                    <Trash2 className="mr-2 h-4 w-4"/>
+                                    Eliminar
+                                </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
 
-                                <DialogContent>
-                                    <DialogHeader>
-                                        <DialogTitle>Renombrar Plantilla</DialogTitle>
-                                        <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
-                                    </DialogHeader>
-                                    <div className="py-4">
-                                        <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
-                                        <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
-                                    </div>
-                                    <DialogFooter>
-                                        <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                        <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
-                                    </DialogFooter>
-                                </DialogContent>
-                            </Dialog>
-                            
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
-                                    <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
+                                    <DialogTitle>Renombrar Plantilla</DialogTitle>
+                                    <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4">
-                                    <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
-                                    <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                                    <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                                    <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
                                 </div>
                                 <DialogFooter>
                                     <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                    <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
+                                    <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
                                 </DialogFooter>
                             </DialogContent>
-                        </Dialog>
-                        <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
-                                {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
-                            </Button>
-                            <Button onClick={handleDownloadPdf} variant="outline" size="icon" disabled={isDownloading}>
-                                {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
-                            </Button>
-                    </div>
-                </div>
-            </CardHeader>
-        </Card>
+                          </Dialog>
+                        
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
+                                <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
+                            </DialogHeader>
+                            <div className="py-4">
+                                <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
+                                <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                            </div>
+                            <DialogFooter>
+                                <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                                <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
+                            </DialogFooter>
+                        </DialogContent>
+                      </Dialog>
+                      
+                  </div>
+              </div>
+              <div className="flex items-center gap-2 self-end">
+                <Button onClick={() => clubId && fetchAllData(clubId, true)} variant="outline" size="icon" disabled={isRefreshing}>
+                    {isRefreshing ? ( <RefreshCw className="h-4 w-4 animate-spin" /> ) : ( <RefreshCw className="h-4 w-4" /> )}
+                </Button>
+                <Button onClick={handleDownloadPdf} variant="outline" size="icon" disabled={isDownloading}>
+                    {isDownloading ? ( <Loader2 className="h-4 w-4 animate-spin" /> ) : ( <Download className="h-4 w-4" /> )}
+                </Button>
+              </div>
+          </CardHeader>
+      </Card>
       
        <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col flex-grow">
           <div className="sm:hidden mb-4">
@@ -1571,13 +1580,13 @@ export default function SchedulesPage() {
               </div>
               
               <Card className="sticky top-6 self-start flex flex-col lg:col-span-2 xl:col-span-1">
-                  <CardHeader className="flex flex-row items-center justify-between sticky top-0 bg-card z-10 border-b">
-                      <div className="flex items-center gap-1">
+                  <CardHeader className="flex flex-col md:flex-row items-center justify-between sticky top-0 bg-card z-10 border-b p-4 gap-2">
+                      <div className="flex items-center gap-1 w-full justify-center md:w-auto">
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('prev')}><ChevronLeft className="h-4 w-4" /></Button>
                           <div className="text-base font-semibold capitalize w-24 text-center">{currentDay}</div>
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateDay('next')}><ChevronRight className="h-4 w-4" /></Button>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 w-full justify-center md:w-auto">
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
                           <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos/Pistas"}</div>
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
@@ -1664,3 +1673,4 @@ export default function SchedulesPage() {
 
 
     
+
