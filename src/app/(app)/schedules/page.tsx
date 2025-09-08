@@ -805,6 +805,12 @@ function CalendarView() {
   )
 }
 
+const scheduleTabs = [
+    { value: "editor", label: "Editor de Plantilla", icon: Edit },
+    { value: "calendar", label: "Calendario de Eventos", icon: Calendar },
+    { value: "preview", label: "Vista Semanal", icon: Eye },
+];
+
 export default function SchedulesPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -1381,13 +1387,30 @@ export default function SchedulesPage() {
             </CardHeader>
         </Card>
 
-       <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col">
-        <TabsList>
-            <TabsTrigger value="editor"><Edit className="mr-2 h-4 w-4" /> Editor de Plantilla</TabsTrigger>
-            <TabsTrigger value="calendar"><Calendar className="mr-2 h-4 w-4" /> Calendario de Eventos</TabsTrigger>
-            <TabsTrigger value="preview"><Eye className="mr-2 h-4 w-4" /> Vista Semanal</TabsTrigger>
+       <Tabs value={currentTab} onValueChange={setCurrentTab} className="flex flex-col flex-grow">
+        <div className="sm:hidden mb-4">
+          <Select value={currentTab} onValueChange={setCurrentTab}>
+            <SelectTrigger>
+              <SelectValue placeholder="Seleccionar vista..." />
+            </SelectTrigger>
+            <SelectContent>
+              {scheduleTabs.map(tab => (
+                <SelectItem key={tab.value} value={tab.value}>
+                  <div className="flex items-center gap-2">
+                    <tab.icon className="h-4 w-4" />
+                    {tab.label}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <TabsList className="hidden sm:inline-flex">
+            {scheduleTabs.map(tab => (
+                <TabsTrigger key={tab.value} value={tab.value}><tab.icon className="mr-2 h-4 w-4" />{tab.label}</TabsTrigger>
+            ))}
         </TabsList>
-        <TabsContent value="editor" className="pt-4">
+        <TabsContent value="editor" className="pt-4 flex-grow">
           <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-[420px_1fr] gap-6">
               <Card>
                   <CardHeader>
@@ -1561,7 +1584,7 @@ export default function SchedulesPage() {
          <TabsContent value="calendar" className="pt-4">
           <CalendarView />
         </TabsContent>
-        <TabsContent value="preview" className="pt-0 overflow-auto">
+        <TabsContent value="preview" className="pt-0 overflow-auto flex-grow">
              <WeeklyScheduleView 
                 template={displayTemplate} 
                 innerRef={el => {
