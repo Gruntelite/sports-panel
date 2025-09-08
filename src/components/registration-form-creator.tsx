@@ -357,7 +357,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                           <div className="space-y-4">
                               <h4 className="font-medium">Campos del Formulario</h4>
                               <p className="text-sm text-muted-foreground">Activa los campos que necesites. Los obligatorios no se pueden desactivar.</p>
-                              <ScrollArea className="space-y-3 max-h-72 pr-4">
+                              <ScrollArea className="space-y-3 max-h-48 pr-4">
                                   {allFields.map((item) => (
                                   <FormField
                                       key={item.id}
