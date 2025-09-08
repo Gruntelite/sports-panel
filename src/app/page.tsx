@@ -351,7 +351,7 @@ export default function LandingPage() {
         <main className="flex-1">
           <section className="w-full pt-8 md:pt-12 pb-8 md:pb-10">
             <div className="container px-4 md:px-6">
-              <div className="grid gap-6 lg:grid-cols-[1fr_1.2fr] lg:gap-12 xl:gap-16 items-center">
+              <div className="grid gap-6 lg:grid-cols-[1fr_1.5fr] lg:gap-12 xl:gap-16 items-center">
                   <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
                     <div className="space-y-4">
                       <h1 className="text-3xl font-bold tracking-tighter md:text-5xl xl:text-6xl/none font-headline">
@@ -378,14 +378,6 @@ export default function LandingPage() {
                             height={1063}
                             className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full"
                         />
-                        <div className="flex justify-center">
-                            <Button asChild size="lg" variant="outline">
-                                <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank" rel="noopener noreferrer">
-                                <Download className="mr-2 h-4 w-4" />
-                                Descargar Guía de Uso
-                                </Link>
-                            </Button>
-                        </div>
                     </div>
                 </div>
             </div>
