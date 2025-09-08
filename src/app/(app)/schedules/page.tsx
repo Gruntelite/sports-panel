@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
@@ -806,27 +807,30 @@ function CalendarView() {
     </Dialog>
 
     <Dialog open={isDayModalOpen} onOpenChange={setIsDayModalOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-2xl">
             <DialogHeader>
                 <DialogTitle className="capitalize">Eventos del {selectedDayDetails && format(selectedDayDetails.date, "eeee, d 'de' LLLL", { locale: es })}</DialogTitle>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
                 <div className="space-y-3">
                     {selectedDayDetails && selectedDayDetails.events.length > 0 ? (
-                        selectedDayDetails.events.map(event => (
-                            <div key={event.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", event.color)}>
-                                <div className="flex flex-col items-center w-16 md:w-20">
-                                    <span className="font-bold text-sm md:text-base">{format(event.start.toDate(), 'HH:mm')}</span>
-                                    <span className="text-xs text-muted-foreground">{format(event.end.toDate(), 'HH:mm')}</span>
+                        selectedDayDetails.events.map(event => {
+                            const separatorColor = EVENT_COLORS.find(c => c.value === event.color)?.hex || 'hsl(var(--primary))';
+                            return (
+                                <div key={event.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", event.color)}>
+                                    <div className="flex flex-col items-center w-16 md:w-20">
+                                        <span className="font-bold text-sm md:text-base">{format(event.start.toDate(), 'HH:mm')}</span>
+                                        <span className="text-xs text-muted-foreground">{format(event.end.toDate(), 'HH:mm')}</span>
+                                    </div>
+                                    <div style={{ backgroundColor: separatorColor }} className="h-10 w-1 rounded-full"></div>
+                                    <div className="flex-1">
+                                        <p className="font-semibold text-sm md:text-base">{event.title}</p>
+                                        {event.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {event.location}</div>}
+                                        {event.type && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">{event.type === 'Entrenamiento' ? <UserSquare className="h-3.5 w-3.5"/> : <CalendarIcon className="h-3.5 w-3.5"/>} {event.type}</div>}
+                                    </div>
                                 </div>
-                                <Separator orientation="vertical" className="h-10 w-1 rounded-full bg-current" />
-                                <div className="flex-1">
-                                    <p className="font-semibold text-sm md:text-base">{event.title}</p>
-                                    {event.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {event.location}</div>}
-                                    {event.type && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground">{event.type === 'Entrenamiento' ? <UserSquare className="h-3.5 w-3.5"/> : <CalendarIcon className="h-3.5 w-3.5"/>} {event.type}</div>}
-                                </div>
-                            </div>
-                        ))
+                            )
+                        })
                     ) : (
                         <p className="text-center text-muted-foreground py-8">No hay eventos para este día.</p>
                     )}
@@ -1350,7 +1354,7 @@ export default function SchedulesPage() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                             <Button variant="outline">
-                                {displayTemplate?.name || "Seleccionar Plantilla"}
+                                Plantilla: {displayTemplate?.name || "Seleccionar"}
                                 <MoreVertical className="ml-2 h-4 w-4" />
                             </Button>
                             </DropdownMenuTrigger>
