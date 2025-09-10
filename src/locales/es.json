@@ -882,5 +882,27 @@
         "success": {
             "general": "La configuración del club ha sido actualizada. Recarga la página para ver los cambios en los colores."
         }
+    },
+    "importer": {
+        "title": "Importar",
+        "description": "Sube un archivo CSV para importar múltiples registros a la vez.",
+        "uploadLabel": "Sube tu archivo CSV",
+        "parsing": "Procesando...",
+        "previewButton": "Ver Vista Previa",
+        "types": {
+            "players": "Jugadores",
+            "coaches": "Entrenadores",
+            "staff": "Staff y Directiva",
+            "socios": "Socios"
+        },
+        "modal": {
+            "title": "Vista Previa de la Importación",
+            "description": "Revisa los datos antes de importarlos. Hay {count} filas para importar.",
+            "error": {
+                "title": "Error en las Columnas",
+                "description": "El archivo CSV no tiene las columnas correctas o no están en el orden adecuado. Por favor, revisa la guía de abajo y vuelve a subir el archivo."
+            },
+            "confirmButton": "Confirmar e Importar"
+        }
     }
 }

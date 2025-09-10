@@ -22,6 +22,7 @@ import {
   DialogTrigger,
   DialogClose
 } from "@/components/ui/dialog";
+import { useTranslation } from './i18n-provider';
 
 
 type ImporterProps = {
@@ -31,6 +32,7 @@ type ImporterProps = {
 }
 
 export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: ImporterProps) {
+    const { t } = useTranslation();
     const [file, setFile] = useState<File | null>(null);
     const [data, setData] = useState<any[]>([]);
     const [headers, setHeaders] = useState<string[]>([]);
@@ -124,45 +126,53 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
         // It allows extra columns at the end, which will be ignored.
         return !requiredKeys.every((key, i) => key === headers[i]);
     }, [headers, requiredColumns]);
+    
+    const importerTypeTranslations: { [key: string]: string } = {
+        players: t('importer.types.players'),
+        coaches: t('importer.types.coaches'),
+        staff: t('importer.types.staff'),
+        socios: t('importer.types.socios'),
+    };
+    
 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Importar {importerType}</CardTitle>
+                <CardTitle>{t('importer.title')} {importerTypeTranslations[importerType]}</CardTitle>
                 <CardDescription>
-                    Sube un archivo CSV para importar múltiples registros a la vez.
+                    {t('importer.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="flex items-center gap-4">
                     <div className="space-y-2 flex-grow">
-                        <label htmlFor="csv-upload" className="font-medium">Sube tu archivo CSV</label>
+                        <label htmlFor="csv-upload" className="font-medium">{t('importer.uploadLabel')}</label>
                         <Input id="csv-upload" type="file" accept=".csv" onChange={handleFileChange} disabled={isParsing} className="max-w-md"/>
                     </div>
 
-                    {isParsing && <div className="flex items-center gap-2 text-muted-foreground pt-8"><Loader2 className="h-4 w-4 animate-spin" /> Procesando...</div>}
+                    {isParsing && <div className="flex items-center gap-2 text-muted-foreground pt-8"><Loader2 className="h-4 w-4 animate-spin" /> {t('importer.parsing')}</div>}
                     
                     {data.length > 0 && !isParsing && (
                         <Dialog open={isPreviewModalOpen} onOpenChange={setIsPreviewModalOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="outline" className="self-end">
                                     <Eye className="mr-2 h-4 w-4"/>
-                                    Ver Vista Previa
+                                    {t('importer.previewButton')}
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-7xl">
                                 <DialogHeader>
-                                    <DialogTitle>Vista Previa de la Importación</DialogTitle>
+                                    <DialogTitle>{t('importer.modal.title')}</DialogTitle>
                                     <DialogDescription>
-                                        Revisa los datos antes de importarlos. Hay {data.length} filas para importar.
+                                        {t('importer.modal.description', { count: data.length })}
                                     </DialogDescription>
                                 </DialogHeader>
                                 {columnMismatch && (
                                     <div className="p-4 bg-destructive/10 text-destructive border border-destructive/50 rounded-md flex items-start gap-3">
                                         <AlertCircle className="h-5 w-5 mt-0.5"/>
                                         <div>
-                                            <h4 className="font-bold">Error en las Columnas</h4>
-                                            <p className="text-sm">El archivo CSV no tiene las columnas correctas o no están en el orden adecuado. Por favor, revisa la guía de abajo y vuelve a subir el archivo.</p>
+                                            <h4 className="font-bold">{t('importer.modal.error.title')}</h4>
+                                            <p className="text-sm">{t('importer.modal.error.description')}</p>
                                         </div>
                                     </div>
                                 )}
@@ -184,11 +194,11 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
                                 </div>
                                 <DialogFooter>
                                      <DialogClose asChild>
-                                        <Button variant="secondary">Cerrar</Button>
+                                        <Button variant="secondary">{t('common.cancel')}</Button>
                                     </DialogClose>
                                     <Button onClick={handleImport} disabled={isImporting || columnMismatch}>
                                         {isImporting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-                                        Confirmar e Importar
+                                        {t('importer.modal.confirmButton')}
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>

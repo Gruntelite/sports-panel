@@ -879,5 +879,27 @@
         "success": {
             "general": "La configuració del club ha estat actualitzada. Recarrega la pàgina per veure els canvis en els colors."
         }
+    },
+    "importer": {
+        "title": "Importar",
+        "description": "Puja un arxiu CSV per importar múltiples registres alhora.",
+        "uploadLabel": "Puja el teu arxiu CSV",
+        "parsing": "Processant...",
+        "previewButton": "Veure Vista Prèvia",
+        "types": {
+            "players": "Jugadors",
+            "coaches": "Entrenadors",
+            "staff": "Staff i Directiva",
+            "socios": "Socis"
+        },
+        "modal": {
+            "title": "Vista Prèvia de la Importació",
+            "description": "Revisa les dades abans d'importar-les. Hi ha {count} files per importar.",
+            "error": {
+                "title": "Error a les Columnes",
+                "description": "L'arxiu CSV no té les columnes correctes o no estan en l'ordre adequat. Si us plau, revisa la guia de sota i torna a pujar l'arxiu."
+            },
+            "confirmButton": "Confirmar i Importar"
+        }
     }
 }
