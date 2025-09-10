@@ -44,8 +44,10 @@ import { collection, getDocs, doc, getDoc, addDoc, query, deleteDoc, where, writ
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
+import { useTranslation } from "@/components/i18n-provider";
 
 export default function TeamsPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -260,9 +262,9 @@ export default function TeamsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
           <div>
-            <h1 className="text-2xl font-bold font-headline tracking-tight">Equipos</h1>
+            <h1 className="text-2xl font-bold font-headline tracking-tight">{t('teams.title')}</h1>
             <p className="text-muted-foreground">
-              Crea y gestiona los equipos de tu club.
+              {t('teams.description')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
@@ -278,58 +280,58 @@ export default function TeamsPage() {
                     }
                 }}
             >
-              {isOrdering ? "Cancelar Ordenación" : "Activar ordenación manual"}
+              {isOrdering ? t('teams.cancelOrder') : t('teams.enableOrder')}
             </Button>
             {isOrdering && hasOrderChanged && (
                  <Button size="sm" className="h-9 gap-1" onClick={handleSaveOrder} disabled={loading}>
                     {loading ? <Loader2 className="h-4 w-4 animate-spin"/> : <Save className="h-4 w-4"/>}
-                    Guardar Orden
+                    {t('teams.saveOrder')}
                 </Button>
             )}
             <Dialog open={isAddTeamOpen} onOpenChange={setIsAddTeamOpen}>
               <DialogTrigger asChild>
                 <Button className="gap-1">
                   <PlusCircle className="h-3.5 w-3.5" />
-                  Crear Equipo
+                  {t('teams.createTeam')}
                 </Button>
               </DialogTrigger>
               <DialogContent>
                   <DialogHeader>
-                      <DialogTitle>Crear Nuevo Equipo</DialogTitle>
+                      <DialogTitle>{t('teams.createTeamTitle')}</DialogTitle>
                       <DialogDescription>
-                          Rellena los detalles para crear un nuevo equipo en tu club.
+                          {t('teams.createTeamDesc')}
                       </DialogDescription>
                   </DialogHeader>
                   <div className="grid gap-4 py-4">
                       <div className="space-y-2">
-                          <Label htmlFor="team-name">Nombre</Label>
+                          <Label htmlFor="team-name">{t('teams.teamName')}</Label>
                           <Input id="team-name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="team-level">Nivel</Label>
+                          <Label htmlFor="team-level">{t('teams.level')}</Label>
                           <Input id="team-level" placeholder="p.ej. Competición, Escuela" value={newTeamLevel} onChange={(e) => setNewTeamLevel(e.target.value)} />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="team-min-age">Edad Mínima</Label>
+                            <Label htmlFor="team-min-age">{t('teams.minAge')}</Label>
                             <Input id="team-min-age" type="number" value={newTeamMinAge} onChange={(e) => setNewTeamMinAge(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="team-max-age">Edad Máxima</Label>
+                            <Label htmlFor="team-max-age">{t('teams.maxAge')}</Label>
                             <Input id="team-max-age" type="number" value={newTeamMaxAge} onChange={(e) => setNewTeamMaxAge(e.target.value)} />
                         </div>
                       </div>
                       <div className="space-y-2">
-                          <Label htmlFor="team-image">Imagen</Label>
+                          <Label htmlFor="team-image">{t('teams.image')}</Label>
                           <Input id="team-image" type="file" accept="image/*" onChange={(e) => setNewTeamImage(e.target.files ? e.target.files[0] : null)} />
                       </div>
                   </div>
                   <DialogFooter>
                       <DialogClose asChild>
-                          <Button type="button" variant="secondary">Cancelar</Button>
+                          <Button type="button" variant="secondary">{t('common.cancel')}</Button>
                       </DialogClose>
                       <Button type="button" onClick={handleAddTeam} disabled={loading}>
-                          {loading ? <Loader2 className="animate-spin" /> : 'Crear Equipo'}
+                          {loading ? <Loader2 className="animate-spin" /> : t('teams.createTeam')}
                       </Button>
                   </DialogFooter>
               </DialogContent>
@@ -365,7 +367,7 @@ export default function TeamsPage() {
               <CardContent className="p-4">
                   <div className="flex items-start justify-between">
                       <div>
-                          <Badge variant="secondary" className="mb-2">Edades: {team.minAge || "N/A"} - {team.maxAge || "N/A"}</Badge>
+                          <Badge variant="secondary" className="mb-2">{t('teams.ages')}: {team.minAge || "N/A"} - {team.maxAge || "N/A"}</Badge>
                           <Link href={`/teams/${team.id}`}>
                             <CardTitle className="text-xl font-bold hover:underline">{team.name}</CardTitle>
                           </Link>
@@ -383,10 +385,10 @@ export default function TeamsPage() {
                           </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                              <DropdownMenuItem asChild><Link href={`/teams/${team.id}`} className="w-full">Editar</Link></DropdownMenuItem>
+                              <DropdownMenuItem asChild><Link href={`/teams/${team.id}`} className="w-full">{t('teams.edit')}</Link></DropdownMenuItem>
                               <DropdownMenuItem className="text-destructive" onClick={() => setTeamToDelete(team)}>
                                 <Trash2 className="mr-2 h-4 w-4" />
-                                Eliminar
+                                {t('teams.delete')}
                               </DropdownMenuItem>
                           </DropdownMenuContent>
                       </DropdownMenu>
@@ -395,11 +397,11 @@ export default function TeamsPage() {
               <CardFooter className="bg-muted/40 p-4 flex justify-between text-sm text-muted-foreground">
                   <div className="flex items-center gap-1">
                       <Users className="h-4 w-4" />
-                      <span>{team.players} Jugadores</span>
+                      <span>{team.players} {t('teams.players')}</span>
                   </div>
                   <div className="flex items-center gap-1">
                       <Shield className="h-4 w-4" />
-                      <span>{team.coaches} Entrenadores</span>
+                      <span>{team.coaches} {t('teams.coaches')}</span>
                   </div>
               </CardFooter>
             </Card>
@@ -409,16 +411,15 @@ export default function TeamsPage() {
       <AlertDialog open={!!teamToDelete} onOpenChange={(open) => !open && setTeamToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('teams.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el equipo
-              y todos sus datos asociados.
+              {t('teams.confirmDeleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTeam} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('teams.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -426,3 +427,5 @@ export default function TeamsPage() {
     </>
   )
 }
+
+    

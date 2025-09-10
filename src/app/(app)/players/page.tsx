@@ -92,6 +92,8 @@ import { FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { MemberDetailModal } from "@/components/member-detail-modal";
+import { useTranslation } from "@/components/i18n-provider";
+
 
 const playerFields = {
     personal: [
@@ -114,6 +116,7 @@ const playerFields = {
 type EditModalSection = 'personal' | 'contact' | 'sports' | 'custom';
 
 export default function PlayersPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -647,22 +650,22 @@ export default function PlayersPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <CardTitle>Jugadores</CardTitle>
+              <CardTitle>{t('players.title')}</CardTitle>
               <CardDescription>
-                Gestiona los jugadores de tu club y su información.
+                {t('players.description')}
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
               <Button onClick={() => setIsFieldsModalOpen(true)} className="w-full sm:w-auto">
                   <Send className="mr-2 h-4 w-4" />
-                  Solicitar Actualización
+                  {t('players.requestUpdate')}
               </Button>
                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                         <Columns className="mr-2 h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Columnas
+                          {t('players.columns')}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
@@ -699,10 +702,10 @@ export default function PlayersPage() {
                   </DropdownMenu>
                   <Select value={filterTeamId} onValueChange={setFilterTeamId}>
                     <SelectTrigger className="h-9 w-full sm:w-[150px]">
-                      <SelectValue placeholder="Filtrar por equipo"/>
+                      <SelectValue placeholder={t('players.filterByTeam')}/>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los equipos</SelectItem>
+                      <SelectItem value="all">{t('players.allTeams')}</SelectItem>
                       {teams.map(team => (
                         <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                       ))}
@@ -713,14 +716,14 @@ export default function PlayersPage() {
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="h-9 gap-1 w-full sm:w-auto">
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                           Acciones ({selectedPlayers.length})
+                           {t('players.actions')} ({selectedPlayers.length})
                         </span>
                         <ChevronDown className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                        <DropdownMenuSub>
-                         <DropdownMenuSubTrigger>Asignar a Equipo</DropdownMenuSubTrigger>
+                         <DropdownMenuSubTrigger>{t('players.assignToTeam')}</DropdownMenuSubTrigger>
                          <DropdownMenuSubContent>
                            {teams.map(team => (
                              <DropdownMenuItem key={team.id} onSelect={() => handleBulkAssignTeam(team.id)}>
@@ -730,14 +733,14 @@ export default function PlayersPage() {
                          </DropdownMenuSubContent>
                        </DropdownMenuSub>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onSelect={() => setIsBulkDeleteAlertOpen(true)}>Eliminar Seleccionados</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onSelect={() => setIsBulkDeleteAlertOpen(true)}>{t('players.deleteSelected')}</DropdownMenuItem>
                     </DropdownMenuContent>
                  </DropdownMenu>
               ) : (
                   <Button size="sm" className="h-9 gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
                       <PlusCircle className="h-3.5 w-3.5" />
                       <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Añadir Jugador
+                          {t('players.addPlayer')}
                       </span>
                   </Button>
               )}
@@ -769,7 +772,7 @@ export default function PlayersPage() {
                       </TableHead>
                    ))}
                   <TableHead>
-                    <span className="sr-only">Acciones</span>
+                    <span className="sr-only">{t('players.actions')}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -823,16 +826,16 @@ export default function PlayersPage() {
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
                              <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Alternar menú</span>
+                            <span className="sr-only">{t('players.toggleMenu')}</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => setViewingPlayer(player)}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>Editar</DropdownMenuItem>
+                          <DropdownMenuLabel>{t('players.actions')}</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setViewingPlayer(player)}><Eye className="mr-2 h-4 w-4"/>{t('players.viewProfile')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>{t('players.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
-                            Eliminar
+                            {t('players.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -845,7 +848,7 @@ export default function PlayersPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Mostrando <strong>{filteredPlayers.length}</strong> de <strong>{players.length}</strong> jugadores
+            {t('players.showing')} <strong>{filteredPlayers.length}</strong> {t('players.of')} <strong>{players.length}</strong> {t('players.playersCount')}
           </div>
         </CardFooter>
       </Card>
@@ -866,15 +869,15 @@ export default function PlayersPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Jugador' : 'Editar Jugador'}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? t('players.addPlayerTitle') : t('players.editPlayerTitle')}</DialogTitle>
                 <DialogDescription>
-                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo jugador al club.' : 'Modifica la información del jugador.'}
+                    {modalMode === 'add' ? t('players.addPlayerDesc') : t('players.editPlayerDesc')}
                 </DialogDescription>
             </DialogHeader>
              <ScrollArea className="max-h-[70vh] p-0">
                 <div className="py-4 px-6 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
                     <div className="flex flex-col items-center gap-4 pt-5">
-                        <Label>Foto del Jugador</Label>
+                        <Label>{t('players.playerPhoto')}</Label>
                         <Avatar className="h-32 w-32">
                             <AvatarImage src={imagePreview || playerData.avatar} />
                             <AvatarFallback>
@@ -885,7 +888,7 @@ export default function PlayersPage() {
                         <Button asChild variant="outline" size="sm">
                             <label htmlFor="player-image" className="cursor-pointer">
                                 <Upload className="mr-2 h-3 w-3"/>
-                                Subir
+                                {t('players.upload')}
                             </label>
                         </Button>
                         <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
@@ -898,19 +901,19 @@ export default function PlayersPage() {
                                     <SelectValue placeholder="Seleccionar sección..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="personal">Datos Personales</SelectItem>
-                                    <SelectItem value="contact">Contacto y Banco</SelectItem>
-                                    <SelectItem value="sports">Datos Deportivos</SelectItem>
-                                    <SelectItem value="custom">Otros Datos</SelectItem>
+                                    <SelectItem value="personal">{t('players.personalData')}</SelectItem>
+                                    <SelectItem value="contact">{t('players.contactAndBank')}</SelectItem>
+                                    <SelectItem value="sports">{t('players.sportsData')}</SelectItem>
+                                    <SelectItem value="custom">{t('players.otherData')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <Tabs defaultValue="personal" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
                             <TabsList className="grid w-full grid-cols-4">
-                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Banco</TabsTrigger>
-                                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
-                                <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('players.personalData')}</TabsTrigger>
+                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('players.contactAndBank')}</TabsTrigger>
+                                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>{t('players.sportsData')}</TabsTrigger>
+                                <TabsTrigger value="custom">{t('players.otherData')}</TabsTrigger>
                             </TabsList>
                         </Tabs>
 
@@ -1117,7 +1120,7 @@ export default function PlayersPage() {
                                     />
                                 </div>
                             )) : (
-                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.</p>
+                                <p className="text-center text-muted-foreground pt-10">{t('players.noCustomFields')}</p>
                             )}
                         </div>
                     </div>
@@ -1125,11 +1128,11 @@ export default function PlayersPage() {
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">
                 <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancelar</Button>
+                    <Button type="button" variant="secondary">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="button" onClick={handleSavePlayer} disabled={saving}>
                     {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4"/>}
-                    Guardar
+                    {t('common.saveChanges')}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -1137,15 +1140,15 @@ export default function PlayersPage() {
       <AlertDialog open={!!playerToDelete} onOpenChange={(open) => !open && setPlayerToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('players.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al jugador {playerToDelete?.name} {playerToDelete?.lastName}.
+              {t('players.confirmDeleteDesc', { playerName: `${playerToDelete?.name} ${playerToDelete?.lastName}` })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeletePlayer} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('players.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1153,13 +1156,13 @@ export default function PlayersPage() {
       <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('players.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedPlayers.length} jugadores.
+              {t('players.confirmBulkDeleteDesc', { playerCount: selectedPlayers.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
               {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Jugadores'}
             </AlertDialogAction>
@@ -1171,16 +1174,16 @@ export default function PlayersPage() {
       <Dialog open={isFieldsModalOpen} onOpenChange={setIsFieldsModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Paso 1: Selecciona los campos a actualizar</DialogTitle>
-            <DialogDescription>Elige qué información quieres que actualicen los jugadores.</DialogDescription>
+            <DialogTitle>{t('players.step1Title')}</DialogTitle>
+            <DialogDescription>{t('players.step1Desc')}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <FieldSelector fields={playerFields} customFields={playerCustomFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+            <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
             <Button onClick={() => { setIsFieldsModalOpen(false); setIsMembersModalOpen(true); }} disabled={selectedFields.length === 0}>
-              Siguiente: Seleccionar Jugadores
+              {t('players.nextStep')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1189,8 +1192,8 @@ export default function PlayersPage() {
       <Dialog open={isMembersModalOpen} onOpenChange={setIsMembersModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Paso 2: Selecciona los destinatarios</DialogTitle>
-            <DialogDescription>Elige los jugadores que recibirán la solicitud.</DialogDescription>
+            <DialogTitle>{t('players.step2Title')}</DialogTitle>
+            <DialogDescription>{t('players.step2Desc')}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="flex items-center p-2 border rounded-md">
@@ -1199,7 +1202,7 @@ export default function PlayersPage() {
                 onCheckedChange={(checked) => handleSelectAllMembers(checked as boolean)}
                 checked={players.length > 0 && selectedPlayers.length === players.length}
               />
-              <Label htmlFor="select-all-members" className="ml-2 font-medium">Seleccionar todos ({players.length})</Label>
+              <Label htmlFor="select-all-members" className="ml-2 font-medium">{t('players.selectAll')} ({players.length})</Label>
             </div>
             <ScrollArea className="h-72 mt-4">
               <div className="space-y-2">
@@ -1220,11 +1223,11 @@ export default function PlayersPage() {
           </div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => { setIsMembersModalOpen(false); setIsFieldsModalOpen(true); }}>
-              Atrás
+              {t('players.back')}
             </Button>
             <Button onClick={handleSendUpdateRequests} disabled={saving || selectedPlayers.length === 0}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-              {saving ? 'Enviando...' : `Enviar a ${selectedPlayers.length} Jugador(es)`}
+              {saving ? 'Enviando...' : t('players.sendTo', { count: selectedPlayers.length })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1232,3 +1235,5 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
+    

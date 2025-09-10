@@ -84,6 +84,7 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { MemberDetailModal } from "@/components/member-detail-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "../ui/separator";
+import { useTranslation } from "@/components/i18n-provider";
 
 const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'payment', label: 'Pago' }];
 const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
@@ -97,6 +98,7 @@ const MONTHS = [
 type EditModalSection = 'data' | 'payment' | 'custom';
 
 export default function StaffPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -443,25 +445,25 @@ export default function StaffPage() {
     <TooltipProvider>
       <div className="flex flex-col gap-6">
        <div>
-        <h1 className="text-2xl font-bold font-headline tracking-tight">Socios y Directiva</h1>
+        <h1 className="text-2xl font-bold font-headline tracking-tight">{t('staff.title')}</h1>
         <p className="text-muted-foreground">
-          Gestiona el personal administrativo, directivo y los socios de tu club.
+          {t('staff.description')}
         </p>
       </div>
 
        <Tabs defaultValue="staff" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="staff">Staff y Directiva</TabsTrigger>
-          <TabsTrigger value="socios">Socios</TabsTrigger>
+          <TabsTrigger value="staff">{t('staff.tabs.staff')}</TabsTrigger>
+          <TabsTrigger value="socios">{t('staff.tabs.socios')}</TabsTrigger>
         </TabsList>
         <TabsContent value="staff">
             <Card>
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex-1">
-                      <CardTitle>Staff y Directiva</CardTitle>
+                      <CardTitle>{t('staff.tabs.staff')}</CardTitle>
                       <CardDescription>
-                        Personal administrativo y directivo del club.
+                        {t('staff.staffDescription')}
                       </CardDescription>
                     </div>
                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -470,13 +472,13 @@ export default function StaffPage() {
                               <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                                 <Columns className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                  Columnas
+                                  {t('staff.columns')}
                                 </span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <ScrollArea className="h-[400px]">
-                                <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t('staff.toggleColumns')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {staffFields.map(field => (
                                     <DropdownMenuCheckboxItem
@@ -507,7 +509,7 @@ export default function StaffPage() {
                           </DropdownMenu>
                           <Button onClick={() => handleOpenModal('add', 'staff')} className="h-9 w-full sm:w-auto">
                             <PlusCircle className="mr-2 h-4 w-4" />
-                            Añadir Miembro
+                            {t('staff.addMember')}
                           </Button>
                     </div>
                   </div>
@@ -530,7 +532,7 @@ export default function StaffPage() {
                               </TableHead>
                           ))}
                           <TableHead>
-                            <span className="sr-only">Acciones</span>
+                            <span className="sr-only">{t('staff.actions')}</span>
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -561,7 +563,7 @@ export default function StaffPage() {
                                                       <AlertCircle className="h-4 w-4 text-destructive" />
                                                     </TooltipTrigger>
                                                     <TooltipContent>
-                                                      <p>Faltan datos por rellenar</p>
+                                                      <p>{t('staff.missingData')}</p>
                                                     </TooltipContent>
                                                 </Tooltip>
                                               )}
@@ -577,20 +579,20 @@ export default function StaffPage() {
                                 <DropdownMenuTrigger asChild>
                                   <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Alternar menú</span>
+                                    <span className="sr-only">{t('staff.toggleMenu')}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => setViewingMember({member, type: 'staff'})}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>Editar</DropdownMenuItem>
+                                  <DropdownMenuLabel>{t('staff.actions')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => setViewingMember({member, type: 'staff'})}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>{t('staff.edit')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
                                     <Send className="mr-2 h-4 w-4" />
-                                    Solicitar Actualización
+                                    {t('staff.requestUpdate')}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(member)}>
-                                    Eliminar
+                                    {t('staff.delete')}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -608,9 +610,9 @@ export default function StaffPage() {
                 <CardHeader>
                   <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex-1">
-                      <CardTitle>Socios</CardTitle>
+                      <CardTitle>{t('staff.tabs.socios')}</CardTitle>
                       <CardDescription>
-                        Miembros del club que no son jugadores ni staff.
+                        {t('staff.sociosDescription')}
                       </CardDescription>
                     </div>
                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -619,13 +621,13 @@ export default function StaffPage() {
                               <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                                 <Columns className="h-3.5 w-3.5" />
                                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                  Columnas
+                                  {t('staff.columns')}
                                 </span>
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                               <ScrollArea className="h-[400px]">
-                                <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                                <DropdownMenuLabel>{t('staff.toggleColumns')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
                                 {socioFields.map(field => (
                                     <DropdownMenuCheckboxItem
@@ -656,7 +658,7 @@ export default function StaffPage() {
                           </DropdownMenu>
                         <Button onClick={() => handleOpenModal('add', 'socio')} className="h-9 w-full sm:w-auto">
                         <PlusCircle className="mr-2 h-4 w-4" />
-                        Añadir Socio
+                        {t('staff.addSocio')}
                         </Button>
                     </div>
                   </div>
@@ -679,7 +681,7 @@ export default function StaffPage() {
                               </TableHead>
                           ))}
                           <TableHead>
-                            <span className="sr-only">Acciones</span>
+                            <span className="sr-only">{t('staff.actions')}</span>
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -714,16 +716,16 @@ export default function StaffPage() {
                                 <DropdownMenuTrigger asChild>
                                   <Button aria-haspopup="true" size="icon" variant="ghost">
                                     <MoreHorizontal className="h-4 w-4" />
-                                    <span className="sr-only">Alternar menú</span>
+                                    <span className="sr-only">{t('staff.toggleMenu')}</span>
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => setViewingMember({member: socio, type: 'socio'})}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
-                                  <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>Editar</DropdownMenuItem>
+                                  <DropdownMenuLabel>{t('staff.actions')}</DropdownMenuLabel>
+                                  <DropdownMenuItem onClick={() => setViewingMember({member: socio, type: 'socio'})}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>{t('staff.edit')}</DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
-                                    Eliminar
+                                    {t('staff.delete')}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -755,15 +757,15 @@ export default function StaffPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo' : 'Editar'} {modalType === 'staff' ? 'Miembro de Staff' : 'Socio'}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? t('staff.addNew') : t('staff.edit')} {modalType === 'staff' ? t('staff.staffMember') : t('staff.socio')}</DialogTitle>
                 <DialogDescription>
-                    Modifica la información del miembro.
+                    {t('staff.modalDescription')}
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh]">
               <div className="py-4 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6 pr-6">
                   <div className="flex flex-col items-center gap-4 pt-5">
-                      <Label>Foto</Label>
+                      <Label>{t('staff.photo')}</Label>
                       <Avatar className="h-32 w-32">
                           <AvatarImage src={imagePreview || currentData?.avatar} />
                           <AvatarFallback>
@@ -774,7 +776,7 @@ export default function StaffPage() {
                       <Button asChild variant="outline" size="sm">
                           <label htmlFor="member-image" className="cursor-pointer">
                               <Upload className="mr-2 h-3 w-3"/>
-                              Subir
+                              {t('staff.upload')}
                           </label>
                       </Button>
                       <Input id="member-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
@@ -787,17 +789,17 @@ export default function StaffPage() {
                                     <SelectValue placeholder="Seleccionar sección..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="data">Datos</SelectItem>
-                                    <SelectItem value="payment">Pagos</SelectItem>
-                                    <SelectItem value="custom">Otros Datos</SelectItem>
+                                    <SelectItem value="data">{t('staff.data')}</SelectItem>
+                                    <SelectItem value="payment">{t('staff.payments')}</SelectItem>
+                                    <SelectItem value="custom">{t('staff.otherData')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <Tabs defaultValue="data" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
                             <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="data">Datos</TabsTrigger>
-                                <TabsTrigger value="payment">Pagos</TabsTrigger>
-                                <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                                <TabsTrigger value="data">{t('staff.data')}</TabsTrigger>
+                                <TabsTrigger value="payment">{t('staff.payments')}</TabsTrigger>
+                                <TabsTrigger value="custom">{t('staff.otherData')}</TabsTrigger>
                             </TabsList>
                         </Tabs>
 
@@ -805,28 +807,28 @@ export default function StaffPage() {
                            {modalType === 'staff' ? (
                               <div className="space-y-6">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      <div className="space-y-2"><Label htmlFor="name">Nombre</Label><Input id="name" autoComplete="off" value={staffData.name || ''} onChange={handleInputChange} /></div>
-                                      <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" autoComplete="off" value={staffData.lastName || ''} onChange={handleInputChange} /></div>
+                                      <div className="space-y-2"><Label htmlFor="name">{t('staff.name')}</Label><Input id="name" autoComplete="off" value={staffData.name || ''} onChange={handleInputChange} /></div>
+                                      <div className="space-y-2"><Label htmlFor="lastName">{t('staff.lastName')}</Label><Input id="lastName" autoComplete="off" value={staffData.lastName || ''} onChange={handleInputChange} /></div>
                                   </div>
-                                  <div className="space-y-2"><Label htmlFor="role">Cargo</Label><Input id="role" placeholder="p.ej., Coordinador, Directivo" value={staffData.role || ''} onChange={handleInputChange} /></div>
+                                  <div className="space-y-2"><Label htmlFor="role">{t('staff.role')}</Label><Input id="role" placeholder="p.ej., Coordinador, Directivo" value={staffData.role || ''} onChange={handleInputChange} /></div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                      <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} /></div>
-                                      <div className="space-y-2"><Label htmlFor="phone">Teléfono</Label><Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} /></div>
+                                      <div className="space-y-2"><Label htmlFor="email">{t('staff.email')}</Label><Input id="email" type="email" value={staffData.email || ''} onChange={handleInputChange} /></div>
+                                      <div className="space-y-2"><Label htmlFor="phone">{t('staff.phone')}</Label><Input id="phone" type="tel" value={staffData.phone || ''} onChange={handleInputChange} /></div>
                                   </div>
                               </div>
                             ) : (
                               <div className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2"><Label htmlFor="name">Nombre</Label><Input id="name" autoComplete="off" value={socioData.name || ''} onChange={handleInputChange} /></div>
-                                    <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" autoComplete="off" value={socioData.lastName || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="name">{t('staff.name')}</Label><Input id="name" autoComplete="off" value={socioData.name || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="lastName">{t('staff.lastName')}</Label><Input id="lastName" autoComplete="off" value={socioData.lastName || ''} onChange={handleInputChange} /></div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                  <div className="space-y-2"><Label htmlFor="email">Email</Label><Input id="email" type="email" value={socioData.email || ''} onChange={handleInputChange} /></div>
-                                  <div className="space-y-2"><Label htmlFor="phone">Teléfono</Label><Input id="phone" type="tel" value={socioData.phone || ''} onChange={handleInputChange} /></div>
+                                  <div className="space-y-2"><Label htmlFor="email">{t('staff.email')}</Label><Input id="email" type="email" value={socioData.email || ''} onChange={handleInputChange} /></div>
+                                  <div className="space-y-2"><Label htmlFor="phone">{t('staff.phone')}</Label><Input id="phone" type="tel" value={socioData.phone || ''} onChange={handleInputChange} /></div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2"><Label htmlFor="dni">NIF</Label><Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} /></div>
-                                    <div className="space-y-2"><Label htmlFor="socioNumber">Número de Socio</Label><Input id="socioNumber" value={socioData.socioNumber || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="dni">{t('staff.dni')}</Label><Input id="dni" value={socioData.dni || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="socioNumber">{t('staff.socioNumber')}</Label><Input id="socioNumber" value={socioData.socioNumber || ''} onChange={handleInputChange} /></div>
                                 </div>
                               </div>
                             )}
@@ -836,21 +838,21 @@ export default function StaffPage() {
                            {modalType === 'staff' ? (
                                 <>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="space-y-2"><Label htmlFor="payment">Pago (€)</Label><Input id="payment" type="number" value={staffData.payment || ''} onChange={handleInputChange} /></div>
-                                    <div className="space-y-2"><Label htmlFor="paymentFrequency">Frecuencia de Pago</Label><Select value={staffData.paymentFrequency} onValueChange={(value) => handleSelectChange('paymentFrequency', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">Mensual</SelectItem><SelectItem value="annual">Anual</SelectItem></SelectContent></Select></div>
+                                    <div className="space-y-2"><Label htmlFor="payment">{t('staff.paymentAmount')}</Label><Input id="payment" type="number" value={staffData.payment || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="paymentFrequency">{t('staff.paymentFrequency')}</Label><Select value={staffData.paymentFrequency} onValueChange={(value) => handleSelectChange('paymentFrequency', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">{t('staff.monthly')}</SelectItem><SelectItem value="annual">{t('staff.annual')}</SelectItem></SelectContent></Select></div>
                                 </div>
                                 {staffData.paymentFrequency === 'monthly' && (
-                                    <div className="space-y-2"><Label>Meses sin pago</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{staffData.excludedMonths && staffData.excludedMonths.length > 0 ? `${staffData.excludedMonths.length} mese(s) seleccionado(s)`: "Seleccionar meses..."}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => { const newSelection = new Set(staffData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setStaffData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", staffData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
+                                    <div className="space-y-2"><Label>{t('staff.excludedMonths')}</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{staffData.excludedMonths && staffData.excludedMonths.length > 0 ? `${staffData.excludedMonths.length} mese(s) seleccionado(s)`: `${t('staff.selectMonths')}...`}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => { const newSelection = new Set(staffData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setStaffData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", staffData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
                                 )}
                                 </>
                             ) : (
                                 <>
                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2"><Label htmlFor="paymentType">Tipo de Cuota</Label><Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">Mensual</SelectItem><SelectItem value="annual">Anual</SelectItem></SelectContent></Select></div>
-                                    <div className="space-y-2"><Label htmlFor="fee">Importe Cuota (€)</Label><Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2"><Label htmlFor="paymentType">{t('staff.feeType')}</Label><Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">{t('staff.monthly')}</SelectItem><SelectItem value="annual">{t('staff.annual')}</SelectItem></SelectContent></Select></div>
+                                    <div className="space-y-2"><Label htmlFor="fee">{t('staff.feeAmount')}</Label><Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} /></div>
                                 </div>
                                 {socioData.paymentType === 'monthly' && (
-                                <div className="space-y-2"><Label>Meses sin cuota</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{socioData.excludedMonths && socioData.excludedMonths.length > 0 ? `${socioData.excludedMonths.length} mese(s) seleccionado(s)` : "Seleccionar meses..."}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => {const newSelection = new Set(socioData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setSocioData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", socioData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
+                                <div className="space-y-2"><Label>{t('staff.excludedMonthsFee')}</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{socioData.excludedMonths && socioData.excludedMonths.length > 0 ? `${socioData.excludedMonths.length} mese(s) seleccionado(s)` : `${t('staff.selectMonths')}...`}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => {const newSelection = new Set(socioData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setSocioData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", socioData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
                                 )}
                                 </>
                            )}
@@ -870,7 +872,7 @@ export default function StaffPage() {
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-center text-sm text-muted-foreground py-8">No hay campos personalizados para este tipo de miembro.</p>
+                                <p className="text-center text-sm text-muted-foreground py-8">{t('staff.noCustomFields')}</p>
                             )}
                         </div>
                   </div>
@@ -878,10 +880,10 @@ export default function StaffPage() {
             </ScrollArea>
             <DialogFooter className="border-t pt-4">
                 <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancelar</Button>
+                    <Button type="button" variant="secondary">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="button" onClick={handleSave} disabled={loading}>
-                    {loading ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                    {loading ? <Loader2 className="animate-spin" /> : t('common.saveChanges')}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -889,15 +891,15 @@ export default function StaffPage() {
       <AlertDialog open={!!itemToDelete} onOpenChange={(open) => !open && setItemToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('staff.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {itemToDelete?.name} {itemToDelete?.lastName}.
+              {t('staff.confirmDeleteDesc', { memberName: `${itemToDelete?.name} ${itemToDelete?.lastName}` })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('staff.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -905,3 +907,5 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+
+    
