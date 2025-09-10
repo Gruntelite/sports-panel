@@ -57,13 +57,7 @@
         ],
         "testimonials": {
             "title": "La Confianza de los que Gestionan",
-            "subtitle": "Clubs como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel.",
-            "0": { "quote": "Desde que usamos SportsPanel, la administración del club es otra. La función de solicitar actualización de datos a las familias nos ahorra semanas de trabajo al inicio de cada temporada. Es un cambio brutal." },
-            "1": { "quote": "Organizar los horarios de los 15 equipos era una locura. Ahora, con el calendario de horarios, todo el mundo sabe dónde y cuándo entrena. Y si hay un cambio, se enteran al momento." },
-            "2": { "quote": "La sección de tesorería nos da una visión clara de la salud financiera del club. Controlar las cuotas, los gastos recurrentes y los patrocinios nunca había sido tan sencillo y visual." },
-            "3": { "quote": "Los formularios de inscripción online son una maravilla. Gestionamos el campus de verano y las captaciones sin papeleo, recogiendo los datos y los pagos de forma automática. ¡Profesionaliza mucho al club!" },
-            "4": { "quote": "La comunicación con los entrenadores es mucho más fluida. Podemos enviarles comunicados específicos o a todo el cuerpo técnico con un par de clics. Se acabó el caos de los grupos de WhatsApp." },
-            "5": { "quote": "El importador de CSV nos salvó la vida. Pudimos cargar los datos de más de 300 socios en una tarde, sin tener que introducirlos uno a uno. La puesta en marcha fue increíblemente rápida gracias a eso." }
+            "subtitle": "Clubs como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel."
         },
         "featuresTitle": "Todo lo que tu club necesita",
         "featuresSubtitle": "Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo.",

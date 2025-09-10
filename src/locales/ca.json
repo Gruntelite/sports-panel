@@ -57,13 +57,7 @@
         ],
         "testimonials": {
             "title": "La Confiança dels que Gestionen",
-            "subtitle": "Clubs com el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel.",
-            "0": { "quote": "Des que fem servir SportsPanel, l'administració del club és una altra cosa. La funció de sol·licitar l'actualització de dades a les famílies ens estalvia setmanes de feina a l'inici de cada temporada. És un canvi brutal." },
-            "1": { "quote": "Organitzar els horaris dels 15 equips era una bogeria. Ara, amb el calendari d'horaris, tothom sap on i quan entrena. I si hi ha un canvi, se n'assabenten al moment." },
-            "2": { "quote": "La secció de tresoreria ens dóna una visió clara de la salut financera del club. Controlar les quotes, les despeses recurrents i els patrocinis mai no havia estat tan senzill i visual." },
-            "3": { "quote": "Els formularis d'inscripció online són una meravella. Gestionem el campus d'estiu i les captacions sense paperassa, recollint les dades i els pagaments de forma automàtica. Professionalitza molt el club!" },
-            "4": { "quote": "La comunicació amb els entrenadors és molt més fluida. Podem enviar-los comunicats específics o a tot el cos tècnic amb un parell de clics. S'ha acabat el caos dels grups de WhatsApp." },
-            "5": { "quote": "L'importador de CSV ens va salvar la vida. Vam poder carregar les dades de més de 300 socis en una tarda, sense haver d'introduir-les una per una. La posada en marxa va ser increïblement ràpida gràcies a això." }
+            "subtitle": "Clubs com el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel."
         },
         "featuresTitle": "Tot el que el teu club necessita",
         "featuresSubtitle": "Una plataforma completa pensada per optimitzar cada aspecte de la gestió del teu club, estalviant-te temps i esforç.",

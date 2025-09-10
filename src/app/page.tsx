@@ -145,12 +145,12 @@ export default function LandingPage() {
   ];
 
   const testimonials = [
-      { name: "Javier García", role: "Presidente, C.D. Móstoles", quote: t('landing.testimonials.0.quote') },
-      { name: "Elena Ruiz", role: "Coordinadora, A.D. Alcorcón F.S.", quote: t('landing.testimonials.1.quote') },
-      { name: "Marcos Herrero", role: "Tesorero, Club Baloncesto Fuenlabrada", quote: t('landing.testimonials.2.quote') },
-      { name: "Sofía Moreno", role: "Secretaria, C.V. Leganés", quote: t('landing.testimonials.3.quote') },
-      { name: "David Alonso", role: "Director Deportivo, U.D. San Sebastián de los Reyes", quote: t('landing.testimonials.4.quote') },
-      { name: "Isabel Jiménez", role: "Administrativa, Club Patinaje Getafe", quote: t('landing.testimonials.5.quote') }
+      { name: "Javier García", role: "Presidente, C.D. Móstoles", quote: "Desde que usamos SportsPanel, la administración del club es otra. La función de solicitar la actualización de datos a las familias nos ahorra semanas de trabajo al inicio de cada temporada. Es un cambio brutal." },
+      { name: "Elena Ruiz", role: "Coordinadora, A.D. Alcorcón F.S.", quote: "Organizar los horarios de los 15 equipos era una locura. Ahora, con el calendario de horarios, todo el mundo sabe dónde y cuándo entrena. Y si hay un cambio, se enteran al momento." },
+      { name: "Marcos Herrero", role: "Tesorero, Club Baloncesto Fuenlabrada", quote: "La sección de tesorería nos da una visión clara de la salud financiera del club. Controlar las cuotas, los gastos recurrentes y los patrocinios nunca había sido tan sencillo y visual." },
+      { name: "Sofía Moreno", role: "Secretaria, C.V. Leganés", quote: "Los formularios de inscripción online son una maravilla. Gestionamos el campus de verano y las captaciones sin papeleo, recogiendo las dadas y los pagos de forma automática. ¡Profesionaliza mucho al club!" },
+      { name: "David Alonso", role: "Director Deportivo, U.D. San Sebastián de los Reyes", quote: "La comunicación con los entrenadores es mucho más fluida. Podemos enviarles comunicados específicos o a todo el cuerpo técnico con un par de clics. Se acabó el caos de los grupos de WhatsApp." },
+      { name: "Isabel Jiménez", role: "Administrativa, Club Patinaje Getafe", quote: "El importador de CSV nos salvó la vida. Pudimos cargar los datos de más de 300 socios en una tarde, sin tener que introducirlos uno a uno. La puesta en marcha fue increíblemente rápida gracias a eso." }
   ];
 
   const benefits = [
