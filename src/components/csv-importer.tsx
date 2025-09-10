@@ -138,7 +138,7 @@ export function CsvImporter({ importerType, requiredColumns, onImportSuccess }: 
     return (
         <Card>
             <CardHeader>
-                <CardTitle>{t('importer.title')} {importerTypeTranslations[importerType]}</CardTitle>
+                <CardTitle>{t('importer.title', { type: importerTypeTranslations[importerType] })}</CardTitle>
                 <CardDescription>
                     {t('importer.description')}
                 </CardDescription>
