@@ -26,169 +26,9 @@ import { Separator } from '@/components/ui/separator';
 import { useTranslation } from '@/components/i18n-provider';
 import { LanguageSwitcher } from '@/components/language-switcher';
 
-
-const features = [
-  {
-    icon: <Users className="h-8 w-8" />,
-    title: "Gestión Centralizada de Miembros y Equipos",
-    description: "Administra fichas de jugadores, entrenadores, staff y equipos en un único lugar. Accede a toda la información al instante.",
-  },
-  {
-    icon: <CircleDollarSign className="h-8 w-8" />,
-    title: "Tesorería y Cuotas",
-    description: "Lleva un control claro de los ingresos por cuotas, gastos y la salud financiera de tu club sin complicaciones.",
-  },
-   {
-    icon: <Mail className="h-8 w-8" />,
-    title: "Comunicación Integrada",
-    description: "Envía correos electrónicos a equipos, grupos o a todo el club directamente desde la plataforma.",
-  },
-  {
-    icon: <Database className="h-8 w-8" />,
-    title: "Importador de BBDD",
-    description: "Importa fácilmente tu base de datos de miembros (jugadores, técnicos, etc.) mediante archivos CSV para una puesta en marcha rápida.",
-  },
-  {
-    icon: <UserCheck className="h-8 w-8" />,
-    title: "Actualización de Datos Digitalizada",
-    description: "Envía solicitudes automáticas a tus miembros para que actualicen sus datos. La información se sincroniza al instante.",
-  },
-  {
-    icon: <ClipboardList className="h-8 w-8" />,
-    title: "Formularios de Inscripción",
-    description: "Crea y publica formularios para eventos, campus o captaciones. Gestiona inscritos y pagos de forma centralizada.",
-  },
-  {
-    icon: <Calendar className="h-8 w-8" />,
-    title: "Calendario y Horarios",
-    description: "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar.",
-  },
-  {
-    icon: <AlertTriangle className="h-8 w-8" />,
-    title: "Incidencias y Protocolos",
-    description: "Registra incidencias, lesiones o sanciones y ten a mano los protocolos de actuación del club para una gestión rápida y eficaz.",
-  },
-  {
-    icon: <FolderArchive className="h-8 w-8" />,
-    title: "Almacén de Documentos",
-    description: "Guarda y organiza tus documentos importantes como normativas o autorizaciones de forma segura en la nube.",
-  },
-];
-
-const testimonials = [
-    {
-        name: "Javier García",
-        role: "Presidente, C.D. Móstoles",
-        quote: "Desde que usamos SportsPanel, la administración del club es otra. La función de solicitar actualización de datos a las familias nos ahorra semanas de trabajo al inicio de cada temporada. Es un cambio brutal.",
-    },
-    {
-        name: "Elena Ruiz",
-        role: "Coordinadora, A.D. Alcorcón F.S.",
-        quote: "Organizar los horarios de los 15 equipos era una locura. Ahora, con el calendario de horarios, todo el mundo sabe dónde y cuándo entrena. Y si hay un cambio, se enteran al momento.",
-    },
-    {
-        name: "Marcos Herrero",
-        role: "Tesorero, Club Baloncesto Fuenlabrada",
-        quote: "La sección de tesorería nos da una visión clara de la salud financiera del club. Controlar las cuotas, los gastos recurrentes y los patrocinios nunca había sido tan sencillo y visual.",
-    },
-     {
-        name: "Sofía Moreno",
-        role: "Secretaria, C.V. Leganés",
-        quote: "Los formularios de inscripción online son una maravilla. Gestionamos el campus de verano y las captaciones sin papeleo, recogiendo los datos y los pagos de forma automática. ¡Profesionaliza mucho al club!",
-    },
-    {
-        name: "David Alonso",
-        role: "Director Deportivo, U.D. San Sebastián de los Reyes",
-        quote: "La comunicación con los entrenadores es mucho más fluida. Podemos enviarles comunicados específicos o a todo el cuerpo técnico con un par de clics. Se acabó el caos de los grupos de WhatsApp.",
-    },
-    {
-        name: "Isabel Jiménez",
-        role: "Administrativa, Club Patinaje Getafe",
-        quote: "El importador de CSV nos salvó la vida. Pudimos cargar los datos de más de 300 socios en una tarde, sin tener que introducirlos uno a uno. La puesta en marcha fue increíblemente rápida gracias a eso."
-    }
-]
-
-const benefits = [
-    {
-        title: "Ahorra Tiempo en Administración",
-        subtitle: "Digitaliza las fichas y centraliza la información.",
-        points: [
-            "Reduce el papeleo y los errores manuales.",
-            "Accede a la información de cualquier miembro en segundos.",
-            "Simplifica el proceso de actualización de información.",
-        ],
-        image: {
-            src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(13).png?alt=media&token=3ce9a165-0142-4bc0-97f7-8900a2245e97",
-            alt: "Administración Eficiente",
-            hint: "organización escritorio"
-        }
-    },
-    {
-        title: "Comunicación Directa y Eficaz",
-        subtitle: "Mantén a todos informados sin esfuerzo.",
-        points: [
-            "Envía comunicados a equipos específicos o a toda la administración.",
-            "Notifica cambios de horario o cancelaciones al instante.",
-            "Solicita la subida de documentos con un solo clic.",
-        ],
-        image: {
-            src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(14).png?alt=media&token=dd1084fa-8dcb-479c-a014-55dad3a26415",
-            alt: "Comunicación Centralizada",
-            hint: "notificación móvil"
-        }
-    },
-     {
-        title: "Un Portal para tu Club",
-        subtitle: "Un portal único para la administración del club.",
-        points: [
-            "Las familias reciben enlaces para actualizar sus datos o subir archivos.",
-            "Los entrenadores reciben la información que necesitan por email.",
-            "La administración tiene una visión global de todo el club.",
-        ],
-        image: {
-            src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(15).png?alt=media&token=0984a6c9-c0ff-4e96-9612-72dd2726eaa4",
-            alt: "Portal Unificado",
-            hint: "personas conectadas"
-        }
-    }
-]
-
-const faqs = [
-  {
-    question: "¿Ofrecen un periodo de prueba?",
-    answer: "¡Sí! Ofrecemos una prueba de 20 días para que explores todas las funcionalidades de SportsPanel. Puedes cancelar tu suscripción en cualquier momento. Además, nuestro plan mensual no tiene ningún tipo de permanencia."
-  },
-  {
-    question: "¿Puedo importar mis datos existentes de otro programa?",
-    answer: "Sí. Contamos con un importador de datos mediante archivos CSV. Puedes preparar una hoja de cálculo con tus jugadores, entrenadores o socios y subirlos a la plataforma de forma masiva, ahorrándote horas de trabajo manual."
-  },
-  {
-    question: "¿Mis datos están seguros en la plataforma?",
-    answer: "La seguridad es nuestra máxima prioridad. Utilizamos la infraestructura de Google Cloud, una de las más seguras del mundo, para proteger tus datos. Todas las conexiones están encriptadas y realizamos copias de seguridad periódicas."
-  },
-  {
-    question: "¿Cómo funciona la comunicación con las familias?",
-    answer: "Puedes enviar correos electrónicos directamente desde la plataforma. Tienes la opción de segmentar tus envíos por equipos, por tipo de miembro (jugadores, entrenadores...) o a todo el club. Las familias recibirán las notificaciones en su email."
-  },
-  {
-    question: "¿Puedo solicitar a mis miembros que actualicen sus datos?",
-    answer: "Sí, y es una de nuestras funcionalidades estrella. Puedes seleccionar qué campos necesitas que se actualicen (DNI, dirección, teléfono...) y enviar una solicitud masiva. Los miembros recibirán un enlace único y seguro para rellenar la información, que se actualizará automáticamente en su ficha."
-  },
-  {
-    question: "¿SportsPanel se puede personalizar con el logo y los colores de mi club?",
-    answer: "¡Sí! Puedes personalizar la plataforma con el nombre, el logo y el color principal de tu club para que tanto los miembros del staff como las familias se sientan como en casa."
-  }
-];
-
-const stats = [
-    { value: "9h+", title: "AHORRO SEMANAL", description: "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
-    { value: "95%", title: "TASA DE RETENCIÓN", description: "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-    { value: "+130", title: "CLUBS DEPORTIVOS", description: "Que ya confían en nuestra plataforma para su gestión diaria." },
-    { value: "98%", title: "DIGITALIZACIÓN", description: "De los procesos internos del club que se pueden gestionar con nosotros." },
-];
-
 function ContactForm() {
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [name, setName] = React.useState("");
     const [email, setEmail] = React.useState("");
     const [message, setMessage] = React.useState("");
@@ -213,12 +53,12 @@ function ContactForm() {
         const result = await sendEmailWithSmtpAction(payload);
 
         if (result.success) {
-            toast({ title: "Mensaje Enviado", description: "Hemos recibido tu consulta. Te responderemos lo antes posible."});
+            toast({ title: t('contact.successTitle'), description: t('contact.successDescription')});
             setName("");
             setEmail("");
             setMessage("");
         } else {
-            toast({ variant: "destructive", title: "Error al enviar", description: result.error});
+            toast({ variant: "destructive", title: t('contact.errorTitle'), description: result.error});
         }
         
         setIsSending(false);
@@ -227,25 +67,25 @@ function ContactForm() {
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
              <div className="space-y-2">
-                <Label htmlFor="name">Tu Nombre</Label>
+                <Label htmlFor="name">{t('contact.yourName')}</Label>
                 <Input id="name" value={name} onChange={(e) => setName(e.target.value)} required/>
             </div>
              <div className="space-y-2">
-                <Label htmlFor="email">Tu Email</Label>
+                <Label htmlFor="email">{t('contact.yourEmail')}</Label>
                 <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required/>
             </div>
              <div className="space-y-2">
-                <Label htmlFor="message">Mensaje</Label>
+                <Label htmlFor="message">{t('contact.message')}</Label>
                 <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} required className="min-h-[120px]"/>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button variant="ghost">Cancelar</Button>
+                    <Button variant="ghost">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="submit" disabled={isSending}>
                     {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                     <Send className="mr-2 h-4 w-4"/>
-                    Enviar
+                    {t('common.send')}
                 </Button>
             </DialogFooter>
         </form>
@@ -255,6 +95,100 @@ function ContactForm() {
 export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
   const { t } = useTranslation();
+
+  const features = [
+    {
+      icon: <Users className="h-8 w-8" />,
+      title: t('landing.features.0.title'),
+      description: t('landing.features.0.description'),
+    },
+    {
+      icon: <CircleDollarSign className="h-8 w-8" />,
+      title: t('landing.features.1.title'),
+      description: t('landing.features.1.description'),
+    },
+     {
+      icon: <Mail className="h-8 w-8" />,
+      title: t('landing.features.2.title'),
+      description: t('landing.features.2.description'),
+    },
+    {
+      icon: <Database className="h-8 w-8" />,
+      title: t('landing.features.3.title'),
+      description: t('landing.features.3.description'),
+    },
+    {
+      icon: <UserCheck className="h-8 w-8" />,
+      title: t('landing.features.4.title'),
+      description: t('landing.features.4.description'),
+    },
+    {
+      icon: <ClipboardList className="h-8 w-8" />,
+      title: t('landing.features.5.title'),
+      description: t('landing.features.5.description'),
+    },
+    {
+      icon: <Calendar className="h-8 w-8" />,
+      title: t('landing.features.6.title'),
+      description: t('landing.features.6.description'),
+    },
+    {
+      icon: <AlertTriangle className="h-8 w-8" />,
+      title: t('landing.features.7.title'),
+      description: t('landing.features.7.description'),
+    },
+    {
+      icon: <FolderArchive className="h-8 w-8" />,
+      title: t('landing.features.8.title'),
+      description: t('landing.features.8.description'),
+    },
+  ];
+
+  const testimonials = [
+      { name: "Javier García", role: "Presidente, C.D. Móstoles", quote: t('landing.testimonials.0.quote') },
+      { name: "Elena Ruiz", role: "Coordinadora, A.D. Alcorcón F.S.", quote: t('landing.testimonials.1.quote') },
+      { name: "Marcos Herrero", role: "Tesorero, Club Baloncesto Fuenlabrada", quote: t('landing.testimonials.2.quote') },
+      { name: "Sofía Moreno", role: "Secretaria, C.V. Leganés", quote: t('landing.testimonials.3.quote') },
+      { name: "David Alonso", role: "Director Deportivo, U.D. San Sebastián de los Reyes", quote: t('landing.testimonials.4.quote') },
+      { name: "Isabel Jiménez", role: "Administrativa, Club Patinaje Getafe", quote: t('landing.testimonials.5.quote') }
+  ];
+
+  const benefits = [
+      {
+          title: t('landing.benefits.0.title'),
+          subtitle: t('landing.benefits.0.subtitle'),
+          points: [t('landing.benefits.0.points.0'), t('landing.benefits.0.points.1'), t('landing.benefits.0.points.2')],
+          image: { src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(13).png?alt=media&token=3ce9a165-0142-4bc0-97f7-8900a2245e97", alt: "Administración Eficiente", hint: "organización escritorio" }
+      },
+      {
+          title: t('landing.benefits.1.title'),
+          subtitle: t('landing.benefits.1.subtitle'),
+          points: [t('landing.benefits.1.points.0'), t('landing.benefits.1.points.1'), t('landing.benefits.1.points.2')],
+          image: { src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(14).png?alt=media&token=dd1084fa-8dcb-479c-a014-55dad3a26415", alt: "Comunicación Centralizada", hint: "notificación móvil" }
+      },
+       {
+          title: t('landing.benefits.2.title'),
+          subtitle: t('landing.benefits.2.subtitle'),
+          points: [t('landing.benefits.2.points.0'), t('landing.benefits.2.points.1'), t('landing.benefits.2.points.2')],
+          image: { src: "https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(15).png?alt=media&token=0984a6c9-c0ff-4e96-9612-72dd2726eaa4", alt: "Portal Unificado", hint: "personas conectadas" }
+      }
+  ];
+  
+  const faqs = [
+    { question: t('landing.faq.0.question'), answer: t('landing.faq.0.answer') },
+    { question: t('landing.faq.1.question'), answer: t('landing.faq.1.answer') },
+    { question: t('landing.faq.2.question'), answer: t('landing.faq.2.answer') },
+    { question: t('landing.faq.3.question'), answer: t('landing.faq.3.answer') },
+    { question: t('landing.faq.4.question'), answer: t('landing.faq.4.answer') },
+    { question: t('landing.faq.5.question'), answer: t('landing.faq.5.answer') },
+  ];
+
+  const stats = [
+    { value: "9h+", title: t('landing.stats.0.title'), description: t('landing.stats.0.description') },
+    { value: "95%", title: t('landing.stats.1.title'), description: t('landing.stats.1.description') },
+    { value: "+130", title: t('landing.stats.2.title'), description: t('landing.stats.2.description') },
+    { value: "98%", title: t('landing.stats.3.title'), description: t('landing.stats.3.description') },
+];
 
   const pricing = {
     pro: { monthly: 33, yearly: Math.round(33 * 12 * 0.9) }
@@ -279,24 +213,24 @@ export default function LandingPage() {
           <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
             <LanguageSwitcher />
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-              Características
+              {t('landing.nav.features')}
             </Link>
             <Link href="#benefits" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-              Beneficios
+              {t('landing.nav.benefits')}
             </Link>
             <Link href="#pricing" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-              Precios
+              {t('landing.nav.pricing')}
             </Link>
             <DialogTrigger asChild>
               <Button variant="ghost" className="text-sm font-medium hover:underline underline-offset-4" >
-                Contacto
+                {t('landing.nav.contact')}
               </Button>
             </DialogTrigger>
             <Link href="/login" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
-              Iniciar Sesión
+              {t('landing.nav.login')}
             </Link>
             <Button asChild>
-              <Link href="/register" prefetch={false}>Crea tu club</Link>
+              <Link href="/register" prefetch={false}>{t('landing.nav.register')}</Link>
             </Button>
           </nav>
           <div className="ml-auto md:hidden">
@@ -304,7 +238,7 @@ export default function LandingPage() {
                   <SheetTrigger asChild>
                       <Button variant="outline" size="icon">
                           <Menu className="h-6 w-6" />
-                          <span className="sr-only">Abrir menú</span>
+                          <span className="sr-only">{t('header.openMenu')}</span>
                       </Button>
                   </SheetTrigger>
                   <SheetContent side="right">
@@ -316,35 +250,35 @@ export default function LandingPage() {
                     <div className="grid gap-4 py-6">
                         <DialogClose asChild>
                             <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                                Características
+                                {t('landing.nav.features')}
                             </Link>
                         </DialogClose>
                         <DialogClose asChild>
                         <Link href="#benefits" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                            Beneficios
+                            {t('landing.nav.benefits')}
                         </Link>
                         </DialogClose>
                          <DialogClose asChild>
                         <Link href="#pricing" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                            Precios
+                            {t('landing.nav.pricing')}
                         </Link>
                         </DialogClose>
                         <DialogTrigger asChild>
                          <DialogClose asChild>
                             <Button variant="ghost" className="text-lg font-medium hover:underline underline-offset-4 justify-start p-0">
-                                Contacto
+                                {t('landing.nav.contact')}
                             </Button>
                           </DialogClose>
                         </DialogTrigger>
                         <Separator />
                         <DialogClose asChild>
                         <Link href="/login" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
-                            Iniciar Sesión
+                             {t('landing.nav.login')}
                         </Link>
                         </DialogClose>
                         <DialogClose asChild>
                         <Button asChild size="lg">
-                            <Link href="/register" prefetch={false}>Crea tu club</Link>
+                            <Link href="/register" prefetch={false}>{t('landing.nav.register')}</Link>
                         </Button>
                         </DialogClose>
                     </div>
@@ -407,10 +341,10 @@ export default function LandingPage() {
                  <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                       <div className="space-y-2">
                           <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                            La Confianza de los que Gestionan
+                            {t('landing.testimonials.title')}
                           </h2>
                           <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                              Clubs como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel.
+                              {t('landing.testimonials.subtitle')}
                           </p>
                       </div>
                   </div>
@@ -479,11 +413,11 @@ export default function LandingPage() {
                 ))}
               </div>
                <div className="text-center mt-8">
-                <h3 className="text-2xl font-bold font-headline tracking-tight">Digitaliza tu club. Ahorra tiempo.</h3>
-                <p className="text-muted-foreground mt-2 mb-6">Únete a los clubs que ya han optimizado su gestión.</p>
+                <h3 className="text-2xl font-bold font-headline tracking-tight">{t('landing.bottomCta.title')}</h3>
+                <p className="text-muted-foreground mt-2 mb-6">{t('landing.bottomCta.subtitle')}</p>
                 <Button asChild size="lg">
                     <Link href="/register" prefetch={false}>
-                    Empieza a optimizar tu club <ArrowRight className="ml-2 h-5 w-5" />
+                    {t('landing.bottomCta.button')} <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                 </Button>
             </div>
@@ -495,10 +429,10 @@ export default function LandingPage() {
                   <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                       <div className="space-y-2">
                           <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                            Ahorra tiempo, reduce errores <br /> y mejora la comunicación
+                            {t('landing.benefits.title')}
                           </h2>
                           <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                              SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.
+                              {t('landing.benefits.subtitle')}
                           </p>
                       </div>
                   </div>
@@ -543,38 +477,34 @@ export default function LandingPage() {
               <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                   <div className="space-y-2">
                       <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                        Un Plan Simple y Transparente
+                        {t('landing.pricing.title')}
                       </h2>
                       <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                          Todo lo que necesitas, sin complicaciones. Un único plan con todas las funcionalidades y sin límite de miembros.
+                          {t('landing.pricing.subtitle')}
                       </p>
                   </div>
               </div>
               <div className="mx-auto flex justify-center">
                   <div className="relative flex flex-col rounded-lg border-2 border-primary bg-card shadow-lg p-6 sm:p-8 text-center max-w-md w-full">
-                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>Plan Único</div>
-                      <h3 className="text-2xl font-bold font-headline">SportsPanel Completo</h3>
-                      <p className="text-muted-foreground mt-1">Fichas <b>ilimitadas</b></p>
+                      <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold flex items-center gap-1.5"><Star className="h-3 w-3"/>{t('landing.pricing.planName')}</div>
+                      <h3 className="text-2xl font-bold font-headline">{t('landing.pricing.planTitle')}</h3>
+                      <p className="text-muted-foreground mt-1">{t('landing.pricing.planSubtitle')}</p>
                       <div className="mt-4 flex flex-col items-center justify-center gap-2">
                         <div className="flex items-baseline">
                           <span className="text-5xl font-bold">{pricing.pro.monthly}€</span>
-                          <span className="text-muted-foreground self-end">/mes</span>
+                          <span className="text-muted-foreground self-end">/{t('landing.pricing.perMonth')}</span>
                         </div>
-                          <span className="text-xs text-muted-foreground">Cuota mensual sin IVA incluido</span>
+                          <span className="text-xs text-muted-foreground">{t('landing.pricing.vatNote')}</span>
                       </div>
                       <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Gestión de miembros y equipos</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Tesorería y control de cuotas</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Comunicación integrada</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>+14.000 emails al mes</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Importador de datos</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Solicitud de datos a familias</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Formularios de inscripción</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Calendario y horarios</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Registro de incidencias</span></li>
-                          <li className="flex items-center gap-2"><CheckCircle className="h-5 w-5 text-green-500" /><span>Almacén de documentos</span></li>
+                           {t('landing.pricing.features', { returnObjects: true }).map((feature, index) => (
+                                <li key={index} className="flex items-center gap-2">
+                                    <CheckCircle className="h-5 w-5 text-green-500" />
+                                    <span>{feature}</span>
+                                </li>
+                            ))}
                       </ul>
-                      <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">Empieza tu prueba gratuita de 20 días</Link></Button>
+                      <Button className="mt-8 w-full" size="lg" asChild><Link href="/register">{t('landing.pricing.cta')}</Link></Button>
                   </div>
               </div>
             </div>
@@ -585,10 +515,10 @@ export default function LandingPage() {
                   <div className="flex flex-col items-center justify-center space-y-4 text-center mb-12">
                       <div className="space-y-2">
                           <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                            Preguntas Frecuentes
+                            {t('landing.faq.title')}
                           </h2>
                           <p className="max-w-[900px] text-center text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                              ¿Tienes dudas? Aquí tienes las respuestas a las preguntas más comunes.
+                              {t('landing.faq.subtitle')}
                           </p>
                       </div>
                   </div>
@@ -610,21 +540,21 @@ export default function LandingPage() {
 
         </main>
         <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full shrink-0 items-center px-4 md:px-6 border-t">
-          <p className="text-xs text-muted-foreground">&copy; 2024 SportsPanel. Todos los derechos reservados.</p>
+          <p className="text-xs text-muted-foreground">&copy; 2024 SportsPanel. {t('landing.footer.rights')}</p>
           <nav className="sm:ml-auto flex gap-4 sm:gap-6">
             <Link href="/terms" className="text-xs hover:underline underline-offset-4" prefetch={false}>
-              Términos de Servicio
+              {t('landing.footer.terms')}
             </Link>
             <Link href="/privacy" className="text-xs hover:underline underline-offset-4" prefetch={false}>
-              Política de Privacidad
+              {t('landing.footer.privacy')}
             </Link>
           </nav>
         </footer>
         <DialogContent>
           <DialogHeader>
-              <DialogTitle>Contacta con Nosotros</DialogTitle>
+              <DialogTitle>{t('contact.title')}</DialogTitle>
               <DialogDescription>
-                  ¿Tienes alguna pregunta? Rellena el formulario y te responderemos lo antes posible.
+                  {t('contact.description')}
               </DialogDescription>
           </DialogHeader>
           <ContactForm />

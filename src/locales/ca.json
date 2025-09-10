@@ -1,5 +1,12 @@
 
 {
+    "common": {
+        "saveChanges": "Desar Canvis",
+        "error": "Error",
+        "saved": "Desat",
+        "cancel": "Cancel·lar",
+        "send": "Enviar"
+    },
     "sidebar": {
         "dashboard": "Panell",
         "treasury": "Tresoreria",
@@ -30,12 +37,100 @@
         "mainMenu": "Menú Principal"
     },
     "landing": {
+        "nav": {
+            "features": "Característiques",
+            "benefits": "Beneficis",
+            "pricing": "Preus",
+            "contact": "Contacte",
+            "login": "Iniciar Sessió",
+            "register": "Crea el teu club"
+        },
         "title": "El Programari que Automatitza el teu Club i Estalvia Hores de Gestió",
         "subtitle": "Centralitza la Base de Dades, tresoreria, emmagatzematge d'arxius i comunicació amb famílies en un únic panell.",
         "cta": "Prova-ho gratis",
         "ctaNote": "Sense targeta de crèdit · Cancel·la quan vulguis",
+        "stats": [
+            { "title": "ESTALVI SETMANAL", "description": "Temps mitjà que els nostres clubs estalvien en tasques administratives." },
+            { "title": "TAXA DE RETENCIÓ", "description": "Dels clubs que proven SportsPanel, la gran majoria s'hi queda." },
+            { "title": "CLUBS ESPORTIUS", "description": "Que ja confien en la nostra plataforma per a la seva gestió diària." },
+            { "title": "DIGITALITZACIÓ", "description": "Dels processos interns del club que es poden gestionar amb nosaltres." }
+        ],
+        "testimonials": {
+            "title": "La Confiança dels que Gestionen",
+            "subtitle": "Clubs com el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel.",
+            "0": { "quote": "Des que fem servir SportsPanel, l'administració del club és una altra cosa. La funció de sol·licitar l'actualització de dades a les famílies ens estalvia setmanes de feina a l'inici de cada temporada. És un canvi brutal." },
+            "1": { "quote": "Organitzar els horaris dels 15 equips era una bogeria. Ara, amb el calendari d'horaris, tothom sap on i quan entrena. I si hi ha un canvi, se n'assabenten al moment." },
+            "2": { "quote": "La secció de tresoreria ens dóna una visió clara de la salut financera del club. Controlar les quotes, les despeses recurrents i els patrocinis mai no havia estat tan senzill i visual." },
+            "3": { "quote": "Els formularis d'inscripció online són una meravella. Gestionem el campus d'estiu i les captacions sense paperassa, recollint les dades i els pagaments de forma automàtica. Professionalitza molt el club!" },
+            "4": { "quote": "La comunicació amb els entrenadors és molt més fluida. Podem enviar-los comunicats específics o a tot el cos tècnic amb un parell de clics. S'ha acabat el caos dels grups de WhatsApp." },
+            "5": { "quote": "L'importador de CSV ens va salvar la vida. Vam poder carregar les dades de més de 300 socis en una tarda, sense haver d'introduir-les una per una. La posada en marxa va ser increïblement ràpida gràcies a això." }
+        },
         "featuresTitle": "Tot el que el teu club necessita",
-        "featuresSubtitle": "Una plataforma completa pensada per optimitzar cada aspecte de la gestió del teu club, estalviant-te temps i esforç."
+        "featuresSubtitle": "Una plataforma completa pensada per optimitzar cada aspecte de la gestió del teu club, estalviant-te temps i esforç.",
+        "features": [
+            { "title": "Gestió Centralitzada de Membres i Equips", "description": "Administra fitxes de jugadors, entrenadors, staff i equips en un únic lloc. Accedeix a tota la informació a l'instant." },
+            { "title": "Tresoreria i Quotes", "description": "Porta un control clar dels ingressos per quotes, despeses i la salut financera del teu club sense complicacions." },
+            { "title": "Comunicació Integrada", "description": "Envia correus electrònics a equips, grups o a tot el club directament des de la plataforma." },
+            { "title": "Importador de BBDD", "description": "Importa fàcilment la teva base de dades de membres (jugadors, tècnics, etc.) mitjançant arxius CSV per a una posada en marxa ràpida." },
+            { "title": "Actualització de Dades Digitalitzada", "description": "Envia sol·licituds automàtiques als teus membres perquè actualitzin les seves dades. La informació se sincronitza a l'instant." },
+            { "title": "Formularis d'Inscripció", "description": "Crea i publica formularis per a esdeveniments, campus o captacions. Gestiona inscrits i pagaments de forma centralitzada." },
+            { "title": "Calendari i Horaris", "description": "Organitza entrenaments, partits i esdeveniments amb un calendari interactiu que tothom pot consultar." },
+            { "title": "Incidències i Protocols", "description": "Registra incidències, lesions o sancions i tingues a mà els protocols d'actuació del club per a una gestió ràpida i eficaç." },
+            { "title": "Magatzem de Documents", "description": "Guarda i organitza els teus documents importants com normatives o autoritzacions de forma segura al núvol." }
+        ],
+        "bottomCta": {
+            "title": "Digitalitza el teu club. Estalvia temps.",
+            "subtitle": "Uneix-te als clubs que ja han optimitzat la seva gestió.",
+            "button": "Comença a optimitzar el teu club"
+        },
+        "benefits": {
+            "title": "Estalvia temps, redueix errors i millora la comunicació",
+            "subtitle": "SportsPanel automatitza les tasques repetitives perquè puguis centrar-te en el que de veritat importa: l'esport.",
+            "0": {
+                "title": "Estalvia Temps en Administració",
+                "subtitle": "Digitalitza les fitxes i centralitza la informació.",
+                "points": ["Redueix la paperassa i els errors manuals.", "Accedeix a la informació de qualsevol membre en segons.", "Simplifica el procés d'actualització d'informació."]
+            },
+            "1": {
+                "title": "Comunicació Directa i Eficaç",
+                "subtitle": "Mantingues a tothom informat sense esforç.",
+                "points": ["Envia comunicats a equips específics o a tota l'administració.", "Notifica canvis d'horari o cancel·lacions a l'instant.", "Sol·licita la pujada de documents amb un sol clic."]
+            },
+            "2": {
+                "title": "Un Portal per al teu Club",
+                "subtitle": "Un portal únic per a l'administració del club.",
+                "points": ["Les famílies reben enllaços per actualitzar les seves dades o pujar arxius.", "Els entrenadors reben la informació que necessiten per correu electrònic.", "L'administració té una visió global de tot el club."]
+            }
+        },
+        "pricing": {
+            "title": "Un Pla Simple i Transparent",
+            "subtitle": "Tot el que necessites, sense complicacions. Un únic pla amb totes les funcionalitats i sense límit de membres.",
+            "planName": "Pla Únic",
+            "planTitle": "SportsPanel Complet",
+            "planSubtitle": "Fitxes il·limitades",
+            "perMonth": "mes",
+            "vatNote": "Quota mensual sense IVA inclòs",
+            "features": [
+                "Gestió de membres i equips", "Tresoreria i control de quotes", "Comunicació integrada", "+14.000 emails al mes", "Importador de dades", "Sol·licitud de dades a famílies",
+                "Formularis d'inscripció", "Calendari i horaris", "Registre d'incidències", "Magatzem de documents"
+            ],
+            "cta": "Comença la teva prova gratuïta de 20 dies"
+        },
+        "faq": {
+            "title": "Preguntes Freqüents",
+            "subtitle": "Tens dubtes? Aquí tens les respostes a les preguntes més comunes.",
+            "0": { "question": "Ofereixen un període de prova?", "answer": "Sí! Oferim una prova de 20 dies perquè exploris totes les funcionalitats de SportsPanel. Pots cancel·lar la teva subscripció en qualsevol moment. A més, el nostre pla mensual no té cap mena de permanència." },
+            "1": { "question": "Puc importar les meves dades existents d'un altre programa?", "answer": "Sí. Comptem amb un importador de dades mitjançant arxius CSV. Pots preparar un full de càlcul amb els teus jugadors, entrenadors o socis i pujar-los a la plataforma de forma massiva, estalviant-te hores de feina manual." },
+            "2": { "question": "Les meves dades estan segures a la plataforma?", "answer": "La seguretat és la nostra màxima prioritat. Utilitzem la infraestructura de Google Cloud, una de les més segures del món, per protegir les teves dades. Totes les connexions estan encriptades i realitzem còpies de seguretat periòdiques." },
+            "3": { "question": "Com funciona la comunicació amb les famílies?", "answer": "Pots enviar correus electrònics directament des de la plataforma. Tens l'opció de segmentar els teus enviaments per equips, per tipus de membre (jugadors, entrenadors...) o a tot el club. Les famílies rebran les notificacions al seu correu electrònic." },
+            "4": { "question": "Puc sol·licitar als meus membres que actualitzin les seves dades?", "answer": "Sí, i és una de les nostres funcionalitats estrella. Pots seleccionar quins camps necessites que s'actualitzin (DNI, adreça, telèfon...) i enviar una sol·licitud massiva. Els membres rebran un enllaç únic i segur per emplenar la informació, que s'actualitzarà automàticament a la seva fitxa." },
+            "5": { "question": "SportsPanel es pot personalitzar amb el logo i els colors del meu club?", "answer": "Sí! Pots personalitzar la plataforma amb el nom, el logo i el color principal del teu club perquè tant els membres de l'staff com les famílies se sentin com a casa." }
+        },
+        "footer": {
+            "rights": "Tots els drets reservats.",
+            "terms": "Termes de Servei",
+            "privacy": "Política de Privacitat"
+        }
     },
     "login": {
         "title": "Iniciar Sessió",
@@ -68,5 +163,69 @@
         "login": "Inicia Sessió",
         "successTitle": "Club Creat!",
         "successDesc": "La teva prova de 20 dies ha començat. Benvingut/da!"
+    },
+    "contact": {
+        "title": "Contacta amb Nosaltres",
+        "description": "Tens alguna pregunta? Emplena el formulari i et respondrem el més aviat possible.",
+        "yourName": "El teu Nom",
+        "yourEmail": "El teu Email",
+        "message": "Missatge",
+        "successTitle": "Missatge Enviat",
+        "successDescription": "Hem rebut la teva consulta. Et respondrem el més aviat possible.",
+        "errorTitle": "Error en enviar",
+        "subject": "Assumpte"
+    },
+    "review": {
+        "errorTitle": "Error",
+        "errorDescription": "Si us plau, selecciona una puntuació.",
+        "successTitle": "Gràcies per la teva ressenya!",
+        "successDescription": "La teva opinió ens ajuda a millorar.",
+        "rating": "La teva Puntuació",
+        "comment": "Comentari (Opcional)",
+        "send": "Enviar Ressenya"
+    },
+    "account": {
+        "errors": {
+            "loadProfile": "No s'ha pogut carregar el teu perfil.",
+            "saveProfile": "No s'han pogut desar els canvis al teu perfil."
+        },
+        "success": {
+            "profileUpdated": "El teu perfil s'ha actualitzat correctament."
+        },
+        "notFound": {
+            "title": "Perfil no Trobat",
+            "description": "No hem pogut trobar les dades del teu perfil. Si us plau, contacta amb l'administrador del teu club."
+        },
+        "title": "El Meu Compte",
+        "description": "Edita la teva informació personal, de contacte i esportiva.",
+        "cardTitle": "Perfil de Membre",
+        "cardDescription": "Aquesta és la informació que el club té sobre tu. Mantén-la actualitzada.",
+        "tabs": {
+            "personal": "Personal",
+            "contact": "Contacte",
+            "sports": "Esportiu"
+        },
+        "isOwnTutor": "Sóc el meu propi tutor (major de 18 anys)",
+        "tutorTitle": "Dades del Tutor/a"
+    },
+    "fields": {
+        "name": "Nom",
+        "lastName": "Cognoms",
+        "birthDate": "Data de Naixement",
+        "dni": "DNI/NIF",
+        "address": "Adreça",
+        "city": "Ciutat",
+        "postalCode": "Codi Postal",
+        "tutorName": "Nom del Tutor",
+        "tutorLastName": "Cognoms del Tutor",
+        "tutorDni": "DNI del Tutor",
+        "contactEmail": "Email de Contacte",
+        "contactPhone": "Telèfon de Contacte",
+        "iban": "IBAN (Compte Bancari)",
+        "jerseyNumber": "Dorsal",
+        "kitSize": "Talla d'Equipació",
+        "monthlyFee": "Quota Mensual",
+        "monthlyPayment": "Pagament Mensual",
+        "medicalCheck": "Revisió mèdica completada"
     }
 }

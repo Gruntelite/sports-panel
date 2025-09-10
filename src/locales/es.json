@@ -1,5 +1,12 @@
 
 {
+    "common": {
+        "saveChanges": "Guardar Cambios",
+        "error": "Error",
+        "saved": "Guardado",
+        "cancel": "Cancelar",
+        "send": "Enviar"
+    },
     "sidebar": {
         "dashboard": "Panel",
         "treasury": "Tesorería",
@@ -30,12 +37,100 @@
         "mainMenu": "Menú Principal"
     },
     "landing": {
+        "nav": {
+            "features": "Características",
+            "benefits": "Beneficios",
+            "pricing": "Precios",
+            "contact": "Contacto",
+            "login": "Iniciar Sesión",
+            "register": "Crea tu club"
+        },
         "title": "El Software que Automatiza tu Club y Ahorra Horas de Gestión",
         "subtitle": "Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.",
         "cta": "Pruébalo gratis",
         "ctaNote": "Sin tarjeta de crédito · Cancela cuando quieras",
+        "stats": [
+            { "title": "AHORRO SEMANAL", "description": "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
+            { "title": "TASA DE RETENCIÓN", "description": "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
+            { "title": "CLUBS DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
+            { "title": "DIGITALIZACIÓN", "description": "De los procesos internos del club que se pueden gestionar con nosotros." }
+        ],
+        "testimonials": {
+            "title": "La Confianza de los que Gestionan",
+            "subtitle": "Clubs como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel.",
+            "0": { "quote": "Desde que usamos SportsPanel, la administración del club es otra. La función de solicitar actualización de datos a las familias nos ahorra semanas de trabajo al inicio de cada temporada. Es un cambio brutal." },
+            "1": { "quote": "Organizar los horarios de los 15 equipos era una locura. Ahora, con el calendario de horarios, todo el mundo sabe dónde y cuándo entrena. Y si hay un cambio, se enteran al momento." },
+            "2": { "quote": "La sección de tesorería nos da una visión clara de la salud financiera del club. Controlar las cuotas, los gastos recurrentes y los patrocinios nunca había sido tan sencillo y visual." },
+            "3": { "quote": "Los formularios de inscripción online son una maravilla. Gestionamos el campus de verano y las captaciones sin papeleo, recogiendo los datos y los pagos de forma automática. ¡Profesionaliza mucho al club!" },
+            "4": { "quote": "La comunicación con los entrenadores es mucho más fluida. Podemos enviarles comunicados específicos o a todo el cuerpo técnico con un par de clics. Se acabó el caos de los grupos de WhatsApp." },
+            "5": { "quote": "El importador de CSV nos salvó la vida. Pudimos cargar los datos de más de 300 socios en una tarde, sin tener que introducirlos uno a uno. La puesta en marcha fue increíblemente rápida gracias a eso." }
+        },
         "featuresTitle": "Todo lo que tu club necesita",
-        "featuresSubtitle": "Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo."
+        "featuresSubtitle": "Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo.",
+        "features": [
+            { "title": "Gestión Centralizada de Miembros y Equipos", "description": "Administra fichas de jugadores, entrenadores, staff y equipos en un único lugar. Accede a toda la información al instante." },
+            { "title": "Tesorería y Cuotas", "description": "Lleva un control claro de los ingresos por cuotas, gastos y la salud financiera de tu club sin complicaciones." },
+            { "title": "Comunicación Integrada", "description": "Envía correos electrónicos a equipos, grupos o a todo el club directamente desde la plataforma." },
+            { "title": "Importador de BBDD", "description": "Importa fácilmente tu base de datos de miembros (jugadores, técnicos, etc.) mediante archivos CSV para una puesta en marcha rápida." },
+            { "title": "Actualización de Datos Digitalizada", "description": "Envía solicitudes automáticas a tus miembros para que actualicen sus datos. La información se sincroniza al instante." },
+            { "title": "Formularios de Inscripción", "description": "Crea y publica formularios para eventos, campus o captaciones. Gestiona inscritos y pagos de forma centralizada." },
+            { "title": "Calendario y Horarios", "description": "Organiza entrenamientos, partidos y eventos con un calendario interactivo que todos pueden consultar." },
+            { "title": "Incidencias y Protocolos", "description": "Registra incidencias, lesiones o sanciones y ten a mano los protocolos de actuación del club para una gestión rápida y eficaz." },
+            { "title": "Almacén de Documentos", "description": "Guarda y organiza tus documentos importantes como normativas o autorizaciones de forma segura en la nube." }
+        ],
+        "bottomCta": {
+            "title": "Digitaliza tu club. Ahorra tiempo.",
+            "subtitle": "Únete a los clubs que ya han optimizado su gestión.",
+            "button": "Empieza a optimizar tu club"
+        },
+        "benefits": {
+            "title": "Ahorra tiempo, reduce errores y mejora la comunicación",
+            "subtitle": "SportsPanel automatiza las tareas repetitivas para que puedas centrarte en lo que de verdad importa: el deporte.",
+            "0": {
+                "title": "Ahorra Tiempo en Administración",
+                "subtitle": "Digitaliza las fichas y centraliza la información.",
+                "points": ["Reduce el papeleo y los errores manuales.", "Accede a la información de cualquier miembro en segundos.", "Simplifica el proceso de actualización de información."]
+            },
+            "1": {
+                "title": "Comunicación Directa y Eficaz",
+                "subtitle": "Mantén a todos informados sin esfuerzo.",
+                "points": ["Envía comunicados a equipos específicos o a toda la administración.", "Notifica cambios de horario o cancelaciones al instante.", "Solicita la subida de documentos con un solo clic."]
+            },
+            "2": {
+                "title": "Un Portal para tu Club",
+                "subtitle": "Un portal único para la administración del club.",
+                "points": ["Las familias reciben enlaces para actualizar sus datos o subir archivos.", "Los entrenadores reciben la información que necesitan por email.", "La administración tiene una visión global de todo el club."]
+            }
+        },
+        "pricing": {
+            "title": "Un Plan Simple y Transparente",
+            "subtitle": "Todo lo que necesitas, sin complicaciones. Un único plan con todas las funcionalidades y sin límite de miembros.",
+            "planName": "Plan Único",
+            "planTitle": "SportsPanel Completo",
+            "planSubtitle": "Fichas ilimitadas",
+            "perMonth": "mes",
+            "vatNote": "Cuota mensual sin IVA incluido",
+            "features": [
+                "Gestión de miembros y equipos", "Tesorería y control de cuotas", "Comunicación integrada", "+14.000 emails al mes", "Importador de datos", "Solicitud de datos a familias",
+                "Formularios de inscripción", "Calendario y horarios", "Registro de incidencias", "Almacén de documentos"
+            ],
+            "cta": "Empieza tu prueba gratuita de 20 días"
+        },
+        "faq": {
+            "title": "Preguntas Frecuentes",
+            "subtitle": "¿Tienes dudas? Aquí tienes las respuestas a las preguntas más comunes.",
+            "0": { "question": "¿Ofrecen un periodo de prueba?", "answer": "¡Sí! Ofrecemos una prueba de 20 días para que explores todas las funcionalidades de SportsPanel. Puedes cancelar tu suscripción en cualquier momento. Además, nuestro plan mensual no tiene ningún tipo de permanencia." },
+            "1": { "question": "¿Puedo importar mis datos existentes de otro programa?", "answer": "Sí. Contamos con un importador de datos mediante archivos CSV. Puedes preparar una hoja de cálculo con tus jugadores, entrenadores o socios y subirlos a la plataforma de forma masiva, ahorrándote horas de trabajo manual." },
+            "2": { "question": "¿Mis datos están seguros en la plataforma?", "answer": "La seguridad es nuestra máxima prioridad. Utilizamos la infraestructura de Google Cloud, una de las más seguras del mundo, para proteger tus datos. Todas las conexiones están encriptadas y realizamos copias de seguridad periódicas." },
+            "3": { "question": "¿Cómo funciona la comunicación con las familias?", "answer": "Puedes enviar correos electrónicos directamente desde la plataforma. Tienes la opción de segmentar tus envíos por equipos, por tipo de miembro (jugadores, entrenadores...) o a todo el club. Las familias recibirán las notificaciones en su email." },
+            "4": { "question": "¿Puedo solicitar a mis miembros que actualicen sus datos?", "answer": "Sí, y es una de nuestras funcionalidades estrella. Puedes seleccionar qué campos necesitas que se actualicen (DNI, dirección, teléfono...) y enviar una solicitud masiva. Los miembros recibirán un enlace único y seguro para rellenar la información, que se actualizará automáticamente en su ficha." },
+            "5": { "question": "¿SportsPanel se puede personalizar con el logo y los colores de mi club?", "answer": "¡Sí! Puedes personalizar la plataforma con el nombre, el logo y el color principal de tu club para que tanto los miembros del staff como las familias se sientan como en casa." }
+        },
+        "footer": {
+            "rights": "Todos los derechos reservados.",
+            "terms": "Términos de Servicio",
+            "privacy": "Política de Privacidad"
+        }
     },
     "login": {
         "title": "Iniciar Sesión",
@@ -68,5 +163,69 @@
         "login": "Inicia Sesión",
         "successTitle": "¡Club Creado!",
         "successDesc": "Tu prueba de 20 días ha comenzado. ¡Bienvenido!"
+    },
+    "contact": {
+        "title": "Contacta con Nosotros",
+        "description": "¿Tienes alguna pregunta? Rellena el formulario y te responderemos lo antes posible.",
+        "yourName": "Tu Nombre",
+        "yourEmail": "Tu Email",
+        "message": "Mensaje",
+        "successTitle": "Mensaje Enviado",
+        "successDescription": "Hemos recibido tu consulta. Te responderemos lo antes posible.",
+        "errorTitle": "Error al enviar",
+        "subject": "Asunto"
+    },
+    "review": {
+        "errorTitle": "Error",
+        "errorDescription": "Por favor, selecciona una puntuación.",
+        "successTitle": "¡Gracias por tu reseña!",
+        "successDescription": "Tu opinión nos ayuda a mejorar.",
+        "rating": "Tu Puntuación",
+        "comment": "Comentario (Opcional)",
+        "send": "Enviar Reseña"
+    },
+    "account": {
+        "errors": {
+            "loadProfile": "No se pudo cargar tu perfil.",
+            "saveProfile": "No se pudieron guardar los cambios en tu perfil."
+        },
+        "success": {
+            "profileUpdated": "Tu perfil ha sido actualizado correctamente."
+        },
+        "notFound": {
+            "title": "Perfil no Encontrado",
+            "description": "No hemos podido encontrar los datos de tu perfil. Por favor, contacta con el administrador de tu club."
+        },
+        "title": "Mi Cuenta",
+        "description": "Edita tu información personal, de contacto y deportiva.",
+        "cardTitle": "Perfil de Miembro",
+        "cardDescription": "Esta es la información que el club tiene sobre ti. Mantenla actualizada.",
+        "tabs": {
+            "personal": "Personal",
+            "contact": "Contacto",
+            "sports": "Deportivo"
+        },
+        "isOwnTutor": "Soy mi propio tutor (mayor de 18 años)",
+        "tutorTitle": "Datos del Tutor/a"
+    },
+    "fields": {
+        "name": "Nombre",
+        "lastName": "Apellidos",
+        "birthDate": "Fecha de Nacimiento",
+        "dni": "DNI/NIF",
+        "address": "Dirección",
+        "city": "Ciudad",
+        "postalCode": "Código Postal",
+        "tutorName": "Nombre del Tutor",
+        "tutorLastName": "Apellidos del Tutor",
+        "tutorDni": "DNI del Tutor",
+        "contactEmail": "Email de Contacto",
+        "contactPhone": "Teléfono de Contacto",
+        "iban": "IBAN (Cuenta Bancaria)",
+        "jerseyNumber": "Dorsal",
+        "kitSize": "Talla de Equipación",
+        "monthlyFee": "Cuota Mensual",
+        "monthlyPayment": "Pago Mensual",
+        "medicalCheck": "Revisión médica completada"
     }
 }
