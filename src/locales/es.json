@@ -884,7 +884,6 @@
         }
     },
     "importer": {
-        "title": "Importar",
         "description": "Sube un archivo CSV para importar múltiples registros a la vez.",
         "uploadLabel": "Sube tu archivo CSV",
         "parsing": "Procesando...",
@@ -905,8 +904,10 @@
             "confirmButton": "Confirmar e Importar"
         },
         "guide": {
-            "title": "Orden y Nombres de las Columnas para {type}",
-            "description": "Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo. Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde."
+            "copySuccessTitle": "Cabeceras Copiadas",
+            "copySuccessDesc": "Los nombres técnicos de las columnas se han copiado al portapapeles.",
+            "copyHeaders": "Copiar Cabeceras",
+            "copyHeadersSpreadsheet": "Copiar Cabeceras para Hoja de Cálculo"
         }
     }
 }

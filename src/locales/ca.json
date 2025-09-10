@@ -884,7 +884,6 @@
         }
     },
     "importer": {
-        "title": "Importar",
         "description": "Puja un arxiu CSV per importar múltiples registres alhora.",
         "uploadLabel": "Puja el teu arxiu CSV",
         "parsing": "Processant...",
@@ -905,8 +904,10 @@
             "confirmButton": "Confirmar i Importar"
         },
         "guide": {
-            "title": "Ordre i Noms de les Columnes per a {type}",
-            "description": "Fes servir el botó de copiar per enganxar les capçaleres a la primera fila del teu full de càlcul. Assegura't que les dades del teu arxiu CSV coincideixen amb aquestes columnes. No et preocupis si alguns camps queden buits, podràs completar-los més tard."
+            "copySuccessTitle": "Capçaleres Copiades",
+            "copySuccessDesc": "Els noms tècnics de les columnes s'han copiat al porta-retalls.",
+            "copyHeaders": "Copiar Capçaleres",
+            "copyHeadersSpreadsheet": "Copiar Capçaleres per a Full de Càlcul"
         }
     }
 }

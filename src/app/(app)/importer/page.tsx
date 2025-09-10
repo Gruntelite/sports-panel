@@ -96,13 +96,14 @@ const socioColumns: ColumnInfo[] = [
 
 const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
     const { toast } = useToast();
+    const { t } = useTranslation();
 
     const handleCopyHeaders = () => {
         const headerKeys = columns.map(c => c.key).join('\t');
         navigator.clipboard.writeText(headerKeys);
         toast({
-            title: "Cabeceras Copiadas",
-            description: "Los nombres técnicos de las columnas se han copiado al portapapeles.",
+            title: t('importer.guide.copySuccessTitle'),
+            description: t('importer.guide.copySuccessDesc'),
         });
     };
 
@@ -110,8 +111,8 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
         <div className="space-y-4">
             <Button onClick={handleCopyHeaders} variant="outline" size="sm" className="w-full sm:w-auto">
                 <Copy className="mr-2 h-4 w-4" />
-                <span className="sm:hidden">Copiar Cabeceras</span>
-                <span className="hidden sm:inline">Copiar Cabeceras para Hoja de Cálculo</span>
+                <span className="sm:hidden">{t('importer.guide.copyHeaders')}</span>
+                <span className="hidden sm:inline">{t('importer.guide.copyHeadersSpreadsheet')}</span>
             </Button>
             <ol className="list-decimal list-inside grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
                 {columns.map(col => (
@@ -185,9 +186,9 @@ export default function ImporterPage() {
                     />
                     <Card>
                         <CardHeader>
-                            <CardTitle>{t('importer.guide.title', { type: tab.label.toLowerCase() })}</CardTitle>
+                            <CardTitle>Orden y Nombres de las Columnas para {tab.label.toLowerCase()}</CardTitle>
                             <CardDescription>
-                                {t('importer.guide.description')}
+                                Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo. Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
