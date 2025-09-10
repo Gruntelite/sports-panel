@@ -53,7 +53,7 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const { t, locale } = useTranslation();
-  const sports = t('sports', { returnObjects: true }) as { label: string, value: string }[];
+  const sports = Array.isArray(t('sports', { returnObjects: true })) ? t('sports', { returnObjects: true }) as { label: string, value: string }[] : [];
 
 
   const form = useForm<z.infer<typeof registerSchema>>({
@@ -135,7 +135,7 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">{t('register.trial.title')}</h1>
-            <div className="space-y-4 text-left">
+            <div className="space-y-4">
                 <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
                     <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.0')}</span>
@@ -246,7 +246,7 @@ export default function RegisterPage() {
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Idioma por Defecto</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} value={field.value}>
                             <FormControl>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecciona..." />
