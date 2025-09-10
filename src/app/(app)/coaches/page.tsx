@@ -92,6 +92,7 @@ import { FieldSelector } from "@/components/data-update-sender";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { MemberDetailModal } from "@/components/member-detail-modal";
+import { useTranslation } from "@/components/i18n-provider";
 
 const technicalRoles = [
     "Entrenador",
@@ -108,26 +109,12 @@ const technicalRoles = [
     "Otro",
 ];
 
-const coachFields = {
-    personal: [
-        { id: "name", label: "Nombre y Apellidos" }, { id: "birthDate", label: "Fecha de Nacimiento" }, { id: "dni", label: "NIF" },
-        { id: "sex", label: "Sexo" }, { id: "nationality", label: "Nacionalidad" },
-        { id: "address", label: "Dirección" }, { id: "city", label: "Ciudad" }, { id: "postalCode", label: "Código Postal" },
-    ],
-    contact: [
-        { id: "tutorName", label: "Nombre del Tutor/a" }, { id: "tutorLastName", label: "Apellidos del Tutor/a" },
-        { id: "tutorDni", label: "NIF del Tutor/a" }, { id: "email", label: "Email de Contacto" },
-        { id: "phone", label: "Teléfono de Contacto" },
-    ],
-    payment: [
-        { id: "role", label: "Cargo" }, { id: "teamName", label: "Equipo" }, { id: "iban", label: "IBAN" },
-        { id: "monthlyPayment", label: "Pago Mensual (€)" }, { id: "kitSize", label: "Talla de Equipación" },
-    ]
-};
+
 
 type EditModalSection = 'personal' | 'contact' | 'payment' | 'custom';
 
 export default function CoachesPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -137,7 +124,6 @@ export default function CoachesPage() {
   const [filteredCoaches, setFilteredCoaches] = useState<Coach[]>([]);
   const [teams, setTeams] = useState<Team[]>([]);
   const [customFields, setCustomFields] = useState<CustomFieldDef[]>([]);
-
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
@@ -158,6 +144,23 @@ export default function CoachesPage() {
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
   
   const [modalSection, setModalSection] = useState<EditModalSection>('personal');
+
+    const coachFields = {
+    personal: [
+        { id: "name", label: t('coaches.fields.name') }, { id: "birthDate", label: t('coaches.fields.birthDate') }, { id: "dni", label: t('coaches.fields.dni') },
+        { id: "sex", label: t('coaches.fields.sex') }, { id: "nationality", label: t('coaches.fields.nationality') },
+        { id: "address", label: t('coaches.fields.address') }, { id: "city", label: t('coaches.fields.city') }, { id: "postalCode", label: t('coaches.fields.postalCode') },
+    ],
+    contact: [
+        { id: "tutorName", label: t('coaches.fields.tutorName') }, { id: "tutorLastName", label: t('coaches.fields.tutorLastName') },
+        { id: "tutorDni", label: t('coaches.fields.tutorDni') }, { id: "email", label: t('coaches.fields.contactEmail') },
+        { id: "phone", label: t('coaches.fields.contactPhone') },
+    ],
+    payment: [
+        { id: "role", label: t('coaches.fields.role') }, { id: "teamName", label: t('coaches.fields.team') }, { id: "iban", label: t('coaches.fields.iban') },
+        { id: "monthlyPayment", label: t('coaches.fields.monthlyPayment') }, { id: "kitSize", label: t('coaches.fields.kitSize') },
+    ]
+};
 
   const allColumnFields = [
     ...coachFields.personal,
@@ -657,28 +660,28 @@ export default function CoachesPage() {
         <CardHeader>
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div className="flex-1">
-              <CardTitle>Equipo Técnico</CardTitle>
+              <CardTitle>{t('coaches.title')}</CardTitle>
               <CardDescription>
-                Gestiona a todos los miembros del personal técnico de tu club.
+                {t('coaches.description')}
               </CardDescription>
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
                <Button onClick={() => setIsFieldsModalOpen(true)} className="w-full sm:w-auto">
                   <Send className="mr-2 h-4 w-4" />
-                  Solicitar Actualización
+                  {t('coaches.requestUpdate')}
               </Button>
                <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="h-9 gap-1 w-full sm:w-auto">
                         <Columns className="mr-2 h-3.5 w-3.5" />
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                          Columnas
+                          {t('coaches.columns')}
                         </span>
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                      <ScrollArea className="h-[400px]">
-                      <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                      <DropdownMenuLabel>{t('coaches.toggleColumns')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       {allColumnFields.map(field => (
                           <DropdownMenuCheckboxItem
@@ -709,10 +712,10 @@ export default function CoachesPage() {
                 </DropdownMenu>
                 <Select value={filterTeamId} onValueChange={setFilterTeamId}>
                     <SelectTrigger className="h-9 w-full sm:w-[150px]">
-                      <SelectValue placeholder="Filtrar por equipo"/>
+                      <SelectValue placeholder={t('coaches.filterByTeam')}/>
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="all">Todos los equipos</SelectItem>
+                      <SelectItem value="all">{t('coaches.allTeams')}</SelectItem>
                       {teams.map(team => (
                         <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                       ))}
@@ -723,17 +726,17 @@ export default function CoachesPage() {
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" className="h-9 gap-1 w-full sm:w-auto">
                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                           Acciones ({selectedCoaches.length})
+                           {t('coaches.actions')} ({selectedCoaches.length})
                         </span>
                         <ChevronDown className="h-3.5 w-3.5" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                        <DropdownMenuSub>
-                         <DropdownMenuSubTrigger>Asignar a Equipo</DropdownMenuSubTrigger>
+                         <DropdownMenuSubTrigger>{t('coaches.assignToTeam')}</DropdownMenuSubTrigger>
                          <DropdownMenuSubContent>
                             <DropdownMenuItem onSelect={() => handleBulkAssignTeam('club')}>Club (transversal)</DropdownMenuItem>
-                            <DropdownMenuItem onSelect={() => handleBulkAssignTeam('unassigned')}>Sin equipo</DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleBulkAssignTeam('unassigned')}>{t('coaches.unassigned')}</DropdownMenuItem>
                             <DropdownMenuSeparator/>
                            {teams.map(team => (
                              <DropdownMenuItem key={team.id} onSelect={() => handleBulkAssignTeam(team.id)}>
@@ -743,14 +746,14 @@ export default function CoachesPage() {
                          </DropdownMenuSubContent>
                        </DropdownMenuSub>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-destructive" onSelect={() => setIsBulkDeleteAlertOpen(true)}>Eliminar Seleccionados</DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onSelect={() => setIsBulkDeleteAlertOpen(true)}>{t('coaches.deleteSelected')}</DropdownMenuItem>
                     </DropdownMenuContent>
                  </DropdownMenu>
               ) : (
                   <Button size="sm" className="h-9 gap-1 w-full sm:w-auto" onClick={() => handleOpenModal('add')}>
                     <PlusCircle className="h-3.5 w-3.5" />
                     <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                        Añadir Miembro
+                        {t('coaches.addCoach')}
                     </span>
                   </Button>
               )}
@@ -766,7 +769,7 @@ export default function CoachesPage() {
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                      aria-label="Seleccionar todo"
+                      aria-label={t('coaches.selectAll')}
                     />
                   </TableHead>
                   {allPossibleColumns.map(field => (
@@ -782,7 +785,7 @@ export default function CoachesPage() {
                       </TableHead>
                   ))}
                   <TableHead>
-                    <span className="sr-only">Acciones</span>
+                    <span className="sr-only">{t('coaches.actions')}</span>
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -819,7 +822,7 @@ export default function CoachesPage() {
                                               <AlertCircle className="h-4 w-4 text-destructive" />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                              <p>Faltan datos por rellenar</p>
+                                              <p>{t('coaches.missingData')}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                       )}
@@ -835,16 +838,16 @@ export default function CoachesPage() {
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
                             <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Alternar menú</span>
+                            <span className="sr-only">{t('coaches.toggleMenu')}</span>
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => setViewingCoach(coach)}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>Editar</DropdownMenuItem>
+                          <DropdownMenuLabel>{t('coaches.actions')}</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => setViewingCoach(coach)}><Eye className="mr-2 h-4 w-4"/>{t('coaches.viewProfile')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>{t('coaches.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>
-                            Eliminar
+                            {t('coaches.delete')}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -857,7 +860,7 @@ export default function CoachesPage() {
         </CardContent>
         <CardFooter>
           <div className="text-xs text-muted-foreground">
-            Mostrando <strong>{filteredCoaches.length}</strong> de <strong>{coaches.length}</strong> miembros
+            {t('coaches.showing')} <strong>{filteredCoaches.length}</strong> {t('coaches.of')} <strong>{coaches.length}</strong> {t('coaches.coachesCount')}
           </div>
         </CardFooter>
       </Card>
@@ -878,15 +881,15 @@ export default function CoachesPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Miembro' : 'Editar Miembro'}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? t('coaches.addCoachTitle') : t('coaches.editCoachTitle')}</DialogTitle>
                 <DialogDescription>
-                    {modalMode === 'add' ? 'Rellena la información para añadir un nuevo miembro al equipo técnico.' : 'Modifica la información del miembro.'}
+                    {modalMode === 'add' ? t('coaches.addCoachDesc') : t('coaches.editCoachDesc')}
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] p-0">
                 <div className="py-4 px-6 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
                     <div className="flex flex-col items-center gap-4 pt-5">
-                        <Label>Foto</Label>
+                        <Label>{t('coaches.coachPhoto')}</Label>
                         <Avatar className="h-32 w-32">
                             <AvatarImage src={imagePreview || coachData.avatar} />
                             <AvatarFallback>
@@ -897,7 +900,7 @@ export default function CoachesPage() {
                         <Button asChild variant="outline" size="sm">
                             <label htmlFor="coach-image" className="cursor-pointer">
                                 <Upload className="mr-2 h-3 w-3"/>
-                                Subir
+                                {t('coaches.upload')}
                             </label>
                         </Button>
                         <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
@@ -907,53 +910,53 @@ export default function CoachesPage() {
                         <div className="sm:hidden mb-4">
                             <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar sección..." />
+                                    <SelectValue placeholder={t('coaches.selectSection')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="personal">Datos Personales</SelectItem>
-                                    <SelectItem value="contact">Contacto y Tutor</SelectItem>
-                                    <SelectItem value="payment">Cargo y Equipo</SelectItem>
-                                    <SelectItem value="custom">Otros Datos</SelectItem>
+                                    <SelectItem value="personal">{t('coaches.personalData')}</SelectItem>
+                                    <SelectItem value="contact">{t('coaches.contactAndTutor')}</SelectItem>
+                                    <SelectItem value="payment">{t('coaches.roleAndTeam')}</SelectItem>
+                                    <SelectItem value="custom">{t('coaches.otherData')}</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
                         <Tabs defaultValue="personal" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
                             <TabsList className="grid w-full grid-cols-4">
-                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
-                                <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>Cargo y Equipo</TabsTrigger>
-                                <TabsTrigger value="custom">Otros Datos</TabsTrigger>
+                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('coaches.personalData')}</TabsTrigger>
+                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('coaches.contactAndTutor')}</TabsTrigger>
+                                <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>{t('coaches.roleAndTeam')}</TabsTrigger>
+                                <TabsTrigger value="custom">{t('coaches.otherData')}</TabsTrigger>
                             </TabsList>
                         </Tabs>
 
                         <div className={cn("pt-6 space-y-6", modalSection !== 'personal' && 'hidden sm:block')}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Nombre</Label>
+                                    <Label htmlFor="name">{t('coaches.fields.name')}</Label>
                                     <Input id="name" autoComplete="off" value={coachData.name || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Label htmlFor="lastName">{t('coaches.fields.lastName')}</Label>
                                     <Input id="lastName" autoComplete="off" value={coachData.lastName || ''} onChange={handleInputChange} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                     <div className="space-y-2">
-                                    <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                    <Label htmlFor="birthDate">{t('coaches.fields.birthDate')}</Label>
                                     <DatePicker 
                                         date={coachData.birthDate ? parseISO(coachData.birthDate) : undefined}
                                         onDateChange={(date) => handleDateChange('birthDate', date)}
                                     />
-                                    {coachData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(coachData.birthDate)} años</p>}
+                                    {coachData.birthDate && <p className="text-xs text-muted-foreground">{t('coaches.age')}: {calculateAge(coachData.birthDate)} {t('coaches.years')}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="dni">NIF</Label>
+                                    <Label htmlFor="dni">{t('coaches.fields.dni')}</Label>
                                     <Input id="dni" value={coachData.dni || ''} onChange={handleInputChange} />
                                 </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="sex">Sexo</Label>
+                                        <Label htmlFor="sex">{t('coaches.fields.sex')}</Label>
                                         <Select value={coachData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="masculino">Masculino</SelectItem>
                                                 <SelectItem value="femenino">Femenino</SelectItem>
@@ -963,43 +966,43 @@ export default function CoachesPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="nationality">Nacionalidad</Label>
+                                        <Label htmlFor="nationality">{t('coaches.fields.nationality')}</Label>
                                         <Input id="nationality" value={coachData.nationality || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
+                                        <Label htmlFor="healthCardNumber">{t('coaches.fields.healthCard')}</Label>
                                         <Input id="healthCardNumber" value={coachData.healthCardNumber || ''} onChange={handleInputChange} />
                                     </div>
                             </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="address">Dirección</Label>
+                                    <Label htmlFor="address">{t('coaches.fields.address')}</Label>
                                     <Input id="address" value={coachData.address || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Label htmlFor="city">{t('coaches.fields.city')}</Label>
                                     <Input id="city" value={coachData.city || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Label htmlFor="postalCode">{t('coaches.fields.postalCode')}</Label>
                                     <Input id="postalCode" value={coachData.postalCode || ''} onChange={handleInputChange} />
                                 </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                        <Label htmlFor="kitSize">{t('coaches.fields.kitSize')}</Label>
                                         <Input id="kitSize" placeholder="p.ej., L, 12, M" value={coachData.kitSize || ''} onChange={handleInputChange} />
                                     </div>
                             </div>
                                 <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                    <Label>Fecha de Alta</Label>
+                                    <Label>{t('coaches.startDate')}</Label>
                                     <DatePicker 
                                         date={coachData.startDate ? parseISO(coachData.startDate) : undefined}
                                         onDateChange={(date) => handleDateChange('startDate', date)}
                                     />
                                     </div>
                                     <div className="space-y-2">
-                                    <Label>Fecha de Baja</Label>
+                                    <Label>{t('coaches.endDate')}</Label>
                                     <DatePicker 
                                         date={coachData.endDate ? parseISO(coachData.endDate) : undefined}
                                         onDateChange={(date) => handleDateChange('endDate', date)}
@@ -1009,34 +1012,34 @@ export default function CoachesPage() {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="currentlyActive" checked={coachData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
-                                <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                                <Label htmlFor="currentlyActive">{t('coaches.currentlyActive')}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="hasInterruption" checked={(coachData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
                                     if(checked) { handleAddInterruption() }
                                     else { setCoachData(prev => ({...prev, interruptions: []}))}
                                 }} />
-                                <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                                <Label htmlFor="hasInterruption">{t('coaches.hasInterruptions')}</Label>
                             </div>
                             {(coachData.interruptions?.length || 0) > 0 && (
                                 <div className="space-y-2 pl-6">
                                     {coachData.interruptions?.map((interruption, index) => (
                                         <div key={interruption.id} className="flex items-end gap-2">
                                             <div className="space-y-1">
-                                                <Label>Inicio Interrupción</Label>
+                                                <Label>{t('coaches.interruptionStart')}</Label>
                                                     <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label>Fin Interrupción</Label>
+                                                <Label>{t('coaches.interruptionEnd')}</Label>
                                                     <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
                                             </div>
                                             <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
                                         </div>
                                     ))}
-                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>{t('coaches.addInterruption')}</Button>
                                 </div>
                             )}
-                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
+                            <p className="text-sm font-medium text-muted-foreground pt-2">{t('coaches.tenure')}: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
                             </div>
                         </div>
 
@@ -1047,24 +1050,24 @@ export default function CoachesPage() {
                                     checked={coachData.isOwnTutor || false}
                                     onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
                                 />
-                                <Label htmlFor="isOwnTutor" className="font-normal">El miembro del staff es su propio tutor (mayor de 18 años)</Label>
+                                <Label htmlFor="isOwnTutor" className="font-normal">{t('coaches.isOwnTutor')}</Label>
                             </div>
                                 
                                 {!(coachData.isOwnTutor) && (
                                     <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
-                                        <h4 className="font-medium">Datos del Tutor/a</h4>
+                                        <h4 className="font-medium">{t('coaches.tutorData')}</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorName">Nombre</Label>
+                                                <Label htmlFor="tutorName">{t('coaches.fields.name')}</Label>
                                                 <Input id="tutorName" autoComplete="off" value={coachData.tutorName || ''} onChange={handleInputChange} />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorLastName">Apellidos</Label>
+                                                <Label htmlFor="tutorLastName">{t('coaches.fields.lastName')}</Label>
                                                 <Input id="tutorLastName" autoComplete="off" value={coachData.tutorLastName || ''} onChange={handleInputChange} />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
+                                            <Label htmlFor="tutorDni">{t('coaches.fields.tutorDni')}</Label>
                                             <Input id="tutorDni" value={coachData.tutorDni || ''} onChange={handleInputChange} />
                                         </div>
                                     </div>
@@ -1072,11 +1075,11 @@ export default function CoachesPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
+                                        <Label htmlFor="email">{t('coaches.fields.email')}</Label>
                                         <Input id="email" type="email" value={coachData.email || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="phone">Teléfono</Label>
+                                        <Label htmlFor="phone">{t('coaches.fields.phone')}</Label>
                                         <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
@@ -1084,10 +1087,10 @@ export default function CoachesPage() {
 
                         <div className={cn("pt-6 space-y-6", modalSection !== 'payment' && 'hidden sm:block')}>
                             <div className="space-y-2">
-                                <Label htmlFor="role">Cargo</Label>
+                                <Label htmlFor="role">{t('coaches.fields.role')}</Label>
                                 <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un cargo" />
+                                        <SelectValue placeholder="..." />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {technicalRoles.map(role => (
@@ -1097,13 +1100,13 @@ export default function CoachesPage() {
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="teamId">Equipo Asignado</Label>
+                                <Label htmlFor="teamId">{t('coaches.fields.team')}</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={coachData.teamId || 'unassigned'}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un equipo" />
+                                        <SelectValue placeholder="..." />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                        <SelectItem value="unassigned">{t('coaches.unassigned')}</SelectItem>
                                         <SelectItem value="club">Club (transversal)</SelectItem>
                                         <DropdownMenuSeparator/>
                                         {teams.map(team => (
@@ -1114,11 +1117,11 @@ export default function CoachesPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                    <Label htmlFor="iban">{t('coaches.fields.iban')}</Label>
                                     <Input id="iban" value={coachData.iban || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                    <Label htmlFor="monthlyPayment">{t('coaches.fields.monthlyPayment')}</Label>
                                     <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
                                 </div>
                             </div>
@@ -1136,7 +1139,7 @@ export default function CoachesPage() {
                                     />
                                 </div>
                             )) : (
-                                <p className="text-center text-muted-foreground pt-10">No hay campos personalizados para entrenadores. Puedes añadirlos en Ajustes del Club.</p>
+                                <p className="text-center text-muted-foreground pt-10">{t('coaches.noCustomFields')}</p>
                             )}
                         </div>
                     </div>
@@ -1144,11 +1147,11 @@ export default function CoachesPage() {
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">
                 <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancelar</Button>
+                    <Button type="button" variant="secondary">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="button" onClick={handleSaveCoach} disabled={saving}>
                     {saving ? <Loader2 className="animate-spin mr-2" /> : <Save className="mr-2 h-4 w-4"/>}
-                    Guardar
+                    {t('common.saveChanges')}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -1156,15 +1159,15 @@ export default function CoachesPage() {
       <AlertDialog open={!!coachToDelete} onOpenChange={(open) => !open && setCoachToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('coaches.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente a {coachToDelete?.name} {coachToDelete?.lastName}.
+              {t('coaches.confirmDeleteDesc', { coachName: `${coachToDelete?.name} ${coachToDelete?.lastName}` })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteCoach} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('coaches.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1172,15 +1175,15 @@ export default function CoachesPage() {
        <AlertDialog open={isBulkDeleteAlertOpen} onOpenChange={setIsBulkDeleteAlertOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('coaches.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminarán permanentemente {selectedCoaches.length} miembros.
+              {t('coaches.confirmBulkDeleteDesc', { coachCount: selectedCoaches.length })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Miembros'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('coaches.deleteCoaches')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1190,16 +1193,16 @@ export default function CoachesPage() {
       <Dialog open={isFieldsModalOpen} onOpenChange={setIsFieldsModalOpen}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Paso 1: Selecciona los campos a actualizar</DialogTitle>
-            <DialogDescription>Elige qué información quieres que actualicen los entrenadores.</DialogDescription>
+            <DialogTitle>{t('coaches.step1Title')}</DialogTitle>
+            <DialogDescription>{t('coaches.step1Desc')}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <FieldSelector fields={coachFields} customFields={coachCustomFields} selectedFields={selectedFields} onFieldSelect={handleFieldSelection} />
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+            <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
             <Button onClick={() => { setIsFieldsModalOpen(false); setIsMembersModalOpen(true); }} disabled={selectedFields.length === 0}>
-              Siguiente: Seleccionar Entrenadores
+              {t('coaches.nextStep')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1208,8 +1211,8 @@ export default function CoachesPage() {
       <Dialog open={isMembersModalOpen} onOpenChange={setIsMembersModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Paso 2: Selecciona los destinatarios</DialogTitle>
-            <DialogDescription>Elige los entrenadores que recibirán la solicitud.</DialogDescription>
+            <DialogTitle>{t('coaches.step2Title')}</DialogTitle>
+            <DialogDescription>{t('coaches.step2Desc')}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="flex items-center p-2 border rounded-md">
@@ -1218,7 +1221,7 @@ export default function CoachesPage() {
                 onCheckedChange={(checked) => handleSelectAllMembers(checked as boolean)}
                 checked={coaches.length > 0 && selectedCoaches.length === coaches.length}
               />
-              <Label htmlFor="select-all-members" className="ml-2 font-medium">Seleccionar todos ({coaches.length})</Label>
+              <Label htmlFor="select-all-members" className="ml-2 font-medium">{t('coaches.selectAll')} ({coaches.length})</Label>
             </div>
             <ScrollArea className="h-72 mt-4">
               <div className="space-y-2">
@@ -1239,11 +1242,11 @@ export default function CoachesPage() {
           </div>
           <DialogFooter>
             <Button variant="secondary" onClick={() => { setIsMembersModalOpen(false); setIsFieldsModalOpen(true); }}>
-              Atrás
+              {t('coaches.back')}
             </Button>
             <Button onClick={handleSendUpdateRequests} disabled={saving || selectedCoaches.length === 0}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-              {saving ? 'Enviando...' : `Enviar a ${selectedCoaches.length} Entrenador(es)`}
+              {saving ? 'Enviando...' : t('coaches.sendTo', { count: selectedCoaches.length })}
             </Button>
           </DialogFooter>
         </DialogContent>

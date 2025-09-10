@@ -94,10 +94,12 @@ import { useParams, useRouter } from "next/navigation";
 import { MemberDetailModal } from "@/components/member-detail-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "@/components/i18n-provider";
 
 type EditModalSection = 'personal' | 'contact' | 'sports' | 'payment';
 
 export default function EditTeamPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const params = useParams();
   const router = useRouter();
@@ -725,7 +727,7 @@ export default function EditTeamPage() {
                 <Button variant="outline" size="icon" onClick={() => navigateToTeam(prevTeamId)} disabled={!prevTeamId}>
                     <ChevronLeft className="h-4 w-4"/>
                 </Button>
-                <h1 className="text-2xl font-bold font-headline tracking-tight whitespace-nowrap">Editar Equipo: {team.name}</h1>
+                <h1 className="text-2xl font-bold font-headline tracking-tight whitespace-nowrap">{t('teams.editTeam.title')}: {team.name}</h1>
                  <Button variant="outline" size="icon" onClick={() => navigateToTeam(nextTeamId)} disabled={!nextTeamId}>
                     <ChevronRight className="h-4 w-4"/>
                 </Button>
@@ -736,7 +738,7 @@ export default function EditTeamPage() {
               <div className="lg:col-span-1 space-y-6">
                   <Card>
                       <CardHeader>
-                          <CardTitle>Imagen del Equipo</CardTitle>
+                          <CardTitle>{t('teams.editTeam.teamImage')}</CardTitle>
                       </CardHeader>
                       <CardContent className="flex flex-col items-center gap-4">
                           <Image
@@ -749,7 +751,7 @@ export default function EditTeamPage() {
                            <Button asChild variant="outline" className="w-full">
                               <label htmlFor="team-image-upload" className="cursor-pointer">
                                   <Upload className="mr-2 h-4 w-4"/>
-                                  Cambiar Imagen
+                                  {t('teams.editTeam.changeImage')}
                               </label>
                           </Button>
                           <Input id="team-image-upload" type="file" className="hidden" accept="image/*" onChange={handleTeamImageChange} />
@@ -758,33 +760,33 @@ export default function EditTeamPage() {
 
                   <Card>
                       <CardHeader>
-                          <CardTitle>Detalles del Equipo</CardTitle>
+                          <CardTitle>{t('teams.editTeam.teamDetails')}</CardTitle>
                       </CardHeader>
                       <CardContent className="space-y-4">
                            <div className="space-y-2">
-                              <Label htmlFor="name">Nombre del Equipo</Label>
+                              <Label htmlFor="name">{t('teams.teamName')}</Label>
                               <Input id="name" autoComplete="off" value={team.name || ''} onChange={handleTeamInputChange} />
                           </div>
                           <div className="space-y-2">
-                              <Label htmlFor="level">Nivel</Label>
+                              <Label htmlFor="level">{t('teams.level')}</Label>
                               <Input id="level" placeholder="p.ej. Competición, Escuela" value={team.level || ''} onChange={handleTeamInputChange} />
                           </div>
                           <div className="grid grid-cols-2 gap-4">
                               <div className="space-y-2">
-                                  <Label htmlFor="minAge">Edad Mínima</Label>
+                                  <Label htmlFor="minAge">{t('teams.minAge')}</Label>
                                   <Input id="minAge" type="number" value={team.minAge ?? ''} onChange={handleTeamInputChange} />
                               </div>
                               <div className="space-y-2">
-                                  <Label htmlFor="maxAge">Edad Máxima</Label>
+                                  <Label htmlFor="maxAge">{t('teams.maxAge')}</Label>
                                   <Input id="maxAge" type="number" value={team.maxAge ?? ''} onChange={handleTeamInputChange} />
                               </div>
                           </div>
                            <div className="space-y-2">
-                              <Label htmlFor="defaultMonthlyFee">Cuota Mensual por Defecto (€)</Label>
+                              <Label htmlFor="defaultMonthlyFee">{t('teams.editTeam.defaultFee')}</Label>
                               <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee ?? ''} onChange={handleTeamInputChange} />
                           </div>
                            <Button onClick={handleSaveChanges} disabled={saving} className="w-full">
-                              {saving ? <Loader2 className="animate-spin" /> : 'Guardar Cambios'}
+                              {saving ? <Loader2 className="animate-spin" /> : t('common.saveChanges')}
                            </Button>
                       </CardContent>
                   </Card>
@@ -794,8 +796,8 @@ export default function EditTeamPage() {
                       <CardHeader>
                           <div className="flex items-center justify-between">
                             <div>
-                              <CardTitle>Plantilla del Equipo</CardTitle>
-                              <CardDescription>Miembros actualmente en {team.name}.</CardDescription>
+                              <CardTitle>{t('teams.editTeam.squad')}</CardTitle>
+                              <CardDescription>{t('teams.editTeam.squadDesc', { teamName: team.name })}</CardDescription>
                             </div>
                              <div className="flex items-center gap-2">
                               {selectedMembers.length > 0 ? (
@@ -803,14 +805,14 @@ export default function EditTeamPage() {
                                     <DropdownMenuTrigger asChild>
                                       <Button variant="outline" className="h-8 gap-1">
                                         <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                          Acciones ({selectedMembers.length})
+                                          {t('teams.actions')} ({selectedMembers.length})
                                         </span>
                                         <ChevronDown className="h-3.5 w-3.5" />
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                       <DropdownMenuSub>
-                                        <DropdownMenuSubTrigger>Mover a Equipo</DropdownMenuSubTrigger>
+                                        <DropdownMenuSubTrigger>{t('teams.editTeam.moveTo')}</DropdownMenuSubTrigger>
                                         <DropdownMenuSubContent>
                                           {allTeams.filter(t => t.id !== teamId).map(t => (
                                             <DropdownMenuItem key={t.id} onSelect={() => handleBulkAssignTeam(t.id)}>
@@ -820,7 +822,7 @@ export default function EditTeamPage() {
                                         </DropdownMenuSubContent>
                                       </DropdownMenuSub>
                                         <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-destructive">Eliminar Seleccionados</DropdownMenuItem>
+                                        <DropdownMenuItem className="text-destructive">{t('teams.deleteSelected')}</DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
                               ) : (
@@ -829,18 +831,18 @@ export default function EditTeamPage() {
                                        <Button size="sm" className="h-8 gap-1">
                                           <UserPlus className="h-3.5 w-3.5" />
                                           <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                                              Añadir Miembro
+                                              {t('teams.editTeam.addMember')}
                                           </span>
                                       </Button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                       <DropdownMenuItem onSelect={() => handleOpenModal('add', 'player')}>
                                         <User className="mr-2 h-4 w-4"/>
-                                        Añadir Jugador
+                                        {t('teams.editTeam.addPlayer')}
                                       </DropdownMenuItem>
                                        <DropdownMenuItem onSelect={() => handleOpenModal('add', 'coach')}>
                                         <UserSquare className="mr-2 h-4 w-4"/>
-                                        Añadir Entrenador
+                                        {t('teams.editTeam.addCoach')}
                                       </DropdownMenuItem>
                                     </DropdownMenuContent>
                                   </DropdownMenu>
@@ -856,14 +858,14 @@ export default function EditTeamPage() {
                                           <Checkbox
                                             checked={isAllSelected}
                                             onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                                            aria-label="Seleccionar todo"
+                                            aria-label={t('teams.editTeam.selectAll')}
                                           />
                                         </TableHead>
-                                      <TableHead>Nombre</TableHead>
-                                      <TableHead>Rol</TableHead>
-                                      <TableHead>Dorsal</TableHead>
+                                      <TableHead>{t('teams.editTeam.name')}</TableHead>
+                                      <TableHead>{t('teams.editTeam.role')}</TableHead>
+                                      <TableHead>{t('teams.editTeam.number')}</TableHead>
                                       <TableHead>
-                                        <span className="sr-only">Acciones</span>
+                                        <span className="sr-only">{t('teams.actions')}</span>
                                       </TableHead>
                                   </TableRow>
                               </TableHeader>
@@ -892,7 +894,7 @@ export default function EditTeamPage() {
                                                         <AlertCircle className="h-4 w-4 text-destructive" />
                                                       </TooltipTrigger>
                                                       <TooltipContent>
-                                                        <p>Faltan datos por rellenar</p>
+                                                        <p>{t('teams.editTeam.missingData')}</p>
                                                       </TooltipContent>
                                                   </Tooltip>
                                                 )}
@@ -911,16 +913,16 @@ export default function EditTeamPage() {
                                               <DropdownMenuTrigger asChild>
                                                 <Button aria-haspopup="true" size="icon" variant="ghost">
                                                   <MoreHorizontal className="h-4 w-4" />
-                                                  <span className="sr-only">Alternar menú</span>
+                                                  <span className="sr-only">{t('teams.editTeam.toggleMenu')}</span>
                                                 </Button>
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => setViewingMember({member: member.data as Player | Coach, type: member.role === 'Jugador' ? 'player' : 'coach'})}><Eye className="mr-2 h-4 w-4"/>Ver Ficha</DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleOpenModal('edit', member.role === 'Jugador' ? 'player' : 'coach', member)}>Editar</DropdownMenuItem>
+                                                <DropdownMenuLabel>{t('teams.actions')}</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => setViewingMember({member: member.data as Player | Coach, type: member.role === 'Jugador' ? 'player' : 'coach'})}><Eye className="mr-2 h-4 w-4"/>{t('teams.editTeam.viewProfile')}</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleOpenModal('edit', member.role === 'Jugador' ? 'player' : 'coach', member)}>{t('teams.editTeam.edit')}</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="text-destructive" onClick={() => setMemberToDelete(member)}>
-                                                  Eliminar
+                                                  {t('teams.delete')}
                                                 </DropdownMenuItem>
                                               </DropdownMenuContent>
                                             </DropdownMenu>
@@ -929,7 +931,7 @@ export default function EditTeamPage() {
                                   )) : (
                                        <TableRow>
                                           <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                                              No hay miembros en este equipo.
+                                              {t('teams.editTeam.noMembers')}
                                           </TableCell>
                                       </TableRow>
                                   )}
@@ -938,7 +940,7 @@ export default function EditTeamPage() {
                       </CardContent>
                       <CardFooter>
                         <div className="text-xs text-muted-foreground">
-                          Total: <strong>{playerCount}</strong> {playerCount === 1 ? 'Jugador' : 'Jugadores'} y <strong>{coachCount}</strong> {coachCount === 1 ? 'Entrenador' : 'Entrenadores'}.
+                          {t('teams.editTeam.total')}: <strong>{playerCount}</strong> {playerCount === 1 ? 'Jugador' : t('teams.players')} y <strong>{coachCount}</strong> {coachCount === 1 ? 'Entrenador' : t('teams.coaches')}.
                         </div>
                       </CardFooter>
                   </Card>
@@ -963,15 +965,15 @@ export default function EditTeamPage() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? `Añadir Nuevo ${modalType === 'player' ? 'Jugador' : 'Entrenador'}` : `Editar ${modalType === 'player' ? 'Jugador' : 'Entrenador'}`}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? `${t('teams.editTeam.add')} ${modalType === 'player' ? t('teams.editTeam.newPlayer') : t('teams.editTeam.newCoach')}` : `${t('teams.editTeam.edit')} ${modalType === 'player' ? t('teams.editTeam.player') : t('teams.editTeam.coach')}`}</DialogTitle>
                 <DialogDescription>
-                    Rellena la información para {modalMode === 'add' ? 'añadir un nuevo' : 'modificar el'} {modalType === 'player' ? 'jugador' : 'entrenador'} al club.
+                    {t('teams.editTeam.modalDesc', { action: modalMode === 'add' ? t('teams.editTeam.add') : t('teams.editTeam.editLower'), type: modalType === 'player' ? t('teams.editTeam.playerLower') : t('teams.editTeam.coachLower') })}
                 </DialogDescription>
             </DialogHeader>
             <ScrollArea className="max-h-[70vh] p-0">
                 <div className="py-4 px-6 grid grid-cols-1 md:grid-cols-[150px_1fr] gap-x-8 gap-y-6">
                     <div className="flex flex-col items-center gap-4 pt-5">
-                        <Label>Foto del {modalType === 'player' ? 'Jugador' : 'Entrenador'}</Label>
+                        <Label>{t('teams.editTeam.photo')}</Label>
                         <Avatar className="h-32 w-32">
                             <AvatarImage src={imagePreview || (modalType === 'player' ? playerData.avatar : coachData.avatar)} />
                             <AvatarFallback>
@@ -982,7 +984,7 @@ export default function EditTeamPage() {
                         <Button asChild variant="outline" size="sm">
                             <label htmlFor="member-image-upload" className="cursor-pointer">
                                 <Upload className="mr-2 h-3 w-3"/>
-                                Subir
+                                {t('teams.editTeam.upload')}
                             </label>
                         </Button>
                         <Input id="member-image-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
@@ -992,27 +994,27 @@ export default function EditTeamPage() {
                         <div className="sm:hidden mb-4">
                             <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar sección..." />
+                                    <SelectValue placeholder={t('coaches.selectSection')} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="personal">Datos Personales</SelectItem>
-                                    <SelectItem value="contact">Contacto y Tutor</SelectItem>
+                                    <SelectItem value="personal">{t('coaches.personalData')}</SelectItem>
+                                    <SelectItem value="contact">{t('coaches.contactAndTutor')}</SelectItem>
                                     {modalType === 'player' ? (
-                                        <SelectItem value="sports">Datos Deportivos</SelectItem>
+                                        <SelectItem value="sports">{t('players.sportsData')}</SelectItem>
                                     ) : (
-                                        <SelectItem value="payment">Pago y Equipo</SelectItem>
+                                        <SelectItem value="payment">{t('coaches.roleAndTeam')}</SelectItem>
                                     )}
                                 </SelectContent>
                             </Select>
                         </div>
                         <Tabs defaultValue="personal" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
                             <TabsList className={`grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-3'}`}>
-                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto y Tutor</TabsTrigger>
+                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('coaches.personalData')}</TabsTrigger>
+                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('coaches.contactAndTutor')}</TabsTrigger>
                                 {modalType === 'player' ? (
-                                    <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                                    <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>{t('players.sportsData')}</TabsTrigger>
                                 ) : (
-                                    <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>Pago y Equipo</TabsTrigger>
+                                    <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>{t('coaches.roleAndTeam')}</TabsTrigger>
                                 )}
                             </TabsList>
                         </Tabs>
@@ -1020,31 +1022,31 @@ export default function EditTeamPage() {
                         <div className={cn("pt-6 space-y-6", modalSection !== 'personal' && 'hidden sm:block')}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Nombre</Label>
+                                    <Label htmlFor="name">{t('coaches.fields.name')}</Label>
                                     <Input id="name" autoComplete="off" value={currentData.name || ''} onChange={handleMemberInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Label htmlFor="lastName">{t('coaches.fields.lastName')}</Label>
                                     <Input id="lastName" autoComplete="off" value={currentData.lastName || ''} onChange={handleMemberInputChange} />
                                 </div>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                    <Label htmlFor="birthDate">{t('coaches.fields.birthDate')}</Label>
                                     <DatePicker 
                                         date={currentData.birthDate ? parseISO(currentData.birthDate) : undefined} 
                                         onDateChange={(date) => handleDateChange('birthDate', date)} 
                                     />
-                                    {currentData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(currentData.birthDate)} años</p>}
+                                    {currentData.birthDate && <p className="text-xs text-muted-foreground">{t('coaches.age')}: {calculateAge(currentData.birthDate)} {t('coaches.years')}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="dni">NIF</Label>
+                                    <Label htmlFor="dni">{t('coaches.fields.dni')}</Label>
                                     <Input id="dni" value={currentData.dni || ''} onChange={handleMemberInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                        <Label htmlFor="sex">Sexo</Label>
+                                        <Label htmlFor="sex">{t('coaches.fields.sex')}</Label>
                                         <Select value={(currentData as any).sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="masculino">Masculino</SelectItem>
                                                 <SelectItem value="femenino">Femenino</SelectItem>
@@ -1053,30 +1055,30 @@ export default function EditTeamPage() {
                                     </div>
                             </div>
                                 <div className="space-y-2">
-                                <Label htmlFor="address">Dirección</Label>
+                                <Label htmlFor="address">{t('coaches.fields.address')}</Label>
                                 <Input id="address" value={(currentData as any).address || ''} onChange={handleMemberInputChange} />
                                 </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Label htmlFor="city">{t('coaches.fields.city')}</Label>
                                     <Input id="city" value={(currentData as any).city || ''} onChange={handleMemberInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Label htmlFor="postalCode">{t('coaches.fields.postalCode')}</Label>
                                     <Input id="postalCode" value={(currentData as any).postalCode || ''} onChange={handleMemberInputChange} />
                                 </div>
                             </div>
                                 <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                    <Label>Fecha de Alta</Label>
+                                    <Label>{t('coaches.startDate')}</Label>
                                     <DatePicker 
                                         date={currentData.startDate ? parseISO(currentData.startDate) : undefined}
                                         onDateChange={(date) => handleDateChange('startDate', date)}
                                     />
                                     </div>
                                     <div className="space-y-2">
-                                    <Label>Fecha de Baja</Label>
+                                    <Label>{t('coaches.endDate')}</Label>
                                     <DatePicker 
                                         date={currentData.endDate ? parseISO(currentData.endDate) : undefined}
                                         onDateChange={(date) => handleDateChange('endDate', date)}
@@ -1086,7 +1088,7 @@ export default function EditTeamPage() {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="currentlyActive" checked={currentData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
-                                <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                                <Label htmlFor="currentlyActive">{t('coaches.currentlyActive')}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="hasInterruption" checked={(currentData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
@@ -1096,27 +1098,27 @@ export default function EditTeamPage() {
                                         else setCoachData(prev => ({...prev, interruptions: []}))
                                         }
                                 }} />
-                                <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                                <Label htmlFor="hasInterruption">{t('coaches.hasInterruptions')}</Label>
                             </div>
                             {(currentData.interruptions?.length || 0) > 0 && (
                                 <div className="space-y-2 pl-6">
                                     {currentData.interruptions?.map((interruption, index) => (
                                         <div key={interruption.id} className="flex items-end gap-2">
                                             <div className="space-y-1">
-                                                <Label>Inicio Interrupción</Label>
+                                                <Label>{t('coaches.interruptionStart')}</Label>
                                                     <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label>Fin Interrupción</Label>
+                                                <Label>{t('coaches.interruptionEnd')}</Label>
                                                     <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
                                             </div>
                                             <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
                                         </div>
                                     ))}
-                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>{t('coaches.addInterruption')}</Button>
                                 </div>
                             )}
-                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
+                            <p className="text-sm font-medium text-muted-foreground pt-2">{t('coaches.tenure')}: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
                             </div>
                         </div>
 
@@ -1127,24 +1129,24 @@ export default function EditTeamPage() {
                                     checked={currentData.isOwnTutor || false}
                                     onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
                                 />
-                                <Label htmlFor="isOwnTutor" className="font-normal">{modalType === 'player' ? 'El jugador' : 'El entrenador'} es su propio tutor (mayor de 18 años)</Label>
+                                <Label htmlFor="isOwnTutor" className="font-normal">{modalType === 'player' ? t('players.isOwnTutor') : t('coaches.isOwnTutor')}</Label>
                             </div>
                                 
                                 {!(currentData.isOwnTutor) && (
                                     <div className="space-y-6 p-4 border rounded-md bg-muted/50 mt-4">
-                                        <h4 className="font-medium">Datos del Tutor/a</h4>
+                                        <h4 className="font-medium">{t('coaches.tutorData')}</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorName">Nombre</Label>
+                                                <Label htmlFor="tutorName">{t('coaches.fields.name')}</Label>
                                                 <Input id="tutorName" autoComplete="off" value={(currentData as any).tutorName || ''} onChange={handleMemberInputChange} />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorLastName">Apellidos</Label>
+                                                <Label htmlFor="tutorLastName">{t('coaches.fields.lastName')}</Label>
                                                 <Input id="tutorLastName" autoComplete="off" value={(currentData as any).tutorLastName || ''} onChange={handleMemberInputChange} />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
+                                            <Label htmlFor="tutorDni">{t('coaches.fields.tutorDni')}</Label>
                                             <Input id="tutorDni" value={(currentData as any).tutorDni || ''} onChange={handleMemberInputChange} />
                                         </div>
                                     </div>
@@ -1152,11 +1154,11 @@ export default function EditTeamPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                        <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? t('coaches.fields.email') : t('coaches.fields.tutorEmail')}</Label>
                                         <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                        <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? t('coaches.fields.phone') : t('coaches.fields.tutorPhone')}</Label>
                                         <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleMemberInputChange} />
                                     </div>
                                 </div>
@@ -1166,15 +1168,15 @@ export default function EditTeamPage() {
                             {modalType === 'player' ? (
                                 <>
                                     <div className="space-y-2">
-                                        <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                        <Label htmlFor="iban">{t('coaches.fields.iban')}</Label>
                                         <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                         <div className="space-y-2">
-                                            <Label htmlFor="teamId">Equipo</Label>
+                                            <Label htmlFor="teamId">{t('coaches.fields.team')}</Label>
                                             <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
                                                 <SelectTrigger>
-                                                    <SelectValue placeholder="Selecciona un equipo" />
+                                                    <SelectValue placeholder="..." />
                                                 </SelectTrigger>
                                                 <SelectContent>
                                                     {allTeams.map(t => (
@@ -1184,23 +1186,23 @@ export default function EditTeamPage() {
                                             </Select>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                            <Label htmlFor="jerseyNumber">{t('players.fields.jerseyNumber')}</Label>
                                             <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleMemberInputChange} />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                            <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
                                             <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="kitSize">Talla de Equipación</Label>
+                                            <Label htmlFor="kitSize">{t('coaches.fields.kitSize')}</Label>
                                             <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleMemberInputChange} />
                                         </div>
                                         <div className="flex items-end pb-1">
                                             <div className="flex items-center space-x-2">
                                                 <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
-                                                <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                                                <Label htmlFor="medicalCheckCompleted">{t('players.fields.medicalCheck')}</Label>
                                             </div>
                                         </div>
                                     </div>
@@ -1209,22 +1211,22 @@ export default function EditTeamPage() {
                                 <>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div className="space-y-2">
-                                            <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                            <Label htmlFor="iban">{t('coaches.fields.iban')}</Label>
                                             <Input id="iban" value={coachData.iban || ''} onChange={handleMemberInputChange} />
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="monthlyPayment">Pago Mensual (€)</Label>
+                                            <Label htmlFor="monthlyPayment">{t('coaches.fields.monthlyPayment')}</Label>
                                             <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleMemberInputChange} />
                                         </div>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="teamId">Equipo Asignado</Label>
+                                        <Label htmlFor="teamId">{t('coaches.fields.team')}</Label>
                                         <Select onValueChange={(value) => handleSelectChange('teamId' as any, value)} value={coachData.teamId || 'unassigned'}>
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Selecciona un equipo" />
+                                                <SelectValue placeholder="..." />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                                <SelectItem value="unassigned">{t('coaches.unassigned')}</SelectItem>
                                                 {allTeams.map(t => (
                                                     <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
                                                 ))}
@@ -1239,10 +1241,10 @@ export default function EditTeamPage() {
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">
                 <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancelar</Button>
+                    <Button type="button" variant="secondary">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="button" onClick={handleSaveMember} disabled={saving}>
-                    {saving ? <Loader2 className="animate-spin" /> : 'Guardar'}
+                    {saving ? <Loader2 className="animate-spin" /> : t('common.saveChanges')}
                 </Button>
             </DialogFooter>
         </DialogContent>
@@ -1250,15 +1252,15 @@ export default function EditTeamPage() {
       <AlertDialog open={!!memberToDelete} onOpenChange={(open) => !open && setMemberToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('teams.editTeam.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente al miembro {memberToDelete?.name}.
+              {t('teams.editTeam.confirmDeleteDesc', { memberName: memberToDelete?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteMember} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('teams.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
