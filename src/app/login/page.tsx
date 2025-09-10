@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from 'react';
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -32,6 +33,12 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { t } = useTranslation();
+  
+  const stats = [
+    { text: t('login.stats.0') },
+    { text: t('login.stats.1') },
+    { text: t('login.stats.2') },
+  ];
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,17 +92,14 @@ export default function LoginPage() {
         />
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
-            <div className="text-center">
-                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">+130 Clubs nos Eligen</p>
-            </div>
-            <Separator className="bg-white/20" />
-            <div className="text-center">
-                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">+9h de Ahorro Semanal</p>
-            </div>
-            <Separator className="bg-white/20" />
-            <div className="text-center">
-                <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">95% Tasa de Retención</p>
-            </div>
+            {stats.map((stat, index) => (
+                <React.Fragment key={index}>
+                    <div className="text-center">
+                        <p className="text-4xl font-bold text-shadow shadow-black/50 whitespace-nowrap">{stat.text}</p>
+                    </div>
+                    {index < stats.length - 1 && <Separator className="bg-white/20" />}
+                </React.Fragment>
+            ))}
         </div>
       </div>
       <div className="relative flex flex-col items-center justify-center h-screen">

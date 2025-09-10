@@ -57,7 +57,7 @@
         ],
         "testimonials": {
             "title": "La Confiança dels que Gestionen",
-            "subtitle": "Clubs com el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel."
+            "subtitle": "Clubs como el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel."
         },
         "featuresTitle": "Tot el que el teu club necessita",
         "featuresSubtitle": "Una plataforma completa pensada per optimitzar cada aspecte de la gestió del teu club, estalviant-te temps i esforç.",
@@ -138,7 +138,12 @@
         "welcomeBack": "Benvingut/da de nou!",
         "loginSuccess": "Has iniciat sessió correctament.",
         "loginError": "Error en l'inici de sessió",
-        "loginErrorDesc": "El correu electrònic o la contrasenya són incorrectes."
+        "loginErrorDesc": "El correu electrònic o la contrasenya són incorrectes.",
+        "stats": [
+            "+130 Clubs ens Escullen",
+            "+9h d'Estalvi Setmanal",
+            "95% Taxa de Retenció"
+        ]
     },
     "register": {
         "title": "Crea el teu Club",
@@ -156,7 +161,14 @@
         "hasAccount": "Ja tens un compte?",
         "login": "Inicia Sessió",
         "successTitle": "Club Creat!",
-        "successDesc": "La teva prova de 20 dies ha començat. Benvingut/da!"
+        "successDesc": "La teva prova de 20 dies ha començat. Benvingut/da!",
+        "trial": {
+            "title": "20 dies de prova gratis",
+            "0": "No necessites targeta de crèdit.",
+            "1": "Sense compromís de permanència.",
+            "2": "Cancel·la quan vulguis.",
+            "3": "Accedeix a totes les funcionalitats."
+        }
     },
     "contact": {
         "title": "Contacta amb Nosaltres",

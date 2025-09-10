@@ -57,7 +57,7 @@
         ],
         "testimonials": {
             "title": "La Confianza de los que Gestionan",
-            "subtitle": "Clubs como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel."
+            "subtitle": "Clubes como el tuyo ya están ahorrando tiempo y mejorando su organización con SportsPanel."
         },
         "featuresTitle": "Todo lo que tu club necesita",
         "featuresSubtitle": "Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo.",
@@ -74,7 +74,7 @@
         ],
         "bottomCta": {
             "title": "Digitaliza tu club. Ahorra tiempo.",
-            "subtitle": "Únete a los clubs que ya han optimizado su gestión.",
+            "subtitle": "Únete a los clubes que ya han optimizado su gestión.",
             "button": "Empieza a optimizar tu club"
         },
         "benefits": {
@@ -138,7 +138,12 @@
         "welcomeBack": "¡Bienvenido de nuevo!",
         "loginSuccess": "Has iniciado sesión correctamente.",
         "loginError": "Fallo en el Inicio de Sesión",
-        "loginErrorDesc": "El correo electrónico o la contraseña son incorrectos."
+        "loginErrorDesc": "El correo electrónico o la contraseña son incorrectos.",
+        "stats": [
+            "+130 Clubs nos Eligen",
+            "+9h de Ahorro Semanal",
+            "95% Tasa de Retención"
+        ]
     },
     "register": {
         "title": "Crea tu Club",
@@ -156,7 +161,14 @@
         "hasAccount": "¿Ya tienes una cuenta?",
         "login": "Inicia Sesión",
         "successTitle": "¡Club Creado!",
-        "successDesc": "Tu prueba de 20 días ha comenzado. ¡Bienvenido!"
+        "successDesc": "Tu prueba de 20 días ha comenzado. ¡Bienvenido!",
+        "trial": {
+            "title": "20 días de prueba gratis",
+            "0": "No necesitas tarjeta de crédito.",
+            "1": "Sin compromiso de permanencia.",
+            "2": "Cancela cuando quieras.",
+            "3": "Accede a todas las funcionalidades."
+        }
     },
     "contact": {
         "title": "Contacta con Nosotros",

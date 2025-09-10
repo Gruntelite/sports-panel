@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -125,23 +126,23 @@ export default function RegisterPage() {
         />
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
-            <h1 className="text-4xl font-bold text-shadow shadow-black/50">20 días de prueba gratis</h1>
+            <h1 className="text-4xl font-bold text-shadow shadow-black/50">{t('register.trial.title')}</h1>
             <div className="space-y-4">
-                 <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">No necesitas tarjeta de crédito.</span>
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.0')}</span>
                 </div>
-                 <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">Sin compromiso de permanencia.</span>
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.1')}</span>
                 </div>
-                 <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">Cancela cuando quieras.</span>
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.2')}</span>
                 </div>
-                 <div className="flex items-center justify-center gap-3">
+                <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">Accede a todas las funcionalidades.</span>
+                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.3')}</span>
                 </div>
             </div>
         </div>
