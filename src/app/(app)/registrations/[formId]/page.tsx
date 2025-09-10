@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -24,9 +25,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, ArrowLeft, Download, CheckCircle, XCircle } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "@/components/i18n-provider";
 
 export default function RegistrationSubmissionsPage() {
   const params = useParams();
@@ -35,6 +37,7 @@ export default function RegistrationSubmissionsPage() {
   const [clubId, setClubId] = useState<string | null>(null);
 
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [formDef, setFormDef] = useState<RegistrationForm | null>(null);
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [loading, setLoading] = useState(true);
@@ -92,7 +95,7 @@ export default function RegistrationSubmissionsPage() {
   const handleDownloadCsv = () => {
     if (!formDef || submissions.length === 0) return;
 
-    const headers = ["Fecha de Inscripción", ...formDef.fields.map(field => field.label), ...(formDef.price > 0 ? ['Estado del Pago'] : [])];
+    const headers = [t('registrations.form.submissionDate'), ...formDef.fields.map(field => field.label), ...(formDef.price > 0 ? [t('registrations.form.paymentStatus')] : [])];
     
     const csvRows = [
         headers.join(','),
@@ -127,9 +130,9 @@ export default function RegistrationSubmissionsPage() {
     try {
         await updateDoc(submissionRef, { paymentStatus: newStatus });
         setSubmissions(prev => prev.map(sub => sub.id === submissionId ? { ...sub, paymentStatus: newStatus } : sub));
-        toast({ title: "Estado de pago actualizado."});
+        toast({ title: t('registrations.form.paymentStatusUpdated')});
     } catch(e) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo actualizar el estado del pago." });
+        toast({ variant: "destructive", title: "Error", description: t('registrations.form.paymentStatusError') });
     }
   };
 
@@ -143,7 +146,7 @@ export default function RegistrationSubmissionsPage() {
   }
 
   if (!formDef) {
-    return <p>No se encontró el formulario.</p>;
+    return <p>{t('registrations.form.notFound')}</p>;
   }
 
   return (
@@ -153,32 +156,32 @@ export default function RegistrationSubmissionsPage() {
                 <ArrowLeft className="h-4 w-4" />
             </Button>
             <div>
-                <h1 className="text-2xl font-bold font-headline tracking-tight">Inscritos en: {formDef.title}</h1>
-                <p className="text-muted-foreground">Viendo {submissions.length} de {formDef.submissionCount || submissions.length} inscripciones.</p>
+                <h1 className="text-2xl font-bold font-headline tracking-tight">{t('registrations.form.title', { formTitle: formDef.title })}</h1>
+                <p className="text-muted-foreground">{t('registrations.form.description', { count: submissions.length, total: formDef.submissionCount || submissions.length })}</p>
             </div>
         </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Lista de Inscritos</CardTitle>
+              <CardTitle>{t('registrations.form.listTitle')}</CardTitle>
               <CardDescription>
-                Estos son los datos de las personas que se han registrado a través del formulario público.
+                {t('registrations.form.listDescription')}
               </CardDescription>
             </div>
             <Button onClick={handleDownloadCsv} variant="outline" disabled={submissions.length === 0}>
                 <Download className="mr-2 h-4 w-4" />
-                Descargar CSV
+                {t('registrations.form.downloadCsv')}
             </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Fecha</TableHead>
+                <TableHead>{t('registrations.form.date')}</TableHead>
                 {formDef.fields.map((field) => (
                   <TableHead key={field.id}>{field.label}</TableHead>
                 ))}
-                 {formDef.price > 0 && <TableHead>Pagado</TableHead>}
+                 {formDef.price > 0 && <TableHead>{t('registrations.form.paid')}</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -186,7 +189,7 @@ export default function RegistrationSubmissionsPage() {
                 submissions.map((submission) => (
                   <TableRow key={submission.id}>
                     <TableCell>
-                      {format(submission.submittedAt.toDate(), "d MMM yy, HH:mm", { locale: es })}
+                      {format(submission.submittedAt.toDate(), "d MMM yy, HH:mm", { locale: locale === 'ca' ? ca : es })}
                     </TableCell>
                     {formDef.fields.map((field) => (
                       <TableCell key={field.id}>
@@ -209,7 +212,7 @@ export default function RegistrationSubmissionsPage() {
                     colSpan={formDef.fields.length + 2}
                     className="h-24 text-center"
                   >
-                    Todavía no hay ninguna inscripción.
+                    {t('registrations.form.noSubmissions')}
                   </TableCell>
                 </TableRow>
               )}
@@ -220,3 +223,4 @@ export default function RegistrationSubmissionsPage() {
     </div>
   );
 }
+

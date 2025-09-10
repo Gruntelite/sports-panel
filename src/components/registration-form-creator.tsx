@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,6 +23,7 @@ import { Switch } from "./ui/switch";
 import { cn } from "@/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
+import { useTranslation } from "./i18n-provider";
 
 
 const initialFormFields: CustomRegistrationFormField[] = [
@@ -57,15 +59,10 @@ type RegistrationFormCreatorProps = {
   mode: 'add' | 'edit';
 };
 
-const TABS: { id: ActiveTab, label: string, icon: React.ElementType }[] = [
-    { id: 'general', label: 'Información General', icon: Info },
-    { id: 'config', label: 'Configuración', icon: Settings },
-    { id: 'fields', label: 'Campos del Formulario', icon: FileText },
-];
-
 export function RegistrationFormCreator({ onFormSaved, initialData, mode }: RegistrationFormCreatorProps) {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
   
   const [allFields, setAllFields] = useState<CustomRegistrationFormField[]>(initialFormFields);
   const [newFieldName, setNewFieldName] = useState("");
@@ -73,6 +70,11 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
   const [activeTab, setActiveTab] = useState<ActiveTab>('general');
   const [isFieldSelectOpen, setIsFieldSelectOpen] = useState(false);
 
+  const TABS: { id: ActiveTab, label: string, icon: React.ElementType }[] = [
+    { id: 'general', label: t('registrations.modal.tabs.general'), icon: Info },
+    { id: 'config', label: t('registrations.modal.tabs.config'), icon: Settings },
+    { id: 'fields', label: t('registrations.modal.tabs.fields'), icon: FileText },
+];
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -129,7 +131,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
   
   const handleAddCustomField = () => {
     if (newFieldName.trim() === "") {
-        toast({ variant: "destructive", title: "El nombre del campo no puede estar vacío."});
+        toast({ variant: "destructive", title: t('registrations.modal.errors.emptyFieldName')});
         return;
     }
     const fieldId = newFieldName.toLowerCase().replace(/[^a-z0-9]/g, '_') + `_${Date.now()}`;
@@ -209,8 +211,8 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
             const formRef = doc(db, "clubs", clubId, "registrationForms", initialData.id);
             await updateDoc(formRef, formData);
              toast({
-                title: "¡Formulario Actualizado!",
-                description: "Los cambios en el formulario se han guardado.",
+                title: t('registrations.modal.updateSuccessTitle'),
+                description: t('registrations.modal.updateSuccessDesc'),
             });
         } else {
             const newFormDoc = {
@@ -221,8 +223,8 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
             };
             await addDoc(collection(db, "clubs", clubId, "registrationForms"), newFormDoc);
              toast({
-                title: "¡Formulario Creado!",
-                description: "Tu formulario de inscripción público está listo.",
+                title: t('registrations.modal.createSuccessTitle'),
+                description: t('registrations.modal.createSuccessDesc'),
             });
         }
         
@@ -232,8 +234,8 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
         console.error("Error saving form:", error);
         toast({
             variant: "destructive",
-            title: "Fallo al Guardar",
-            description: "No se pudo guardar el formulario en la base de datos.",
+            title: t('registrations.modal.errors.saveErrorTitle'),
+            description: t('registrations.modal.errors.saveErrorDesc'),
         });
     }
 
@@ -248,7 +250,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
              <div className="sm:hidden">
                 <Select value={activeTab} onValueChange={(value) => setActiveTab(value as ActiveTab)}>
                   <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar sección..." />
+                    <SelectValue placeholder={t('registrations.modal.selectSection')} />
                   </SelectTrigger>
                   <SelectContent>
                     {TABS.map((tab) => (
@@ -289,9 +291,9 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                       name="title"
                       render={({ field }) => (
                       <FormItem>
-                          <FormLabel>Título del Formulario</FormLabel>
+                          <FormLabel>{t('registrations.modal.formTitle')}</FormLabel>
                           <FormControl>
-                          <Input placeholder="p.ej., Torneo de Verano 3x3, Captación 2024" {...field} />
+                          <Input placeholder={t('registrations.modal.formTitlePlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                       </FormItem>
@@ -302,9 +304,9 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                       name="description"
                       render={({ field }) => (
                       <FormItem>
-                          <FormLabel>Descripción</FormLabel>
+                          <FormLabel>{t('registrations.modal.description')}</FormLabel>
                           <FormControl>
-                          <Textarea placeholder="Describe brevemente el evento, las fechas, el lugar, el precio, etc." {...field} />
+                          <Textarea placeholder={t('registrations.modal.descriptionPlaceholder')} {...field} />
                           </FormControl>
                           <FormMessage />
                       </FormItem>
@@ -312,10 +314,10 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                   />
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="eventStartDate" render={({ field }) => (
-                          <FormItem><FormLabel>Fecha de Inicio del Evento</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.eventStartDate')}</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
                       )}/>
                         <FormField control={form.control} name="eventEndDate" render={({ field }) => (
-                          <FormItem><FormLabel>Fecha de Fin del Evento</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.eventEndDate')}</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
                       )}/>
                   </div>
               </div>
@@ -325,25 +327,25 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
               <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="price" render={({ field }) => (
-                          <FormItem><FormLabel>Precio por Inscripción (€)</FormLabel><Input type="number" placeholder="0" {...field} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.price')}</FormLabel><Input type="number" placeholder="0" {...field} /><FormMessage /></FormItem>
                       )}/>
                       <FormField control={form.control} name="maxSubmissions" render={({ field }) => (
-                          <FormItem><FormLabel>Límite de Inscritos</FormLabel><Input type="number" placeholder="0 (sin límite)" {...field} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.maxSubmissions')}</FormLabel><Input type="number" placeholder="0 (sin límite)" {...field} /><FormMessage /></FormItem>
                       )}/>
                   </div>
 
                   {price != null && price > 0 && (
                       <FormField control={form.control} name="paymentIBAN" render={({ field }) => (
-                          <FormItem><FormLabel>IBAN para la Transferencia</FormLabel><Input placeholder="ES00 0000 0000 00 0000000000" {...field} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.paymentIBAN')}</FormLabel><Input placeholder="ES00 0000 0000 00 0000000000" {...field} /><FormMessage /></FormItem>
                       )}/>
                   )}
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <FormField control={form.control} name="registrationStartDate" render={({ field }) => (
-                          <FormItem><FormLabel>Fecha Inicio de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.regStartDate')}</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
                       )}/>
                         <FormField control={form.control} name="registrationDeadline" render={({ field }) => (
-                          <FormItem><FormLabel>Fecha Fin de Inscripción</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
+                          <FormItem><FormLabel>{t('registrations.modal.regEndDate')}</FormLabel><DatePicker date={field.value} onDateChange={field.onChange} /><FormMessage /></FormItem>
                       )}/>
                   </div>
               </div>
@@ -352,7 +354,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
           <div className={cn('mt-6', activeTab !== 'fields' && 'hidden')}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8">
                   <div className="space-y-4">
-                    <h4 className="font-medium">Campos del Formulario</h4>
+                    <h4 className="font-medium">{t('registrations.modal.formFields')}</h4>
                      <FormField
                         control={form.control}
                         name="selectedFieldIds"
@@ -361,15 +363,15 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                             <Popover open={isFieldSelectOpen} onOpenChange={setIsFieldSelectOpen}>
                                 <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full justify-start font-normal">
-                                    {field.value?.length > 0 ? `${field.value.length} campo(s) seleccionado(s)` : "Seleccionar campos..."}
+                                    {field.value?.length > 0 ? t('registrations.modal.selectedFields', { count: field.value.length }) : t('registrations.modal.selectFields')}
                                     <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="p-0" align="start">
                                 <Command>
-                                    <CommandInput placeholder="Buscar campo..." />
+                                    <CommandInput placeholder={t('registrations.modal.searchField')} />
                                     <CommandList>
-                                        <CommandEmpty>No se encontró ningún campo.</CommandEmpty>
+                                        <CommandEmpty>{t('registrations.modal.noFieldFound')}</CommandEmpty>
                                         <CommandGroup>
                                             {allFields.map(item => (
                                                  <CommandItem
@@ -386,7 +388,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                                                  >
                                                     <Check className={cn("mr-2 h-4 w-4", field.value.includes(item.id) ? "opacity-100" : "opacity-0")} />
                                                     {item.label}
-                                                    {item.required && <span className="ml-2 text-xs text-muted-foreground">(Obligatorio)</span>}
+                                                    {item.required && <span className="ml-2 text-xs text-muted-foreground">({t('registrations.modal.required')})</span>}
                                                 </CommandItem>
                                             ))}
                                         </CommandGroup>
@@ -400,27 +402,27 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                       />
                   </div>
                    <div className="space-y-4">
-                      <h4 className="font-medium">Añadir Campo Personalizado</h4>
+                      <h4 className="font-medium">{t('registrations.modal.addCustomField')}</h4>
                       <div className="space-y-2">
-                          <Label htmlFor="new-field-name">Nombre del Campo</Label>
-                          <Input id="new-field-name" placeholder="p.ej., Talla de camiseta" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} />
+                          <Label htmlFor="new-field-name">{t('registrations.modal.fieldName')}</Label>
+                          <Input id="new-field-name" placeholder={t('registrations.modal.fieldNamePlaceholder')} value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} />
                       </div>
                         <div className="space-y-2">
-                            <Label htmlFor="new-field-type">Tipo de Campo</Label>
+                            <Label htmlFor="new-field-type">{t('registrations.modal.fieldType')}</Label>
                           <Select value={newFieldType} onValueChange={(value) => setNewFieldType(value as CustomRegistrationFormField['type'])}>
                               <SelectTrigger id="new-field-type"><SelectValue placeholder="Tipo" /></SelectTrigger>
                               <SelectContent>
-                              <SelectItem value="text">Texto Corto</SelectItem>
-                              <SelectItem value="textarea">Texto Largo</SelectItem>
-                              <SelectItem value="email">Email</SelectItem>
-                              <SelectItem value="tel">Teléfono</SelectItem>
-                              <SelectItem value="number">Número</SelectItem>
+                              <SelectItem value="text">{t('registrations.modal.fieldTypes.text')}</SelectItem>
+                              <SelectItem value="textarea">{t('registrations.modal.fieldTypes.textarea')}</SelectItem>
+                              <SelectItem value="email">{t('registrations.modal.fieldTypes.email')}</SelectItem>
+                              <SelectItem value="tel">{t('registrations.modal.fieldTypes.tel')}</SelectItem>
+                              <SelectItem value="number">{t('registrations.modal.fieldTypes.number')}</SelectItem>
                               </SelectContent>
                           </Select>
                         </div>
                         <Button type="button" className="w-full" variant="outline" onClick={handleAddCustomField}>
                           <PlusCircle className="mr-2 h-4 w-4" />
-                          Añadir Campo
+                          {t('registrations.modal.addField')}
                       </Button>
                     </div>
               </div>
@@ -428,16 +430,16 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
 
           <DialogFooter>
               <DialogClose asChild>
-                  <Button variant="secondary">Cancelar</Button>
+                  <Button variant="secondary">{t('common.cancel')}</Button>
               </DialogClose>
                 <Button type="submit" disabled={loading}>
                   {loading ? (
                   <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Guardando...
+                      {t('registrations.modal.saving')}
                   </>
                   ) : (
-                  mode === 'add' ? 'Crear Formulario' : 'Guardar Cambios'
+                  mode === 'add' ? t('registrations.modal.createButton') : t('common.saveChanges')
                   )}
               </Button>
           </DialogFooter>
@@ -446,4 +448,3 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
     </div>
   );
 }
-

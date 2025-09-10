@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -72,7 +73,7 @@ import {
   ClipboardList
 } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -81,10 +82,12 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { v4 as uuidv4 } from "uuid";
 import { deleteObject, getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { useTranslation } from "@/components/i18n-provider";
 
 
 function IncidentsTab() {
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -124,7 +127,7 @@ function IncidentsTab() {
       setIncidents(incidentsList);
     } catch (error) {
       console.error("Error fetching incidents:", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar las incidencias." });
+      toast({ variant: "destructive", title: t('common.error'), description: t('incidents.errors.loadIncidents') });
     }
     setLoading(false);
   };
@@ -137,7 +140,7 @@ function IncidentsTab() {
 
   const handleSaveIncident = async () => {
     if (!clubId || !incidentData.type || !incidentData.date) {
-      toast({ variant: "destructive", title: "Error", description: "Fecha y tipo son obligatorios." });
+      toast({ variant: "destructive", title: t('common.error'), description: t('incidents.errors.dateTypeRequired') });
       return;
     }
     setSaving(true);
@@ -151,16 +154,16 @@ function IncidentsTab() {
       if (modalMode === 'edit' && incidentData.id) {
         const incidentRef = doc(db, "clubs", clubId, "incidents", incidentData.id);
         await updateDoc(incidentRef, dataToSave);
-        toast({ title: "Incidencia actualizada", description: "Los detalles de la incidencia han sido guardados." });
+        toast({ title: t('incidents.incidentUpdated'), description: t('incidents.incidentUpdatedDesc') });
       } else {
         await addDoc(collection(db, "clubs", clubId, "incidents"), dataToSave);
-        toast({ title: "Incidencia Creada", description: "La nueva incidencia ha sido registrada." });
+        toast({ title: t('incidents.incidentCreated'), description: t('incidents.incidentCreatedDesc') });
       }
       setIsModalOpen(false);
       if (clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error saving incident:", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la incidencia." });
+      toast({ variant: "destructive", title: t('common.error'), description: t('incidents.errors.saveIncident') });
     } finally {
       setSaving(false);
     }
@@ -171,12 +174,12 @@ function IncidentsTab() {
     setSaving(true);
     try {
       await deleteDoc(doc(db, "clubs", clubId, "incidents", incidentToDelete.id));
-      toast({ title: "Incidencia eliminada", description: "La incidencia ha sido eliminada." });
+      toast({ title: t('incidents.incidentDeleted'), description: t('incidents.incidentDeletedDesc') });
       setIncidentToDelete(null);
       if (clubId) fetchData(clubId);
     } catch (error) {
       console.error("Error deleting incident:", error);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la incidencia." });
+      toast({ variant: "destructive", title: t('common.error'), description: t('incidents.errors.deleteIncident') });
     } finally {
       setSaving(false);
     }
@@ -186,10 +189,10 @@ function IncidentsTab() {
     <>
       <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <CardTitle>Historial de Incidencias</CardTitle>
+          <CardTitle>{t('incidents.incidents.history')}</CardTitle>
           <Button onClick={() => handleOpenModal('add')} className="w-full md:w-auto">
             <PlusCircle className="mr-2 h-4 w-4" />
-            Registrar Incidencia
+            {t('incidents.incidents.register')}
           </Button>
         </CardHeader>
         <CardContent>
@@ -202,18 +205,18 @@ function IncidentsTab() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Tipo</TableHead>
-                    <TableHead>Involucrados</TableHead>
-                    <TableHead>Estado</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t('incidents.incidents.table.date')}</TableHead>
+                    <TableHead>{t('incidents.incidents.table.type')}</TableHead>
+                    <TableHead>{t('incidents.incidents.table.involved')}</TableHead>
+                    <TableHead>{t('incidents.incidents.table.status')}</TableHead>
+                    <TableHead className="text-right">{t('incidents.incidents.table.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {incidents.length > 0 ? (
                     incidents.map((incident) => (
                       <TableRow key={incident.id}>
-                        <TableCell>{format(incident.date.toDate(), "d 'de' LLLL, yyyy", { locale: es })}</TableCell>
+                        <TableCell>{format(incident.date.toDate(), "d 'de' LLLL, yyyy", { locale: locale === 'ca' ? ca : es })}</TableCell>
                         <TableCell>{incident.type}</TableCell>
                         <TableCell className="max-w-xs truncate">{incident.involved.join(', ')}</TableCell>
                         <TableCell>
@@ -225,8 +228,8 @@ function IncidentsTab() {
                               <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onSelect={() => handleOpenModal('edit', incident)}><Edit className="mr-2 h-4 w-4" />Editar</DropdownMenuItem>
-                              <DropdownMenuItem onSelect={() => setIncidentToDelete(incident)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />Eliminar</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => handleOpenModal('edit', incident)}><Edit className="mr-2 h-4 w-4" />{t('incidents.incidents.edit')}</DropdownMenuItem>
+                              <DropdownMenuItem onSelect={() => setIncidentToDelete(incident)} className="text-destructive"><Trash2 className="mr-2 h-4 w-4" />{t('incidents.incidents.delete')}</DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
@@ -234,7 +237,7 @@ function IncidentsTab() {
                     ))
                   ) : (
                     <TableRow>
-                      <TableCell colSpan={5} className="h-24 text-center">No hay incidencias registradas.</TableCell>
+                      <TableCell colSpan={5} className="h-24 text-center">{t('incidents.incidents.noIncidents')}</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -247,52 +250,52 @@ function IncidentsTab() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{modalMode === 'add' ? 'Registrar Nueva Incidencia' : 'Editar Incidencia'}</DialogTitle>
+            <DialogTitle>{modalMode === 'add' ? t('incidents.incidents.modal.addTitle') : t('incidents.incidents.modal.editTitle')}</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="date">Fecha de la Incidencia</Label>
+                <Label htmlFor="date">{t('incidents.incidents.modal.date')}</Label>
                 <Input id="date" type="date" value={typeof incidentData.date === 'string' ? incidentData.date.split('T')[0] : incidentData.date?.toDate().toISOString().split('T')[0] || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, date: e.target.value }))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="type">Tipo de Incidencia</Label>
+                <Label htmlFor="type">{t('incidents.incidents.modal.type')}</Label>
                 <Select value={incidentData.type} onValueChange={(value) => setIncidentData(prev => ({ ...prev, type: value as Incident['type'] }))}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar tipo..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('incidents.incidents.modal.selectType')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Lesión">Lesión</SelectItem>
-                    <SelectItem value="Comportamiento">Comportamiento</SelectItem>
-                    <SelectItem value="Administrativa">Administrativa</SelectItem>
-                    <SelectItem value="Otro">Otro</SelectItem>
+                    <SelectItem value="Lesión">{t('incidents.types.injury')}</SelectItem>
+                    <SelectItem value="Comportamiento">{t('incidents.types.behavior')}</SelectItem>
+                    <SelectItem value="Administrativa">{t('incidents.types.administrative')}</SelectItem>
+                    <SelectItem value="Otro">{t('incidents.types.other')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="involved">Personas Involucradas</Label>
-              <Input id="involved" placeholder="Nombres separados por coma" value={incidentData.involved?.join(', ') || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, involved: e.target.value.split(',').map(s => s.trim()) }))} />
+              <Label htmlFor="involved">{t('incidents.incidents.modal.involved')}</Label>
+              <Input id="involved" placeholder={t('incidents.incidents.modal.involvedPlaceholder')} value={incidentData.involved?.join(', ') || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, involved: e.target.value.split(',').map(s => s.trim()) }))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Descripción</Label>
-              <Textarea id="description" placeholder="Describe detalladamente lo ocurrido..." value={incidentData.description || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, description: e.target.value }))} />
+              <Label htmlFor="description">{t('incidents.incidents.modal.description')}</Label>
+              <Textarea id="description" placeholder={t('incidents.incidents.modal.descriptionPlaceholder')} value={incidentData.description || ''} onChange={(e) => setIncidentData(prev => ({ ...prev, description: e.target.value }))} />
             </div>
              <div className="space-y-2">
-                <Label htmlFor="status">Estado</Label>
+                <Label htmlFor="status">{t('incidents.incidents.modal.status')}</Label>
                 <Select value={incidentData.status} onValueChange={(value) => setIncidentData(prev => ({ ...prev, status: value as Incident['status'] }))}>
-                  <SelectTrigger><SelectValue placeholder="Seleccionar estado..." /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder={t('incidents.incidents.modal.selectStatus')} /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Abierta">Abierta</SelectItem>
-                    <SelectItem value="En Progreso">En Progreso</SelectItem>
-                    <SelectItem value="Resuelta">Resuelta</SelectItem>
+                    <SelectItem value="Abierta">{t('incidents.status.open')}</SelectItem>
+                    <SelectItem value="En Progreso">{t('incidents.status.inProgress')}</SelectItem>
+                    <SelectItem value="Resuelta">{t('incidents.status.resolved')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
           </div>
           <DialogFooter>
-            <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+            <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
             <Button onClick={handleSaveIncident} disabled={saving}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Guardar Incidencia
+              {t('incidents.incidents.modal.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -301,13 +304,13 @@ function IncidentsTab() {
       <AlertDialog open={!!incidentToDelete} onOpenChange={(open) => !open && setIncidentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
-            <AlertDialogDescription>Esta acción no se puede deshacer y eliminará permanentemente el registro de la incidencia.</AlertDialogDescription>
+            <AlertDialogTitle>{t('incidents.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('incidents.confirmDeleteDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteIncident} disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : "Eliminar"}
+              {saving ? <Loader2 className="animate-spin" /> : t('incidents.incidents.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -319,6 +322,7 @@ function IncidentsTab() {
 
 function ProtocolsTab() {
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -344,8 +348,8 @@ function ProtocolsTab() {
       console.error("Error fetching data:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "No se pudieron cargar los protocolos.",
+        title: t('common.error'),
+        description: t('incidents.errors.loadProtocols'),
       });
     }
     setLoading(false);
@@ -373,17 +377,17 @@ function ProtocolsTab() {
 
   const handleFileUpload = async () => {
     if (!clubId) {
-        toast({ variant: "destructive", title: "Error de Autenticación", description: "Debes estar autenticado para subir archivos."});
+        toast({ variant: "destructive", title: t('incidents.errors.authErrorTitle'), description: t('incidents.errors.authErrorDesc')});
         return;
     }
     if (!fileToUpload || !protocolNameToSave.trim()) {
-      toast({ variant: "destructive", title: "Faltan datos", description: "El nombre del protocolo y el archivo son obligatorios."});
+      toast({ variant: "destructive", title: t('incidents.errors.missingDataTitle'), description: t('incidents.errors.missingDataDesc')});
       return;
     }
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     if (fileToUpload.size > MAX_FILE_SIZE) {
-        toast({ variant: "destructive", title: "Archivo demasiado grande", description: "El tamaño máximo del archivo es 10 MB."});
+        toast({ variant: "destructive", title: t('incidents.errors.fileTooLargeTitle'), description: t('incidents.errors.fileTooLargeDesc')});
         return;
     }
 
@@ -406,8 +410,8 @@ function ProtocolsTab() {
       await addDoc(collection(db, "clubs", clubId, "protocols"), newProtocolData);
 
       toast({
-        title: "¡Protocolo Subido!",
-        description: `${protocolNameToSave} se ha guardado correctamente.`,
+        title: t('incidents.protocols.uploadSuccessTitle'),
+        description: t('incidents.protocols.uploadSuccessDesc', { protocolName: protocolNameToSave }),
       });
       
       setIsUploadModalOpen(false);
@@ -418,11 +422,11 @@ function ProtocolsTab() {
 
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      let errorMessage = "No se pudo subir el archivo. Revisa tu conexión y los permisos de Firebase Storage.";
+      let errorMessage = t('incidents.errors.uploadErrorDescDefault');
       if (error.code === 'storage/unauthorized') {
-        errorMessage = "Error de permisos. No estás autorizado para subir archivos a esta ubicación.";
+        errorMessage = t('incidents.errors.uploadErrorUnauthorized');
       }
-      toast({ variant: "destructive", title: "Error de Subida", description: errorMessage });
+      toast({ variant: "destructive", title: t('incidents.errors.uploadErrorTitle'), description: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -439,8 +443,8 @@ function ProtocolsTab() {
       await deleteDoc(doc(db, "clubs", clubId, "protocols", protocolToDelete.id!));
       
       toast({
-        title: "Protocolo Eliminado",
-        description: `${protocolToDelete.name} ha sido eliminado.`,
+        title: t('incidents.protocols.deleteSuccessTitle'),
+        description: t('incidents.protocols.deleteSuccessDesc', { protocolName: protocolToDelete.name }),
       });
 
       setProtocolToDelete(null);
@@ -449,8 +453,8 @@ function ProtocolsTab() {
       console.error("Error deleting protocol:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "No se pudo eliminar el protocolo.",
+        title: t('common.error'),
+        description: t('incidents.errors.deleteProtocol'),
       });
     } finally {
       setSaving(false);
@@ -462,9 +466,9 @@ function ProtocolsTab() {
       <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <CardTitle>Todos los Protocolos</CardTitle>
+            <CardTitle>{t('incidents.protocols.title')}</CardTitle>
             <CardDescription>
-              Documentos de actuación para todo el club.
+              {t('incidents.protocols.description')}
             </CardDescription>
           </div>
           <Dialog
@@ -474,29 +478,28 @@ function ProtocolsTab() {
             <DialogTrigger asChild>
               <Button className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Subir Nuevo Protocolo
+                {t('incidents.protocols.uploadButton')}
               </Button>
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Subir Nuevo Protocolo</DialogTitle>
+                <DialogTitle>{t('incidents.protocols.modal.title')}</DialogTitle>
                 <DialogDescription>
-                  Selecciona un archivo y ponle un nombre descriptivo para
-                  identificarlo fácilmente.
+                  {t('incidents.protocols.modal.description')}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="protocol-name">Nombre del Protocolo *</Label>
+                  <Label htmlFor="protocol-name">{t('incidents.protocols.modal.nameLabel')} *</Label>
                   <Input
                     id="protocol-name"
-                    placeholder="p.ej., Protocolo de Lesiones Graves"
+                    placeholder={t('incidents.protocols.modal.namePlaceholder')}
                     value={protocolNameToSave}
                     onChange={(e) => setProtocolNameToSave(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="protocol-file">Archivo *</Label>
+                  <Label htmlFor="protocol-file">{t('incidents.protocols.modal.fileLabel')} *</Label>
                   <Input
                     id="protocol-file"
                     type="file"
@@ -504,19 +507,19 @@ function ProtocolsTab() {
                       setFileToUpload(e.target.files?.[0] || null)
                     }
                   />
-                  <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
+                  <p className="text-xs text-muted-foreground">{t('incidents.protocols.modal.fileHint')}</p>
                 </div>
               </div>
               <DialogFooter>
                 <DialogClose asChild>
-                  <Button variant="secondary">Cancelar</Button>
+                  <Button variant="secondary">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button onClick={handleFileUpload} disabled={saving}>
                   {saving && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   )}
                   <Upload className="mr-2 h-4 w-4" />
-                  Subir y Guardar
+                  {t('incidents.protocols.modal.saveButton')}
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -532,9 +535,9 @@ function ProtocolsTab() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre del Archivo</TableHead>
-                    <TableHead>Fecha de Subida</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t('incidents.protocols.table.fileName')}</TableHead>
+                    <TableHead>{t('incidents.protocols.table.uploadDate')}</TableHead>
+                    <TableHead className="text-right">{t('incidents.protocols.table.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -548,7 +551,7 @@ function ProtocolsTab() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {format(protocol.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                          {format(protocol.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: locale === 'ca' ? ca : es })}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="icon" className="mr-2">
@@ -568,7 +571,7 @@ function ProtocolsTab() {
                         colSpan={3}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        Todavía no se ha subido ningún protocolo.
+                        {t('incidents.protocols.noProtocols')}
                       </TableCell>
                     </TableRow>
                   )}
@@ -585,14 +588,13 @@ function ProtocolsTab() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('incidents.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. El archivo se eliminará
-              permanentemente.
+              {t('incidents.confirmDeleteDescProtocol')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteProtocol}
               disabled={saving}
@@ -601,7 +603,7 @@ function ProtocolsTab() {
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Eliminar"
+                t('incidents.incidents.delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -613,24 +615,25 @@ function ProtocolsTab() {
 
 
 export default function IncidentsAndProtocolsPage() {
+    const { t } = useTranslation();
     const [activeTab, setActiveTab] = useState("incidents");
     const tabs = [
-        { id: "incidents", label: "Registro de Incidencias", icon: AlertTriangle },
-        { id: "protocols", label: "Protocolos del Club", icon: ClipboardList }
+        { id: "incidents", label: t('incidents.tabs.incidents'), icon: AlertTriangle },
+        { id: "protocols", label: t('incidents.tabs.protocols'), icon: ClipboardList }
     ];
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-bold font-headline tracking-tight">Incidencias y Protocolos</h1>
+        <h1 className="text-2xl font-bold font-headline tracking-tight">{t('sidebar.incidents')}</h1>
         <p className="text-muted-foreground">
-          Gestiona incidencias y consulta los protocolos de actuación del club.
+          {t('incidents.description')}
         </p>
       </div>
       <div className="sm:hidden">
         <Select value={activeTab} onValueChange={setActiveTab}>
           <SelectTrigger>
-            <SelectValue placeholder="Seleccionar sección..." />
+            <SelectValue placeholder={t('incidents.selectSection')} />
           </SelectTrigger>
           <SelectContent>
             {tabs.map((tab) => (

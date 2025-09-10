@@ -25,8 +25,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parse, parseISO, addMonths, subMonths } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "@/components/i18n-provider";
 
 
 type Venue = {
@@ -263,6 +264,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
 
 function CalendarView() {
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [clubId, setClubId] = useState<string | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -569,9 +571,9 @@ function CalendarView() {
   const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
   const placeholders = Array.from({ length: startDay }, (_, i) => i);
   
-  const monthName = addMonths(startOfMonth, 1).toLocaleString('es-ES', { month: 'long', timeZone: 'UTC' });
+  const monthName = addMonths(startOfMonth, 1).toLocaleString(locale === 'ca' ? 'ca-ES' : 'es-ES', { month: 'long', timeZone: 'UTC' });
   const year = startOfMonth.getUTCFullYear();
-  const selectedTemplateName = templates.find(t => t.id === defaultTemplateId)?.name || 'Seleccionar Plantilla';
+  const selectedTemplateName = templates.find(t => t.id === defaultTemplateId)?.name || t('schedules.calendar.selectTemplate');
 
   return (
     <>
@@ -581,11 +583,11 @@ function CalendarView() {
             <Button variant="outline" size="icon" onClick={() => changeMonth(-1)}><ChevronLeft className="h-4 w-4" /></Button>
             <CardTitle className="text-xl capitalize min-w-[150px] text-center">{monthName} {year}</CardTitle>
             <Button variant="outline" size="icon" onClick={() => changeMonth(1)}><ChevronRight className="h-4 w-4" /></Button>
-            <Button variant="outline" onClick={() => setCurrentDate(new Date())}>Hoy</Button>
+            <Button variant="outline" onClick={() => setCurrentDate(new Date())}>{t('schedules.calendar.today')}</Button>
         </div>
         <div className="flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto">
             <div className="w-full sm:w-auto">
-                <Label>Plantilla por defecto</Label>
+                <Label>{t('schedules.calendar.defaultTemplate')}</Label>
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button variant="outline" disabled={isUpdating || templates.length === 0} className="w-full sm:w-[180px] justify-between mt-1">
@@ -596,9 +598,9 @@ function CalendarView() {
                     </PopoverTrigger>
                     <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                         <Command>
-                            <CommandInput placeholder="Buscar plantilla..." />
+                            <CommandInput placeholder={t('schedules.calendar.searchTemplate')}/>
                             <CommandList>
-                            <CommandEmpty>No se encontró ninguna plantilla.</CommandEmpty>
+                            <CommandEmpty>{t('schedules.calendar.noTemplateFound')}</CommandEmpty>
                             <CommandGroup>
                                 {templates.map((template) => (
                                 <CommandItem
@@ -624,15 +626,15 @@ function CalendarView() {
                 <DropdownMenuTrigger asChild>
                     <Button className="gap-1 w-full sm:w-auto self-end" disabled={isUpdating}>
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                        Acciones ({selectedDays.size})
+                        {t('schedules.calendar.actions')} ({selectedDays.size})
                         <MoreHorizontal className="h-3.5 w-3.5" />
                     </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                    <DropdownMenuItem onSelect={() => handleOpenModal('add')}>Añadir Evento a Día Seleccionado</DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => handleOpenModal('add')}>{t('schedules.calendar.addEventToSelection')}</DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuSub>
-                        <DropdownMenuSubTrigger>Asignar Plantilla a Días</DropdownMenuSubTrigger>
+                        <DropdownMenuSubTrigger>{t('schedules.calendar.assignTemplate')}</DropdownMenuSubTrigger>
                         <DropdownMenuSubContent>
                             {templates.map(template => (
                                 <DropdownMenuItem key={template.id} onSelect={() => handleApplyTemplateToSelection(template.id)}>
@@ -643,21 +645,21 @@ function CalendarView() {
                     </DropdownMenuSub>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onSelect={handleRevertToDefault}>
-                        Volver a la Plantilla por Defecto
+                        {t('schedules.calendar.revertToDefault')}
                     </DropdownMenuItem>
                 </DropdownMenuContent>
              </DropdownMenu>
           ) : (
             <Button className="gap-1 w-full sm:w-auto self-end" onClick={() => handleOpenModal('add')}>
                 <PlusCircle className="h-3.5 w-3.5" />
-                Añadir Evento
+                {t('schedules.calendar.addEvent')}
             </Button>
           )}
         </div>
       </CardHeader>
         <div className="sticky top-0 z-10 bg-card">
             <div className="grid grid-cols-7 border-b border-border">
-                {['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'].map(day => (
+                {t('schedules.calendar.daysShort', { returnObjects: true }).map((day: string) => (
                     <div key={day} className="text-center font-semibold py-2 text-muted-foreground text-sm">{day}</div>
                 ))}
             </div>
@@ -709,19 +711,19 @@ function CalendarView() {
     <Dialog open={isEventModalOpen} onOpenChange={setIsEventModalOpen}>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>{modalMode === 'add' ? 'Añadir Nuevo Evento' : 'Editar Evento'}</DialogTitle>
+                <DialogTitle>{modalMode === 'add' ? t('schedules.calendar.modal.addTitle') : t('schedules.calendar.modal.editTitle')}</DialogTitle>
                 <DialogDescription>
-                    Rellena los detalles del evento.
+                    {t('schedules.calendar.modal.description')}
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                    <Label htmlFor="event-title">Título del Evento</Label>
+                    <Label htmlFor="event-title">{t('schedules.calendar.modal.eventTitle')}</Label>
                     <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} />
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label>Fecha de Inicio</Label>
+                        <Label>{t('schedules.calendar.modal.startDate')}</Label>
                         <DatePicker 
                             date={eventData.start ? eventData.start.toDate() : undefined}
                             onDateChange={(date) => {
@@ -736,7 +738,7 @@ function CalendarView() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <Label>Fecha de Fin</Label>
+                        <Label>{t('schedules.calendar.modal.endDate')}</Label>
                          <DatePicker 
                             date={eventData.end ? eventData.end.toDate() : undefined}
                             onDateChange={(date) => {
@@ -753,7 +755,7 @@ function CalendarView() {
                 </div>
                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label htmlFor="event-start-time">Hora de Inicio</Label>
+                        <Label htmlFor="event-start-time">{t('schedules.calendar.modal.startTime')}</Label>
                         <Input id="event-start-time" type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => {
                              if(eventData.start) {
                                 const [h, m] = e.target.value.split(':');
@@ -764,7 +766,7 @@ function CalendarView() {
                         }}/>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="event-end-time">Hora de Fin</Label>
+                        <Label htmlFor="event-end-time">{t('schedules.calendar.modal.endTime')}</Label>
                         <Input id="event-end-time" type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => {
                              if(eventData.end) {
                                 const [h, m] = e.target.value.split(':');
@@ -776,11 +778,11 @@ function CalendarView() {
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <Label htmlFor="event-location">Ubicación (Opcional)</Label>
+                    <Label htmlFor="event-location">{t('schedules.calendar.modal.location')}</Label>
                     <Input id="event-location" value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
                 </div>
                 <div className="space-y-2">
-                    <Label>Color del Evento</Label>
+                    <Label>{t('schedules.calendar.modal.eventColor')}</Label>
                     <div className="flex gap-2 flex-wrap">
                         {EVENT_COLORS.map(color => (
                             <button key={color.name} onClick={() => setEventData({...eventData, color: color.value})} className={cn("h-8 w-8 rounded-full border-2 transition-transform", eventData.color === color.value ? 'border-ring scale-110' : 'border-transparent')} style={{backgroundColor: color.hex}}/>
@@ -794,15 +796,15 @@ function CalendarView() {
                      <Button variant="secondary" onClick={handleDeleteEvent} disabled={isUpdating}>
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                         <Trash2 className="mr-2 h-4 w-4"/>
-                        Eliminar Evento
+                        {t('schedules.calendar.modal.deleteEvent')}
                     </Button>
                   )}
                 </div>
                 <div className="flex gap-2">
-                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
+                    <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
                     <Button onClick={handleSaveEvent} disabled={isUpdating}>
                         {isUpdating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                        Guardar Evento
+                        {t('schedules.calendar.modal.saveEvent')}
                     </Button>
                 </div>
             </DialogFooter>
@@ -812,7 +814,7 @@ function CalendarView() {
     <Dialog open={isDayModalOpen} onOpenChange={setIsDayModalOpen}>
         <DialogContent className="max-w-xl">
             <DialogHeader>
-                <DialogTitle className="capitalize">Eventos del {selectedDayDetails && format(selectedDayDetails.date, "eeee, d 'de' LLLL", { locale: es })}</DialogTitle>
+                <DialogTitle className="capitalize">{t('schedules.calendar.dayDetail.title')} {selectedDayDetails && format(selectedDayDetails.date, "eeee, d 'de' LLLL", { locale: es })}</DialogTitle>
             </DialogHeader>
             <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
                 <div className="space-y-3">
@@ -835,13 +837,13 @@ function CalendarView() {
                             )
                         })
                     ) : (
-                        <p className="text-center text-muted-foreground py-8">No hay eventos para este día.</p>
+                        <p className="text-center text-muted-foreground py-8">{t('schedules.calendar.dayDetail.noEvents')}</p>
                     )}
                 </div>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button variant="outline">Cerrar</Button>
+                    <Button variant="outline">{t('schedules.calendar.dayDetail.close')}</Button>
                 </DialogClose>
             </DialogFooter>
         </DialogContent>
@@ -851,13 +853,8 @@ function CalendarView() {
   )
 }
 
-const scheduleTabs = [
-    { value: "editor", label: "Editor de Plantilla", icon: Edit },
-    { value: "calendar", label: "Calendario de Eventos", icon: Calendar },
-    { value: "preview", label: "Vista Semanal", icon: Eye },
-];
-
 export default function SchedulesPage() {
+  const { t } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -893,6 +890,12 @@ export default function SchedulesPage() {
   
   const [pendingAssignments, setPendingAssignments] = useState<Assignment[]>([]);
   const [currentTab, setCurrentTab] = useState("editor");
+
+   const scheduleTabs = [
+    { value: "editor", label: t('schedules.tabs.editor'), icon: Edit },
+    { value: "calendar", label: t('schedules.tabs.calendar'), icon: Calendar },
+    { value: "preview", label: t('schedules.tabs.preview'), icon: Eye },
+];
   
   const getScheduleRef = useCallback((templateId: string) => {
     if (!clubId || !templateId) return null;
@@ -1000,7 +1003,7 @@ export default function SchedulesPage() {
             await updateDoc(scheduleRef, { venues: updatedVenues });
             setVenues(updatedVenues);
             setNewVenueName('');
-            toast({ title: "Recinto/Pista añadido", description: "El nuevo recinto/pista se ha guardado." });
+            toast({ title: t('schedules.editor.venueAdded'), description: t('schedules.editor.venueAddedDesc') });
         }
     }
   }
@@ -1012,7 +1015,7 @@ export default function SchedulesPage() {
     if (scheduleRef) {
         await updateDoc(scheduleRef, { venues: updatedVenues });
         setVenues(updatedVenues);
-        toast({ title: "Recinto/Pista eliminado", description: "El recinto/pista se ha eliminado." });
+        toast({ title: t('schedules.editor.venueRemoved'), description: t('schedules.editor.venueRemovedDesc') });
     }
   }
 
@@ -1034,7 +1037,7 @@ export default function SchedulesPage() {
               color: templateColor,
             });
             setWeeklySchedule(updatedWeeklySchedule);
-            toast({ title: "Plantilla Guardada", description: `Los horarios para el ${currentDay} se han guardado.` });
+            toast({ title: t('schedules.editor.templateSaved'), description: t('schedules.editor.templateSavedDesc', { day: currentDay }) });
         } catch (error) {
             console.error("Error saving template:", error);
             toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la plantilla." });
@@ -1057,7 +1060,7 @@ export default function SchedulesPage() {
             endTime: "23:00",
             color: TEMPLATE_COLORS[0].value,
         });
-        toast({ title: "Plantilla creada", description: `La plantilla "${newTemplateName}" ha sido creada.` });
+        toast({ title: t('schedules.templateCreated'), description: t('schedules.templateCreatedDesc', { templateName: newTemplateName }) });
         setIsNewTemplateModalOpen(false);
         setNewTemplateName("");
         if(clubId) fetchAllData(clubId);
@@ -1073,7 +1076,7 @@ export default function SchedulesPage() {
     try {
       if(scheduleRef){
         await updateDoc(scheduleRef, { name: editedTemplateName.trim() });
-        toast({ title: "Plantilla actualizada", description: `El nombre de la plantilla se ha actualizado.` });
+        toast({ title: t('schedules.templateRenamed'), description: t('schedules.templateRenamedDesc') });
         setIsEditTemplateModalOpen(false);
         setEditedTemplateName("");
         if(clubId) fetchAllData(clubId);
@@ -1088,7 +1091,7 @@ export default function SchedulesPage() {
     if (!clubId || !templateToDelete) return;
     try {
         await deleteDoc(doc(db, "clubs", clubId, "schedules", templateToDelete.id));
-        toast({ title: "Plantilla eliminada", description: "La plantilla ha sido eliminada." });
+        toast({ title: t('schedules.templateDeleted'), description: t('schedules.templateDeletedDesc') });
         setTemplateToDelete(null);
         setCurrentTemplateId(null); // Reset current template
         if(clubId) fetchAllData(clubId);
@@ -1344,21 +1347,21 @@ export default function SchedulesPage() {
     <div className="flex flex-col gap-6 h-full">
        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold font-headline tracking-tight">Planificación y Horarios</h1>
-          <p className="text-muted-foreground">Define tus plantillas de horarios y asígnalas a los días del calendario.</p>
+          <h1 className="text-2xl font-bold font-headline tracking-tight">{t('sidebar.schedules')}</h1>
+          <p className="text-muted-foreground">{t('schedules.description')}</p>
         </div>
       </div>
       <Card>
           <CardHeader className="flex flex-col md:flex-row items-stretch md:items-center md:justify-between gap-4">
                 <div className="w-full md:w-auto">
-                  <Label>Plantilla seleccionada</Label>
+                  <Label>{t('schedules.selectedTemplate')}</Label>
                   <div className="flex items-center gap-2 mt-1">
                       <Dialog open={isNewTemplateModalOpen} onOpenChange={setIsNewTemplateModalOpen}>
                         <Dialog open={isEditTemplateModalOpen} onOpenChange={setIsEditTemplateModalOpen}>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                 <Button variant="outline" className="flex-1 md:flex-none">
-                                    {displayTemplate?.name || "Seleccionar"}
+                                    {displayTemplate?.name || t('schedules.select')}
                                     <MoreVertical className="ml-2 h-4 w-4" />
                                 </Button>
                                 </DropdownMenuTrigger>
@@ -1374,7 +1377,7 @@ export default function SchedulesPage() {
                                         setIsNewTemplateModalOpen(true);
                                     }}>
                                         <PlusCircle className="mr-2 h-4 w-4"/>
-                                        Crear Plantilla
+                                        {t('schedules.createTemplate')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onSelect={(e) => {
                                         e.preventDefault();
@@ -1382,43 +1385,43 @@ export default function SchedulesPage() {
                                         setIsEditTemplateModalOpen(true);
                                     }} disabled={!currentTemplateId}>
                                         <Edit className="mr-2 h-4 w-4"/>
-                                        Renombrar
+                                        {t('schedules.rename')}
                                     </DropdownMenuItem>
                                 <DropdownMenuItem className="text-destructive" onSelect={() => setTemplateToDelete(displayTemplate || null)} disabled={!currentTemplateId}>
                                     <Trash2 className="mr-2 h-4 w-4"/>
-                                    Eliminar
+                                    {t('schedules.delete')}
                                 </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Renombrar Plantilla</DialogTitle>
-                                    <DialogDescription>Introduce un nuevo nombre para la plantilla "{displayTemplate?.name}".</DialogDescription>
+                                    <DialogTitle>{t('schedules.renameTemplateTitle')}</DialogTitle>
+                                    <DialogDescription>{t('schedules.renameTemplateDesc', { templateName: displayTemplate?.name })}</DialogDescription>
                                 </DialogHeader>
                                 <div className="py-4">
-                                    <Label htmlFor="edit-template-name">Nuevo Nombre</Label>
+                                    <Label htmlFor="edit-template-name">{t('schedules.newTemplateName')}</Label>
                                     <Input id="edit-template-name" value={editedTemplateName} onChange={(e) => setEditedTemplateName(e.target.value)} />
                                 </div>
                                 <DialogFooter>
-                                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                    <Button onClick={handleEditTemplateName}>Guardar Cambios</Button>
+                                    <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                                    <Button onClick={handleEditTemplateName}>{t('common.saveChanges')}</Button>
                                 </DialogFooter>
                             </DialogContent>
                           </Dialog>
                         
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Crear Nueva Plantilla de Horarios</DialogTitle>
-                                <DialogDescription>Introduce un nombre para tu nueva plantilla.</DialogDescription>
+                                <DialogTitle>{t('schedules.createTemplateTitle')}</DialogTitle>
+                                <DialogDescription>{t('schedules.createTemplateDesc')}</DialogDescription>
                             </DialogHeader>
                             <div className="py-4">
-                                <Label htmlFor="new-template-name">Nombre de la Plantilla</Label>
+                                <Label htmlFor="new-template-name">{t('schedules.templateName')}</Label>
                                 <Input id="new-template-name" value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
                             </div>
                             <DialogFooter>
-                                <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                <Button onClick={handleCreateTemplate}>Crear Plantilla</Button>
+                                <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                                <Button onClick={handleCreateTemplate}>{t('schedules.createTemplate')}</Button>
                             </DialogFooter>
                         </DialogContent>
                       </Dialog>
@@ -1440,7 +1443,7 @@ export default function SchedulesPage() {
           <div className="sm:hidden mb-4">
             <Select value={currentTab} onValueChange={setCurrentTab}>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccionar vista..." />
+                <SelectValue placeholder={t('schedules.tabs.selectView')} />
               </SelectTrigger>
               <SelectContent>
                 {scheduleTabs.map(tab => (
@@ -1465,8 +1468,8 @@ export default function SchedulesPage() {
               <div className="lg:col-span-3 xl:col-span-1">
                 <Card>
                     <CardHeader>
-                        <CardTitle>Configuración de Horarios</CardTitle>
-                        <CardDescription>Define recintos/pistas, rango horario y asigna tiempos a tus equipos para el <span className="font-semibold">{currentDay}</span>.</CardDescription>
+                        <CardTitle>{t('schedules.editor.title')}</CardTitle>
+                        <CardDescription>{t('schedules.editor.description', { day: currentDay })}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-6">
                         <Accordion type="multiple" className="w-full" defaultValue={['assignments']}>
@@ -1474,12 +1477,12 @@ export default function SchedulesPage() {
                             <AccordionTrigger className="text-base font-semibold">
                                 <div className="flex items-center gap-2">
                                 <Settings className="h-5 w-5" />
-                                Configuración General
+                                {t('schedules.editor.generalSettings')}
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-4 space-y-4">
                                 <div className="space-y-2">
-                                    <Label>Color de la Plantilla</Label>
+                                    <Label>{t('schedules.editor.templateColor')}</Label>
                                     <div className="flex flex-wrap gap-2">
                                         {TEMPLATE_COLORS.map(color => (
                                             <button
@@ -1492,9 +1495,9 @@ export default function SchedulesPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                <Label>Recintos/Pistas de Entrenamiento</Label>
+                                <Label>{t('schedules.editor.venues')}</Label>
                                 <div className="flex items-center gap-2">
-                                    <Input placeholder="Nombre del nuevo recinto/pista" value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
+                                    <Input placeholder={t('schedules.editor.newVenuePlaceholder')} value={newVenueName} onChange={(e) => setNewVenueName(e.target.value)} />
                                     <Button onClick={handleAddVenue} size="sm"><PlusCircle className="h-4 w-4"/></Button>
                                 </div>
                                 <div className="space-y-2">
@@ -1510,11 +1513,11 @@ export default function SchedulesPage() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-4 pt-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="start-time">Hora de Inicio</Label>
+                                        <Label htmlFor="start-time">{t('schedules.editor.startTime')}</Label>
                                         <Input id="start-time" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="end-time">Hora de Fin</Label>
+                                        <Label htmlFor="end-time">{t('schedules.editor.endTime')}</Label>
                                         <Input id="end-time" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} />
                                     </div>
                                 </div>
@@ -1524,7 +1527,7 @@ export default function SchedulesPage() {
                             <AccordionTrigger className="text-base font-semibold">
                                 <div className="flex items-center gap-2">
                                 <Clock className="h-5 w-5" />
-                                Asignaciones para el {currentDay}
+                                {t('schedules.editor.assignmentsFor', { day: currentDay })}
                                 </div>
                             </AccordionTrigger>
                             <AccordionContent className="pt-4 space-y-4">
@@ -1533,18 +1536,18 @@ export default function SchedulesPage() {
                                     <div key={assignment.id} className="flex items-end gap-2 p-3 rounded-lg border bg-card shadow-sm">
                                         <div className="grid grid-cols-1 gap-2 flex-1">
                                         <div className="space-y-1">
-                                            <Label className="text-xs">Equipo</Label>
+                                            <Label className="text-xs">{t('schedules.editor.team')}</Label>
                                             <Select value={assignment.teamId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'teamId', value)}>
-                                            <SelectTrigger className="h-8"><SelectValue placeholder="Equipo" /></SelectTrigger>
+                                            <SelectTrigger className="h-8"><SelectValue placeholder={t('schedules.editor.team')} /></SelectTrigger>
                                             <SelectContent>
                                                 {teams.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}
                                             </SelectContent>
                                             </Select>
                                         </div>
                                         <div className="space-y-1">
-                                            <Label className="text-xs">Recinto/Pista</Label>
+                                            <Label className="text-xs">{t('schedules.editor.venue')}</Label>
                                             <Select value={assignment.venueId} onValueChange={(value) => handleAssignmentSelectChange(assignment.id, 'venueId', value)}>
-                                            <SelectTrigger className="h-8"><SelectValue placeholder="Recinto/Pista" /></SelectTrigger>
+                                            <SelectTrigger className="h-8"><SelectValue placeholder={t('schedules.editor.venue')} /></SelectTrigger>
                                             <SelectContent>
                                                 {venues.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)}
                                             </SelectContent>
@@ -1552,11 +1555,11 @@ export default function SchedulesPage() {
                                         </div>
                                         <div className="flex gap-2">
                                             <div className="space-y-1 w-full">
-                                            <Label className="text-xs">Inicio</Label>
+                                            <Label className="text-xs">{t('schedules.editor.start')}</Label>
                                             <Input type="time" value={assignment.startTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'startTime', e.target.value)} className="h-8" />
                                             </div>
                                             <div className="space-y-1 w-full">
-                                            <Label className="text-xs">Fin</Label>
+                                            <Label className="text-xs">{t('schedules.editor.end')}</Label>
                                             <Input type="time" value={assignment.endTime} onChange={(e) => handleUpdateAssignment(assignment.id, 'endTime', e.target.value)} className="h-8" />
                                             </div>
                                         </div>
@@ -1570,7 +1573,7 @@ export default function SchedulesPage() {
 
                                 <Button variant="outline" className="w-full" onClick={handleAddAssignmentRow}>
                                 <PlusCircle className="mr-2 h-4 w-4"/>
-                                Añadir Asignación
+                                {t('schedules.editor.addAssignment')}
                                 </Button>
                             </AccordionContent>
                             </AccordionItem>
@@ -1588,7 +1591,7 @@ export default function SchedulesPage() {
                       </div>
                       <div className="flex items-center gap-1 w-full justify-center md:w-auto">
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('prev')} disabled={venues.length < 2}><ChevronLeft className="h-4 w-4" /></Button>
-                          <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || "Sin Recintos/Pistas"}</div>
+                          <div className="text-base font-semibold capitalize w-32 text-center truncate">{currentVenue?.name || t('schedules.editor.noVenues')}</div>
                           <Button variant="outline" size="icon" className="h-8 w-8" onClick={() => navigateVenue('next')} disabled={venues.length < 2}><ChevronRight className="h-4 w-4" /></Button>
                       </div>
                   </CardHeader>
@@ -1627,7 +1630,7 @@ export default function SchedulesPage() {
                   <div className="p-6 border-t">
                       <Button size="lg" className="w-full gap-2" onClick={handleSaveTemplate}>
                           <Clock className="h-5 w-5"/>
-                          Guardar Plantilla
+                          {t('schedules.editor.saveTemplate')}
                       </Button>
                   </div>
               </Card>
@@ -1652,15 +1655,15 @@ export default function SchedulesPage() {
        <AlertDialog open={!!templateToDelete} onOpenChange={(open) => !open && setTemplateToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('schedules.deleteTemplateConfirmTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente la plantilla "{templateToDelete?.name}".
+              {t('schedules.deleteTemplateConfirmDesc', { templateName: templateToDelete?.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTemplate}>
-              Eliminar
+              {t('schedules.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1669,8 +1672,3 @@ export default function SchedulesPage() {
     </div>
   );
 }
-
-
-
-    
-

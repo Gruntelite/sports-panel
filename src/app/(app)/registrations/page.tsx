@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -64,13 +65,15 @@ import {
   Eye,
 } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { RegistrationFormCreator } from "@/components/registration-form-creator";
+import { useTranslation } from "@/components/i18n-provider";
 
 export default function RegistrationsPage() {
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -128,7 +131,7 @@ export default function RegistrationsPage() {
   const handleCopyLink = (formId: string) => {
      const fullUrl = `${window.location.origin}/form/${formId}`;
      navigator.clipboard.writeText(fullUrl);
-     toast({ title: "Enlace Copiado", description: "La URL del formulario se ha copiado." });
+     toast({ title: t('registrations.linkCopied'), description: t('registrations.linkCopiedDesc') });
   }
 
   const handleDeleteForm = async () => {
@@ -136,11 +139,11 @@ export default function RegistrationsPage() {
     setSaving(true);
     try {
         await deleteDoc(doc(db, "clubs", clubId, "registrationForms", formToDelete.id));
-        toast({ title: "Evento eliminado", description: `El evento "${formToDelete.title}" ha sido eliminado.` });
+        toast({ title: t('registrations.eventDeleted'), description: t('registrations.eventDeletedDesc', { eventName: formToDelete.title }) });
         setFormToDelete(null);
         fetchForms(clubId);
     } catch(e) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el evento."});
+        toast({ variant: "destructive", title: "Error", description: t('registrations.eventDeleteError')});
     } finally {
         setSaving(false);
     }
@@ -151,15 +154,15 @@ export default function RegistrationsPage() {
       <div className="flex flex-col gap-6">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold font-headline tracking-tight">Inscripciones y Eventos</h1>
+            <h1 className="text-2xl font-bold font-headline tracking-tight">{t('sidebar.registrations')}</h1>
             <p className="text-muted-foreground">
-              Crea y gestiona formularios para tus eventos, campus o captaciones.
+              {t('registrations.description')}
             </p>
           </div>
            <div className="mt-4 md:mt-0">
              <Button onClick={() => handleOpenModal('add')} className="w-full md:w-auto">
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Crear Nuevo Evento
+                {t('registrations.createEvent')}
               </Button>
            </div>
         </div>
@@ -179,9 +182,9 @@ export default function RegistrationsPage() {
                           <CardDescription>
                             {form.eventStartDate ? (
                                 <span>
-                                    Del {format(form.eventStartDate.toDate(), "d MMM", { locale: es })} al {format(form.eventEndDate ? form.eventEndDate.toDate() : form.eventStartDate.toDate(), "d MMM yyyy", { locale: es })}
+                                    {t('registrations.from')} {format(form.eventStartDate.toDate(), "d MMM", { locale: locale === 'ca' ? ca : es })} {t('registrations.to')} {format(form.eventEndDate ? form.eventEndDate.toDate() : form.eventStartDate.toDate(), "d MMM yyyy", { locale: locale === 'ca' ? ca : es })}
                                 </span>
-                            ) : "Sin fecha de evento"}
+                            ) : t('registrations.noEventDate')}
                           </CardDescription>
                       </div>
                       <DropdownMenu>
@@ -189,15 +192,15 @@ export default function RegistrationsPage() {
                             <Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                            <DropdownMenuItem onSelect={() => handleOpenModal('edit', form)}><Edit className="mr-2 h-4 w-4"/>Editar</DropdownMenuItem>
-                            <DropdownMenuItem asChild><Link href={`/registrations/${form.id}`}><Eye className="mr-2 h-4 w-4" />Ver Inscritos</Link></DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleOpenModal('edit', form)}><Edit className="mr-2 h-4 w-4"/>{t('registrations.edit')}</DropdownMenuItem>
+                            <DropdownMenuItem asChild><Link href={`/registrations/${form.id}`}><Eye className="mr-2 h-4 w-4" />{t('registrations.viewRegistrations')}</Link></DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />Copiar Enlace Público</DropdownMenuItem>
-                            <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />Abrir Formulario</a></DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => handleCopyLink(form.id)}><Clipboard className="mr-2 h-4 w-4" />{t('registrations.copyLink')}</DropdownMenuItem>
+                            <DropdownMenuItem asChild><a href={`/form/${form.id}`} target="_blank" rel="noopener noreferrer"><ExternalLink className="mr-2 h-4 w-4" />{t('registrations.openForm')}</a></DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem className="text-destructive" onSelect={() => setFormToDelete(form)}>
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Eliminar
+                              {t('registrations.delete')}
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -205,29 +208,29 @@ export default function RegistrationsPage() {
                   </CardHeader>
                   <CardContent className="flex-grow space-y-3">
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? 'Activo' : 'Cerrado'}</Badge>
+                        <Badge variant={form.status === 'active' ? 'secondary' : 'outline'}>{form.status === 'active' ? t('registrations.active') : t('registrations.closed')}</Badge>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <CalendarCheck className="h-4 w-4"/>
-                          <span>Inscripción: <b>{form.registrationStartDate ? format(form.registrationStartDate.toDate(), "dd/MM/yy") : 'N/A'} - {form.registrationDeadline ? format(form.registrationDeadline.toDate(), "dd/MM/yy") : 'N/A'}</b></span>
+                          <span>{t('registrations.registration')}: <b>{form.registrationStartDate ? format(form.registrationStartDate.toDate(), "dd/MM/yy") : 'N/A'} - {form.registrationDeadline ? format(form.registrationDeadline.toDate(), "dd/MM/yy") : 'N/A'}</b></span>
                       </div>
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <CircleDollarSign className="h-4 w-4"/>
-                          <span>Precio: <b>{form.price > 0 ? `${form.price}€` : 'Gratis'}</b></span>
+                          <span>{t('registrations.price')}: <b>{form.price > 0 ? `${form.price}€` : t('registrations.free')}</b></span>
                       </div>
                   </CardContent>
                   <CardFooter className="bg-muted/50 p-4">
                     <div className="flex items-center gap-2 text-sm font-semibold">
                         <Users className="h-4 w-4 text-muted-foreground"/>
-                        <span>{form.submissionCount || 0} de {form.maxSubmissions || '∞'} inscritos</span>
+                        <span>{form.submissionCount || 0} {t('registrations.of')} {form.maxSubmissions || '∞'} {t('registrations.registrants')}</span>
                     </div>
                   </CardFooter>
                 </Card>
               ))
           ) : (
               <div className="col-span-full h-48 flex flex-col items-center justify-center text-center text-muted-foreground border-2 border-dashed rounded-lg">
-                <h3 className="text-lg font-semibold">No has creado ningún evento</h3>
-                <p className="text-sm">Haz clic en "Crear Nuevo Evento" para empezar.</p>
+                <h3 className="text-lg font-semibold">{t('registrations.noEventsTitle')}</h3>
+                <p className="text-sm">{t('registrations.noEventsDesc')}</p>
               </div>
           )}
         </div>
@@ -236,8 +239,8 @@ export default function RegistrationsPage() {
        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{modalMode === 'add' ? 'Crear' : 'Editar'} Formulario de Inscripción</DialogTitle>
-            <DialogDescription>Diseña un formulario público para tu próximo evento, torneo o captación.</DialogDescription>
+            <DialogTitle>{modalMode === 'add' ? t('registrations.modal.createTitle') : t('registrations.modal.editTitle')}</DialogTitle>
+            <DialogDescription>{t('registrations.modal.description')}</DialogDescription>
           </DialogHeader>
           <RegistrationFormCreator 
             onFormSaved={handleFormSaved} 
@@ -251,13 +254,13 @@ export default function RegistrationsPage() {
        <AlertDialog open={!!formToDelete} onOpenChange={(open) => !open && setFormToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('registrations.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el evento "{formToDelete?.title}" y todas sus inscripciones asociadas.
+              {t('registrations.confirmDeleteDesc', { eventName: formToDelete?.title })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteForm}
               disabled={saving}
@@ -266,7 +269,7 @@ export default function RegistrationsPage() {
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Eliminar"
+                t('registrations.delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
