@@ -116,14 +116,10 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                 }
             });
             sponsorships.forEach(s => {
-                if (s.frequency === 'monthly') {
-                    for (let i = 0; i < 12; i++) {
-                        if (!s.excludedMonths?.includes(i)) {
-                            monthlyData[i].Ingresos += s.amount;
-                        }
-                    }
-                } else { // annual
-                    monthlyData[0].Ingresos += s.amount;
+                if (s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
+                    addOrUpdate(`${t('treasury.accounting.sponsorship')}: ${s.sponsorName}`, s.amount, 'income');
+                } else if (s.frequency === 'annual' && month === 0) {
+                    addOrUpdate(`${t('treasury.accounting.sponsorship')}: ${s.sponsorName}`, s.amount, 'income');
                 }
             });
              formsWithSubmissions.forEach(form => {
@@ -183,7 +179,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             setChartData(formattedData);
         };
         processData();
-    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions, staff, socios, locale]);
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions, staff, socios, locale, t]);
 
     const chartConfig: ChartConfig = {
         Ingresos: { label: t('treasury.chart.income'), color: "hsl(var(--chart-1))" },

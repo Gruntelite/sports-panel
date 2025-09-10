@@ -397,5 +397,66 @@
             "actions": "Accions",
             "none": "Encara no has creat cap pagament puntual."
         }
+    },
+    "dashboard": {
+        "stats": {
+            "totalPlayers": "Total de Jugadors",
+            "totalCoaches": "Total d'Entrenadors",
+            "teams": "Equips",
+            "monthlyIncome": "Ingressos Previstos (Mes)",
+            "totalIncomeIn": "Total d'ingressos a"
+        },
+        "dailySchedule": {
+            "title": "Agenda del Dia",
+            "today": "Avui",
+            "trainingsTitle": "Entrenaments del",
+            "trainingsDescription": "Sessions programades per a aquest dia.",
+            "noTrainings": "No hi ha entrenaments programats per a aquest dia.",
+            "eventsTitle": "Altres Esdeveniments del",
+            "eventsDescription": "Partits, reunions i altres esdeveniments.",
+            "noEvents": "No hi ha altres esdeveniments per a aquest dia."
+        }
+    },
+    "players": {
+        "title": "Jugadors",
+        "description": "Gestiona els jugadors del teu club i la seva informació.",
+        "requestUpdate": "Sol·licitar Actualització",
+        "columns": "Columnes",
+        "filterByTeam": "Filtrar per equip",
+        "allTeams": "Tots els equips",
+        "actions": "Accions",
+        "assignToTeam": "Assignar a Equip",
+        "unassigned": "Sense equip",
+        "deleteSelected": "Eliminar Seleccionats",
+        "addPlayer": "Afegir Jugador",
+        "toggleMenu": "Alternar menú",
+        "viewProfile": "Veure Fitxa",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "showing": "Mostrant",
+        "of": "de",
+        "playersCount": "jugadors",
+        "addPlayerTitle": "Afegir Nou Jugador",
+        "addPlayerDesc": "Emplena la informació per afegir un nou jugador al club.",
+        "editPlayerTitle": "Editar Jugador",
+        "editPlayerDesc": "Modifica la informació del jugador.",
+        "playerPhoto": "Foto del Jugador",
+        "upload": "Pujar",
+        "personalData": "Dades Personals",
+        "contactAndBank": "Contacte i Banc",
+        "sportsData": "Dades Esportives",
+        "otherData": "Altres Dades",
+        "noCustomFields": "No hi ha camps personalitzats per a jugadors. Pots afegir-los a Ajustos del Club.",
+        "confirmDeleteTitle": "Estàs segur?",
+        "confirmDeleteDesc": "Aquesta acció no es pot desfer. S'eliminarà permanentment al jugador {playerName}.",
+        "confirmBulkDeleteDesc": "Aquesta acció no es pot desfer. S'eliminaran permanentment {playerCount} jugadors.",
+        "step1Title": "Pas 1: Selecciona els camps a actualitzar",
+        "step1Desc": "Tria quina informació vols que actualitzin els jugadors.",
+        "step2Title": "Pas 2: Selecciona els destinataris",
+        "step2Desc": "Tria els jugadors que rebran la sol·licitud.",
+        "nextStep": "Següent: Seleccionar Jugadors",
+        "back": "Enrere",
+        "sendTo": "Enviar a {count} Jugador(s)",
+        "selectAll": "Seleccionar tots"
     }
 }

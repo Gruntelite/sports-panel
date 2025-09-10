@@ -397,5 +397,66 @@
             "actions": "Acciones",
             "none": "No has creado ningún pago puntual todavía."
         }
+    },
+    "dashboard": {
+        "stats": {
+            "totalPlayers": "Total de Jugadores",
+            "totalCoaches": "Total de Entrenadores",
+            "teams": "Equipos",
+            "monthlyIncome": "Ingresos Previstos (Mes)",
+            "totalIncomeIn": "Total de ingresos en"
+        },
+        "dailySchedule": {
+            "title": "Agenda del Día",
+            "today": "Hoy",
+            "trainingsTitle": "Entrenamientos del",
+            "trainingsDescription": "Sesiones programadas para este día.",
+            "noTrainings": "No hay entrenamientos programados para este día.",
+            "eventsTitle": "Otros Eventos del",
+            "eventsDescription": "Partidos, reuniones y otros eventos.",
+            "noEvents": "No hay otros eventos para este día."
+        }
+    },
+    "players": {
+        "title": "Jugadores",
+        "description": "Gestiona los jugadores de tu club y su información.",
+        "requestUpdate": "Solicitar Actualización",
+        "columns": "Columnas",
+        "filterByTeam": "Filtrar por equipo",
+        "allTeams": "Todos los equipos",
+        "actions": "Acciones",
+        "assignToTeam": "Asignar a Equipo",
+        "unassigned": "Sin equipo",
+        "deleteSelected": "Eliminar Seleccionados",
+        "addPlayer": "Añadir Jugador",
+        "toggleMenu": "Alternar menú",
+        "viewProfile": "Ver Ficha",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "showing": "Mostrando",
+        "of": "de",
+        "playersCount": "jugadores",
+        "addPlayerTitle": "Añadir Nuevo Jugador",
+        "addPlayerDesc": "Rellena la información para añadir un nuevo jugador al club.",
+        "editPlayerTitle": "Editar Jugador",
+        "editPlayerDesc": "Modifica la información del jugador.",
+        "playerPhoto": "Foto del Jugador",
+        "upload": "Subir",
+        "personalData": "Datos Personales",
+        "contactAndBank": "Contacto y Banco",
+        "sportsData": "Datos Deportivos",
+        "otherData": "Otros Datos",
+        "noCustomFields": "No hay campos personalizados para jugadores. Puedes añadirlos en Ajustes del Club.",
+        "confirmDeleteTitle": "¿Estás seguro?",
+        "confirmDeleteDesc": "Esta acción no se puede deshacer. Se eliminará permanentemente al jugador {playerName}.",
+        "confirmBulkDeleteDesc": "Esta acción no se puede deshacer. Se eliminarán permanentemente {playerCount} jugadores.",
+        "step1Title": "Paso 1: Selecciona los campos a actualizar",
+        "step1Desc": "Elige qué información quieres que actualicen los jugadores.",
+        "step2Title": "Paso 2: Selecciona los destinatarios",
+        "step2Desc": "Elige los jugadores que recibirán la solicitud.",
+        "nextStep": "Siguiente: Seleccionar Jugadores",
+        "back": "Atrás",
+        "sendTo": "Enviar a {count} Jugador(es)",
+        "selectAll": "Seleccionar todos"
     }
 }

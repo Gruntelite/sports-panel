@@ -17,8 +17,9 @@ import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { DatePicker } from "@/components/ui/date-picker";
+import { useTranslation } from "@/components/i18n-provider";
 
 const iconMap = {
   Users: Users,
@@ -47,6 +48,7 @@ type EventEntry = {
 }
 
 function DailySchedule({ selectedDate }: { selectedDate: Date }) {
+    const { t, locale } = useTranslation();
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [events, setEvents] = useState<EventEntry[]>([]);
     const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
         return () => unsubscribe();
     }, [selectedDate]);
 
-    const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: es });
+    const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: locale === 'ca' ? ca : es });
     
     const getSeparatorColorFromBorder = (colorClass: string) => {
       if (!colorClass) return 'bg-primary';
@@ -166,9 +168,9 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className="capitalize text-lg md:text-xl">Entrenamientos del {titleDate}</CardTitle>
+                    <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.trainingsTitle')} {titleDate}</CardTitle>
                     <CardDescription>
-                        Sesiones programadas para este día.
+                       {t('dashboard.dailySchedule.trainingsDescription')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -194,7 +196,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         </div>
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
-                            <p>No hay entrenamientos programados para este día.</p>
+                            <p>{t('dashboard.dailySchedule.noTrainings')}</p>
                         </div>
                     )}
                 </CardContent>
@@ -202,9 +204,9 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
 
              <Card>
                 <CardHeader>
-                    <CardTitle className="capitalize text-lg md:text-xl">Otros Eventos del {titleDate}</CardTitle>
+                    <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.eventsTitle')} {titleDate}</CardTitle>
                     <CardDescription>
-                        Partidos, reuniones y otros eventos.
+                        {t('dashboard.dailySchedule.eventsDescription')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
@@ -233,7 +235,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         </div>
                     ) : (
                         <div className="text-center py-10 text-muted-foreground">
-                            <p>No hay otros eventos para este día.</p>
+                            <p>{t('dashboard.dailySchedule.noEvents')}</p>
                         </div>
                     )}
                 </CardContent>
@@ -243,6 +245,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
 }
 
 export default function DashboardPage() {
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState([
     { id: "players", title: "Total de Jugadores", value: "0", change: "", icon: 'Users' },
@@ -276,15 +279,14 @@ export default function DashboardPage() {
                 return acc + (player.monthlyFee || 0);
             }, 0);
 
-            const monthName = format(new Date(), "LLLL 'de' yyyy", { locale: es });
+            const monthName = format(new Date(), "LLLL 'de' yyyy", { locale: locale === 'ca' ? ca : es });
 
-            setStats(prevStats => prevStats.map(stat => {
-                if (stat.id === 'players') return { ...stat, value: playersCount.toString() };
-                if (stat.id === 'coaches') return { ...stat, value: coachesCount.toString() };
-                if (stat.id === 'teams') return { ...stat, value: teamsCount.toString() };
-                if (stat.id === 'fees') return { ...stat, value: `${expectedIncome.toLocaleString('es-ES')} €`, change: `Total de ingresos en ${monthName}` };
-                return stat;
-            }));
+            setStats([
+                { id: "players", title: t('dashboard.stats.totalPlayers'), value: playersCount.toString(), change: "", icon: 'Users' },
+                { id: "coaches", title: t('dashboard.stats.totalCoaches'), value: coachesCount.toString(), change: "", icon: 'UserSquare' },
+                { id: "teams", title: t('dashboard.stats.teams'), value: teamsCount.toString(), change: "", icon: 'Shield' },
+                { id: "fees", title: t('dashboard.stats.monthlyIncome'), value: `${expectedIncome.toLocaleString('es-ES')} €`, change: `${t('dashboard.stats.totalIncomeIn')} ${monthName}`, icon: 'CircleDollarSign' },
+            ]);
 
         } catch (error) {
             console.error("Error fetching dashboard stats:", error);
@@ -312,7 +314,7 @@ export default function DashboardPage() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [t, locale]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -353,10 +355,10 @@ export default function DashboardPage() {
       
        <Card>
         <CardHeader className="flex-col items-start gap-4 space-y-0 md:flex-row md:items-center">
-          <CardTitle>Agenda del Día</CardTitle>
+          <CardTitle>{t('dashboard.dailySchedule.title')}</CardTitle>
           <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto">
             <DatePicker date={selectedDate} onDateChange={(date) => date && setSelectedDate(date)} />
-            <Button variant="outline" onClick={() => setSelectedDate(new Date())}>Hoy</Button>
+            <Button variant="outline" onClick={() => setSelectedDate(new Date())}>{t('dashboard.dailySchedule.today')}</Button>
           </div>
         </CardHeader>
       </Card>
