@@ -294,11 +294,108 @@
         { "label": "Waterpolo", "value": "waterpolo" },
         { "label": "Windsurf", "value": "windsurf" }
     ],
-    "communications": {
+     "communications": {
         "description": "Contacta con los miembros de tu club y configura tus envíos.",
         "tabs": {
             "directSend": "Envío Directo",
             "settings": "Configuración"
+        }
+    },
+     "treasury": {
+        "description": "Gestiona las cuotas, pagos y la salud financiera de tu club.",
+        "stats": {
+            "expectedIncome": "Ingresos Previstos",
+            "totalExpenses": "Gastos Totales",
+            "sponsorshipIncome": "Ingresos por Patrocinios",
+            "staffPayments": "Pagos a Personal",
+            "monthly": "Mes",
+            "annual": "Año",
+            "currentMonth": "Mes Actual",
+            "fullYear": "Año Completo",
+            "incomeDesc": "Suma de cuotas, pagos puntuales y patrocinios.",
+            "expensesDesc": "Suma de gastos recurrentes, puntuales y de personal.",
+            "sponsorshipDesc": "Suma de todos los patrocinios.",
+            "staffPaymentsDesc": "Suma de todos los pagos al cuerpo técnico y staff."
+        },
+        "chart": {
+            "title": "Análisis Financiero",
+            "description": "Evolución de ingresos y gastos durante el año.",
+            "income": "Ingresos",
+            "expenses": "Gastos",
+            "year": "Año"
+        },
+        "tabs": {
+            "accounting": "Contabilidad",
+            "fees": "Cuotas y Pagos",
+            "sponsorships": "Patrocinios",
+            "expenses": "Gastos",
+            "otherPayments": "Pagos Adicionales"
+        },
+        "accounting": {
+            "title": "Desglose de Contabilidad Mensual",
+            "description": "Resumen de todos los ingresos y gastos para el mes seleccionado.",
+            "totalIncome": "Total Ingresos",
+            "totalExpenses": "Total Gastos",
+            "balance": "Balance",
+            "category": "Categoría",
+            "amount": "Importe",
+            "noMovements": "No hay movimientos este mes.",
+            "playerFees": "Cuotas de Jugadores",
+            "socioFees": "Cuotas de Socios",
+            "socioFeesAnnual": "Cuotas de Socios (Anual)",
+            "sponsorship": "Patrocinio",
+            "oneTimePayment": "Pago Puntual",
+            "registrations": "Inscripciones",
+            "coachSalaries": "Nóminas Cuerpo Técnico",
+            "staffSalary": "Nómina",
+            "staffSalaryAnnual": "Nómina (Anual)"
+        },
+        "fees": {
+            "title": "Gestión de Cuotas y Pagos",
+            "description": "Configura los meses sin cobro para cuotas y pagos a entrenadores.",
+            "playerFeeExclusion": "Meses sin cobro de cuota (Jugadores y Socios)",
+            "staffPaymentExclusion": "Meses sin pago a personal (Entrenadores y Staff)",
+            "months": "mes(es)",
+            "select": "Seleccionar",
+            "filterByRole": "Filtrar por rol",
+            "allRoles": "Todos los roles",
+            "players": "Jugadores",
+            "coaches": "Entrenadores",
+            "staff": "Staff",
+            "socios": "Socios",
+            "filterByTeam": "Filtrar por equipo",
+            "allTeams": "Todos los equipos",
+            "member": "Miembro",
+            "team": "Equipo",
+            "role": "Rol",
+            "income": "Cuota (Ingreso)",
+            "expense": "Pago (Gasto)"
+        },
+        "sponsorships": {
+            "title": "Gestión de Patrocinios",
+            "description": "Añade, edita y gestiona los patrocinios del club.",
+            "add": "Añadir Patrocinio",
+            "sponsor": "Patrocinador",
+            "amount": "Cantidad",
+            "actions": "Acciones",
+            "none": "No has añadido ningún patrocinio todavía."
+        },
+        "expenses": {
+            "recurringTitle": "Gastos Recurrentes",
+            "recurringDescription": "Gastos fijos que se repiten mensualmente.",
+            "oneOffTitle": "Gastos Puntuales",
+            "oneOffDescription": "Gastos únicos para material, eventos, etc."
+        },
+        "otherPayments": {
+            "title": "Pagos Puntuales",
+            "description": "Crea y gestiona cobros únicos para campus, torneos, material, etc.",
+            "add": "Crear Nuevo Pago",
+            "concept": "Concepto",
+            "amount": "Cantidad",
+            "issueDate": "Fecha de Emisión",
+            "recipients": "Destinatarios",
+            "actions": "Acciones",
+            "none": "No has creado ningún pago puntual todavía."
         }
     }
 }

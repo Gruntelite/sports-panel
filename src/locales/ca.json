@@ -57,7 +57,7 @@
         ],
         "testimonials": {
             "title": "La Confiança dels que Gestionen",
-            "subtitle": "Clubs como el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel."
+            "subtitle": "Clubs com el teu ja estan estalviant temps i millorant la seva organització amb SportsPanel."
         },
         "featuresTitle": "Tot el que el teu club necessita",
         "featuresSubtitle": "Una plataforma completa pensada per optimitzar cada aspecte de la gestió del teu club, estalviant-te temps i esforç.",
@@ -299,6 +299,103 @@
         "tabs": {
             "directSend": "Enviament Directe",
             "settings": "Configuració"
+        }
+    },
+     "treasury": {
+        "description": "Gestiona les quotes, pagaments i la salut financera del teu club.",
+        "stats": {
+            "expectedIncome": "Ingressos Previstos",
+            "totalExpenses": "Despeses Totals",
+            "sponsorshipIncome": "Ingressos per Patrocinis",
+            "staffPayments": "Pagaments a Personal",
+            "monthly": "Mes",
+            "annual": "Any",
+            "currentMonth": "Mes Actual",
+            "fullYear": "Any Complet",
+            "incomeDesc": "Suma de quotes, pagaments puntuals i patrocinis.",
+            "expensesDesc": "Suma de despeses recurrents, puntuals i de personal.",
+            "sponsorshipDesc": "Suma de tots els patrocinis.",
+            "staffPaymentsDesc": "Suma de tots els pagaments al cos tècnic i staff."
+        },
+        "chart": {
+            "title": "Anàlisi Financera",
+            "description": "Evolució d'ingressos i despeses durant l'any.",
+            "income": "Ingressos",
+            "expenses": "Despeses",
+            "year": "Any"
+        },
+        "tabs": {
+            "accounting": "Comptabilitat",
+            "fees": "Quotes i Pagaments",
+            "sponsorships": "Patrocinis",
+            "expenses": "Despeses",
+            "otherPayments": "Pagaments Addicionals"
+        },
+        "accounting": {
+            "title": "Desglossament de Comptabilitat Mensual",
+            "description": "Resum de tots els ingressos i despeses per al mes seleccionat.",
+            "totalIncome": "Total Ingressos",
+            "totalExpenses": "Total Despeses",
+            "balance": "Balanç",
+            "category": "Categoria",
+            "amount": "Import",
+            "noMovements": "No hi ha moviments aquest mes.",
+            "playerFees": "Quotes de Jugadors",
+            "socioFees": "Quotes de Socis",
+            "socioFeesAnnual": "Quotes de Socis (Anual)",
+            "sponsorship": "Patrocini",
+            "oneTimePayment": "Pagament Puntual",
+            "registrations": "Inscripcions",
+            "coachSalaries": "Nòmines Cos Tècnic",
+            "staffSalary": "Nòmina",
+            "staffSalaryAnnual": "Nòmina (Anual)"
+        },
+        "fees": {
+            "title": "Gestió de Quotes i Pagaments",
+            "description": "Configura els mesos sense cobrament per a quotes i pagaments a entrenadors.",
+            "playerFeeExclusion": "Mesos sense cobrament de quota (Jugadors i Socis)",
+            "staffPaymentExclusion": "Mesos sense pagament a personal (Entrenadors i Staff)",
+            "months": "mes(os)",
+            "select": "Seleccionar",
+            "filterByRole": "Filtrar per rol",
+            "allRoles": "Tots els rols",
+            "players": "Jugadors",
+            "coaches": "Entrenadors",
+            "staff": "Staff",
+            "socios": "Socis",
+            "filterByTeam": "Filtrar per equip",
+            "allTeams": "Tots els equips",
+            "member": "Membre",
+            "team": "Equip",
+            "role": "Rol",
+            "income": "Quota (Ingrés)",
+            "expense": "Pagament (Despesa)"
+        },
+        "sponsorships": {
+            "title": "Gestió de Patrocinis",
+            "description": "Afegeix, edita i gestiona els patrocinis del club.",
+            "add": "Afegir Patrocini",
+            "sponsor": "Patrocinador",
+            "amount": "Quantitat",
+            "actions": "Accions",
+            "none": "Encara no has afegit cap patrocini."
+        },
+        "expenses": {
+            "recurringTitle": "Despeses Recurrents",
+            "recurringDescription": "Despeses fixes que es repeteixen mensualment.",
+            "oneOffTitle": "Despeses Puntuals",
+            "oneOffDescription": "Despeses úniques per a material, esdeveniments, etc."
+        },
+        "otherPayments": {
+            "title": "Pagaments Puntuals",
+            "description": "Crea i gestiona cobraments únics per a campus, tornejos, material, etc.",
+            "add": "Crear Nou Pagament",
+            "concept": "Concepte",
+            "amount": "Quantitat",
+            "issueDate": "Data d'Emissió",
+            "recipients": "Destinataris",
+            "actions": "Accions",
+            "none": "Encara no has creat cap pagament puntual."
         }
     }
 }

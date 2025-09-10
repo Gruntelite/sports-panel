@@ -37,9 +37,10 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, getMonth, getYear, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip as ChartTooltip, ResponsiveContainer } from "recharts";
 import { ChartContainer, ChartTooltipContent, type ChartConfig } from "@/components/ui/chart";
+import { useTranslation } from "./i18n-provider";
 
 type FeeMember = {
     id: string;
@@ -70,6 +71,7 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
     staff: Staff[],
     socios: Socio[]
 }) {
+    const { t, locale } = useTranslation();
     const [year, setYear] = useState<number>(new Date().getFullYear());
     const [chartData, setChartData] = useState<any[]>([]);
     
@@ -174,30 +176,30 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
             });
             
             const formattedData = Object.keys(monthlyData).map(monthIndex => ({
-                name: format(new Date(year, Number(monthIndex)), "MMM", { locale: es }),
+                name: format(new Date(year, Number(monthIndex)), "MMM", { locale: locale === 'ca' ? ca : es }),
                 Ingresos: monthlyData[Number(monthIndex)].Ingresos,
                 Gastos: monthlyData[Number(monthIndex)].Gastos
             }));
             setChartData(formattedData);
         };
         processData();
-    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions, staff, socios]);
+    }, [year, players, oneTimePayments, coaches, sponsorships, recurringExpenses, oneOffExpenses, feeExcludedMonths, coachFeeExcludedMonths, formsWithSubmissions, staff, socios, locale]);
 
     const chartConfig: ChartConfig = {
-        Ingresos: { label: "Ingresos", color: "hsl(var(--chart-1))" },
-        Gastos: { label: "Gastos", color: "hsl(var(--chart-2))" }
+        Ingresos: { label: t('treasury.chart.income'), color: "hsl(var(--chart-1))" },
+        Gastos: { label: t('treasury.chart.expenses'), color: "hsl(var(--chart-2))" }
     };
 
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Análisis Financiero</CardTitle>
-                    <CardDescription>Evolución de ingresos y gastos durante el año.</CardDescription>
+                    <CardTitle>{t('treasury.chart.title')}</CardTitle>
+                    <CardDescription>{t('treasury.chart.description')}</CardDescription>
                 </div>
                  <Select value={year.toString()} onValueChange={(val) => setYear(Number(val))}>
                     <SelectTrigger className="w-[120px]">
-                        <SelectValue placeholder="Año" />
+                        <SelectValue placeholder={t('treasury.chart.year')} />
                     </SelectTrigger>
                     <SelectContent>
                         <SelectItem value={new Date().getFullYear().toString()}>{new Date().getFullYear()}</SelectItem>
@@ -257,6 +259,7 @@ const MONTHS = [
 
 
 export function TreasuryDashboard() {
+  const { t, locale } = useTranslation();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -383,20 +386,20 @@ export function TreasuryDashboard() {
         // Incomes
         if (!localFeeExcluded.includes(month)) {
             const totalFees = players.reduce((acc, p) => acc + (p.monthlyFee || 0), 0);
-            if (totalFees > 0) addOrUpdate("Cuotas de Jugadores", totalFees, 'income');
+            if (totalFees > 0) addOrUpdate(t('treasury.accounting.playerFees'), totalFees, 'income');
             
             const totalSocioFees = socios
                 .filter(s => s.paymentType === 'monthly' && !s.excludedMonths?.includes(month))
                 .reduce((acc, s) => acc + s.fee, 0);
-            if(totalSocioFees > 0) addOrUpdate("Cuotas de Socios", totalSocioFees, 'income');
+            if(totalSocioFees > 0) addOrUpdate(t('treasury.accounting.socioFees'), totalSocioFees, 'income');
         }
-         socios.filter(s => s.paymentType === 'annual' && month === 0).forEach(s => addOrUpdate("Cuotas de Socios (Anual)", s.fee, 'income'));
+         socios.filter(s => s.paymentType === 'annual' && month === 0).forEach(s => addOrUpdate(t('treasury.accounting.socioFeesAnnual'), s.fee, 'income'));
 
         sponsorships.forEach(s => {
             if (s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
-                addOrUpdate(`Patrocinio: ${s.sponsorName}`, s.amount, 'income');
+                addOrUpdate(`${t('treasury.accounting.sponsorship')}: ${s.sponsorName}`, s.amount, 'income');
             } else if (s.frequency === 'annual' && month === 0) {
-                addOrUpdate(`Patrocinio: ${s.sponsorName}`, s.amount, 'income');
+                addOrUpdate(`${t('treasury.accounting.sponsorship')}: ${s.sponsorName}`, s.amount, 'income');
             }
         });
 
@@ -407,7 +410,7 @@ export function TreasuryDashboard() {
                 if (!p.isEvent) {
                     amount *= ((p.targetTeamIds?.length || 0) + (p.targetUserIds?.length || 0));
                 }
-                addOrUpdate(`Pago Puntual: ${p.concept}`, amount, 'income');
+                addOrUpdate(`${t('treasury.accounting.oneTimePayment')}: ${p.concept}`, amount, 'income');
             });
         
         formsWithSubmissions.forEach(form => {
@@ -420,7 +423,7 @@ export function TreasuryDashboard() {
                     .reduce((acc) => acc + form.price, 0);
 
                 if (formIncome > 0) {
-                    addOrUpdate(`Inscripciones: ${form.title}`, formIncome, 'income');
+                    addOrUpdate(`${t('treasury.accounting.registrations')}: ${form.title}`, formIncome, 'income');
                 }
             }
         });
@@ -428,15 +431,15 @@ export function TreasuryDashboard() {
         // Expenses
         if (!localCoachFeeExcluded.includes(month)) {
             const totalCoachPayments = coaches.reduce((acc, c) => acc + (c.monthlyPayment || 0), 0);
-             if (totalCoachPayments > 0) addOrUpdate("Nóminas Cuerpo Técnico", totalCoachPayments, 'expense');
+             if (totalCoachPayments > 0) addOrUpdate(t('treasury.accounting.coachSalaries'), totalCoachPayments, 'expense');
         }
         staff
             .filter(s => s.paymentFrequency === 'monthly' && !s.excludedMonths?.includes(month))
-            .forEach(s => addOrUpdate(`Nómina: ${s.name} ${s.lastName}`, s.payment || 0, 'expense'));
+            .forEach(s => addOrUpdate(`${t('treasury.accounting.staffSalary')}: ${s.name} ${s.lastName}`, s.payment || 0, 'expense'));
 
         staff
             .filter(s => s.paymentFrequency === 'annual' && month === 0)
-            .forEach(s => addOrUpdate(`Nómina: ${s.name} ${s.lastName} (Anual)`, s.payment || 0, 'expense'));
+            .forEach(s => addOrUpdate(`${t('treasury.accounting.staffSalaryAnnual')}: ${s.name} ${s.lastName}`, s.payment || 0, 'expense'));
 
 
         recurringExpenses
@@ -462,7 +465,7 @@ export function TreasuryDashboard() {
     if (!loading) {
         calculateMonthlySummary();
     }
-}, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading, staff, socios]);
+}, [accountingDate, players, coaches, oneTimePayments, sponsorships, recurringExpenses, oneOffExpenses, formsWithSubmissions, localFeeExcluded, localCoachFeeExcluded, loading, staff, socios, t]);
 
 
   const fetchData = async (clubId: string) => {
@@ -877,11 +880,11 @@ export function TreasuryDashboard() {
   }
 
   const tabsConfig = [
-    { value: "accounting", label: "Contabilidad" },
-    { value: "fees", label: "Cuotas y Pagos" },
-    { value: "sponsorships", label: "Patrocinios" },
-    { value: "expenses", label: "Gastos" },
-    { value: "other", label: "Pagos Adicionales" },
+    { value: "accounting", label: t('treasury.tabs.accounting') },
+    { value: "fees", label: t('treasury.tabs.fees') },
+    { value: "sponsorships", label: t('treasury.tabs.sponsorships') },
+    { value: "expenses", label: t('treasury.tabs.expenses') },
+    { value: "other", label: t('treasury.tabs.otherPayments') },
   ];
 
 
@@ -893,7 +896,7 @@ export function TreasuryDashboard() {
     );
   }
 
-  const timeRangeLabel = timeRange === 'monthly' ? 'Mes' : 'Año';
+  const timeRangeLabel = timeRange === 'monthly' ? `(${t('treasury.stats.monthly')})` : `(${t('treasury.stats.annual')})`;
   const eventPayments = formsWithSubmissions
     .filter(form => form.price > 0 && form.submissions.length > 0)
     .map(form => {
@@ -917,18 +920,18 @@ export function TreasuryDashboard() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        Ingresos Previstos
+                        {t('treasury.stats.expectedIncome')}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="ghost" size="sm" className="p-1 h-auto text-sm font-medium -ml-1">
-                                    <span className="text-muted-foreground">{timeRangeLabel}</span>
+                                    <span className="text-muted-foreground">{timeRange === 'monthly' ? t('treasury.stats.monthly') : t('treasury.stats.annual')}</span>
                                     <ChevronDown className="h-4 w-4 ml-0.5 text-muted-foreground"/>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent>
                                 <DropdownMenuRadioGroup value={timeRange} onValueChange={(value) => setTimeRange(value as 'monthly' | 'annual')}>
-                                    <DropdownMenuRadioItem value="monthly">Mes Actual</DropdownMenuRadioItem>
-                                    <DropdownMenuRadioItem value="annual">Año Completo</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="monthly">{t('treasury.stats.currentMonth')}</DropdownMenuRadioItem>
+                                    <DropdownMenuRadioItem value="annual">{t('treasury.stats.fullYear')}</DropdownMenuRadioItem>
                                 </DropdownMenuRadioGroup>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -937,37 +940,37 @@ export function TreasuryDashboard() {
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.expectedIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de cuotas, pagos puntuales y patrocinios.</p>
+                    <p className="text-xs text-muted-foreground">{t('treasury.stats.incomeDesc')}</p>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Gastos Totales ({timeRangeLabel})</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('treasury.stats.totalExpenses')} {timeRangeLabel}</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.monthlyExpenses.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de gastos recurrentes, puntuales y de personal.</p>
+                    <p className="text-xs text-muted-foreground">{t('treasury.stats.expensesDesc')}</p>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Ingresos por Patrocinios ({timeRangeLabel})</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('treasury.stats.sponsorshipIncome')} {timeRangeLabel}</CardTitle>
                     <TrendingUp className="h-4 w-4 text-green-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.sponsorshipIncome.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de todos los patrocinios.</p>
+                    <p className="text-xs text-muted-foreground">{t('treasury.stats.sponsorshipDesc')}</p>
                 </CardContent>
             </Card>
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Pagos a Personal ({timeRangeLabel})</CardTitle>
+                    <CardTitle className="text-sm font-medium">{t('treasury.stats.staffPayments')} {timeRangeLabel}</CardTitle>
                     <TrendingDown className="h-4 w-4 text-red-500" />
                 </CardHeader>
                 <CardContent>
                     <div className="text-2xl font-bold">{stats.coachPayments.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</div>
-                    <p className="text-xs text-muted-foreground">Suma de todos los pagos al cuerpo técnico y staff.</p>
+                    <p className="text-xs text-muted-foreground">{t('treasury.stats.staffPaymentsDesc')}</p>
                 </CardContent>
             </Card>
         </div>
@@ -1008,35 +1011,35 @@ export function TreasuryDashboard() {
              <Card>
                 <CardHeader className="flex flex-col sm:flex-row items-center justify-between gap-2">
                     <div className="flex-1">
-                        <CardTitle>Desglose de Contabilidad Mensual</CardTitle>
-                        <CardDescription>Resumen de todos los ingresos y gastos para el mes seleccionado.</CardDescription>
+                        <CardTitle>{t('treasury.accounting.title')}</CardTitle>
+                        <CardDescription>{t('treasury.accounting.description')}</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                          <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => subMonths(prev, 1))}><ChevronLeft className="h-4 w-4"/></Button>
-                         <span className="font-semibold text-lg w-36 text-center capitalize">{format(accountingDate, "LLLL yyyy", { locale: es })}</span>
+                         <span className="font-semibold text-lg w-36 text-center capitalize">{format(accountingDate, "LLLL yyyy", { locale: locale === 'ca' ? ca : es })}</span>
                          <Button variant="outline" size="icon" onClick={() => setAccountingDate(prev => addMonths(prev, 1))}><ChevronRight className="h-4 w-4"/></Button>
                     </div>
                 </CardHeader>
                  <CardContent>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <Card className="bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-800">
-                            <CardHeader className="pb-2"><CardTitle className="text-green-800 dark:text-green-300 text-base">Total Ingresos</CardTitle></CardHeader>
+                            <CardHeader className="pb-2"><CardTitle className="text-green-800 dark:text-green-300 text-base">{t('treasury.accounting.totalIncome')}</CardTitle></CardHeader>
                             <CardContent><p className="text-2xl font-bold text-green-700 dark:text-green-400">{monthlyTotals.income.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</p></CardContent>
                         </Card>
                         <Card className="bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-800">
-                             <CardHeader className="pb-2"><CardTitle className="text-red-800 dark:text-red-300 text-base">Total Gastos</CardTitle></CardHeader>
+                             <CardHeader className="pb-2"><CardTitle className="text-red-800 dark:text-red-300 text-base">{t('treasury.accounting.totalExpenses')}</CardTitle></CardHeader>
                              <CardContent><p className="text-2xl font-bold text-red-700 dark:text-red-400">{monthlyTotals.expense.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</p></CardContent>
                         </Card>
                          <Card className="bg-blue-50 dark:bg-blue-900/30 border-blue-200 dark:border-blue-800">
-                             <CardHeader className="pb-2"><CardTitle className="text-blue-800 dark:text-blue-300 text-base">Balance</CardTitle></CardHeader>
+                             <CardHeader className="pb-2"><CardTitle className="text-blue-800 dark:text-blue-300 text-base">{t('treasury.accounting.balance')}</CardTitle></CardHeader>
                              <CardContent><p className="text-2xl font-bold text-blue-700 dark:text-blue-400">{monthlyTotals.balance.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</p></CardContent>
                         </Card>
                     </div>
                      <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>Categoría</TableHead>
-                                <TableHead className="text-right">Importe</TableHead>
+                                <TableHead>{t('treasury.accounting.category')}</TableHead>
+                                <TableHead className="text-right">{t('treasury.accounting.amount')}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -1049,7 +1052,7 @@ export function TreasuryDashboard() {
                                 </TableRow>
                             )) : (
                                 <TableRow>
-                                    <TableCell colSpan={2} className="text-center h-24">No hay movimientos este mes.</TableCell>
+                                    <TableCell colSpan={2} className="text-center h-24">{t('treasury.accounting.noMovements')}</TableCell>
                                 </TableRow>
                             )}
                         </TableBody>
@@ -1060,20 +1063,20 @@ export function TreasuryDashboard() {
         <TabsContent value="fees" className="mt-4">
           <Card>
             <CardHeader>
-              <CardTitle>Gestión de Cuotas y Pagos</CardTitle>
+              <CardTitle>{t('treasury.fees.title')}</CardTitle>
               <CardDescription>
-                Configura los meses sin cobro para cuotas y pagos a entrenadores.
+                {t('treasury.fees.description')}
               </CardDescription>
             </CardHeader>
             <CardContent>
                 <div className="grid md:grid-cols-2 gap-6 mb-4">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg bg-muted/50">
-                        <Label>Meses sin cobro de cuota (Jugadores y Socios)</Label>
+                        <Label>{t('treasury.fees.playerFeeExclusion')}</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full sm:w-[200px] justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {localFeeExcluded.length ? `${localFeeExcluded.length} mese(s)` : 'Seleccionar...'}
+                                    {localFeeExcluded.length ? `${localFeeExcluded.length} ${t('treasury.fees.months')}` : `${t('treasury.fees.select')}...`}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -1098,12 +1101,12 @@ export function TreasuryDashboard() {
                         </Popover>
                     </div>
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border rounded-lg bg-muted/50">
-                        <Label>Meses sin pago a personal (Entrenadores y Staff)</Label>
+                        <Label>{t('treasury.fees.staffPaymentExclusion')}</Label>
                         <Popover>
                             <PopoverTrigger asChild>
                                 <Button variant="outline" className="w-full sm:w-[200px] justify-start text-left font-normal">
                                     <CalendarIcon className="mr-2 h-4 w-4" />
-                                    {localCoachFeeExcluded.length ? `${localCoachFeeExcluded.length} mese(s)` : 'Seleccionar...'}
+                                    {localCoachFeeExcluded.length ? `${localCoachFeeExcluded.length} ${t('treasury.fees.months')}` : `${t('treasury.fees.select')}...`}
                                 </Button>
                             </PopoverTrigger>
                             <PopoverContent className="w-auto p-0">
@@ -1132,7 +1135,7 @@ export function TreasuryDashboard() {
                     <div className="flex justify-end mb-4">
                         <Button onClick={handleSaveFeeSettings} disabled={saving}>
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                            Guardar Cambios
+                            {t('common.saveChanges')}
                         </Button>
                     </div>
                  )}
@@ -1140,22 +1143,22 @@ export function TreasuryDashboard() {
                     <div className="flex flex-col sm:flex-row justify-end mb-4 gap-2">
                         <Select value={selectedRole} onValueChange={setSelectedRole}>
                             <SelectTrigger className="w-full sm:w-[180px]">
-                                <SelectValue placeholder="Filtrar por rol" />
+                                <SelectValue placeholder={t('treasury.fees.filterByRole')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Todos los roles</SelectItem>
-                                <SelectItem value="Jugador">Jugadores</SelectItem>
-                                <SelectItem value="Entrenador">Entrenadores</SelectItem>
-                                <SelectItem value="Staff">Staff</SelectItem>
-                                <SelectItem value="Socio">Socios</SelectItem>
+                                <SelectItem value="all">{t('treasury.fees.allRoles')}</SelectItem>
+                                <SelectItem value="Jugador">{t('treasury.fees.players')}</SelectItem>
+                                <SelectItem value="Entrenador">{t('treasury.fees.coaches')}</SelectItem>
+                                <SelectItem value="Staff">{t('treasury.fees.staff')}</SelectItem>
+                                <SelectItem value="Socio">{t('treasury.fees.socios')}</SelectItem>
                             </SelectContent>
                         </Select>
                         <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                             <SelectTrigger className="w-full sm:w-[220px]">
-                                <SelectValue placeholder="Filtrar por equipo" />
+                                <SelectValue placeholder={t('treasury.fees.filterByTeam')} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">Todos los equipos</SelectItem>
+                                <SelectItem value="all">{t('treasury.fees.allTeams')}</SelectItem>
                                 {teams.map(team => (
                                     <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                                 ))}
@@ -1167,11 +1170,11 @@ export function TreasuryDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Miembro</TableHead>
-                    <TableHead>Equipo</TableHead>
-                    <TableHead>Rol</TableHead>
-                    <TableHead>Cuota (Ingreso)</TableHead>
-                    <TableHead>Pago (Gasto)</TableHead>
+                    <TableHead>{t('treasury.fees.member')}</TableHead>
+                    <TableHead>{t('treasury.fees.team')}</TableHead>
+                    <TableHead>{t('treasury.fees.role')}</TableHead>
+                    <TableHead>{t('treasury.fees.income')}</TableHead>
+                    <TableHead>{t('treasury.fees.expense')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1205,14 +1208,14 @@ export function TreasuryDashboard() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                 <div>
-                    <CardTitle>Gestión de Patrocinios</CardTitle>
+                    <CardTitle>{t('treasury.sponsorships.title')}</CardTitle>
                     <CardDescription>
-                    Añade, edita y gestiona los patrocinios del club.
+                    {t('treasury.sponsorships.description')}
                     </CardDescription>
                 </div>
                 <Button onClick={() => handleOpenSponsorshipModal('add')}>
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Añadir Patrocinio
+                    {t('treasury.sponsorships.add')}
                 </Button>
                 </CardHeader>
                 <CardContent>
@@ -1220,9 +1223,9 @@ export function TreasuryDashboard() {
                 <Table>
                     <TableHeader>
                     <TableRow>
-                        <TableHead>Patrocinador</TableHead>
-                        <TableHead>Cantidad</TableHead>
-                        <TableHead className="text-right">Acciones</TableHead>
+                        <TableHead>{t('treasury.sponsorships.sponsor')}</TableHead>
+                        <TableHead>{t('treasury.sponsorships.amount')}</TableHead>
+                        <TableHead className="text-right">{t('treasury.sponsorships.actions')}</TableHead>
                     </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1230,7 +1233,7 @@ export function TreasuryDashboard() {
                         sponsorships.map((spon) => (
                         <TableRow key={spon.id}>
                             <TableCell className="font-medium">{spon.sponsorName}</TableCell>
-                            <TableCell>{spon.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})} ({spon.frequency === 'monthly' ? 'Mes' : 'Año'})</TableCell>
+                            <TableCell>{spon.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})} ({spon.frequency === 'monthly' ? t('treasury.stats.monthly') : t('treasury.stats.annual')})</TableCell>
                             <TableCell className="text-right">
                                 <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -1255,7 +1258,7 @@ export function TreasuryDashboard() {
                     ) : (
                         <TableRow>
                         <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
-                            No has añadido ningún patrocinio todavía.
+                            {t('treasury.sponsorships.none')}
                         </TableCell>
                         </TableRow>
                     )}
@@ -1269,8 +1272,8 @@ export function TreasuryDashboard() {
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Gastos Recurrentes</CardTitle>
-                        <CardDescription>Gastos fijos que se repiten mensualmente.</CardDescription>
+                        <CardTitle>{t('treasury.expenses.recurringTitle')}</CardTitle>
+                        <CardDescription>{t('treasury.expenses.recurringDescription')}</CardDescription>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleOpenRecurringExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
                 </CardHeader>
@@ -1297,8 +1300,8 @@ export function TreasuryDashboard() {
              <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
-                        <CardTitle>Gastos Puntuales</CardTitle>
-                        <CardDescription>Gastos únicos para material, eventos, etc.</CardDescription>
+                        <CardTitle>{t('treasury.expenses.oneOffTitle')}</CardTitle>
+                        <CardDescription>{t('treasury.expenses.oneOffDescription')}</CardDescription>
                     </div>
                     <Button size="sm" variant="outline" onClick={() => handleOpenOneOffExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
                 </CardHeader>
@@ -1328,14 +1331,14 @@ export function TreasuryDashboard() {
           <Card>
             <CardHeader className="flex flex-row items-center justify-between">
               <div>
-                <CardTitle>Pagos Puntuales</CardTitle>
+                <CardTitle>{t('treasury.otherPayments.title')}</CardTitle>
                 <CardDescription>
-                  Crea y gestiona cobros únicos para campus, torneos, material, etc.
+                  {t('treasury.otherPayments.description')}
                 </CardDescription>
               </div>
               <Button onClick={() => handleOpenPaymentModal('add')}>
                 <PlusCircle className="mr-2 h-4 w-4" />
-                Crear Nuevo Pago
+                {t('treasury.otherPayments.add')}
               </Button>
             </CardHeader>
             <CardContent>
@@ -1343,11 +1346,11 @@ export function TreasuryDashboard() {
                <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Concepto</TableHead>
-                    <TableHead>Cantidad</TableHead>
-                    <TableHead>Fecha de Emisión</TableHead>
-                    <TableHead>Destinatarios</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t('treasury.otherPayments.concept')}</TableHead>
+                    <TableHead>{t('treasury.otherPayments.amount')}</TableHead>
+                    <TableHead>{t('treasury.otherPayments.issueDate')}</TableHead>
+                    <TableHead>{t('treasury.otherPayments.recipients')}</TableHead>
+                    <TableHead className="text-right">{t('treasury.otherPayments.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -1385,7 +1388,7 @@ export function TreasuryDashboard() {
                   ) : (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
-                        No has creado ningún pago puntual todavía.
+                        {t('treasury.otherPayments.none')}
                       </TableCell>
                     </TableRow>
                   )}
