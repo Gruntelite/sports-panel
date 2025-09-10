@@ -1,0 +1,72 @@
+
+{
+    "sidebar": {
+        "dashboard": "Panell",
+        "treasury": "Tresoreria",
+        "players": "Jugadors",
+        "coaches": "Entrenadors",
+        "teams": "Equips",
+        "staff": "Socis i Directiva",
+        "schedules": "Horaris",
+        "communications": "Comunicacions",
+        "registrations": "Inscripcions i Esdeveniments",
+        "incidents": "Incidències i Protocols",
+        "clubFiles": "Arxius del Club",
+        "importer": "Importador de BBDD",
+        "clubSettings": "Ajustos del Club",
+        "noName": "Sense Nom",
+        "noEmail": "Sense Email",
+        "trialDays": "Et queden {days} dies de prova",
+        "userGuide": "Descarregar Guia d'Ús",
+        "leaveReview": "Deixar una ressenya",
+        "helpSupport": "Ajuda i Suport",
+        "logout": "Tancar Sessió",
+        "supportContact": "Contacte de Suport",
+        "supportDescription": "Tens algun dubte o problema? Emplena el formulari i t'ajudarem el més aviat possible.",
+        "reviewDescription": "La teva opinió és molt important per a nosaltres. Gràcies per ajudar-nos a millorar!"
+    },
+    "header": {
+        "openMenu": "Obrir menú",
+        "mainMenu": "Menú Principal"
+    },
+    "landing": {
+        "title": "El Programari que Automatitza el teu Club i Estalvia Hores de Gestió",
+        "subtitle": "Centralitza la Base de Dades, tresoreria, emmagatzematge d'arxius i comunicació amb famílies en un únic panell.",
+        "cta": "Prova-ho gratis",
+        "ctaNote": "Sense targeta de crèdit · Cancel·la quan vulguis",
+        "featuresTitle": "Tot el que el teu club necessita",
+        "featuresSubtitle": "Una plataforma completa pensada per optimitzar cada aspecte de la gestió del teu club, estalviant-te temps i esforç."
+    },
+    "login": {
+        "title": "Iniciar Sessió",
+        "description": "Introdueix les teves credencials per accedir al teu panell.",
+        "emailLabel": "Correu Electrònic",
+        "passwordLabel": "Contrasenya",
+        "button": "Iniciar Sessió",
+        "loading": "Iniciant sessió...",
+        "noAccount": "No tens un compte?",
+        "createAccount": "Crea'n un",
+        "welcomeBack": "Benvingut/da de nou!",
+        "loginSuccess": "Has iniciat sessió correctament.",
+        "loginError": "Error en l'inici de sessió",
+        "loginErrorDesc": "El correu electrònic o la contrasenya són incorrectes."
+    },
+    "register": {
+        "title": "Crea el teu Club",
+        "description": "Comença a gestionar el teu club en minuts.",
+        "clubNameLabel": "Nom del Club",
+        "adminNameLabel": "El teu Nom Complet",
+        "sportLabel": "Esport Principal",
+        "colorLabel": "Color Principal",
+        "emailLabel": "El teu Correu Electrònic",
+        "passwordLabel": "Contrasenya",
+        "passwordDesc": "Mínim 6 caràcters",
+        "button": "Començar Prova Gratuïta",
+        "loading": "Creant el teu club...",
+        "ctaNote": "No es necessita targeta · 20 dies de prova gratis",
+        "hasAccount": "Ja tens un compte?",
+        "login": "Inicia Sessió",
+        "successTitle": "Club Creat!",
+        "successDesc": "La teva prova de 20 dies ha començat. Benvingut/da!"
+    }
+}

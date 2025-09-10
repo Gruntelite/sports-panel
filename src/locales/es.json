@@ -1,0 +1,72 @@
+
+{
+    "sidebar": {
+        "dashboard": "Panel",
+        "treasury": "Tesorería",
+        "players": "Jugadores",
+        "coaches": "Entrenadores",
+        "teams": "Equipos",
+        "staff": "Socios y Directiva",
+        "schedules": "Horarios",
+        "communications": "Comunicaciones",
+        "registrations": "Inscripciones y Eventos",
+        "incidents": "Incidencias y Protocolos",
+        "clubFiles": "Archivos del Club",
+        "importer": "Importador de BBDD",
+        "clubSettings": "Ajustes del Club",
+        "noName": "Sin Nombre",
+        "noEmail": "Sin Email",
+        "trialDays": "Te quedan {days} días de prueba",
+        "userGuide": "Descargar Guía de Uso",
+        "leaveReview": "Dejar una reseña",
+        "helpSupport": "Ayuda y Soporte",
+        "logout": "Cerrar Sesión",
+        "supportContact": "Contacto de Soporte",
+        "supportDescription": "¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.",
+        "reviewDescription": "Tu opinión es muy importante para nosotros. ¡Gracias por ayudarnos a mejorar!"
+    },
+    "header": {
+        "openMenu": "Abrir menú",
+        "mainMenu": "Menú Principal"
+    },
+    "landing": {
+        "title": "El Software que Automatiza tu Club y Ahorra Horas de Gestión",
+        "subtitle": "Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.",
+        "cta": "Pruébalo gratis",
+        "ctaNote": "Sin tarjeta de crédito · Cancela cuando quieras",
+        "featuresTitle": "Todo lo que tu club necesita",
+        "featuresSubtitle": "Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo."
+    },
+    "login": {
+        "title": "Iniciar Sesión",
+        "description": "Introduce tus credenciales para acceder a tu panel.",
+        "emailLabel": "Correo Electrónico",
+        "passwordLabel": "Contraseña",
+        "button": "Iniciar Sesión",
+        "loading": "Iniciando sesión...",
+        "noAccount": "¿No tienes una cuenta?",
+        "createAccount": "Crea una",
+        "welcomeBack": "¡Bienvenido de nuevo!",
+        "loginSuccess": "Has iniciado sesión correctamente.",
+        "loginError": "Fallo en el Inicio de Sesión",
+        "loginErrorDesc": "El correo electrónico o la contraseña son incorrectos."
+    },
+    "register": {
+        "title": "Crea tu Club",
+        "description": "Empieza a gestionar tu club en minutos.",
+        "clubNameLabel": "Nombre del Club",
+        "adminNameLabel": "Tu Nombre Completo",
+        "sportLabel": "Deporte Principal",
+        "colorLabel": "Color Principal",
+        "emailLabel": "Tu Correo Electrónico",
+        "passwordLabel": "Contraseña",
+        "passwordDesc": "Mínimo 6 caracteres",
+        "button": "Empezar Prueba Gratuita",
+        "loading": "Creando tu club...",
+        "ctaNote": "No se necesita tarjeta · 20 días de prueba gratis",
+        "hasAccount": "¿Ya tienes una cuenta?",
+        "login": "Inicia Sesión",
+        "successTitle": "¡Club Creado!",
+        "successDesc": "Tu prueba de 20 días ha comenzado. ¡Bienvenido!"
+    }
+}

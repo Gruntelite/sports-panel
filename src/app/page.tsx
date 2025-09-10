@@ -23,6 +23,8 @@ import { useToast } from '@/hooks/use-toast';
 import { sendEmailWithSmtpAction } from '@/lib/email';
 import { Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { useTranslation } from '@/components/i18n-provider';
+import { LanguageSwitcher } from '@/components/language-switcher';
 
 
 const features = [
@@ -252,6 +254,7 @@ function ContactForm() {
 
 export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
+  const { t } = useTranslation();
 
   const pricing = {
     pro: { monthly: 33, yearly: Math.round(33 * 12 * 0.9) }
@@ -274,6 +277,7 @@ export default function LandingPage() {
             </div>
           </Link>
           <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
+            <LanguageSwitcher />
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
               Características
             </Link>
@@ -355,20 +359,20 @@ export default function LandingPage() {
                   <div className="flex flex-col justify-center space-y-4 text-center lg:text-left">
                     <div className="space-y-4">
                       <h1 className="text-3xl font-bold tracking-tighter md:text-5xl xl:text-6xl/none font-headline">
-                        El Software que Automatiza tu Club y Ahorra Horas de Gestión
+                        {t('landing.title')}
                       </h1>
                       <p className="mx-auto max-w-[700px] text-base text-muted-foreground md:text-lg lg:mx-0">
-                        Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.
+                        {t('landing.subtitle')}
                       </p>
                     </div>
                     <div className="flex flex-col gap-2 min-[400px]:flex-row lg:justify-start justify-center">
                       <Button asChild size="lg">
                         <Link href="/register" prefetch={false}>
-                          Pruébalo gratis
+                          {t('landing.cta')}
                         </Link>
                       </Button>
                     </div>
-                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">Sin tarjeta de crédito · Cancela cuando quieras</p>
+                     <p className="text-xs text-muted-foreground mt-2 text-center lg:text-left">{t('landing.ctaNote')}</p>
                   </div>
                    <div className="space-y-4">
                         <Image
@@ -452,10 +456,10 @@ export default function LandingPage() {
               <div className="flex flex-col items-center justify-center space-y-4 text-center">
                 <div className="space-y-2">
                   <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">
-                    Todo lo que tu club necesita
+                    {t('landing.featuresTitle')}
                   </h2>
                   <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                    Una plataforma completa pensada para optimizar cada aspecto de la gestión de tu club, ahorrándote tiempo y esfuerzo.
+                    {t('landing.featuresSubtitle')}
                   </p>
                 </div>
               </div>

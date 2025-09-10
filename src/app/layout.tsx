@@ -3,6 +3,7 @@ import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 import { CookieBanner } from '@/components/cookie-banner';
+import { I18nProvider } from '@/components/i18n-provider';
 
 export const metadata: Metadata = {
   title: 'SportsPanel',
@@ -14,11 +15,13 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
+  params
 }: Readonly<{
   children: React.ReactNode;
+  params: { locale: string };
 }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang={params.locale} suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -26,7 +29,9 @@ export default function RootLayout({
         <link rel="icon" href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba" type="image/png" sizes="any" />
       </head>
       <body className="font-body antialiased">
-        {children}
+        <I18nProvider locale={params.locale}>
+            {children}
+        </I18nProvider>
         <Toaster />
         <CookieBanner />
       </body>

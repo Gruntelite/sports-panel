@@ -28,6 +28,8 @@ import { auth } from "@/lib/firebase";
 import { createClubAction } from "@/lib/actions";
 import { v4 as uuidv4 } from 'uuid';
 import Image from "next/image";
+import { useTranslation } from "@/components/i18n-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 declare global {
     interface Window {
@@ -49,6 +51,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const { t } = useTranslation();
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -74,8 +77,8 @@ export default function RegisterPage() {
 
         if (result.success && result.userId) {
             toast({
-                title: "¡Club Creado!",
-                description: "Tu prueba de 20 días ha comenzado. ¡Bienvenido!",
+                title: t('register.successTitle'),
+                description: t('register.successDesc'),
             });
             
             await signInWithEmailAndPassword(auth, values.email, values.password);
@@ -108,6 +111,9 @@ export default function RegisterPage() {
                 <Logo />
                 <span className="font-bold text-lg">SportsPanel</span>
             </Link>
+        </div>
+        <div className="absolute top-4 right-4 z-10">
+            <LanguageSwitcher />
         </div>
         <Image 
           src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
@@ -147,18 +153,14 @@ export default function RegisterPage() {
                     <Logo />
                     <span className="font-bold text-lg">SportsPanel</span>
                 </Link>
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
+                <LanguageSwitcher />
             </div>
         </header>
         
         <Card className="mx-auto max-w-sm w-full border-none shadow-none lg:border lg:shadow-sm">
             <CardHeader className="space-y-2 text-center">
-                <CardTitle className="text-2xl font-bold font-headline">Crea tu Club</CardTitle>
-                <CardDescription>Empieza a gestionar tu club en minutos.</CardDescription>
+                <CardTitle className="text-2xl font-bold font-headline">{t('register.title')}</CardTitle>
+                <CardDescription>{t('register.description')}</CardDescription>
             </CardHeader>
             <CardContent>
             <Form {...form}>
@@ -168,7 +170,7 @@ export default function RegisterPage() {
                     name="clubName"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Nombre del Club</FormLabel>
+                        <FormLabel>{t('register.clubNameLabel')}</FormLabel>
                         <FormControl>
                         <Input placeholder="p.ej., Club Deportivo Águilas" {...field} />
                         </FormControl>
@@ -181,7 +183,7 @@ export default function RegisterPage() {
                     name="adminName"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Tu Nombre Completo</FormLabel>
+                        <FormLabel>{t('register.adminNameLabel')}</FormLabel>
                         <FormControl>
                         <Input placeholder="p.ej., Carlos Sánchez" {...field} />
                         </FormControl>
@@ -195,7 +197,7 @@ export default function RegisterPage() {
                         name="sport"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Deporte Principal</FormLabel>
+                            <FormLabel>{t('register.sportLabel')}</FormLabel>
                             <Select onValueChange={field.onChange} defaultValue={field.value}>
                                 <FormControl>
                                 <SelectTrigger>
@@ -217,7 +219,7 @@ export default function RegisterPage() {
                         name="themeColor"
                         render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Color Principal</FormLabel>
+                            <FormLabel>{t('register.colorLabel')}</FormLabel>
                             <FormControl>
                                 <div className="flex items-center gap-2">
                                     <Input type="color" className="p-1 h-10 w-14" {...field} />
@@ -234,7 +236,7 @@ export default function RegisterPage() {
                     name="email"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Tu Correo Electrónico</FormLabel>
+                        <FormLabel>{t('register.emailLabel')}</FormLabel>
                         <FormControl>
                         <Input type="email" placeholder="tu@email.com" {...field} />
                         </FormControl>
@@ -247,9 +249,9 @@ export default function RegisterPage() {
                     name="password"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Contraseña</FormLabel>
+                        <FormLabel>{t('register.passwordLabel')}</FormLabel>
                         <FormControl>
-                        <Input type="password" placeholder="Mínimo 6 caracteres" {...field} />
+                        <Input type="password" placeholder={t('register.passwordDesc')} {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -257,17 +259,17 @@ export default function RegisterPage() {
                 />
                 <Button type="submit" className="w-full" disabled={loading}>
                     {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                    {loading ? 'Creando tu club...' : 'Empezar Prueba Gratuita'}
+                    {loading ? t('register.loading') : t('register.button')}
                 </Button>
                 </form>
             </Form>
              <p className="text-center text-xs text-muted-foreground mt-4">
-                No se necesita tarjeta · 20 días de prueba gratis
+                {t('register.ctaNote')}
             </p>
             <div className="mt-4 text-center text-sm">
-                ¿Ya tienes una cuenta?{" "}
+                {t('register.hasAccount')}{" "}
                 <Link href="/login" className="underline font-semibold">
-                Inicia Sesión
+                {t('register.login')}
                 </Link>
             </div>
           </CardContent>

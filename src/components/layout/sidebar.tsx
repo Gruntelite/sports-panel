@@ -20,22 +20,24 @@ import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
 import { differenceInDays, isFuture } from "date-fns";
+import { useTranslation } from "../i18n-provider";
+import { LanguageSwitcher } from "../language-switcher";
 
 
 const menuItems = [
-    { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
-    { href: "/treasury", label: "Tesorería", icon: CircleDollarSign },
-    { href: "/players", label: "Jugadores", icon: Users },
-    { href: "/coaches", label: "Entrenadores", icon: UserSquare },
-    { href: "/teams", label: "Equipos", icon: Shield },
-    { href: "/staff", label: "Socios y Directiva", icon: Briefcase},
-    { href: "/schedules", label: "Horarios", icon: Clock },
-    { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
-    { href: "/registrations", label: "Inscripciones y Eventos", icon: ClipboardList },
-    { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
-    { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
-    { href: "/importer", label: "Importador de BBDD", icon: Database },
-    { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
+    { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
+    { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
+    { href: "/players", label: "sidebar.players", icon: Users },
+    { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
+    { href: "/teams", label: "sidebar.teams", icon: Shield },
+    { href: "/staff", label: "sidebar.staff", icon: Briefcase},
+    { href: "/schedules", label: "sidebar.schedules", icon: Clock },
+    { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
+    { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
+    { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
+    { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
+    { href: "/importer", label: "sidebar.importer", icon: Database },
+    { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
   ];
 
 type UserProfile = {
@@ -188,6 +190,8 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
+    const { t } = useTranslation();
+
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [clubId, setClubId] = useState<string | null>(null);
     const [clubName, setClubName] = useState<string | null>(null);
@@ -224,15 +228,15 @@ export function Sidebar() {
                             const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
                             if (trialEndDate && isFuture(trialEndDate)) {
                                 const daysLeft = differenceInDays(trialEndDate, new Date());
-                                if (daysLeft <= 30) {
-                                    setTrialDaysLeft(daysLeft);
+                                if (daysLeft <= 20) {
+                                    setTrialDaysLeft(daysLeft + 1);
                                 }
                             }
                         }
 
                         setUserProfile({
-                            name: user.displayName || "Sin Nombre",
-                            email: user.email || "Sin Email",
+                            name: user.displayName || t('sidebar.noName'),
+                            email: user.email || t('sidebar.noEmail'),
                             initials: (user.displayName || "U").split(' ').map((n:string) => n[0]).join('')
                         });
                     }
@@ -244,7 +248,7 @@ export function Sidebar() {
         });
 
         return () => unsubscribe();
-    }, []);
+    }, [t]);
 
     const handleLogout = async () => {
         await signOut(auth);
@@ -273,14 +277,14 @@ export function Sidebar() {
                     <div className="px-4 lg:px-6 py-2 border-b border-primary-foreground/20 text-center">
                         <p className="text-sm font-semibold flex items-center justify-center gap-2 bg-white/10 rounded-full py-1">
                             <Sparkles className="h-4 w-4 text-yellow-300" />
-                            Te quedan {trialDaysLeft} días de prueba
+                            {t('sidebar.trialDays', { days: trialDaysLeft })}
                         </p>
                     </div>
                 )}
                 <div className="flex-1 overflow-y-auto pt-4">
                     <nav className="grid items-start px-2 font-medium lg:px-4">
                         {menuItems.map((item) => {
-                            const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                            const isActive = pathname.includes(item.href);
                             return (
                                 <Link
                                     key={item.href}
@@ -293,13 +297,14 @@ export function Sidebar() {
                                     )}
                                 >
                                     <item.icon className="h-4 w-4" />
-                                    {item.label}
+                                    {t(item.label)}
                                 </Link>
                             )
                         })}
                     </nav>
                 </div>
                 <div className="mt-auto p-4 space-y-2">
+                     <LanguageSwitcher/>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="w-full justify-center gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20">
@@ -312,21 +317,21 @@ export function Sidebar() {
                              <DropdownMenuItem asChild>
                                 <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
                                     <Download className="mr-2 h-4 w-4" />
-                                    <span>Descargar Guía de Uso</span>
+                                    <span>{t('sidebar.userGuide')}</span>
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => setIsReviewOpen(true)}>
                                 <Star className="mr-2 h-4 w-4" />
-                                <span>Dejar una reseña</span>
+                                <span>{t('sidebar.leaveReview')}</span>
                             </DropdownMenuItem>
                             <DropdownMenuItem onSelect={() => setIsHelpOpen(true)}>
                                 <HelpCircle className="mr-2 h-4 w-4" />
-                                <span>Ayuda y Soporte</span>
+                                <span>{t('sidebar.helpSupport')}</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
                             <DropdownMenuItem onSelect={handleLogout}>
                                 <LogOut className="mr-2 h-4 w-4" />
-                                <span>Cerrar Sesión</span>
+                                <span>{t('sidebar.logout')}</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -334,9 +339,9 @@ export function Sidebar() {
                 <Dialog open={isHelpOpen} onOpenChange={setIsHelpOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Contacto de Soporte</DialogTitle>
+                            <DialogTitle>{t('sidebar.supportContact')}</DialogTitle>
                             <DialogDescription>
-                                ¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.
+                               {t('sidebar.supportDescription')}
                             </DialogDescription>
                         </DialogHeader>
                         {clubId && userProfile && (
@@ -347,9 +352,9 @@ export function Sidebar() {
                 <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>Deja tu Reseña</DialogTitle>
+                            <DialogTitle>{t('sidebar.leaveReview')}</DialogTitle>
                             <DialogDescription>
-                                Tu opinión es muy importante para nosotros. ¡Gracias por ayudarnos a mejorar!
+                                {t('sidebar.reviewDescription')}
                             </DialogDescription>
                         </DialogHeader>
                         {clubId && userProfile && (

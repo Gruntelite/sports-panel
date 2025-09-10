@@ -9,27 +9,31 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "../logo";
+import { useTranslation } from "../i18n-provider";
+import { LanguageSwitcher } from "../language-switcher";
 
 const menuItems = [
-    { href: "/dashboard", label: "Panel", icon: LayoutDashboard },
-    { href: "/treasury", label: "Tesorería", icon: CircleDollarSign },
-    { href: "/players", label: "Jugadores", icon: Users },
-    { href: "/coaches", label: "Entrenadores", icon: UserSquare },
-    { href: "/teams", label: "Equipos", icon: Shield },
-    { href: "/staff", label: "Socios y Directiva", icon: Briefcase},
-    { href: "/schedules", label: "Horarios", icon: Clock },
-    { href: "/communications", label: "Comunicaciones", icon: MessageSquare },
-    { href: "/registrations", label: "Inscripciones y Eventos", icon: ClipboardList },
-    { href: "/incidents", label: "Incidencias y Protocolos", icon: AlertTriangle },
-    { href: "/club-files", label: "Archivos del Club", icon: FolderArchive },
-    { href: "/importer", label: "Importador de BBDD", icon: Database },
-    { href: "/club-settings", label: "Ajustes del Club", icon: Settings },
+    { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
+    { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
+    { href: "/players", label: "sidebar.players", icon: Users },
+    { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
+    { href: "/teams", label: "sidebar.teams", icon: Shield },
+    { href: "/staff", label: "sidebar.staff", icon: Briefcase},
+    { href: "/schedules", label: "sidebar.schedules", icon: Clock },
+    { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
+    { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
+    { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
+    { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
+    { href: "/importer", label: "sidebar.importer", icon: Database },
+    { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
 ];
 
 
 export function Header() {
     const pathname = usePathname();
-    const currentPage = menuItems.find(item => pathname.startsWith(item.href))?.label || 'Panel';
+    const { t } = useTranslation();
+    const currentPageKey = menuItems.find(item => pathname.includes(item.href))?.label || 'sidebar.dashboard';
+    const currentPage = t(currentPageKey);
 
     return (
         <>
@@ -37,6 +41,9 @@ export function Header() {
              <h1 className="text-xl font-bold font-headline tracking-tight">
                 {currentPage}
             </h1>
+             <div className="ml-auto">
+                <LanguageSwitcher />
+            </div>
         </header>
 
         {/* Floating Action Button for Mobile Menu */}
@@ -49,12 +56,12 @@ export function Header() {
                         className="rounded-full w-14 h-14 shadow-lg"
                     >
                         <Menu className="h-6 w-6" />
-                        <span className="sr-only">Abrir menú de navegación</span>
+                        <span className="sr-only">{t('header.openMenu')}</span>
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col p-0">
                     <SheetHeader>
-                        <SheetTitle className="sr-only">Menú Principal</SheetTitle>
+                        <SheetTitle className="sr-only">{t('header.mainMenu')}</SheetTitle>
                     </SheetHeader>
                      <nav className="flex flex-col h-full">
                         <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0">
@@ -73,11 +80,11 @@ export function Header() {
                                     href={item.href}
                                     className={cn(
                                         "flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors",
-                                        pathname.startsWith(item.href) && "bg-muted text-foreground"
+                                        pathname.includes(item.href) && "bg-muted text-foreground"
                                     )}
                                     >
                                         <item.icon className="h-5 w-5" />
-                                        {item.label}
+                                        {t(item.label)}
                                     </Link>
                                 </SheetClose>
                             ))}

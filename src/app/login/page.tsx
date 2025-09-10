@@ -22,6 +22,8 @@ import { Logo } from "@/components/logo";
 import Image from "next/image";
 import { ArrowLeft, Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "@/components/i18n-provider";
+import { LanguageSwitcher } from "@/components/language-switcher";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,6 +31,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { t } = useTranslation();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,8 +41,8 @@ export default function LoginPage() {
       await signInWithEmailAndPassword(auth, email, password);
 
       toast({
-        title: "¡Bienvenido de nuevo!",
-        description: "Has iniciado sesión correctamente.",
+        title: t('login.welcomeBack'),
+        description: t('login.loginSuccess'),
       });
 
       router.push("/dashboard");
@@ -48,11 +51,11 @@ export default function LoginPage() {
       console.error("Login error:", error);
       let description = "Ocurrió un error inesperado.";
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === "auth/invalid-credential") {
-        description = "El correo electrónico o la contraseña son incorrectos.";
+        description = t('login.loginErrorDesc');
       }
       toast({
         variant: "destructive",
-        title: "Fallo en el Inicio de Sesión",
+        title: t('login.loginError'),
         description: description,
       });
     } finally {
@@ -68,6 +71,9 @@ export default function LoginPage() {
                 <Logo />
                 <span className="font-bold text-lg">SportsPanel</span>
             </Link>
+        </div>
+        <div className="absolute top-4 right-4 z-10">
+            <LanguageSwitcher />
         </div>
         <Image 
           src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
@@ -99,41 +105,37 @@ export default function LoginPage() {
                     <Logo />
                     <span className="font-bold text-lg">SportsPanel</span>
                 </Link>
-                <Button variant="ghost" size="icon" asChild>
-                    <Link href="/">
-                        <ArrowLeft className="h-4 w-4" />
-                    </Link>
-                </Button>
+                 <LanguageSwitcher />
             </div>
         </header>
 
       <Card className="mx-auto max-w-sm w-full border-none shadow-none lg:border lg:shadow-sm">
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-2xl font-bold font-headline">
-            Iniciar Sesión
+            {t('login.title')}
           </CardTitle>
           <CardDescription>
-            Introduce tus credenciales para acceder a tu panel.
+            {t('login.description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Correo Electrónico</Label>
+              <Label htmlFor="email">{t('login.emailLabel')}</Label>
               <Input id="email" type="email" placeholder="m@ejemplo.com" required value={email} onChange={(e) => setEmail(e.target.value)} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+              <Label htmlFor="password">{t('login.passwordLabel')}</Label>
               <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+              {loading ? t('login.loading') : t('login.button')}
             </Button>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
             <p className="text-muted-foreground">
-                ¿No tienes una cuenta? <Link href="/register" className="text-primary hover:underline font-semibold">Crea una</Link>
+                {t('login.noAccount')} <Link href="/register" className="text-primary hover:underline font-semibold">{t('login.createAccount')}</Link>
             </p>
         </CardFooter>
       </Card>
