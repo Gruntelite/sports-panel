@@ -118,7 +118,8 @@ function DocumentsList() {
   const [filterOwnerId, setFilterOwnerId] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
-  const docCategories = t('clubFiles.categories', { returnObjects: true }) as { value: string, label: string }[];
+  const docCategoriesRaw = t('clubFiles.categories', { returnObjects: true });
+  const docCategories = Array.isArray(docCategoriesRaw) ? docCategoriesRaw : [];
 
   const fetchData = async (currentClubId: string) => {
     setLoading(true);
