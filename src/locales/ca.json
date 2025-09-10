@@ -451,7 +451,7 @@
         "noCustomFields": "No hi ha camps personalitzats per a jugadors. Pots afegir-los a Ajustos del Club.",
         "confirmDeleteTitle": "Estàs segur?",
         "confirmDeleteDesc": "Aquesta acció no es pot desfer. S'eliminarà permanentment al jugador {playerName}.",
-        "confirmBulkDeleteDesc": "Aquesta acció no es pot desfer. S'eliminaran permanentment {playerCount} jugadors.",
+        "confirmBulkDeleteDesc": "Aquesta acció no es pot desfer. S'eliminararan permanentment {playerCount} jugadors.",
         "step1Title": "Pas 1: Selecciona els camps a actualitzar",
         "step1Desc": "Tria quina informació vols que actualitzin els jugadors.",
         "step2Title": "Pas 2: Selecciona els destinataris",
@@ -623,7 +623,7 @@
         "noCustomFields": "No hi ha camps personalitzats per a entrenadors. Pots afegir-los a Ajustos del Club.",
         "confirmDeleteTitle": "Estàs segur?",
         "confirmDeleteDesc": "Aquesta acció no es pot desfer. S'eliminarà permanentment a {coachName}.",
-        "confirmBulkDeleteDesc": "Aquesta acció no es pot desfer. S'eliminaran permanentment {coachCount} membres.",
+        "confirmBulkDeleteDesc": "Aquesta acció no es pot desfer. S'eliminararan permanentment {coachCount} membres.",
         "deleteCoaches": "Eliminar Membres",
         "step1Title": "Pas 1: Selecciona els camps a actualitzar",
         "step1Desc": "Tria quina informació vols que actualitzin els entrenadors.",
@@ -884,16 +884,19 @@
         }
     },
     "importer": {
-        "description": "Puja un arxiu CSV per importar múltiples registres alhora.",
-        "uploadLabel": "Puja el teu arxiu CSV",
-        "parsing": "Processant...",
-        "previewButton": "Veure Vista Prèvia",
+        "pageTitle": "Importador de BBDD",
+        "pageDescription": "Puja les teves bases de dades mitjançant arxius CSV per a una càrrega ràpida.",
         "types": {
             "players": "Jugadors",
             "coaches": "Entrenadors",
             "staff": "Staff i Directiva",
             "socios": "Socis"
         },
+        "title": "Importar {type}",
+        "description": "Puja el teu arxiu CSV per importar múltiples registres alhora.",
+        "uploadLabel": "Puja el teu arxiu CSV",
+        "parsing": "Processant...",
+        "previewButton": "Veure Vista Prèvia",
         "modal": {
             "title": "Vista Prèvia de la Importació",
             "description": "Revisa les dades abans d'importar-les. Hi ha {count} files per importar.",
@@ -904,10 +907,28 @@
             "confirmButton": "Confirmar i Importar"
         },
         "guide": {
+            "title": "Ordre i Noms de les Columnes per a {type}",
+            "description": "Usa el botó de copiar per enganxar les capçaleres a la primera fila del teu full de càlcul. Assegura't que les dades del teu arxiu CSV coincideixen amb aquestes columnes. No et preocupis si alguns camps queden buits, podràs emplenar-los més tard.",
             "copySuccessTitle": "Capçaleres Copiades",
             "copySuccessDesc": "Els noms tècnics de les columnes s'han copiat al porta-retalls.",
             "copyHeaders": "Copiar Capçaleres",
             "copyHeadersSpreadsheet": "Copiar Capçaleres per a Full de Càlcul"
+        },
+        "columns": {
+            "players": {
+                "name": "Nom", "lastName": "Cognoms", "sex": "Sexe", "birthDate": "Data de Naixement", "dni": "NIF", "nationality": "Nacionalitat", "healthCardNumber": "Nº Targeta Sanitària", "address": "Adreça", "city": "Ciutat", "postalCode": "Codi Postal", "tutorEmail": "Email de Contacte", "tutorPhone": "Telèfon de Contacte", "iban": "IBAN", "teamName": "Nom de l'Equip", "jerseyNumber": "Dorsal", "monthlyFee": "Quota Mensual (€)", "isOwnTutor": "És el seu propi tutor/a", "tutorName": "Nom del Tutor/a", "tutorLastName": "Cognoms del Tutor/a", "tutorDni": "NIF del Tutor/a", "kitSize": "Talla d'Equipació", "startDate": "Data d'Alta", "endDate": "Data de Baixa", "hasInterruption": "Ha tingut interrupcions", "medicalCheckCompleted": "Revisió mèdica completada"
+            },
+            "coaches": {
+                "name": "Nom", "lastName": "Cognoms", "sex": "Sexe", "role": "Càrrec", "email": "Email", "phone": "Telèfon", "teamName": "Equip Assignat", "birthDate": "Data de Naixement", "dni": "NIF", "nationality": "Nacionalitat", "healthCardNumber": "Nº Targeta Sanitària", "address": "Adreça", "city": "Ciutat", "postalCode": "Codi Postal", "iban": "IBAN", "isOwnTutor": "És el seu propi tutor/a", "tutorName": "Nom del Tutor/a", "tutorLastName": "Cognoms del Tutor/a", "tutorDni": "NIF del Tutor/a", "monthlyPayment": "Pagament Mensual (€)", "kitSize": "Talla d'Equipació", "startDate": "Data d'Alta", "endDate": "Data de Baixa", "hasInterruption": "Ha tingut interrupcions"
+            },
+            "staff": {
+                "name": "Nom", "lastName": "Cognoms", "sex": "Sexe", "role": "Càrrec", "email": "Email", "phone": "Telèfon"
+            },
+            "socios": {
+                "name": "Nom", "lastName": "Cognoms", "email": "Email", "phone": "Telèfon", "dni": "NIF", "paymentType": "Tipus de Quota", "fee": "Import Quota (€)", "socioNumber": "Número de Soci"
+            }
         }
     }
 }
+
+    

@@ -17,83 +17,6 @@ type ColumnInfo = {
     label: string;
 };
 
-const playerColumns: ColumnInfo[] = [
-    { key: 'name', label: 'Nombre' },
-    { key: 'lastName', label: 'Apellidos' },
-    { key: 'sex', label: 'Sexo' },
-    { key: 'birthDate', label: 'Fecha de Nacimiento' },
-    { key: 'dni', label: 'NIF' },
-    { key: 'nationality', label: 'Nacionalidad' },
-    { key: 'healthCardNumber', label: 'Nº Tarjeta Sanitaria' },
-    { key: 'address', label: 'Dirección' },
-    { key: 'city', label: 'Ciudad' },
-    { key: 'postalCode', label: 'Código Postal' },
-    { key: 'tutorEmail', label: 'Email de Contacto' },
-    { key: 'tutorPhone', label: 'Teléfono de Contacto' },
-    { key: 'iban', label: 'IBAN' },
-    { key: 'teamName', label: 'Nombre del Equipo' },
-    { key: 'jerseyNumber', label: 'Dorsal' },
-    { key: 'monthlyFee', label: 'Cuota Mensual (€)' },
-    { key: 'isOwnTutor', label: 'Es su propio tutor/a' },
-    { key: 'tutorName', label: 'Nombre del Tutor/a' },
-    { key: 'tutorLastName', label: 'Apellidos del Tutor/a' },
-    { key: 'tutorDni', label: 'NIF del Tutor/a' },
-    { key: 'kitSize', label: 'Talla de Equipación' },
-    { key: 'startDate', label: 'Fecha de Alta' },
-    { key: 'endDate', label: 'Fecha de Baja' },
-    { key: 'hasInterruption', label: 'Ha tenido interrupciones' },
-    { key: 'medicalCheckCompleted', label: 'Revisión médica completada' }
-];
-
-
-const coachColumns: ColumnInfo[] = [
-    { key: 'name', label: 'Nombre' },
-    { key: 'lastName', label: 'Apellidos' },
-    { key: 'sex', label: 'Sexo' },
-    { key: 'role', label: 'Cargo' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Teléfono' },
-    { key: 'teamName', label: 'Equipo Asignado' },
-    { key: 'birthDate', label: 'Fecha de Nacimiento' },
-    { key: 'dni', label: 'NIF' },
-    { key: 'nationality', label: 'Nacionalidad' },
-    { key: 'healthCardNumber', label: 'Nº Tarjeta Sanitaria' },
-    { key: 'address', label: 'Dirección' },
-    { key: 'city', label: 'Ciudad' },
-    { key: 'postalCode', label: 'Código Postal' },
-    { key: 'iban', label: 'IBAN' },
-    { key: 'isOwnTutor', label: 'Es su propio tutor/a' },
-    { key: 'tutorName', label: 'Nombre del Tutor/a' },
-    { key: 'tutorLastName', label: 'Apellidos del Tutor/a' },
-    { key: 'tutorDni', label: 'NIF del Tutor/a' },
-    { key: 'monthlyPayment', label: 'Pago Mensual (€)' },
-    { key: 'kitSize', label: 'Talla de Equipación' },
-    { key: 'startDate', label: 'Fecha de Alta' },
-    { key: 'endDate', label: 'Fecha de Baja' },
-    { key: 'hasInterruption', label: 'Ha tenido interrupciones' }
-];
-
-const staffColumns: ColumnInfo[] = [
-    { key: 'name', label: 'Nombre' },
-    { key: 'lastName', label: 'Apellidos' },
-    { key: 'sex', label: 'Sexo' },
-    { key: 'role', label: 'Cargo' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Teléfono' }
-];
-
-const socioColumns: ColumnInfo[] = [
-    { key: 'name', label: 'Nombre' },
-    { key: 'lastName', label: 'Apellidos' },
-    { key: 'email', label: 'Email' },
-    { key: 'phone', label: 'Teléfono' },
-    { key: 'dni', label: 'NIF' },
-    { key: 'paymentType', label: 'Tipo de Cuota' },
-    { key: 'fee', label: 'Importe Cuota (€)' },
-    { key: 'socioNumber', label: 'Número de Socio' }
-];
-
-
 const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
     const { toast } = useToast();
     const { t } = useTranslation();
@@ -115,7 +38,7 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
                 <span className="hidden sm:inline">{t('importer.guide.copyHeadersSpreadsheet')}</span>
             </Button>
             <ol className="list-decimal list-inside grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-sm text-muted-foreground">
-                {columns.map(col => (
+                {Array.isArray(columns) && columns.map(col => (
                     <li key={col.key}>
                         <span className="font-semibold text-foreground">{col.label}</span>
                         <span className="text-xs ml-1">({col.key})</span>
@@ -130,6 +53,81 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
 export default function ImporterPage() {
     const [activeTab, setActiveTab] = useState("players");
     const { t } = useTranslation();
+
+    const playerColumns: ColumnInfo[] = [
+        { key: 'name', label: t('importer.columns.players.name') },
+        { key: 'lastName', label: t('importer.columns.players.lastName') },
+        { key: 'sex', label: t('importer.columns.players.sex') },
+        { key: 'birthDate', label: t('importer.columns.players.birthDate') },
+        { key: 'dni', label: t('importer.columns.players.dni') },
+        { key: 'nationality', label: t('importer.columns.players.nationality') },
+        { key: 'healthCardNumber', label: t('importer.columns.players.healthCardNumber') },
+        { key: 'address', label: t('importer.columns.players.address') },
+        { key: 'city', label: t('importer.columns.players.city') },
+        { key: 'postalCode', label: t('importer.columns.players.postalCode') },
+        { key: 'tutorEmail', label: t('importer.columns.players.tutorEmail') },
+        { key: 'tutorPhone', label: t('importer.columns.players.tutorPhone') },
+        { key: 'iban', label: t('importer.columns.players.iban') },
+        { key: 'teamName', label: t('importer.columns.players.teamName') },
+        { key: 'jerseyNumber', label: t('importer.columns.players.jerseyNumber') },
+        { key: 'monthlyFee', label: t('importer.columns.players.monthlyFee') },
+        { key: 'isOwnTutor', label: t('importer.columns.players.isOwnTutor') },
+        { key: 'tutorName', label: t('importer.columns.players.tutorName') },
+        { key: 'tutorLastName', label: t('importer.columns.players.tutorLastName') },
+        { key: 'tutorDni', label: t('importer.columns.players.tutorDni') },
+        { key: 'kitSize', label: t('importer.columns.players.kitSize') },
+        { key: 'startDate', label: t('importer.columns.players.startDate') },
+        { key: 'endDate', label: t('importer.columns.players.endDate') },
+        { key: 'hasInterruption', label: t('importer.columns.players.hasInterruption') },
+        { key: 'medicalCheckCompleted', label: t('importer.columns.players.medicalCheckCompleted') }
+    ];
+
+    const coachColumns: ColumnInfo[] = [
+        { key: 'name', label: t('importer.columns.coaches.name') },
+        { key: 'lastName', label: t('importer.columns.coaches.lastName') },
+        { key: 'sex', label: t('importer.columns.coaches.sex') },
+        { key: 'role', label: t('importer.columns.coaches.role') },
+        { key: 'email', label: t('importer.columns.coaches.email') },
+        { key: 'phone', label: t('importer.columns.coaches.phone') },
+        { key: 'teamName', label: t('importer.columns.coaches.teamName') },
+        { key: 'birthDate', label: t('importer.columns.coaches.birthDate') },
+        { key: 'dni', label: t('importer.columns.coaches.dni') },
+        { key: 'nationality', label: t('importer.columns.coaches.nationality') },
+        { key: 'healthCardNumber', label: t('importer.columns.coaches.healthCardNumber') },
+        { key: 'address', label: t('importer.columns.coaches.address') },
+        { key: 'city', label: t('importer.columns.coaches.city') },
+        { key: 'postalCode', label: t('importer.columns.coaches.postalCode') },
+        { key: 'iban', label: t('importer.columns.coaches.iban') },
+        { key: 'isOwnTutor', label: t('importer.columns.coaches.isOwnTutor') },
+        { key: 'tutorName', label: t('importer.columns.coaches.tutorName') },
+        { key: 'tutorLastName', label: t('importer.columns.coaches.tutorLastName') },
+        { key: 'tutorDni', label: t('importer.columns.coaches.tutorDni') },
+        { key: 'monthlyPayment', label: t('importer.columns.coaches.monthlyPayment') },
+        { key: 'kitSize', label: t('importer.columns.coaches.kitSize') },
+        { key: 'startDate', label: t('importer.columns.coaches.startDate') },
+        { key: 'endDate', label: t('importer.columns.coaches.endDate') },
+        { key: 'hasInterruption', label: t('importer.columns.coaches.hasInterruption') }
+    ];
+
+    const staffColumns: ColumnInfo[] = [
+        { key: 'name', label: t('importer.columns.staff.name') },
+        { key: 'lastName', label: t('importer.columns.staff.lastName') },
+        { key: 'sex', label: t('importer.columns.staff.sex') },
+        { key: 'role', label: t('importer.columns.staff.role') },
+        { key: 'email', label: t('importer.columns.staff.email') },
+        { key: 'phone', label: t('importer.columns.staff.phone') }
+    ];
+
+    const socioColumns: ColumnInfo[] = [
+        { key: 'name', label: t('importer.columns.socios.name') },
+        { key: 'lastName', label: t('importer.columns.socios.lastName') },
+        { key: 'email', label: t('importer.columns.socios.email') },
+        { key: 'phone', label: t('importer.columns.socios.phone') },
+        { key: 'dni', label: t('importer.columns.socios.dni') },
+        { key: 'paymentType', label: t('importer.columns.socios.paymentType') },
+        { key: 'fee', label: t('importer.columns.socios.fee') },
+        { key: 'socioNumber', label: t('importer.columns.socios.socioNumber') }
+    ];
     
     const tabs = [
         { id: "players", label: "Jugadores", icon: Users, columns: playerColumns },
@@ -143,10 +141,10 @@ export default function ImporterPage() {
        <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight flex items-center gap-2">
             <Database className="h-6 w-6"/>
-            Importador de BBDD
+            {t('importer.pageTitle')}
         </h1>
         <p className="text-muted-foreground">
-          Sube tus bases de datos mediante archivos CSV para una carga rápida.
+          {t('importer.pageDescription')}
         </p>
       </div>
       
@@ -160,7 +158,7 @@ export default function ImporterPage() {
                     <SelectItem key={tab.id} value={tab.id}>
                         <div className="flex items-center gap-2">
                             <tab.icon className="h-4 w-4" />
-                            {tab.label}
+                            {t(`importer.types.${tab.id}`)}
                         </div>
                     </SelectItem>
                 ))}
@@ -171,7 +169,7 @@ export default function ImporterPage() {
        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full hidden sm:block">
         <TabsList className="grid w-full grid-cols-4">
             {tabs.map(tab => (
-                 <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4" />{tab.label}</TabsTrigger>
+                 <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4" />{t(`importer.types.${tab.id}`)}</TabsTrigger>
             ))}
         </TabsList>
       </Tabs>
@@ -186,9 +184,9 @@ export default function ImporterPage() {
                     />
                     <Card>
                         <CardHeader>
-                            <CardTitle>Orden y Nombres de las Columnas para {tab.label.toLowerCase()}</CardTitle>
+                            <CardTitle>{t('importer.guide.title', { type: t(`importer.types.${tab.id}`).toLowerCase() })}</CardTitle>
                             <CardDescription>
-                                Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo. Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
+                                {t('importer.guide.description')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -201,3 +199,5 @@ export default function ImporterPage() {
     </div>
   );
 }
+
+    

@@ -659,7 +659,7 @@
             "coach": "Entrenador"
         },
         "errors": {
-            "loadError": "No se pudieron cargar los datos.",
+            "loadError": "No se pudieron cargar las dadas.",
             "authErrorTitle": "Error de Autenticación",
             "authErrorDesc": "Debes estar autenticado para subir archivos.",
             "missingDataTitle": "Faltan datos",
@@ -884,16 +884,19 @@
         }
     },
     "importer": {
-        "description": "Sube un archivo CSV para importar múltiples registros a la vez.",
-        "uploadLabel": "Sube tu archivo CSV",
-        "parsing": "Procesando...",
-        "previewButton": "Ver Vista Previa",
+        "pageTitle": "Importador de BBDD",
+        "pageDescription": "Sube tus bases de datos mediante archivos CSV para una carga rápida.",
         "types": {
             "players": "Jugadores",
             "coaches": "Entrenadores",
             "staff": "Staff y Directiva",
             "socios": "Socios"
         },
+        "title": "Importar {type}",
+        "description": "Sube tu archivo CSV para importar múltiples registros a la vez.",
+        "uploadLabel": "Sube tu archivo CSV",
+        "parsing": "Procesando...",
+        "previewButton": "Ver Vista Previa",
         "modal": {
             "title": "Vista Previa de la Importación",
             "description": "Revisa los datos antes de importarlos. Hay {count} filas para importar.",
@@ -904,10 +907,28 @@
             "confirmButton": "Confirmar e Importar"
         },
         "guide": {
+            "title": "Orden y Nombres de las Columnas para {type}",
+            "description": "Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo. Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.",
             "copySuccessTitle": "Cabeceras Copiadas",
             "copySuccessDesc": "Los nombres técnicos de las columnas se han copiado al portapapeles.",
             "copyHeaders": "Copiar Cabeceras",
             "copyHeadersSpreadsheet": "Copiar Cabeceras para Hoja de Cálculo"
+        },
+        "columns": {
+            "players": {
+                "name": "Nombre", "lastName": "Apellidos", "sex": "Sexo", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "nationality": "Nacionalidad", "healthCardNumber": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal", "tutorEmail": "Email de Contacto", "tutorPhone": "Teléfono de Contacto", "iban": "IBAN", "teamName": "Nombre del Equipo", "jerseyNumber": "Dorsal", "monthlyFee": "Cuota Mensual (€)", "isOwnTutor": "Es su propio tutor/a", "tutorName": "Nombre del Tutor/a", "tutorLastName": "Apellidos del Tutor/a", "tutorDni": "NIF del Tutor/a", "kitSize": "Talla de Equipación", "startDate": "Fecha de Alta", "endDate": "Fecha de Baja", "hasInterruption": "Ha tenido interrupciones", "medicalCheckCompleted": "Revisión médica completada"
+            },
+            "coaches": {
+                "name": "Nombre", "lastName": "Apellidos", "sex": "Sexo", "role": "Cargo", "email": "Email", "phone": "Teléfono", "teamName": "Equipo Asignado", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "nationality": "Nacionalidad", "healthCardNumber": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal", "iban": "IBAN", "isOwnTutor": "Es su propio tutor/a", "tutorName": "Nombre del Tutor/a", "tutorLastName": "Apellidos del Tutor/a", "tutorDni": "NIF del Tutor/a", "monthlyPayment": "Pago Mensual (€)", "kitSize": "Talla de Equipación", "startDate": "Fecha de Alta", "endDate": "Fecha de Baja", "hasInterruption": "Ha tenido interrupciones"
+            },
+            "staff": {
+                "name": "Nombre", "lastName": "Apellidos", "sex": "Sexo", "role": "Cargo", "email": "Email", "phone": "Teléfono"
+            },
+            "socios": {
+                "name": "Nombre", "lastName": "Apellidos", "email": "Email", "phone": "Teléfono", "dni": "NIF", "paymentType": "Tipo de Cuota", "fee": "Importe Cuota (€)", "socioNumber": "Número de Socio"
+            }
         }
     }
 }
+
+    
