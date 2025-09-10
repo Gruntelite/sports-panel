@@ -23,10 +23,10 @@ export function LanguageSwitcher() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost">
-          <Languages className="mr-2 h-5 w-5" />
-          {localeNames[locale]}
-          <ChevronDown className="ml-1 h-4 w-4" />
+        <Button variant="ghost" className="flex items-center gap-2">
+          <Languages className="h-5 w-5" />
+          <span>{localeNames[locale]}</span>
+          <ChevronDown className="h-4 w-4" />
           <span className="sr-only">Cambiar idioma</span>
         </Button>
       </DropdownMenuTrigger>
