@@ -667,9 +667,12 @@
             "fileTooLargeTitle": "Arxiu massa gran",
             "fileTooLargeDesc": "La mida màxima de l'arxiu és 10 MB. Si us plau, comprimeix l'arxiu si és més pesat.",
             "uploadErrorTitle": "Error de Pujada",
+            "uploadErrorDescDefault": "No s'ha pogut pujar l'arxiu. Revisa la teva connexió i els permisos.",
             "uploadErrorDesc": "No s'ha pogut pujar l'arxiu. Revisa la teva connexió i els permisos de Firebase Storage.",
             "uploadErrorUnauthorized": "Error de permisos. No estàs autoritzat per pujar arxius a aquesta ubicació.",
-            "deleteError": "No s'ha pogut eliminar el document."
+            "deleteError": "No s'ha pogut eliminar el document.",
+            "loadProtocols": "No s'han pogut carregar els protocols.",
+            "deleteProtocol": "No s'ha pogut eliminar el protocol."
         },
         "uploadSuccessTitle": "Arxiu Pujat!",
         "uploadSuccessDesc": "{documentName} s'ha desat correctament.",
@@ -900,6 +903,10 @@
                 "description": "L'arxiu CSV no té les columnes correctes o no estan en l'ordre adequat. Si us plau, revisa la guia de sota i torna a pujar l'arxiu."
             },
             "confirmButton": "Confirmar i Importar"
+        },
+        "guide": {
+            "title": "Ordre i Noms de les Columnes per a {type}",
+            "description": "Fes servir el botó de copiar per enganxar les capçaleres a la primera fila del teu full de càlcul. Assegura't que les dades del teu arxiu CSV coincideixen amb aquestes columnes. No et preocupis si alguns camps queden buits, podràs completar-los més tard."
         }
     }
 }

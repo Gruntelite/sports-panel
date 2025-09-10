@@ -9,6 +9,7 @@ import { CsvImporter } from "@/components/csv-importer";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useTranslation } from "@/components/i18n-provider";
 
 
 type ColumnInfo = {
@@ -127,6 +128,7 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
 
 export default function ImporterPage() {
     const [activeTab, setActiveTab] = useState("players");
+    const { t } = useTranslation();
     
     const tabs = [
         { id: "players", label: "Jugadores", icon: Users, columns: playerColumns },
@@ -183,10 +185,9 @@ export default function ImporterPage() {
                     />
                     <Card>
                         <CardHeader>
-                            <CardTitle>Orden y Nombres de las Columnas para {tab.label}</CardTitle>
+                            <CardTitle>{t('importer.guide.title', { type: tab.label.toLowerCase() })}</CardTitle>
                             <CardDescription>
-                                Usa el botón de copiar para pegar las cabeceras en la primera fila de tu hoja de cálculo.
-                                Asegúrate de que los datos de tu archivo CSV coinciden con estas columnas. No te preocupes si algunos campos quedan vacíos, podrás completarlos más tarde.
+                                {t('importer.guide.description')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
