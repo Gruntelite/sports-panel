@@ -19,6 +19,7 @@ import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { requestFilesAction } from "@/lib/actions";
+import { useTranslation } from "./i18n-provider";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -27,6 +28,7 @@ const MEMBER_TYPES = [
 ];
 
 export function FileRequestSender() {
+    const { t } = useTranslation();
     const [clubId, setClubId] = useState<string | null>(null);
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
@@ -93,7 +95,7 @@ export function FileRequestSender() {
 
         } catch (error) {
             console.error("Error fetching club members:", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los destinatarios."});
+            toast({ variant: "destructive", title: t('clubFiles.errors.loadError'), description: t('clubFiles.fileRequest.errors.loadRecipients')});
         } finally {
             setLoading(false);
         }
@@ -133,11 +135,11 @@ export function FileRequestSender() {
         e.preventDefault();
         
         if (!clubId) {
-            toast({ variant: "destructive", title: "Error", description: "No se ha podido identificar el club." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.fileRequest.errors.noClub') });
             return;
         }
         if (membersToSend.length === 0) {
-            toast({ variant: "destructive", title: "Error", description: "Debes seleccionar al menos un destinatario." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.fileRequest.errors.noRecipients') });
             return;
         }
 
@@ -145,7 +147,7 @@ export function FileRequestSender() {
         const documentTitle = formData.get('doc-title') as string;
         
         if (!documentTitle.trim()) {
-            toast({ variant: "destructive", title: "Error", description: "El título del documento es obligatorio." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.fileRequest.errors.noDocTitle') });
             return;
         }
 
@@ -158,15 +160,15 @@ export function FileRequestSender() {
 
         if (result.success) {
             toast({
-                title: "¡Solicitudes enviadas!",
-                description: `Se han enviado ${result.count} correos correctamente.`,
+                title: t('clubFiles.fileRequest.successTitle'),
+                description: t('clubFiles.fileRequest.successDesc', { count: result.count || 0 }),
             });
             formRef.current?.reset();
             setSelectedMemberIds(new Set());
         } else {
             toast({
                 variant: "destructive",
-                title: "Error de Envío",
+                title: t('clubFiles.fileRequest.errors.sendErrorTitle'),
                 description: result.error,
             });
         }
@@ -185,40 +187,40 @@ export function FileRequestSender() {
         <Card>
             <form ref={formRef} onSubmit={handleSendRequest}>
                 <CardHeader>
-                    <CardTitle>Solicitar Archivos</CardTitle>
+                    <CardTitle>{t('clubFiles.fileRequest.title')}</CardTitle>
                     <CardDescription>
-                        Pide a los miembros del club que suban un documento específico a través de un enlace seguro por correo electrónico.
+                        {t('clubFiles.fileRequest.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="space-y-2">
-                        <Label htmlFor="doc-title">Título del Documento a Solicitar *</Label>
-                        <Input name="doc-title" id="doc-title" placeholder="p.ej., Foto para la ficha, DNI escaneado" required />
+                        <Label htmlFor="doc-title">{t('clubFiles.fileRequest.docTitleLabel')} *</Label>
+                        <Input name="doc-title" id="doc-title" placeholder={t('clubFiles.fileRequest.docTitlePlaceholder')} required />
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="message">Mensaje Adicional (Opcional)</Label>
-                        <Textarea name="message" id="message" placeholder="Añade aquí cualquier aclaración para el usuario..."/>
+                        <Label htmlFor="message">{t('clubFiles.fileRequest.messageLabel')}</Label>
+                        <Textarea name="message" id="message" placeholder={t('clubFiles.fileRequest.messagePlaceholder')}/>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="attachment">Adjuntar Archivo (Opcional)</Label>
+                        <Label htmlFor="attachment">{t('clubFiles.fileRequest.attachmentLabel')}</Label>
                         <Input name="attachment" id="attachment" type="file" />
-                        <p className="text-xs text-muted-foreground">Si adjuntas un archivo (p.ej. una plantilla), se enviará en el email de solicitud.</p>
+                        <p className="text-xs text-muted-foreground">{t('clubFiles.fileRequest.attachmentHint')}</p>
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Filtrar destinatarios por tipo</Label>
-                            <Popover open={isTypePopoverOpen} onOpenChange={setIsTypePopoverOpen}>
+                            <Label>{t('clubFiles.fileRequest.filterByType')}</Label>
+                             <Popover open={isTypePopoverOpen} onOpenChange={setIsTypePopoverOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start font-normal">
-                                        {selectedTypes.size > 0 ? `${selectedTypes.size} tipo(s) seleccionado(s)` : "Seleccionar tipo..."}
+                                        {selectedTypes.size > 0 ? t('clubFiles.fileRequest.typesSelected', { count: selectedTypes.size }) : t('clubFiles.fileRequest.selectType')}
                                         <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                                     <Command>
-                                        <CommandInput placeholder="Buscar tipo..." />
+                                        <CommandInput placeholder={t('clubFiles.fileRequest.searchType')} />
                                         <CommandList>
-                                            <CommandEmpty>No se encontró el tipo.</CommandEmpty>
+                                            <CommandEmpty>{t('clubFiles.fileRequest.noTypeFound')}</CommandEmpty>
                                             <CommandGroup>
                                                 {MEMBER_TYPES.map(type => (
                                                     <CommandItem
@@ -244,19 +246,19 @@ export function FileRequestSender() {
                             </Popover>
                         </div>
                         <div className="space-y-2">
-                            <Label>Filtrar destinatarios por equipo</Label>
+                            <Label>{t('clubFiles.fileRequest.filterByTeam')}</Label>
                             <Popover open={isTeamPopoverOpen} onOpenChange={setIsTeamPopoverOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start font-normal">
-                                        {selectedTeams.size > 0 ? `${selectedTeams.size} equipo(s) seleccionado(s)` : "Seleccionar equipo..."}
+                                        {selectedTeams.size > 0 ? t('clubFiles.fileRequest.teamsSelected', { count: selectedTeams.size }) : t('clubFiles.fileRequest.selectTeam')}
                                         <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
-                                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                                 <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                                     <Command>
-                                        <CommandInput placeholder="Buscar equipo..." />
+                                        <CommandInput placeholder={t('clubFiles.fileRequest.searchTeam')} />
                                         <CommandList>
-                                            <CommandEmpty>No se encontró el equipo.</CommandEmpty>
+                                            <CommandEmpty>{t('clubFiles.fileRequest.noTeamFound')}</CommandEmpty>
                                             <CommandGroup>
                                                 {teams.map(team => (
                                                     <CommandItem
@@ -284,27 +286,27 @@ export function FileRequestSender() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Destinatarios</Label>
-                        <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
+                        <Label>{t('clubFiles.fileRequest.recipients')}</Label>
+                         <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="outline" className="w-full md:w-auto justify-start font-normal">
+                                 <Button variant="outline" className="w-full md:w-auto justify-start font-normal truncate">
                                     <span className="truncate pr-2">
-                                     {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : `Seleccionar de ${filteredMembers.length} filtrados...`}
+                                     {selectedMemberIds.size > 0 ? t('clubFiles.fileRequest.membersSelected', { count: selectedMemberIds.size }) : t('clubFiles.fileRequest.selectFrom', { count: filteredMembers.length })}
                                     </span>
                                     <UserPlus className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-md">
-                                <DialogHeader>
-                                    <DialogTitle>Seleccionar Destinatarios</DialogTitle>
+                                 <DialogHeader>
+                                    <DialogTitle>{t('clubFiles.fileRequest.selectRecipients')}</DialogTitle>
                                     <DialogDescription>
-                                        Selecciona los miembros que recibirán esta solicitud.
+                                        {t('clubFiles.fileRequest.selectRecipientsDesc')}
                                     </DialogDescription>
                                 </DialogHeader>
                                 <Command>
-                                    <CommandInput placeholder="Buscar miembro..." />
+                                    <CommandInput placeholder={t('clubFiles.fileRequest.searchMember')} />
                                     <CommandList>
-                                        <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
+                                        <CommandEmpty>{t('clubFiles.fileRequest.noMemberFound')}</CommandEmpty>
                                         <CommandGroup>
                                             <CommandItem onSelect={() => handleSelectAllFiltered(!isAllFilteredSelected)} className="flex items-center space-x-2 font-semibold cursor-pointer">
                                                 <Checkbox
@@ -312,7 +314,7 @@ export function FileRequestSender() {
                                                     checked={isAllFilteredSelected}
                                                     onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                                 />
-                                                <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                                <label htmlFor="select-all" className="flex-1 cursor-pointer">{t('clubFiles.fileRequest.selectAll', { count: filteredMembers.length })}</label>
                                             </CommandItem>
                                             <ScrollArea className="h-64">
                                                 {filteredMembers.map((member) => (
@@ -341,20 +343,20 @@ export function FileRequestSender() {
                                 </Command>
                                 <DialogFooter>
                                     <DialogClose asChild>
-                                        <Button>Aceptar</Button>
+                                        <Button>{t('common.accept')}</Button>
                                     </DialogClose>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
                         <p className="text-xs text-muted-foreground">
-                            La solicitud se enviará a <span className="font-semibold">{recipientCount}</span> destinatario(s).
+                            {t('clubFiles.fileRequest.sendTo', { count: recipientCount })}
                         </p>
                     </div>
                 </CardContent>
-                <CardFooter className="border-t pt-6">
+                 <CardFooter className="border-t pt-6">
                     <Button type="submit" className="w-full md:w-auto ml-auto" disabled={recipientCount === 0 || sending}>
                         {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                        {sending ? "Enviando..." : `Enviar Solicitud a ${recipientCount} Miembro(s)`}
+                        {sending ? t('clubFiles.fileRequest.sending') : t('clubFiles.fileRequest.sendRequest', { count: recipientCount })}
                     </Button>
                 </CardFooter>
             </form>

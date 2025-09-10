@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./ui/
 import { Button } from "./ui/button";
 import { Loader2, FileClock, Trash2, Eye, MoreHorizontal } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Progress } from "./ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -38,10 +38,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "./ui/scroll-area";
+import { useTranslation } from "./i18n-provider";
 
 
 export function RequestHistory() {
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [batches, setBatches] = useState<FileRequestBatch[]>([]);
   const [completedCounts, setCompletedCounts] = useState<Record<string, number>>({});
@@ -106,8 +108,8 @@ export function RequestHistory() {
         console.error("Error fetching request history:", error);
         toast({
           variant: "destructive",
-          title: "Error",
-          description: "No se pudo cargar el historial de solicitudes.",
+          title: t('common.error'),
+          description: t('clubFiles.history.errors.load'),
         });
       } finally {
         setLoading(false);
@@ -115,7 +117,7 @@ export function RequestHistory() {
     };
 
     fetchHistory();
-  }, [clubId, toast]);
+  }, [clubId, toast, t]);
   
   const handleDeleteBatch = async () => {
     if (!batchToDelete || !clubId) return;
@@ -135,11 +137,11 @@ export function RequestHistory() {
 
         await batch.commit();
         
-        toast({ title: "Lote de solicitudes eliminado."});
+        toast({ title: t('clubFiles.history.deleteSuccess')});
         setBatches(prev => prev.filter(b => b.id !== batchToDelete.id));
 
     } catch (e) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el lote de solicitudes." });
+        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.history.errors.delete') });
     } finally {
         setDeleting(false);
         setBatchToDelete(null);
@@ -162,7 +164,7 @@ export function RequestHistory() {
         const users = pendingSnapshot.docs.map(d => (d.data() as FileRequest).userName);
         setPendingUsers(users);
     } catch(e) {
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los detalles." });
+        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.history.errors.loadDetails') });
     } finally {
         setDetailsLoading(false);
     }
@@ -181,16 +183,16 @@ export function RequestHistory() {
     <>
     <Card>
       <CardHeader>
-        <CardTitle>Historial de Solicitudes</CardTitle>
+        <CardTitle>{t('clubFiles.history.title')}</CardTitle>
         <CardDescription>
-          Aquí puedes ver el estado de las solicitudes de archivos que has enviado.
+          {t('clubFiles.history.description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
         {batches.length === 0 ? (
           <div className="flex flex-col items-center justify-center text-center text-muted-foreground p-8 border-2 border-dashed rounded-lg">
             <FileClock className="h-10 w-10 mb-2"/>
-            <p>No has enviado ninguna solicitud de archivos todavía.</p>
+            <p>{t('clubFiles.history.noRequests')}</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -204,7 +206,7 @@ export function RequestHistory() {
                     <div className="flex-1 pr-4">
                       <h3 className="font-semibold break-words">{batch.documentTitle}</h3>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Solicitado el {format(batch.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: es })}
+                        {t('clubFiles.history.requestedOn')} {format(batch.createdAt.toDate(), "d 'de' LLLL, yyyy", { locale: locale === 'ca' ? ca : es })}
                       </p>
                     </div>
                     <div className="flex-shrink-0">
@@ -217,11 +219,11 @@ export function RequestHistory() {
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onSelect={() => handleShowDetails(batch)}>
                                     <Eye className="h-4 w-4 mr-2"/>
-                                    Ver Detalles
+                                    {t('clubFiles.history.viewDetails')}
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-destructive" onSelect={() => setBatchToDelete(batch)}>
                                     <Trash2 className="h-4 w-4 mr-2"/>
-                                    Eliminar
+                                    {t('clubFiles.history.delete')}
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -229,7 +231,7 @@ export function RequestHistory() {
                   </div>
                   <Progress value={progress} />
                   <p className="text-sm font-medium text-right">
-                    {completed} de {total} completados
+                    {completed} {t('clubFiles.history.of')} {total} {t('clubFiles.history.completed')}
                   </p>
                 </div>
               );
@@ -242,9 +244,9 @@ export function RequestHistory() {
     <Dialog open={isDetailsModalOpen} onOpenChange={setIsDetailsModalOpen}>
         <DialogContent>
             <DialogHeader>
-                <DialogTitle>Entregas Pendientes: {selectedBatchTitle}</DialogTitle>
+                <DialogTitle>{t('clubFiles.history.modalTitle')}: {selectedBatchTitle}</DialogTitle>
                 <DialogDescription>
-                    Esta es la lista de personas que todavía no han subido el archivo solicitado.
+                    {t('clubFiles.history.modalDescription')}
                 </DialogDescription>
             </DialogHeader>
              <div className="py-4">
@@ -257,14 +259,14 @@ export function RequestHistory() {
                         <ul className="space-y-2">
                             {pendingUsers.length > 0 ? pendingUsers.map((name, index) => (
                                 <li key={index} className="p-2 border rounded-md text-sm">{name}</li>
-                            )) : <p className="text-center text-muted-foreground">¡Todos han completado la entrega!</p>}
+                            )) : <p className="text-center text-muted-foreground">{t('clubFiles.history.allCompleted')}</p>}
                         </ul>
                     </ScrollArea>
                 )}
             </div>
              <DialogFooter>
                 <DialogClose asChild>
-                    <Button>Cerrar</Button>
+                    <Button>{t('clubFiles.history.close')}</Button>
                 </DialogClose>
             </DialogFooter>
         </DialogContent>
@@ -273,19 +275,19 @@ export function RequestHistory() {
     <AlertDialog open={!!batchToDelete} onOpenChange={(open) => !open && setBatchToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el lote de solicitudes para "{batchToDelete?.documentTitle}" y todos sus registros asociados.
+              {t('clubFiles.history.confirmDeleteDesc', { docTitle: batchToDelete?.documentTitle })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteBatch}
               disabled={deleting}
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : "Eliminar"}
+              {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : t('clubFiles.history.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

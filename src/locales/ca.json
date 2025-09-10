@@ -5,7 +5,9 @@
         "error": "Error",
         "saved": "Desat",
         "cancel": "Cancel·lar",
-        "send": "Enviar"
+        "send": "Enviar",
+        "accept": "Acceptar",
+        "confirmDeleteTitle": "Estàs segur?"
     },
     "sidebar": {
         "dashboard": "Panell",
@@ -575,7 +577,7 @@
     },
     "coaches": {
         "title": "Equip Tècnic",
-        "description": "Gestiona tots els membres del personal tècnic del teu club.",
+        "description": "Gestiona a todos los miembros del personal técnico de tu club.",
         "requestUpdate": "Sol·licitar Actualització",
         "columns": "Columnes",
         "toggleColumns": "Mostrar/Ocultar Columnes",
@@ -706,6 +708,92 @@
         "noCategory": "Sense Categoria",
         "noDocuments": "No hi ha documents que coincideixin amb el filtre actual.",
         "confirmDeleteTitle": "Estàs segur?",
-        "confirmDeleteDesc": "Aquesta acció no es pot desfer. L'arxiu s'eliminarà permanentment."
+        "confirmDeleteDesc": "Aquesta acció no es pot desfer. L'arxiu s'eliminarà permanentment.",
+        "confirmDeleteDescProtocol": "Aquesta acció no es pot desfer. El protocol s'eliminarà permanentment.",
+        "fileRequest": {
+            "title": "Sol·licitar Arxius",
+            "description": "Demana als membres del club que pugin un document específic a través d'un enllaç segur per correu electrònic.",
+            "docTitleLabel": "Títol del Document a Sol·licitar",
+            "docTitlePlaceholder": "p.ex., Foto per a la fitxa, DNI escanejat",
+            "messageLabel": "Missatge Addicional (Opcional)",
+            "messagePlaceholder": "Afegeix aquí qualsevol aclariment per a l'usuari...",
+            "attachmentLabel": "Adjuntar Arxiu (Opcional)",
+            "attachmentHint": "Si adjuntes un arxiu (p.ex. una plantilla), s'enviarà a l'email de sol·licitud.",
+            "filterByType": "Filtrar destinataris per tipus",
+            "typesSelected": "{count} tipus seleccionat(s)",
+            "selectType": "Seleccionar tipus...",
+            "searchType": "Cercar tipus...",
+            "noTypeFound": "No s'ha trobat el tipus.",
+            "filterByTeam": "Filtrar destinataris per equip",
+            "teamsSelected": "{count} equip(s) seleccionat(s)",
+            "selectTeam": "Seleccionar equip...",
+            "searchTeam": "Cercar equip...",
+            "noTeamFound": "No s'ha trobat l'equip.",
+            "recipients": "Destinataris",
+            "membersSelected": "{count} membre(s) seleccionat(s)",
+            "selectFrom": "Seleccionar de {count} filtrats...",
+            "selectRecipients": "Seleccionar Destinataris",
+            "selectRecipientsDesc": "Selecciona els membres que rebran aquesta sol·licitud.",
+            "searchMember": "Cercar membre...",
+            "noMemberFound": "No s'ha trobat cap membre.",
+            "selectAll": "Seleccionar tots els {count} membres",
+            "sendTo": "La sol·licitud s'enviarà a {count} destinatari(s).",
+            "sending": "Enviant...",
+            "sendRequest": "Enviar Sol·licitud a {count} Membre(s)",
+            "successTitle": "Sol·licituds enviades!",
+            "successDesc": "S'han enviat {count} correus correctament.",
+            "errors": {
+                "loadRecipients": "No s'han pogut carregar els destinataris.",
+                "noClub": "No s'ha pogut identificar el club.",
+                "noRecipients": "Has de seleccionar almenys un destinatari.",
+                "noDocTitle": "El títol del document és obligatori.",
+                "sendErrorTitle": "Error d'Enviament"
+            }
+        },
+        "history": {
+            "title": "Historial de Sol·licituds",
+            "description": "Aquí pots veure l'estat de les sol·licituds d'arxius que has enviat.",
+            "noRequests": "Encara no has enviat cap sol·licitud d'arxius.",
+            "requestedOn": "Sol·licitat el",
+            "viewDetails": "Veure Detalls",
+            "delete": "Eliminar",
+            "of": "de",
+            "completed": "completats",
+            "modalTitle": "Entregues Pendents",
+            "modalDescription": "Aquesta és la llista de persones que encara no han pujat l'arxiu sol·licitat.",
+            "allCompleted": "Tothom ha completat l'entrega!",
+            "close": "Tancar",
+            "confirmDeleteDesc": "Aquesta acció no es pot desfer. S'eliminarà permanentment el lot de sol·licituds per a \"{docTitle}\" i tots els seus registres associats.",
+            "deleteSuccess": "Lot de sol·licituds eliminat.",
+            "errors": {
+                "load": "No s'ha pogut carregar l'historial de sol·licituds.",
+                "delete": "No s'ha pogut eliminar el lot de sol·licituds.",
+                "loadDetails": "No s'han pogut carregar els detalls."
+            }
+        },
+        "protocols": {
+            "title": "Protocols d'Actuació",
+            "description": "Puja i gestiona els protocols d'actuació del club (lesions, anti-bullying, etc.).",
+            "uploadButton": "Pujar Protocol",
+            "modal": {
+                "title": "Pujar Nou Protocol",
+                "description": "Puja un arxiu PDF amb el protocol.",
+                "nameLabel": "Nom del Protocol",
+                "namePlaceholder": "p.ex., Protocol de Lesions Greus",
+                "fileLabel": "Arxiu del Protocol",
+                "fileHint": "Es recomana PDF. Mida màxima: 10MB.",
+                "saveButton": "Pujar i Desar"
+            },
+            "table": {
+                "fileName": "Nom del Protocol",
+                "uploadDate": "Data de Pujada",
+                "actions": "Accions"
+            },
+            "noProtocols": "Encara no has pujat cap protocol.",
+            "uploadSuccessTitle": "Protocol Pujat",
+            "uploadSuccessDesc": "El protocol {protocolName} s'ha desat correctament.",
+            "deleteSuccessTitle": "Protocol Eliminat",
+            "deleteSuccessDesc": "El protocol {protocolName} ha estat eliminat."
+        }
     }
 }

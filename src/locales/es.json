@@ -5,7 +5,9 @@
         "error": "Error",
         "saved": "Guardado",
         "cancel": "Cancelar",
-        "send": "Enviar"
+        "send": "Enviar",
+        "accept": "Aceptar",
+        "confirmDeleteTitle": "¿Estás seguro?"
     },
     "sidebar": {
         "dashboard": "Panel",
@@ -665,9 +667,12 @@
             "fileTooLargeTitle": "Archivo demasiado grande",
             "fileTooLargeDesc": "El tamaño máximo del archivo es 10 MB. Por favor, comprime el archivo si es más pesado.",
             "uploadErrorTitle": "Error de Subida",
+            "uploadErrorDescDefault": "No se pudo subir el archivo. Revisa tu conexión y los permisos.",
             "uploadErrorDesc": "No se pudo subir el archivo. Revisa tu conexión y los permisos de Firebase Storage.",
             "uploadErrorUnauthorized": "Error de permisos. No estás autorizado para subir archivos a esta ubicación.",
-            "deleteError": "No se pudo eliminar el documento."
+            "deleteError": "No se pudo eliminar el documento.",
+            "loadProtocols": "No se pudieron cargar los protocolos.",
+            "deleteProtocol": "No se pudo eliminar el protocolo."
         },
         "uploadSuccessTitle": "¡Archivo Subido!",
         "uploadSuccessDesc": "{documentName} se ha guardado correctamente.",
@@ -706,6 +711,92 @@
         "noCategory": "Sin Categoría",
         "noDocuments": "No hay documentos que coincidan con el filtro actual.",
         "confirmDeleteTitle": "¿Estás seguro?",
-        "confirmDeleteDesc": "Esta acción no se puede deshacer. El archivo se eliminará permanentemente."
+        "confirmDeleteDesc": "Esta acción no se puede deshacer. El archivo se eliminará permanentemente.",
+        "confirmDeleteDescProtocol": "Esta acción no se puede deshacer. El protocolo se eliminará permanentemente.",
+        "fileRequest": {
+            "title": "Solicitar Archivos",
+            "description": "Pide a los miembros del club que suban un documento específico a través de un enlace seguro por correo electrónico.",
+            "docTitleLabel": "Título del Documento a Solicitar",
+            "docTitlePlaceholder": "p.ej., Foto para la ficha, DNI escaneado",
+            "messageLabel": "Mensaje Adicional (Opcional)",
+            "messagePlaceholder": "Añade aquí cualquier aclaración para el usuario...",
+            "attachmentLabel": "Adjuntar Archivo (Opcional)",
+            "attachmentHint": "Si adjuntas un archivo (p.ej. una plantilla), se enviará en el email de solicitud.",
+            "filterByType": "Filtrar destinatarios por tipo",
+            "typesSelected": "{count} tipo(s) seleccionado(s)",
+            "selectType": "Seleccionar tipo...",
+            "searchType": "Buscar tipo...",
+            "noTypeFound": "No se encontró el tipo.",
+            "filterByTeam": "Filtrar destinatarios por equipo",
+            "teamsSelected": "{count} equipo(s) seleccionado(s)",
+            "selectTeam": "Seleccionar equipo...",
+            "searchTeam": "Buscar equipo...",
+            "noTeamFound": "No se encontró el equipo.",
+            "recipients": "Destinatarios",
+            "membersSelected": "{count} miembro(s) seleccionado(s)",
+            "selectFrom": "Seleccionar de {count} filtrados...",
+            "selectRecipients": "Seleccionar Destinatarios",
+            "selectRecipientsDesc": "Selecciona los miembros que recibirán esta solicitud.",
+            "searchMember": "Buscar miembro...",
+            "noMemberFound": "No se encontró ningún miembro.",
+            "selectAll": "Seleccionar todos los {count} miembros",
+            "sendTo": "La solicitud se enviará a {count} destinatario(s).",
+            "sending": "Enviando...",
+            "sendRequest": "Enviar Solicitud a {count} Miembro(s)",
+            "successTitle": "¡Solicitudes enviadas!",
+            "successDesc": "Se han enviado {count} correos correctamente.",
+            "errors": {
+                "loadRecipients": "No se pudieron cargar los destinatarios.",
+                "noClub": "No se ha podido identificar el club.",
+                "noRecipients": "Debes seleccionar al menos un destinatario.",
+                "noDocTitle": "El título del documento es obligatorio.",
+                "sendErrorTitle": "Error de Envío"
+            }
+        },
+        "history": {
+            "title": "Historial de Solicitudes",
+            "description": "Aquí puedes ver el estado de las solicitudes de archivos que has enviado.",
+            "noRequests": "No has enviado ninguna solicitud de archivos todavía.",
+            "requestedOn": "Solicitado el",
+            "viewDetails": "Ver Detalles",
+            "delete": "Eliminar",
+            "of": "de",
+            "completed": "completados",
+            "modalTitle": "Entregas Pendientes",
+            "modalDescription": "Esta es la lista de personas que todavía no han subido el archivo solicitado.",
+            "allCompleted": "¡Todos han completado la entrega!",
+            "close": "Cerrar",
+            "confirmDeleteDesc": "Esta acción no se puede deshacer. Se eliminará permanentemente el lote de solicitudes para \"{docTitle}\" y todos sus registros asociados.",
+            "deleteSuccess": "Lote de solicitudes eliminado.",
+            "errors": {
+                "load": "No se pudo cargar el historial de solicitudes.",
+                "delete": "No se pudo eliminar el lote de solicitudes.",
+                "loadDetails": "No se pudieron cargar los detalles."
+            }
+        },
+        "protocols": {
+            "title": "Protocolos de Actuación",
+            "description": "Sube y gestiona los protocolos de actuación del club (lesiones, anti-bullying, etc.).",
+            "uploadButton": "Subir Protocolo",
+            "modal": {
+                "title": "Subir Nuevo Protocolo",
+                "description": "Sube un archivo PDF con el protocolo.",
+                "nameLabel": "Nombre del Protocolo",
+                "namePlaceholder": "p.ej., Protocolo de Lesiones Graves",
+                "fileLabel": "Archivo del Protocolo",
+                "fileHint": "Se recomienda PDF. Tamaño máximo: 10MB.",
+                "saveButton": "Subir y Guardar"
+            },
+            "table": {
+                "fileName": "Nombre del Protocolo",
+                "uploadDate": "Fecha de Subida",
+                "actions": "Acciones"
+            },
+            "noProtocols": "No has subido ningún protocolo todavía.",
+            "uploadSuccessTitle": "Protocolo Subido",
+            "uploadSuccessDesc": "El protocolo {protocolName} se ha guardado correctamente.",
+            "deleteSuccessTitle": "Protocolo Eliminado",
+            "deleteSuccessDesc": "El protocolo {protocolName} ha sido eliminado."
+        }
     }
 }
