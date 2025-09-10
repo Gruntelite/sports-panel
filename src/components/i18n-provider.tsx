@@ -4,6 +4,9 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import es from '@/locales/es.json';
 import ca from '@/locales/ca.json';
+import { auth, db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
+import type { ClubSettings } from '@/lib/types';
 
 const translations = { es, ca };
 
@@ -33,6 +36,33 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     if (savedLocale && (savedLocale === 'es' || savedLocale === 'ca')) {
       setLocale(savedLocale);
     }
+
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        if (user) {
+            try {
+                const userDocRef = doc(db, "users", user.uid);
+                const userDocSnap = await getDoc(userDocRef);
+                if (userDocSnap.exists()) {
+                    const clubId = userDocSnap.data().clubId;
+                    if (clubId) {
+                        const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+                        const settingsSnap = await getDoc(settingsRef);
+                        if (settingsSnap.exists()) {
+                            const settings = settingsSnap.data() as ClubSettings;
+                            if (settings.defaultLanguage) {
+                                setLocale(settings.defaultLanguage);
+                                localStorage.setItem('locale', settings.defaultLanguage);
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error fetching default language:", e);
+            }
+        }
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const handleSetLocale = useCallback((newLocale: Locale) => {
@@ -63,6 +93,10 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         return acc.replace(`{${paramKey}}`, String(paramValue));
       }, result);
     }
+    
+    if(Array.isArray(result)){
+      return result.map(item => item.label || item).join(', ');
+    }
 
     return result || key;
   }, [locale]);
@@ -73,5 +107,3 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     </I18nContext.Provider>
   );
 }
-
-    

@@ -19,7 +19,7 @@ function getLuminance(hex: string): number {
 }
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
-    const { clubName, adminName, sport, email, password, themeColor } = values;
+    const { clubName, adminName, sport, email, password, themeColor, defaultLanguage } = values;
     
     try {
         const userRecord = await adminAuth.createUser({
@@ -52,8 +52,8 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
         const luminance = getLuminance(themeColor);
         const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 21);
-        trialEndDate.setHours(0, 0, 0, 0);
+        trialEndDate.setDate(trialEndDate.getDate() + 20);
+        trialEndDate.setHours(23, 59, 59, 999);
 
         const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
         batch.set(settingsRef, {
@@ -61,6 +61,7 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
             themeColorForeground: foregroundColor,
             logoUrl: null,
             trialEndDate: Timestamp.fromDate(trialEndDate),
+            defaultLanguage: defaultLanguage || 'es',
         }, { merge: true });
 
         await batch.commit();

@@ -44,6 +44,7 @@ const registerSchema = z.object({
   themeColor: z.string().regex(/^#[0-9a-f]{6}$/i, { message: "Selecciona un color válido."}),
   email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
+  defaultLanguage: z.enum(['es', 'ca']),
 });
 
 
@@ -51,7 +52,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const { t } = useTranslation();
+  const { t, locale } = useTranslation();
   const sports = t('sports', { returnObjects: true }) as { label: string, value: string }[];
 
 
@@ -64,8 +65,14 @@ export default function RegisterPage() {
       themeColor: "#2563eb",
       email: "",
       password: "",
+      defaultLanguage: locale,
     },
   });
+
+  useEffect(() => {
+    form.setValue('defaultLanguage', locale);
+  }, [locale, form]);
+
 
   async function onSubmit(values: z.infer<typeof registerSchema>) {
     setLoading(true);
@@ -233,6 +240,27 @@ export default function RegisterPage() {
                         )}
                     />
                 </div>
+                 <FormField
+                    control={form.control}
+                    name="defaultLanguage"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Idioma por Defecto</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona..." />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="es">Castellano</SelectItem>
+                                <SelectItem value="ca">Català</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="email"

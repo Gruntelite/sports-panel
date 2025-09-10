@@ -193,6 +193,9 @@ export default function LandingPage() {
   const pricing = {
     pro: { monthly: 33, yearly: Math.round(33 * 12 * 0.9) }
   };
+  
+  const pricingFeatures = t('landing.pricing.features', { returnObjects: true }) as string[];
+
 
   return (
     <Dialog>
@@ -497,7 +500,7 @@ export default function LandingPage() {
                           <span className="text-xs text-muted-foreground">{t('landing.pricing.vatNote')}</span>
                       </div>
                       <ul className="mt-6 space-y-3 flex-grow text-left w-fit mx-auto">
-                           {t('landing.pricing.features', { returnObjects: true }).map((feature, index) => (
+                           {Array.isArray(pricingFeatures) && pricingFeatures.map((feature, index) => (
                                 <li key={index} className="flex items-center gap-2">
                                     <CheckCircle className="h-5 w-5 text-green-500" />
                                     <span>{feature}</span>

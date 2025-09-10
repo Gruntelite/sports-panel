@@ -323,6 +323,7 @@ export type ClubSettings = {
     smtpFromEmail?: string;
     customFields?: CustomFieldDef[];
     trialEndDate?: Timestamp;
+    defaultLanguage?: 'es' | 'ca';
 }
 
 export type Incident = {
@@ -368,4 +369,5 @@ export type ClubCreationData = {
     email: string;
     password: string;
     themeColor: string;
+    defaultLanguage: 'es' | 'ca';
 }
