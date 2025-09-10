@@ -135,22 +135,26 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">{t('register.trial.title')}</h1>
-            <div className="space-y-4 flex flex-col items-center">
-                <div className="flex items-center justify-start gap-3 w-fit">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.0')}</span>
-                </div>
-                <div className="flex items-center justify-start gap-3 w-fit">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.1')}</span>
-                </div>
-                <div className="flex items-center justify-start gap-3 w-fit">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.2')}</span>
-                </div>
-                <div className="flex items-center justify-start gap-3 w-fit">
-                    <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
-                    <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.3')}</span>
+            <div className="space-y-4">
+                <div className="flex justify-center">
+                    <div className="inline-flex flex-col items-start gap-y-4">
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                            <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.0')}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                            <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.1')}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                            <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.2')}</span>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
+                            <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.3')}</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
