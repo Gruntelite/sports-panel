@@ -1,3 +1,4 @@
+
 export const sports = [
     { label: "Ajedrez", value: "ajedrez" },
     { label: "Atletismo", value: "atletismo" },

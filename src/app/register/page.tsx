@@ -22,7 +22,6 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
-import { sports } from "@/lib/sports";
 import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
@@ -53,6 +52,8 @@ export default function RegisterPage() {
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
   const { t } = useTranslation();
+  const sports = t('sports', { returnObjects: true }) as { label: string, value: string }[];
+
 
   const form = useForm<z.infer<typeof registerSchema>>({
     resolver: zodResolver(registerSchema),
@@ -127,7 +128,7 @@ export default function RegisterPage() {
         <div className="absolute inset-0 bg-black/50"></div>
         <div className="z-10 text-white max-w-lg space-y-6 text-center">
             <h1 className="text-4xl font-bold text-shadow shadow-black/50">{t('register.trial.title')}</h1>
-            <div className="space-y-4">
+            <div className="space-y-4 text-left">
                 <div className="flex items-center justify-center gap-3">
                     <CheckCircle2 className="h-7 w-7 flex-shrink-0 text-shadow shadow-black/50"/>
                     <span className="text-xl text-shadow shadow-black/50 whitespace-nowrap">{t('register.trial.0')}</span>
@@ -206,7 +207,7 @@ export default function RegisterPage() {
                                 </SelectTrigger>
                                 </FormControl>
                                 <SelectContent>
-                                    {sports.map(sport => (
+                                    {Array.isArray(sports) && sports.map(sport => (
                                         <SelectItem key={sport.value} value={sport.value}>{sport.label}</SelectItem>
                                     ))}
                                 </SelectContent>
