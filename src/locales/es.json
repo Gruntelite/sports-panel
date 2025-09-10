@@ -293,5 +293,12 @@
         { "label": "Voleibol", "value": "voleibol" },
         { "label": "Waterpolo", "value": "waterpolo" },
         { "label": "Windsurf", "value": "windsurf" }
-    ]
+    ],
+    "communications": {
+        "description": "Contacta con los miembros de tu club y configura tus envíos.",
+        "tabs": {
+            "directSend": "Envío Directo",
+            "settings": "Configuración"
+        }
+    }
 }
