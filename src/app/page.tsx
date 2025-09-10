@@ -380,6 +380,7 @@ export default function LandingPage() {
                             alt="SportsPanel App Screenshot"
                             width={1890}
                             height={1063}
+                            priority
                             className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full"
                         />
                     </div>

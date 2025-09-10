@@ -1,40 +1,73 @@
 
 'use client';
 
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import es from '@/locales/es.json';
 import ca from '@/locales/ca.json';
 
 const translations = { es, ca };
 
-const I18nContext = createContext<{
-    t: (key: string) => string;
-}>({
-    t: () => '',
-});
+type Locale = 'es' | 'ca';
 
-export function useTranslation() {
-    return useContext(I18nContext);
+interface I18nContextType {
+  t: (key: string, params?: { [key: string]: string | number }) => string;
+  locale: Locale;
+  setLocale: (locale: Locale) => void;
 }
 
-export function I18nProvider({ children, locale }: { children: React.ReactNode, locale: string }) {
-    const t = (key: string): string => {
-        const lang = locale === 'ca' ? 'ca' : 'es';
-        const keys = key.split('.');
-        let result: any = translations[lang];
+const I18nContext = createContext<I18nContextType | undefined>(undefined);
 
+export function useTranslation() {
+  const context = useContext(I18nContext);
+  if (!context) {
+    throw new Error('useTranslation must be used within an I18nProvider');
+  }
+  return context;
+}
+
+export function I18nProvider({ children }: { children: React.ReactNode }) {
+  const [locale, setLocale] = useState<Locale>('es');
+
+  useEffect(() => {
+    const savedLocale = localStorage.getItem('locale') as Locale;
+    if (savedLocale && (savedLocale === 'es' || savedLocale === 'ca')) {
+      setLocale(savedLocale);
+    }
+  }, []);
+
+  const handleSetLocale = useCallback((newLocale: Locale) => {
+    setLocale(newLocale);
+    localStorage.setItem('locale', newLocale);
+  }, []);
+
+  const t = useCallback((key: string, params?: { [key: string]: string | number }): string => {
+    const lang = translations[locale] || translations.es;
+    let result: any = lang;
+    
+    try {
+        const keys = key.split('.');
         for (const k of keys) {
             result = result?.[k];
             if (result === undefined) {
-                return key; // Return key if not found
+                return key;
             }
         }
-        return result || key;
-    };
+    } catch(e) {
+        return key;
+    }
     
-    return (
-        <I18nContext.Provider value={{ t }}>
-            {children}
-        </I18nContext.Provider>
-    );
+    if (typeof result === 'string' && params) {
+      return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+        return acc.replace(`{${paramKey}}`, String(paramValue));
+      }, result);
+    }
+
+    return result || key;
+  }, [locale]);
+    
+  return (
+    <I18nContext.Provider value={{ t, locale, setLocale: handleSetLocale }}>
+      {children}
+    </I18nContext.Provider>
+  );
 }

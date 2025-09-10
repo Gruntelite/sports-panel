@@ -15,13 +15,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-  params
 }: Readonly<{
   children: React.ReactNode;
-  params: { locale: string };
 }>) {
   return (
-    <html lang={params.locale} suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -29,7 +27,7 @@ export default function RootLayout({
         <link rel="icon" href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/Dise%C3%B1o%20sin%20t%C3%ADtulo%20(10).png?alt=media&token=94fb008e-1e39-482a-9607-eae672943eba" type="image/png" sizes="any" />
       </head>
       <body className="font-body antialiased">
-        <I18nProvider locale={params.locale}>
+        <I18nProvider>
             {children}
         </I18nProvider>
         <Toaster />

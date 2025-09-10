@@ -1,7 +1,7 @@
 
 'use client';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { useTranslation } from '@/components/i18n-provider';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -11,22 +11,14 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Languages } from 'lucide-react';
 
-const locales = ['es', 'ca'];
+const locales: ('es' | 'ca')[] = ['es', 'ca'];
 const localeNames: {[key: string]: string} = {
     es: 'Castellano',
     ca: 'Català'
 }
 
 export function LanguageSwitcher() {
-  const pathname = usePathname();
-  const router = useRouter();
-
-  const handleLocaleChange = (newLocale: string) => {
-    const newPath = `/${newLocale}${pathname.substring(3)}`;
-    router.push(newPath);
-  };
-  
-  const currentLocale = pathname.substring(1, 3);
+  const { locale, setLocale } = useTranslation();
 
   return (
     <DropdownMenu>
@@ -37,13 +29,13 @@ export function LanguageSwitcher() {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        {locales.map((locale) => (
+        {locales.map((loc) => (
           <DropdownMenuItem
-            key={locale}
-            onSelect={() => handleLocaleChange(locale)}
-            disabled={currentLocale === locale}
+            key={loc}
+            onSelect={() => setLocale(loc)}
+            disabled={locale === loc}
           >
-            {localeNames[locale]}
+            {localeNames[loc]}
           </DropdownMenuItem>
         ))}
       </DropdownMenuContent>

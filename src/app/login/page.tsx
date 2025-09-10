@@ -135,7 +135,8 @@ export default function LoginPage() {
         </CardContent>
         <CardFooter className="flex justify-center text-sm">
             <p className="text-muted-foreground">
-                {t('login.noAccount')} <Link href="/register" className="text-primary hover:underline font-semibold">{t('login.createAccount')}</Link>
+                {t('login.noAccount')}{" "}
+                <Link href="/register" className="text-primary hover:underline font-semibold">{t('login.createAccount')}</Link>
             </p>
         </CardFooter>
       </Card>
