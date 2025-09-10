@@ -795,5 +795,89 @@
             "deleteSuccessTitle": "Protocol Eliminat",
             "deleteSuccessDesc": "El protocol {protocolName} ha estat eliminat."
         }
+    },
+    "clubSettings": {
+        "title": "Ajustos del Club",
+        "description": "Gestiona la configuració general, personalització i subscripció del teu club.",
+        "tabs": {
+            "settings": "Ajustos",
+            "customization": "Camps Personalitzats",
+            "subscription": "Subscripció"
+        },
+        "selectSection": "Seleccionar secció...",
+        "general": {
+            "title": "Ajustos Generals",
+            "clubName": "Nom del Club",
+            "clubNameHint": "Es recomana un màxim de 30 caràcters per a una correcta visualització.",
+            "clubLogo": "Logo del Club",
+            "downloadGuide": "Descarregar Guia d'Ús",
+            "mainColor": "Color Principal del Club",
+            "save": "Desar Canvis"
+        },
+        "security": {
+            "title": "Seguretat del Compte",
+            "description": "Canvia el teu email d'inici de sessió o la teva contrasenya.",
+            "emailLabel": "Correu Electrònic d'Accés",
+            "newPasswordLabel": "Nova Contrasenya",
+            "newPasswordPlaceholder": "Deixar en blanc per no canviar",
+            "confirmPasswordLabel": "Confirmar Nova Contrasenya",
+            "currentPasswordLabel": "Contrasenya Actual (per confirmar)",
+            "currentPasswordRequired": "Has d'introduir la teva contrasenya actual per desar els canvis.",
+            "save": "Desar Canvis de Seguretat",
+            "emailUpdatedTitle": "Email Actualitzat",
+            "emailUpdatedDesc": "La teva adreça de correu electrònic ha estat canviada.",
+            "passwordUpdatedTitle": "Contrasenya Actualitzada",
+            "passwordUpdatedDesc": "La teva contrasenya ha estat canviada.",
+            "passwordsNoMatch": "Les noves contrasenyes no coincideixen.",
+            "passwordLength": "La nova contrasenya ha de tenir almenys 6 caràcters.",
+            "authErrorTitle": "Error d'Autenticació",
+            "authErrorDesc": "La contrasenya actual és incorrecta."
+        },
+        "customization": {
+            "title": "Camps Personalitzats",
+            "description": "Afegeix camps addicionals a les fitxes dels teus membres.",
+            "addField": "Afegir Camp",
+            "fieldInfo": "Tipus: {type} | Aplica a: {appliesTo}",
+            "noFields": "No has creat cap camp personalitzat.",
+            "missingDataTitle": "Falten dades",
+            "missingDataDesc": "Nom i a qui aplica són obligatoris.",
+            "fieldAddedTitle": "Camp afegit",
+            "fieldAddedDesc": "El nou camp personalitzat ha estat desat.",
+            "fieldRemovedTitle": "Camp eliminat",
+            "fieldRemovedDesc": "El camp personalitzat ha estat eliminat.",
+            "modal": {
+                "title": "Crear Camp Personalitzat",
+                "fieldName": "Nom del Camp",
+                "fieldNamePlaceholder": "Ex: Nº Expedient",
+                "fieldType": "Tipus de Camp",
+                "types": {
+                    "text": "Text",
+                    "number": "Número",
+                    "date": "Data"
+                },
+                "appliesTo": "Aplica a",
+                "memberTypes": {
+                    "player": "Jugadors",
+                    "coach": "Entrenadors",
+                    "staff": "Staff"
+                }
+            }
+        },
+        "subscription": {
+            "title": "Subscripció i Pagaments",
+            "description": "Gestiona el teu pla, consulta les teves factures i actualitza el teu mètode de pagament.",
+            "redirect": "Per gestionar la teva subscripció, seràs redirigit al portal segur del nostre proveïdor de pagaments, Stripe.",
+            "portalButton": "Anar al Portal de Client"
+        },
+        "errors": {
+            "load": "No s'han pogut carregar els ajustos.",
+            "saveGeneral": "No s'han pogut desar els canvis.",
+            "saveSecurity": "No s'han pogut desar els canvis de seguretat.",
+            "saveField": "No s'ha pogut desar el camp.",
+            "removeField": "No s'ha pogut eliminar el camp."
+        },
+        "success": {
+            "general": "La configuració del club ha estat actualitzada. Recarrega la pàgina per veure els canvis en els colors."
+        }
     }
 }

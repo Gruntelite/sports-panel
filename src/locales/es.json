@@ -798,5 +798,89 @@
             "deleteSuccessTitle": "Protocolo Eliminado",
             "deleteSuccessDesc": "El protocolo {protocolName} ha sido eliminado."
         }
+    },
+    "clubSettings": {
+        "title": "Ajustes del Club",
+        "description": "Gestiona la configuración general, personalización y suscripción de tu club.",
+        "tabs": {
+            "settings": "Ajustes",
+            "customization": "Campos Personalizados",
+            "subscription": "Suscripción"
+        },
+        "selectSection": "Seleccionar sección...",
+        "general": {
+            "title": "Ajustes Generales",
+            "clubName": "Nombre del Club",
+            "clubNameHint": "Se recomienda un máximo de 30 caracteres para una correcta visualización.",
+            "clubLogo": "Logo del Club",
+            "downloadGuide": "Descargar Guía de Uso",
+            "mainColor": "Color Principal del Club",
+            "save": "Guardar Cambios"
+        },
+        "security": {
+            "title": "Seguridad de la Cuenta",
+            "description": "Cambia tu email de inicio de sesión o tu contraseña.",
+            "emailLabel": "Correo Electrónico de Acceso",
+            "newPasswordLabel": "Nueva Contraseña",
+            "newPasswordPlaceholder": "Dejar en blanco para no cambiar",
+            "confirmPasswordLabel": "Confirmar Nueva Contraseña",
+            "currentPasswordLabel": "Contraseña Actual (para confirmar)",
+            "currentPasswordRequired": "Debes introducir tu contraseña actual para guardar los cambios.",
+            "save": "Guardar Cambios de Seguridad",
+            "emailUpdatedTitle": "Email Actualizado",
+            "emailUpdatedDesc": "Tu dirección de correo electrónico ha sido cambiada.",
+            "passwordUpdatedTitle": "Contraseña Actualizada",
+            "passwordUpdatedDesc": "Tu contraseña ha sido cambiada.",
+            "passwordsNoMatch": "Las nuevas contraseñas no coinciden.",
+            "passwordLength": "La nueva contraseña debe tener al menos 6 caracteres.",
+            "authErrorTitle": "Error de Autenticación",
+            "authErrorDesc": "La contraseña actual es incorrecta."
+        },
+        "customization": {
+            "title": "Campos Personalizados",
+            "description": "Añade campos adicionales a las fichas de tus miembros.",
+            "addField": "Añadir Campo",
+            "fieldInfo": "Tipo: {type} | Aplica a: {appliesTo}",
+            "noFields": "No has creado ningún campo personalizado.",
+            "missingDataTitle": "Faltan datos",
+            "missingDataDesc": "Nombre y a quién aplica son obligatorios.",
+            "fieldAddedTitle": "Campo añadido",
+            "fieldAddedDesc": "El nuevo campo personalizado ha sido guardado.",
+            "fieldRemovedTitle": "Campo eliminado",
+            "fieldRemovedDesc": "El campo personalizado ha sido eliminado.",
+            "modal": {
+                "title": "Crear Campo Personalizado",
+                "fieldName": "Nombre del Campo",
+                "fieldNamePlaceholder": "Ej: Nº Expediente",
+                "fieldType": "Tipo de Campo",
+                "types": {
+                    "text": "Texto",
+                    "number": "Número",
+                    "date": "Fecha"
+                },
+                "appliesTo": "Aplica a",
+                "memberTypes": {
+                    "player": "Jugadores",
+                    "coach": "Entrenadores",
+                    "staff": "Staff"
+                }
+            }
+        },
+        "subscription": {
+            "title": "Suscripción y Pagos",
+            "description": "Gestiona tu plan, consulta tus facturas y actualiza tu método de pago.",
+            "redirect": "Para gestionar tu suscripción, serás redirigido al portal seguro de nuestro proveedor de pagos, Stripe.",
+            "portalButton": "Ir al Portal de Cliente"
+        },
+        "errors": {
+            "load": "No se pudieron cargar los ajustes.",
+            "saveGeneral": "No se pudieron guardar los cambios.",
+            "saveSecurity": "No se pudieron guardar los cambios de seguridad.",
+            "saveField": "No se pudo guardar el campo.",
+            "removeField": "No se pudo eliminar el campo."
+        },
+        "success": {
+            "general": "La configuración del club ha sido actualizada. Recarga la página para ver los cambios en los colores."
+        }
     }
 }

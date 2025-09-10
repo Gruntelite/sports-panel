@@ -27,6 +27,7 @@ import { Switch } from "@/components/ui/switch";
 import type { CustomFieldDef } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose, DialogTrigger } from "@/components/ui/dialog";
+import { useTranslation } from "@/components/i18n-provider";
 
 
 function getLuminance(hex: string): number {
@@ -43,6 +44,7 @@ function getLuminance(hex: string): number {
 
 export default function ClubSettingsPage() {
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [clubId, setClubId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -74,9 +76,9 @@ export default function ClubSettingsPage() {
     
     const [activeTab, setActiveTab] = useState("settings");
      const tabs = [
-        { id: "settings", label: "Ajustes", icon: Settings },
-        { id: "customization", label: "Campos Personalizados", icon: ListPlus },
-        { id: "subscription", label: "Suscripción", icon: CreditCard },
+        { id: "settings", label: t('clubSettings.tabs.settings'), icon: Settings },
+        { id: "customization", label: t('clubSettings.tabs.customization'), icon: ListPlus },
+        { id: "subscription", label: t('clubSettings.tabs.subscription'), icon: CreditCard },
     ];
 
 
@@ -118,7 +120,7 @@ export default function ClubSettingsPage() {
             }
         } catch (error) {
             console.error("Error fetching club settings:", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los ajustes." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.errors.load') });
         } finally {
             setLoading(false);
         }
@@ -170,13 +172,13 @@ export default function ClubSettingsPage() {
             localStorage.setItem('clubThemeColorForeground', foregroundColor);
             window.dispatchEvent(new Event('storage'));
 
-            toast({ title: "¡Guardado!", description: "La configuración del club ha sido actualizada. Recarga la página para ver los cambios en los colores." });
+            toast({ title: t('common.saved'), description: t('clubSettings.success.general') });
             setNewLogo(null);
             setLogoPreview(null);
             if(newLogoUrl) setClubLogoUrl(newLogoUrl);
         } catch (error) {
             console.error("Error saving settings:", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.errors.saveGeneral') });
         } finally {
             setSaving(false);
         }
@@ -187,7 +189,7 @@ export default function ClubSettingsPage() {
         if (!user || !user.email) return;
 
         if (!currentPassword) {
-            toast({ variant: "destructive", title: "Error", description: "Debes introducir tu contraseña actual para guardar los cambios." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.security.currentPasswordRequired') });
             return;
         }
 
@@ -198,22 +200,22 @@ export default function ClubSettingsPage() {
 
             if (newEmail !== user.email) {
                 await updateEmail(user, newEmail);
-                toast({ title: "Email Actualizado", description: "Tu dirección de correo electrónico ha sido cambiada." });
+                toast({ title: t('clubSettings.security.emailUpdatedTitle'), description: t('clubSettings.security.emailUpdatedDesc') });
             }
 
             if (newPassword) {
                 if (newPassword !== confirmNewPassword) {
-                    toast({ variant: "destructive", title: "Error", description: "Las nuevas contraseñas no coinciden." });
+                    toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.security.passwordsNoMatch') });
                     setSavingSecurity(false);
                     return;
                 }
                 if (newPassword.length < 6) {
-                    toast({ variant: "destructive", title: "Error", description: "La nueva contraseña debe tener al menos 6 caracteres." });
+                    toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.security.passwordLength') });
                     setSavingSecurity(false);
                     return;
                 }
                 await updatePassword(user, newPassword);
-                toast({ title: "Contraseña Actualizada", description: "Tu contraseña ha sido cambiada." });
+                toast({ title: t('clubSettings.security.passwordUpdatedTitle'), description: t('clubSettings.security.passwordUpdatedDesc') });
             }
 
             setCurrentPassword('');
@@ -223,9 +225,9 @@ export default function ClubSettingsPage() {
         } catch (error: any) {
             console.error("Error updating security info:", error);
             if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
-                toast({ variant: "destructive", title: "Error de Autenticación", description: "La contraseña actual es incorrecta." });
+                toast({ variant: "destructive", title: t('clubSettings.security.authErrorTitle'), description: t('clubSettings.security.authErrorDesc') });
             } else {
-                toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios de seguridad." });
+                toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.errors.saveSecurity') });
             }
         } finally {
             setSavingSecurity(false);
@@ -238,7 +240,7 @@ export default function ClubSettingsPage() {
 
     const handleAddCustomField = async () => {
         if (!clubId || !newFieldName.trim() || newFieldAppliesTo.length === 0) {
-            toast({ variant: "destructive", title: "Faltan datos", description: "Nombre y a quién aplica son obligatorios." });
+            toast({ variant: "destructive", title: t('clubSettings.customization.missingDataTitle'), description: t('clubSettings.customization.missingDataDesc') });
             return;
         }
         
@@ -260,9 +262,9 @@ export default function ClubSettingsPage() {
             setNewFieldName('');
             setNewFieldType('text');
             setNewFieldAppliesTo([]);
-            toast({ title: "Campo añadido", description: "El nuevo campo personalizado ha sido guardado." });
+            toast({ title: t('clubSettings.customization.fieldAddedTitle'), description: t('clubSettings.customization.fieldAddedDesc') });
         } catch(e) {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el campo." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.errors.saveField') });
         } finally {
             setSaving(false);
         }
@@ -280,9 +282,9 @@ export default function ClubSettingsPage() {
                 customFields: arrayRemove(fieldToRemove)
             });
             setCustomFields(prev => prev.filter(f => f.id !== fieldId));
-            toast({ title: "Campo eliminado", description: "El campo personalizado ha sido eliminado." });
+            toast({ title: t('clubSettings.customization.fieldRemovedTitle'), description: t('clubSettings.customization.fieldRemovedDesc') });
         } catch(e) {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el campo." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubSettings.errors.removeField') });
         } finally {
             setSaving(false);
         }
@@ -298,10 +300,14 @@ export default function ClubSettingsPage() {
 
     return (
         <div className="flex flex-col gap-6">
+             <div>
+                <h1 className="text-2xl font-bold font-headline tracking-tight">{t('clubSettings.title')}</h1>
+                <p className="text-muted-foreground">{t('clubSettings.description')}</p>
+            </div>
             <div className="sm:hidden mb-4">
                 <Select value={activeTab} onValueChange={setActiveTab}>
                     <SelectTrigger>
-                        <SelectValue placeholder="Seleccionar sección..." />
+                        <SelectValue placeholder={t('clubSettings.selectSection')} />
                     </SelectTrigger>
                     <SelectContent>
                         {tabs.map((tab) => (
@@ -327,16 +333,16 @@ export default function ClubSettingsPage() {
             <div className={cn(activeTab === 'settings' ? 'mt-6 space-y-6' : 'hidden')}>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Ajustes Generales</CardTitle>
+                        <CardTitle>{t('clubSettings.general.title')}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="clubName">Nombre del Club</Label>
+                            <Label htmlFor="clubName">{t('clubSettings.general.clubName')}</Label>
                             <Input id="clubName" value={clubName} onChange={(e) => setClubName(e.target.value)} maxLength={30} />
-                            <p className="text-xs text-muted-foreground">Se recomienda un máximo de 30 caracteres para una correcta visualización.</p>
+                            <p className="text-xs text-muted-foreground">{t('clubSettings.general.clubNameHint')}</p>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="clubLogo">Logo del Club</Label>
+                            <Label htmlFor="clubLogo">{t('clubSettings.general.clubLogo')}</Label>
                             <div className="flex flex-col sm:flex-row items-center gap-4">
                                 <Image src={logoPreview || clubLogoUrl || "https://placehold.co/100x100.png"} alt="Logo del club" width={100} height={100} className="rounded-md border p-2 bg-muted/30" />
                                 <div className="flex-1 w-full space-y-2">
@@ -344,14 +350,14 @@ export default function ClubSettingsPage() {
                                     <Button asChild>
                                         <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
                                         <Download className="mr-2 h-4 w-4" />
-                                        Descargar Guía de Uso
+                                        {t('clubSettings.general.downloadGuide')}
                                         </Link>
                                     </Button>
                                 </div>
                             </div>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="clubColor">Color Principal del Club</Label>
+                            <Label htmlFor="clubColor">{t('clubSettings.general.mainColor')}</Label>
                             <div className="flex items-center gap-2">
                                 <Input
                                     id="clubColor"
@@ -371,36 +377,36 @@ export default function ClubSettingsPage() {
                         </div>
                         <Button onClick={handleSaveChanges} disabled={saving}>
                             {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            <Save className="mr-2 h-4 w-4" /> Guardar Cambios
+                            <Save className="mr-2 h-4 w-4" /> {t('clubSettings.general.save')}
                         </Button>
                     </CardContent>
                 </Card>
 
                  <Card>
                     <CardHeader>
-                        <CardTitle>Seguridad de la Cuenta</CardTitle>
-                        <CardDescription>Cambia tu email de inicio de sesión o tu contraseña.</CardDescription>
+                        <CardTitle>{t('clubSettings.security.title')}</CardTitle>
+                        <CardDescription>{t('clubSettings.security.description')}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="space-y-2">
-                            <Label htmlFor="newEmail">Correo Electrónico de Acceso</Label>
+                            <Label htmlFor="newEmail">{t('clubSettings.security.emailLabel')}</Label>
                             <Input id="newEmail" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="newPassword">Nueva Contraseña</Label>
-                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="Dejar en blanco para no cambiar"/>
+                            <Label htmlFor="newPassword">{t('clubSettings.security.newPasswordLabel')}</Label>
+                            <Input id="newPassword" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder={t('clubSettings.security.newPasswordPlaceholder')}/>
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="confirmNewPassword">Confirmar Nueva Contraseña</Label>
+                            <Label htmlFor="confirmNewPassword">{t('clubSettings.security.confirmPasswordLabel')}</Label>
                             <Input id="confirmNewPassword" type="password" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} />
                         </div>
                         <div className="space-y-2 pt-2 border-t">
-                            <Label htmlFor="currentPassword">Contraseña Actual (para confirmar)</Label>
+                            <Label htmlFor="currentPassword">{t('clubSettings.security.currentPasswordLabel')}</Label>
                             <Input id="currentPassword" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required/>
                         </div>
                         <Button onClick={handleSaveSecurityChanges} disabled={savingSecurity}>
                             {savingSecurity && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            <KeyRound className="mr-2 h-4 w-4" /> Guardar Cambios de Seguridad
+                            <KeyRound className="mr-2 h-4 w-4" /> {t('clubSettings.security.save')}
                         </Button>
                     </CardContent>
                 </Card>
@@ -409,37 +415,35 @@ export default function ClubSettingsPage() {
                 <Card>
                     <CardHeader className="flex flex-col sm:flex-row items-start justify-between gap-4">
                         <div className="flex-1">
-                            <CardTitle>Campos Personalizados</CardTitle>
-                            <CardDescription>
-                                Añade campos adicionales a las fichas de tus miembros.
-                            </CardDescription>
+                            <CardTitle>{t('clubSettings.customization.title')}</CardTitle>
+                            <CardDescription>{t('clubSettings.customization.description')}</CardDescription>
                         </div>
                         <Dialog open={isFieldModalOpen} onOpenChange={setIsFieldModalOpen}>
                             <DialogTrigger asChild>
-                                <Button className="w-full mt-2 sm:mt-0 sm:w-auto"><PlusCircle className="mr-2 h-4 w-4" />Añadir Campo</Button>
+                                <Button className="w-full mt-2 sm:mt-0 sm:w-auto"><PlusCircle className="mr-2 h-4 w-4" />{t('clubSettings.customization.addField')}</Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>Crear Campo Personalizado</DialogTitle>
+                                    <DialogTitle>{t('clubSettings.customization.modal.title')}</DialogTitle>
                                 </DialogHeader>
                                 <div className="py-4 space-y-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="newFieldName">Nombre del Campo</Label>
-                                        <Input id="newFieldName" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder="Ej: Nº Expediente" />
+                                        <Label htmlFor="newFieldName">{t('clubSettings.customization.modal.fieldName')}</Label>
+                                        <Input id="newFieldName" value={newFieldName} onChange={(e) => setNewFieldName(e.target.value)} placeholder={t('clubSettings.customization.modal.fieldNamePlaceholder')} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="newFieldType">Tipo de Campo</Label>
+                                        <Label htmlFor="newFieldType">{t('clubSettings.customization.modal.fieldType')}</Label>
                                         <Select value={newFieldType} onValueChange={(v) => setNewFieldType(v as any)}>
                                             <SelectTrigger><SelectValue/></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="text">Texto</SelectItem>
-                                                <SelectItem value="number">Número</SelectItem>
-                                                <SelectItem value="date">Fecha</SelectItem>
+                                                <SelectItem value="text">{t('clubSettings.customization.modal.types.text')}</SelectItem>
+                                                <SelectItem value="number">{t('clubSettings.customization.modal.types.number')}</SelectItem>
+                                                <SelectItem value="date">{t('clubSettings.customization.modal.types.date')}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Aplica a</Label>
+                                        <Label>{t('clubSettings.customization.modal.appliesTo')}</Label>
                                         <div className="flex flex-col sm:flex-row gap-4">
                                             {(['player', 'coach', 'staff'] as const).map(type => (
                                                 <div key={type} className="flex items-center gap-2">
@@ -453,15 +457,15 @@ export default function ClubSettingsPage() {
                                                             setNewFieldAppliesTo(Array.from(updated));
                                                         }}
                                                     />
-                                                    <Label htmlFor={`applies-${type}`} className="capitalize">{type === 'player' ? 'Jugadores' : type === 'coach' ? 'Entrenadores' : 'Staff'}</Label>
+                                                    <Label htmlFor={`applies-${type}`} className="capitalize">{t(`clubSettings.customization.modal.memberTypes.${type}`)}</Label>
                                                 </div>
                                             ))}
                                         </div>
                                     </div>
                                 </div>
                                 <DialogFooter>
-                                    <DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose>
-                                    <Button onClick={handleAddCustomField} disabled={saving}>{saving && <Loader2 className="animate-spin mr-2"/>}Guardar</Button>
+                                    <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                                    <Button onClick={handleAddCustomField} disabled={saving}>{saving && <Loader2 className="animate-spin mr-2"/>}{t('common.saveChanges')}</Button>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
@@ -473,7 +477,7 @@ export default function ClubSettingsPage() {
                                     <li key={field.id} className="flex items-center justify-between p-3 border rounded-md">
                                         <div>
                                             <p className="font-medium">{field.name}</p>
-                                            <p className="text-xs text-muted-foreground">Tipo: {field.type} | Aplica a: {field.appliesTo.join(', ')}</p>
+                                            <p className="text-xs text-muted-foreground">{t('clubSettings.customization.fieldInfo', { type: field.type, appliesTo: field.appliesTo.join(', ') })}</p>
                                         </div>
                                         <Button variant="ghost" size="icon" onClick={() => handleRemoveCustomField(field.id)} disabled={saving}>
                                             <Trash2 className="h-4 w-4 text-destructive"/>
@@ -482,7 +486,7 @@ export default function ClubSettingsPage() {
                                 ))}
                             </ul>
                         ) : (
-                            <p className="text-center text-muted-foreground py-8">No has creado ningún campo personalizado.</p>
+                            <p className="text-center text-muted-foreground py-8">{t('clubSettings.customization.noFields')}</p>
                         )}
                     </CardContent>
                 </Card>
@@ -490,18 +494,16 @@ export default function ClubSettingsPage() {
              <div className={cn('mt-6 sm:mt-0', activeTab !== 'subscription' && 'hidden')}>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Suscripción y Pagos</CardTitle>
-                        <CardDescription>
-                            Gestiona tu plan, consulta tus facturas y actualiza tu método de pago.
-                        </CardDescription>
+                        <CardTitle>{t('clubSettings.subscription.title')}</CardTitle>
+                        <CardDescription>{t('clubSettings.subscription.description')}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-4">
-                            <p>Para gestionar tu suscripción, serás redirigido al portal seguro de nuestro proveedor de pagos, Stripe.</p>
+                            <p>{t('clubSettings.subscription.redirect')}</p>
                             <Button onClick={handleManageSubscription} disabled={loadingPortal}>
                                 {loadingPortal && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                 <ExternalLink className="mr-2 h-4 w-4"/>
-                                Ir al Portal de Cliente
+                                {t('clubSettings.subscription.portalButton')}
                             </Button>
                         </div>
                     </CardContent>
