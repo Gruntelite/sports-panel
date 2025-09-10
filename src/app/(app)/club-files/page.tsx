@@ -75,7 +75,7 @@ import {
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -87,6 +87,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { FileRequestSender } from "@/components/file-request-sender";
 import { RequestHistory } from "@/components/request-history";
 import { Separator } from "@/components/ui/separator";
+import { useTranslation } from "@/components/i18n-provider";
 
 type Owner = {
     id: string;
@@ -94,16 +95,9 @@ type Owner = {
     role?: string;
 }
 
-const docCategories = [
-    { value: 'medico', label: 'Médico' },
-    { value: 'identificacion', label: 'Identificación' },
-    { value: 'autorizacion', label: 'Autorización' },
-    { value: 'factura', label: 'Factura' },
-    { value: 'otro', label: 'Otro' },
-];
-
 function DocumentsList() {
   const { toast } = useToast();
+  const { t, locale } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -123,6 +117,8 @@ function DocumentsList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterOwnerId, setFilterOwnerId] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+
+  const docCategories = t('clubFiles.categories', { returnObjects: true }) as { value: string, label: string }[];
 
   const fetchData = async (currentClubId: string) => {
     setLoading(true);
@@ -148,18 +144,18 @@ function DocumentsList() {
 
       setDocuments(docsList);
       
-      const allOwners: Owner[] = [{ id: 'club', name: 'Club' }];
+      const allOwners: Owner[] = [{ id: 'club', name: t('clubFiles.club') }];
       
       const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
       playersSnap.forEach(doc => {
           const data = doc.data() as Player;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: 'Jugador' });
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: t('clubFiles.roles.player') });
       });
       
       const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
       coachesSnap.forEach(doc => {
           const data = doc.data() as Coach;
-          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: 'Entrenador' });
+          allOwners.push({ id: doc.id, name: `${data.name} ${data.lastName}`, role: t('clubFiles.roles.coach') });
       });
 
       const staffSnap = await getDocs(collection(db, "clubs", currentClubId, "staff"));
@@ -180,8 +176,8 @@ function DocumentsList() {
       console.error("Error fetching data:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "No se pudieron cargar los datos.",
+        title: t('common.error'),
+        description: t('clubFiles.errors.loadError'),
       });
     }
     setLoading(false);
@@ -204,7 +200,7 @@ function DocumentsList() {
       }
     });
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, t]);
 
   useEffect(() => {
     let filtered = documents;
@@ -224,17 +220,17 @@ function DocumentsList() {
 
   const handleFileUpload = async () => {
     if (!clubId || !auth.currentUser) {
-        toast({ variant: "destructive", title: "Error de Autenticación", description: "Debes estar autenticado para subir archivos."});
+        toast({ variant: "destructive", title: t('clubFiles.errors.authErrorTitle'), description: t('clubFiles.errors.authErrorDesc')});
         return;
     }
     if (!fileToUpload || !documentNameToSave.trim() || !selectedCategory || !selectedOwner) {
-      toast({ variant: "destructive", title: "Faltan datos", description: "Todos los campos (nombre, categoría, propietario y archivo) son obligatorios."});
+      toast({ variant: "destructive", title: t('clubFiles.errors.missingDataTitle'), description: t('clubFiles.errors.missingDataDesc')});
       return;
     }
 
     const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
     if (fileToUpload.size > MAX_FILE_SIZE) {
-        toast({ variant: "destructive", title: "Archivo demasiado grande", description: "El tamaño máximo del archivo es 10 MB. Por favor, comprime el archivo si es más pesado."});
+        toast({ variant: "destructive", title: t('clubFiles.errors.fileTooLargeTitle'), description: t('clubFiles.errors.fileTooLargeDesc')});
         return;
     }
 
@@ -260,8 +256,8 @@ function DocumentsList() {
       await addDoc(collection(db, "clubs", clubId, "documents"), newDocumentData);
 
       toast({
-        title: "¡Archivo Subido!",
-        description: `${documentNameToSave} se ha guardado correctamente.`,
+        title: t('clubFiles.uploadSuccessTitle'),
+        description: t('clubFiles.uploadSuccessDesc', { documentName: documentNameToSave }),
       });
       
       setIsUploadModalOpen(false);
@@ -274,11 +270,11 @@ function DocumentsList() {
 
     } catch (error: any) {
       console.error("Error uploading file:", error);
-      let errorMessage = "No se pudo subir el archivo. Revisa tu conexión y los permisos de Firebase Storage.";
+      let errorMessage = t('clubFiles.errors.uploadErrorDesc');
       if (error.code === 'storage/unauthorized') {
-        errorMessage = "Error de permisos. No estás autorizado para subir archivos a esta ubicación.";
+        errorMessage = t('clubFiles.errors.uploadErrorUnauthorized');
       }
-      toast({ variant: "destructive", title: "Error de Subida", description: errorMessage });
+      toast({ variant: "destructive", title: t('clubFiles.errors.uploadErrorTitle'), description: errorMessage });
     } finally {
       setSaving(false);
     }
@@ -295,8 +291,8 @@ function DocumentsList() {
       await deleteDoc(doc(db, "clubs", clubId, "documents", docToDelete.id!));
       
       toast({
-        title: "Documento Eliminado",
-        description: `${docToDelete.name} ha sido eliminado.`,
+        title: t('clubFiles.deleteSuccessTitle'),
+        description: t('clubFiles.deleteSuccessDesc', { documentName: docToDelete.name }),
       });
 
       setDocToDelete(null);
@@ -305,8 +301,8 @@ function DocumentsList() {
       console.error("Error deleting document:", error);
       toast({
         variant: "destructive",
-        title: "Error",
-        description: "No se pudo eliminar el documento.",
+        title: t('common.error'),
+        description: t('clubFiles.errors.deleteError'),
       });
     } finally {
       setSaving(false);
@@ -318,9 +314,9 @@ function DocumentsList() {
       <Card>
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div className="flex-1">
-            <CardTitle>Todos los Documentos</CardTitle>
+            <CardTitle>{t('clubFiles.allDocumentsTitle')}</CardTitle>
             <CardDescription>
-              Archivos disponibles para todo el club.
+              {t('clubFiles.allDocumentsDesc')}
             </CardDescription>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto">
@@ -328,7 +324,7 @@ function DocumentsList() {
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                       type="search"
-                      placeholder="Buscar por nombre..."
+                      placeholder={t('clubFiles.searchPlaceholder')}
                       className="pl-8 w-full sm:w-[200px]"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -336,10 +332,10 @@ function DocumentsList() {
               </div>
                <Select value={filterCategory} onValueChange={setFilterCategory}>
                   <SelectTrigger className="w-full sm:w-[180px]">
-                      <SelectValue placeholder="Filtrar por categoría" />
+                      <SelectValue placeholder={t('clubFiles.filterByCategory')} />
                   </SelectTrigger>
                   <SelectContent>
-                      <SelectItem value="all">Todas las categorías</SelectItem>
+                      <SelectItem value="all">{t('clubFiles.allCategories')}</SelectItem>
                       {docCategories.map(cat => (
                           <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                       ))}
@@ -347,10 +343,10 @@ function DocumentsList() {
               </Select>
                <Select value={filterOwnerId} onValueChange={setFilterOwnerId}>
                   <SelectTrigger className="w-full sm:w-[200px]">
-                      <SelectValue placeholder="Filtrar por propietario" />
+                      <SelectValue placeholder={t('clubFiles.filterByOwner')} />
                   </SelectTrigger>
                   <SelectContent>
-                      <SelectItem value="all">Todos los propietarios</SelectItem>
+                      <SelectItem value="all">{t('clubFiles.allOwners')}</SelectItem>
                       {owners.map(owner => (
                           <SelectItem key={owner.id} value={owner.id}>{owner.name}</SelectItem>
                       ))}
@@ -363,32 +359,31 @@ function DocumentsList() {
                 <DialogTrigger asChild>
                   <Button className="w-full sm:w-auto">
                     <PlusCircle className="mr-2 h-4 w-4" />
-                    Subir Nuevo Archivo
+                    {t('clubFiles.uploadButton')}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
-                    <DialogTitle>Subir Nuevo Documento</DialogTitle>
+                    <DialogTitle>{t('clubFiles.uploadModal.title')}</DialogTitle>
                     <DialogDescription>
-                      Selecciona un archivo y ponle un nombre descriptivo para
-                      identificarlo fácilmente.
+                      {t('clubFiles.uploadModal.description')}
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4 py-4">
                     <div className="space-y-2">
-                      <Label htmlFor="doc-name">Nombre del Documento *</Label>
+                      <Label htmlFor="doc-name">{t('clubFiles.uploadModal.nameLabel')} *</Label>
                       <Input
                         id="doc-name"
-                        placeholder="p.ej., Normativa Interna 2024"
+                        placeholder={t('clubFiles.uploadModal.namePlaceholder')}
                         value={documentNameToSave}
                         onChange={(e) => setDocumentNameToSave(e.target.value)}
                       />
                     </div>
                      <div className="space-y-2">
-                        <Label htmlFor="doc-category">Categoría *</Label>
+                        <Label htmlFor="doc-category">{t('clubFiles.uploadModal.categoryLabel')} *</Label>
                         <Select value={selectedCategory} onValueChange={setSelectedCategory}>
                           <SelectTrigger id="doc-category">
-                            <SelectValue placeholder="Selecciona una categoría" />
+                            <SelectValue placeholder={t('clubFiles.uploadModal.categoryPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
                             {docCategories.map(cat => (
@@ -398,7 +393,7 @@ function DocumentsList() {
                         </Select>
                       </div>
                     <div className="space-y-2">
-                      <Label>Asignar a Usuario *</Label>
+                      <Label>{t('clubFiles.uploadModal.assignLabel')} *</Label>
                       <Popover open={isOwnerPopoverOpen} onOpenChange={setIsOwnerPopoverOpen}>
                           <PopoverTrigger asChild>
                           <Button
@@ -409,15 +404,15 @@ function DocumentsList() {
                           >
                               {selectedOwner
                               ? selectedOwner.name
-                              : "Selecciona un propietario..."}
+                              : t('clubFiles.uploadModal.ownerPlaceholder')}
                               <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
                           </PopoverTrigger>
                           <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                           <Command>
-                              <CommandInput placeholder="Buscar usuario..." />
+                              <CommandInput placeholder={t('clubFiles.uploadModal.searchOwnerPlaceholder')} />
                                <CommandList>
-                                  <CommandEmpty>No se encontró ningún usuario.</CommandEmpty>
+                                  <CommandEmpty>{t('clubFiles.uploadModal.noOwnerFound')}</CommandEmpty>
                                   <CommandGroup>
                                   {owners.map((owner) => (
                                       <CommandItem
@@ -445,7 +440,7 @@ function DocumentsList() {
                       </Popover>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="doc-file">Archivo *</Label>
+                      <Label htmlFor="doc-file">{t('clubFiles.uploadModal.fileLabel')} *</Label>
                       <Input
                         id="doc-file"
                         type="file"
@@ -453,19 +448,19 @@ function DocumentsList() {
                           setFileToUpload(e.target.files?.[0] || null)
                         }
                       />
-                      <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
+                      <p className="text-xs text-muted-foreground">{t('clubFiles.uploadModal.fileHint')}</p>
                     </div>
                   </div>
                   <DialogFooter>
                     <DialogClose asChild>
-                      <Button variant="secondary">Cancelar</Button>
+                      <Button variant="secondary">{t('common.cancel')}</Button>
                     </DialogClose>
                     <Button onClick={handleFileUpload} disabled={saving}>
                       {saving && (
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       )}
                       <Upload className="mr-2 h-4 w-4" />
-                      Subir y Guardar
+                      {t('clubFiles.uploadModal.saveButton')}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -482,11 +477,11 @@ function DocumentsList() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Nombre del Archivo</TableHead>
-                    <TableHead>Categoría</TableHead>
-                    <TableHead>Propietario</TableHead>
-                    <TableHead>Fecha de Subida</TableHead>
-                    <TableHead className="text-right">Acciones</TableHead>
+                    <TableHead>{t('clubFiles.table.fileName')}</TableHead>
+                    <TableHead>{t('clubFiles.table.category')}</TableHead>
+                    <TableHead>{t('clubFiles.table.owner')}</TableHead>
+                    <TableHead>{t('clubFiles.table.uploadDate')}</TableHead>
+                    <TableHead className="text-right">{t('clubFiles.table.actions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -498,16 +493,16 @@ function DocumentsList() {
                           {doc.name}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || 'Sin Categoría'}</Badge>
+                          <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || t('clubFiles.noCategory')}</Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <UserIcon className="h-4 w-4 text-muted-foreground" />
-                            {doc.ownerName || "Club"}
+                            {doc.ownerName || t('clubFiles.club')}
                           </div>
                         </TableCell>
                         <TableCell>
-                          {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: es })}
+                          {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: locale === 'ca' ? ca : es })}
                         </TableCell>
                         <TableCell className="text-right">
                           <Button asChild variant="outline" size="icon" className="mr-2" disabled={!doc.url}>
@@ -527,7 +522,7 @@ function DocumentsList() {
                         colSpan={5}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        No hay documentos que coincidan con el filtro actual.
+                        {t('clubFiles.noDocuments')}
                       </TableCell>
                     </TableRow>
                   )}
@@ -544,14 +539,13 @@ function DocumentsList() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('clubFiles.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. El archivo se eliminará
-              permanentemente.
+              {t('clubFiles.confirmDeleteDesc')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteDocument}
               disabled={saving}
@@ -560,7 +554,7 @@ function DocumentsList() {
               {saving ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
-                "Eliminar"
+                t('teams.delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -571,20 +565,21 @@ function DocumentsList() {
 }
 
 export default function ClubFilesPage() {
+    const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight">
-          Archivos del Club
+          {t('clubFiles.title')}
         </h1>
         <p className="text-muted-foreground">
-          Gestiona documentos importantes como normativas, formularios o autorizaciones.
+          {t('clubFiles.description')}
         </p>
       </div>
       <Tabs defaultValue="documents">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="documents"><FolderOpen className="mr-2 h-4 w-4"/>Ver Documentos</TabsTrigger>
-          <TabsTrigger value="request"><Send className="mr-2 h-4 w-4"/>Solicitar Archivos</TabsTrigger>
+          <TabsTrigger value="documents"><FolderOpen className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.documents')}</TabsTrigger>
+          <TabsTrigger value="request"><Send className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.request')}</TabsTrigger>
         </TabsList>
         <TabsContent value="documents" className="mt-6">
             <DocumentsList/>

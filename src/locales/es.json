@@ -636,5 +636,76 @@
             "contactEmail": "Email de Contacto", "contactPhone": "Teléfono de Contacto", "role": "Cargo", "team": "Equipo", "iban": "IBAN",
             "monthlyPayment": "Pago Mensual (€)", "kitSize": "Talla de Equipación", "healthCard": "Nº Tarjeta Sanitaria", "email": "Email", "phone": "Teléfono"
         }
+    },
+    "clubFiles": {
+        "title": "Archivos del Club",
+        "description": "Gestiona documentos importantes como normativas, formularios o autorizaciones.",
+        "tabs": {
+            "documents": "Ver Documentos",
+            "request": "Solicitar Archivos"
+        },
+        "categories": [
+            { "value": "medico", "label": "Médico" },
+            { "value": "identificacion", "label": "Identificación" },
+            { "value": "autorizacion", "label": "Autorización" },
+            { "value": "factura", "label": "Factura" },
+            { "value": "otro", "label": "Otro" }
+        ],
+        "club": "Club",
+        "roles": {
+            "player": "Jugador",
+            "coach": "Entrenador"
+        },
+        "errors": {
+            "loadError": "No se pudieron cargar los datos.",
+            "authErrorTitle": "Error de Autenticación",
+            "authErrorDesc": "Debes estar autenticado para subir archivos.",
+            "missingDataTitle": "Faltan datos",
+            "missingDataDesc": "Todos los campos (nombre, categoría, propietario y archivo) son obligatorios.",
+            "fileTooLargeTitle": "Archivo demasiado grande",
+            "fileTooLargeDesc": "El tamaño máximo del archivo es 10 MB. Por favor, comprime el archivo si es más pesado.",
+            "uploadErrorTitle": "Error de Subida",
+            "uploadErrorDesc": "No se pudo subir el archivo. Revisa tu conexión y los permisos de Firebase Storage.",
+            "uploadErrorUnauthorized": "Error de permisos. No estás autorizado para subir archivos a esta ubicación.",
+            "deleteError": "No se pudo eliminar el documento."
+        },
+        "uploadSuccessTitle": "¡Archivo Subido!",
+        "uploadSuccessDesc": "{documentName} se ha guardado correctamente.",
+        "deleteSuccessTitle": "Documento Eliminado",
+        "deleteSuccessDesc": "{documentName} ha sido eliminado.",
+        "allDocumentsTitle": "Todos los Documentos",
+        "allDocumentsDesc": "Archivos disponibles para todo el club.",
+        "searchPlaceholder": "Buscar por nombre...",
+        "filterByCategory": "Filtrar por categoría",
+        "allCategories": "Todas las categorías",
+        "filterByOwner": "Filtrar por propietario",
+        "allOwners": "Todos los propietarios",
+        "uploadButton": "Subir Nuevo Archivo",
+        "uploadModal": {
+            "title": "Subir Nuevo Documento",
+            "description": "Selecciona un archivo y ponle un nombre descriptivo para identificarlo fácilmente.",
+            "nameLabel": "Nombre del Documento",
+            "namePlaceholder": "p.ej., Normativa Interna 2024",
+            "categoryLabel": "Categoría",
+            "categoryPlaceholder": "Selecciona una categoría",
+            "assignLabel": "Asignar a Usuario",
+            "ownerPlaceholder": "Selecciona un propietario...",
+            "searchOwnerPlaceholder": "Buscar usuario...",
+            "noOwnerFound": "No se encontró ningún usuario.",
+            "fileLabel": "Archivo",
+            "fileHint": "Tamaño máximo: 10 MB.",
+            "saveButton": "Subir y Guardar"
+        },
+        "table": {
+            "fileName": "Nombre del Archivo",
+            "category": "Categoría",
+            "owner": "Propietario",
+            "uploadDate": "Fecha de Subida",
+            "actions": "Acciones"
+        },
+        "noCategory": "Sin Categoría",
+        "noDocuments": "No hay documentos que coincidan con el filtro actual.",
+        "confirmDeleteTitle": "¿Estás seguro?",
+        "confirmDeleteDesc": "Esta acción no se puede deshacer. El archivo se eliminará permanentemente."
     }
 }

@@ -116,9 +116,9 @@
             "0": { "question": "Ofereixen un període de prova?", "answer": "Sí! Oferim una prova de 20 dies perquè exploris totes les funcionalitats de SportsPanel. Pots cancel·lar la teva subscripció en qualsevol moment. A més, el nostre pla mensual no té cap mena de permanència." },
             "1": { "question": "Puc importar les meves dades existents d'un altre programa?", "answer": "Sí. Comptem amb un importador de dades mitjançant arxius CSV. Pots preparar un full de càlcul amb els teus jugadors, entrenadors o socis i pujar-los a la plataforma de forma massiva, estalviant-te hores de feina manual." },
             "2": { "question": "Les meves dades estan segures a la plataforma?", "answer": "La seguretat és la nostra màxima prioritat. Utilitzem la infraestructura de Google Cloud, una de les més segures del món, per protegir les teves dades. Totes les connexions estan encriptades i realitzem còpies de seguretat periòdiques." },
-            "3": { "question": "Com funciona la comunicació amb les famílies?", "answer": "Pots enviar correus electrònics directament des de la plataforma. Tens l'opció de segmentar els teus enviaments per equips, per tipus de membre (jugadors, entrenadors...) o a tot el club. Les famílies rebran les notificacions al seu correu electrònic." },
+            "3": { "question": "Com funciona la comunicació amb les famílies?", "answer": "Pots enviar correus electrònics directament des de la plataforma. Tens l'opció de segmentar els teus enviaments per equips, per tipus de membre (jugadors, entrenadors...) o a tot el club. Les famílies rebran les notiticions al seu correu electrònic." },
             "4": { "question": "Puc sol·licitar als meus membres que actualitzin les seves dades?", "answer": "Sí, i és una de les nostres funcionalitats estrella. Pots seleccionar quins camps necessites que s'actualitzin (DNI, adreça, telèfon...) i enviar una sol·licitud massiva. Els membres rebran un enllaç únic i segur per emplenar la informació, que s'actualitzarà automàticament a la seva fitxa." },
-            "5": { "question": "SportsPanel es pot personalitzar amb el logo i els colors del meu club?", "answer": "Sí! Pots personalitzar la plataforma amb el nom, el logo i el color principal del teu club perquè tant els membres de l'staff com les famílies se sentin com a casa." }
+            "5": { "question": "SportsPanel es pot personalitzar amb el logo i els colors del meu club?", "answer": "Sí! Pots personalitzar la plataforma amb el nom, el logo i el color principal del teu club perquè tant els membres de l'staff com les famílies se sentin como a casa." }
         },
         "footer": {
             "rights": "Tots els drets reservats.",
@@ -457,7 +457,13 @@
         "nextStep": "Següent: Seleccionar Jugadors",
         "back": "Enrere",
         "sendTo": "Enviar a {count} Jugador(s)",
-        "selectAll": "Seleccionar tots"
+        "selectAll": "Seleccionar tots",
+        "isOwnTutor": "El jugador és el seu propi tutor (major de 18 anys)",
+        "fields": {
+             "jerseyNumber": "Dorsal",
+             "monthlyFee": "Quota (€)",
+             "medicalCheck": "Revisió mèdica completada"
+        }
     },
     "teams": {
         "title": "Equips",
@@ -488,7 +494,9 @@
             "defaultFee": "Quota Mensual per Defecte (€)",
             "squad": "Plantilla de l'Equip",
             "squadDesc": "Membres actualment a {teamName}.",
+            "actions": "Accions",
             "moveTo": "Moure a Equip",
+            "deleteSelected": "Eliminar Seleccionats",
             "addMember": "Afegir Membre",
             "addPlayer": "Afegir Jugador",
             "addCoach": "Afegir Entrenador",
@@ -498,13 +506,13 @@
             "number": "Dorsal",
             "toggleMenu": "Alternar menú",
             "viewProfile": "Veure Fitxa",
+            "edit": "Editar",
             "missingData": "Falten dades per emplenar",
             "noMembers": "No hi ha membres en aquest equip.",
             "total": "Total",
             "add": "Afegir",
             "newPlayer": "Jugador",
             "newCoach": "Entrenador",
-            "edit": "Editar",
             "player": "Jugador",
             "coach": "Entrenador",
             "modalDesc": "{action} un {type} a l'equip.",
@@ -628,5 +636,76 @@
             "contactEmail": "Email de Contacte", "contactPhone": "Telèfon de Contacte", "role": "Càrrec", "team": "Equip", "iban": "IBAN",
             "monthlyPayment": "Pagament Mensual (€)", "kitSize": "Talla d'Equipació", "healthCard": "Nº Targeta Sanitària", "email": "Email", "phone": "Telèfon"
         }
+    },
+    "clubFiles": {
+        "title": "Arxius del Club",
+        "description": "Gestiona documents importants com normatives, formularis o autoritzacions.",
+        "tabs": {
+            "documents": "Veure Documents",
+            "request": "Sol·licitar Arxius"
+        },
+        "categories": [
+            { "value": "medico", "label": "Mèdic" },
+            { "value": "identificacion", "label": "Identificació" },
+            { "value": "autorizacion", "label": "Autorització" },
+            { "value": "factura", "label": "Factura" },
+            { "value": "otro", "label": "Altre" }
+        ],
+        "club": "Club",
+        "roles": {
+            "player": "Jugador",
+            "coach": "Entrenador"
+        },
+        "errors": {
+            "loadError": "No s'han pogut carregar les dades.",
+            "authErrorTitle": "Error d'Autenticació",
+            "authErrorDesc": "Has d'estar autenticat per pujar arxius.",
+            "missingDataTitle": "Falten dades",
+            "missingDataDesc": "Tots els camps (nom, categoria, propietari i arxiu) són obligatoris.",
+            "fileTooLargeTitle": "Arxiu massa gran",
+            "fileTooLargeDesc": "La mida màxima de l'arxiu és 10 MB. Si us plau, comprimeix l'arxiu si és més pesat.",
+            "uploadErrorTitle": "Error de Pujada",
+            "uploadErrorDesc": "No s'ha pogut pujar l'arxiu. Revisa la teva connexió i els permisos de Firebase Storage.",
+            "uploadErrorUnauthorized": "Error de permisos. No estàs autoritzat per pujar arxius a aquesta ubicació.",
+            "deleteError": "No s'ha pogut eliminar el document."
+        },
+        "uploadSuccessTitle": "Arxiu Pujat!",
+        "uploadSuccessDesc": "{documentName} s'ha desat correctament.",
+        "deleteSuccessTitle": "Document Eliminat",
+        "deleteSuccessDesc": "{documentName} ha estat eliminat.",
+        "allDocumentsTitle": "Tots els Documents",
+        "allDocumentsDesc": "Arxius disponibles per a tot el club.",
+        "searchPlaceholder": "Cercar per nom...",
+        "filterByCategory": "Filtrar per categoria",
+        "allCategories": "Totes les categories",
+        "filterByOwner": "Filtrar per propietari",
+        "allOwners": "Tots els propietaris",
+        "uploadButton": "Pujar Nou Arxiu",
+        "uploadModal": {
+            "title": "Pujar Nou Document",
+            "description": "Selecciona un arxiu i posa-li un nom descriptiu per identificar-lo fàcilment.",
+            "nameLabel": "Nom del Document",
+            "namePlaceholder": "p.ex., Normativa Interna 2024",
+            "categoryLabel": "Categoria",
+            "categoryPlaceholder": "Selecciona una categoria",
+            "assignLabel": "Assignar a Usuari",
+            "ownerPlaceholder": "Selecciona un propietari...",
+            "searchOwnerPlaceholder": "Cercar usuari...",
+            "noOwnerFound": "No s'ha trobat cap usuari.",
+            "fileLabel": "Arxiu",
+            "fileHint": "Mida màxima: 10 MB.",
+            "saveButton": "Pujar i Desar"
+        },
+        "table": {
+            "fileName": "Nom de l'Arxiu",
+            "category": "Categoria",
+            "owner": "Propietari",
+            "uploadDate": "Data de Pujada",
+            "actions": "Accions"
+        },
+        "noCategory": "Sense Categoria",
+        "noDocuments": "No hi ha documents que coincideixin amb el filtre actual.",
+        "confirmDeleteTitle": "Estàs segur?",
+        "confirmDeleteDesc": "Aquesta acció no es pot desfer. L'arxiu s'eliminarà permanentment."
     }
 }
