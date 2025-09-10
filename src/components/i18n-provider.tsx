@@ -49,10 +49,12 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
         for (const k of keys) {
             result = result?.[k];
             if (result === undefined) {
+                console.warn(`Translation key not found: ${key}`);
                 return key;
             }
         }
     } catch(e) {
+        console.warn(`Error accessing translation key: ${key}`);
         return key;
     }
     
@@ -71,3 +73,5 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     </I18nContext.Provider>
   );
 }
+
+    

@@ -48,6 +48,7 @@ type UserProfile = {
 
 function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfile}) {
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [subject, setSubject] = useState("");
     const [message, setMessage] = useState("");
     const [isSending, setIsSending] = useState(false);
@@ -71,11 +72,11 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
         const result = await sendEmailWithSmtpAction(payload);
 
         if (result.success) {
-            toast({ title: "Mensaje Enviado", description: "Hemos recibido tu consulta. Te responderemos lo antes posible."});
+            toast({ title: t('contact.successTitle'), description: t('contact.successDescription')});
             setSubject("");
             setMessage("");
         } else {
-            toast({ variant: "destructive", title: "Error al enviar", description: result.error});
+            toast({ variant: "destructive", title: t('contact.errorTitle'), description: result.error});
         }
         
         setIsSending(false);
@@ -84,21 +85,21 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label htmlFor="subject">Asunto</Label>
+                <Label htmlFor="subject">{t('contact.subject')}</Label>
                 <Input id="subject" value={subject} onChange={(e) => setSubject(e.target.value)} required/>
             </div>
              <div className="space-y-2">
-                <Label htmlFor="message">Mensaje</Label>
+                <Label htmlFor="message">{t('contact.message')}</Label>
                 <Textarea id="message" value={message} onChange={(e) => setMessage(e.target.value)} required className="min-h-[150px]"/>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button variant="ghost">Cancelar</Button>
+                    <Button variant="ghost">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="submit" disabled={isSending}>
                     {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                     <Send className="mr-2 h-4 w-4"/>
-                    Enviar
+                    {t('common.send')}
                 </Button>
             </DialogFooter>
         </form>
@@ -107,6 +108,7 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
 
 function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserProfile}) {
     const { toast } = useToast();
+    const { t } = useTranslation();
     const [rating, setRating] = useState(0);
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState("");
@@ -115,7 +117,7 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (rating === 0) {
-            toast({ variant: "destructive", title: "Puntuación requerida", description: "Por favor, selecciona una puntuación antes de enviar." });
+            toast({ variant: "destructive", title: t('review.errorTitle'), description: t('review.errorDescription') });
             return;
         }
         setIsSending(true);
@@ -138,11 +140,11 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
         const result = await sendEmailWithSmtpAction(payload);
 
         if (result.success) {
-            toast({ title: "¡Gracias por tu reseña!", description: "Tu opinión nos ayuda a mejorar."});
+            toast({ title: t('review.successTitle'), description: t('review.successDescription')});
             setRating(0);
             setComment("");
         } else {
-            toast({ variant: "destructive", title: "Error al enviar", description: result.error});
+            toast({ variant: "destructive", title: t('contact.errorTitle'), description: result.error});
         }
         
         setIsSending(false);
@@ -151,7 +153,7 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
     return (
         <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-                <Label>Tu Puntuación</Label>
+                <Label>{t('review.rating')}</Label>
                 <div className="flex items-center gap-1">
                     {[1, 2, 3, 4, 5].map((star) => (
                         <Star
@@ -170,17 +172,17 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
                 </div>
             </div>
              <div className="space-y-2">
-                <Label htmlFor="comment">Tu Comentario (Opcional)</Label>
+                <Label htmlFor="comment">{t('review.comment')}</Label>
                 <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} className="min-h-[150px]"/>
             </div>
             <DialogFooter>
                 <DialogClose asChild>
-                    <Button variant="ghost">Cancelar</Button>
+                    <Button variant="ghost">{t('common.cancel')}</Button>
                 </DialogClose>
                 <Button type="submit" disabled={isSending}>
                     {isSending && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                     <Send className="mr-2 h-4 w-4"/>
-                    Enviar Reseña
+                    {t('review.send')}
                 </Button>
             </DialogFooter>
         </form>
@@ -366,3 +368,5 @@ export function Sidebar() {
         </div>
     );
 }
+
+    

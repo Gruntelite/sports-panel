@@ -61,7 +61,7 @@ export function Header() {
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col p-0">
                     <SheetHeader>
-                        <SheetTitle className="sr-only">{t('header.mainMenu')}</SheetTitle>
+                         <SheetTitle className="sr-only">{t('header.mainMenu')}</SheetTitle>
                     </SheetHeader>
                      <nav className="flex flex-col h-full">
                         <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0">
@@ -97,3 +97,5 @@ export function Header() {
         </>
     )
 }
+
+    

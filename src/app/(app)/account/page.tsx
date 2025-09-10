@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -22,12 +21,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format, parseISO } from 'date-fns';
+import { useTranslation } from "@/components/i18n-provider";
 
 
 type MemberData = Partial<Player & Coach & Staff>;
 
 export default function AccountPage() {
   const { toast } = useToast();
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   
@@ -69,7 +70,7 @@ export default function AccountPage() {
             }
           }
         } catch (error) {
-           toast({ variant: "destructive", title: "Error", description: "No se pudo cargar tu perfil." });
+           toast({ variant: "destructive", title: t('common.error'), description: t('account.errors.loadProfile') });
         } finally {
             setLoading(false);
         }
@@ -78,7 +79,7 @@ export default function AccountPage() {
       }
     });
     return () => unsubscribe();
-  }, [toast]);
+  }, [toast, t]);
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
@@ -109,10 +110,10 @@ export default function AccountPage() {
         const memberDocRef = doc(db, "clubs", clubId, memberCollection, memberId);
         await updateDoc(memberDocRef, memberData);
         
-        toast({ title: "¡Guardado!", description: "Tu información de perfil ha sido actualizada." });
+        toast({ title: t('common.saved'), description: t('account.success.profileUpdated') });
     } catch(e) {
         console.error("Error saving profile data: ", e);
-        toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios."});
+        toast({ variant: "destructive", title: t('common.error'), description: t('account.errors.saveProfile')});
     } finally {
         setSaving(false);
     }
@@ -131,10 +132,10 @@ export default function AccountPage() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Perfil no encontrado</CardTitle>
+          <CardTitle>{t('account.notFound.title')}</CardTitle>
         </CardHeader>
         <CardContent>
-          <p>No pudimos encontrar tu perfil de miembro asociado. Por favor, contacta con el administrador de tu club.</p>
+          <p>{t('account.notFound.description')}</p>
         </CardContent>
       </Card>
     );
@@ -142,7 +143,6 @@ export default function AccountPage() {
 
   const role = memberCollection?.slice(0, -1); // 'player', 'coach', 'staff'
   const isPlayer = role === 'player';
-  const isCoach = role === 'coach';
   
   const birthDate = memberData.birthDate ? parseISO(memberData.birthDate) : undefined;
 
@@ -150,79 +150,79 @@ export default function AccountPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-bold font-headline tracking-tight">
-          Mi Perfil
+          {t('account.title')}
         </h1>
         <p className="text-muted-foreground">
-          Revisa y actualiza tu información personal.
+          {t('account.description')}
         </p>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>Tu Información</CardTitle>
+          <CardTitle>{t('account.cardTitle')}</CardTitle>
           <CardDescription>
-            Los campos marcados con un candado no pueden ser modificados. Contacta con tu club si necesitas cambiarlos.
+            {t('account.cardDescription')}
           </CardDescription>
         </CardHeader>
         <CardContent>
             <Tabs defaultValue="personal" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>Datos Personales</TabsTrigger>
-                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>Contacto</TabsTrigger>
-                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>Datos Deportivos</TabsTrigger>
+                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('account.tabs.personal')}</TabsTrigger>
+                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('account.tabs.contact')}</TabsTrigger>
+                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>{t('account.tabs.sports')}</TabsTrigger>
               </TabsList>
               
               <TabsContent value="personal" className="pt-6">
                  <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2"><Label htmlFor="name">Nombre</Label><Input id="name" value={memberData.name || ''} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label htmlFor="lastName">Apellidos</Label><Input id="lastName" value={memberData.lastName || ''} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="name">{t('fields.name')}</Label><Input id="name" value={memberData.name || ''} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="lastName">{t('fields.lastName')}</Label><Input id="lastName" value={memberData.lastName || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2"><Label>Fecha de Nacimiento</Label><DatePicker date={birthDate} onDateChange={(date) => handleDateChange('birthDate', date)} /></div>
-                        <div className="space-y-2"><Label htmlFor="dni">NIF</Label><Input id="dni" value={memberData.dni || ''} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label>{t('fields.birthDate')}</Label><DatePicker date={birthDate} onDateChange={(date) => handleDateChange('birthDate', date)} /></div>
+                        <div className="space-y-2"><Label htmlFor="dni">{t('fields.dni')}</Label><Input id="dni" value={memberData.dni || ''} onChange={handleInputChange} /></div>
                     </div>
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2"><Label htmlFor="address">Dirección</Label><Input id="address" value={memberData.address || ''} onChange={handleInputChange} /></div>
-                        <div className="space-y-2"><Label htmlFor="city">Ciudad</Label><Input id="city" value={memberData.city || ''} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="address">{t('fields.address')}</Label><Input id="address" value={memberData.address || ''} onChange={handleInputChange} /></div>
+                        <div className="space-y-2"><Label htmlFor="city">{t('fields.city')}</Label><Input id="city" value={memberData.city || ''} onChange={handleInputChange} /></div>
                      </div>
-                     <div className="space-y-2"><Label htmlFor="postalCode">Código Postal</Label><Input id="postalCode" value={memberData.postalCode || ''} onChange={handleInputChange} /></div>
+                     <div className="space-y-2"><Label htmlFor="postalCode">{t('fields.postalCode')}</Label><Input id="postalCode" value={memberData.postalCode || ''} onChange={handleInputChange} /></div>
                  </div>
               </TabsContent>
 
               <TabsContent value="contact" className="pt-6">
                  <div className="space-y-6">
-                    <div className="flex items-center space-x-2"><Checkbox id="isOwnTutor" checked={memberData.isOwnTutor || false} onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}/><Label htmlFor="isOwnTutor">Soy mi propio tutor/a (mayor de edad)</Label></div>
+                    <div className="flex items-center space-x-2"><Checkbox id="isOwnTutor" checked={memberData.isOwnTutor || false} onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}/><Label htmlFor="isOwnTutor">{t('account.isOwnTutor')}</Label></div>
                     {!(memberData.isOwnTutor) && (
-                        <Card className="bg-muted/50"><CardHeader><CardTitle className="text-lg">Datos del Tutor/a</CardTitle></CardHeader>
+                        <Card className="bg-muted/50"><CardHeader><CardTitle className="text-lg">{t('account.tutorTitle')}</CardTitle></CardHeader>
                             <CardContent className="space-y-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2"><Label htmlFor="tutorName">Nombre del Tutor/a</Label><Input id="tutorName" value={memberData.tutorName || ''} onChange={handleInputChange}/></div>
-                                    <div className="space-y-2"><Label htmlFor="tutorLastName">Apellidos del Tutor/a</Label><Input id="tutorLastName" value={memberData.tutorLastName || ''} onChange={handleInputChange}/></div>
+                                    <div className="space-y-2"><Label htmlFor="tutorName">{t('fields.tutorName')}</Label><Input id="tutorName" value={memberData.tutorName || ''} onChange={handleInputChange}/></div>
+                                    <div className="space-y-2"><Label htmlFor="tutorLastName">{t('fields.tutorLastName')}</Label><Input id="tutorLastName" value={memberData.tutorLastName || ''} onChange={handleInputChange}/></div>
                                 </div>
-                                <div className="space-y-2"><Label htmlFor="tutorDni">NIF del Tutor/a</Label><Input id="tutorDni" value={memberData.tutorDni || ''} onChange={handleInputChange}/></div>
+                                <div className="space-y-2"><Label htmlFor="tutorDni">{t('fields.tutorDni')}</Label><Input id="tutorDni" value={memberData.tutorDni || ''} onChange={handleInputChange}/></div>
                             </CardContent>
                         </Card>
                     )}
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-2"><Label htmlFor={isPlayer ? 'tutorEmail' : 'email'}>Email de Contacto</Label><Input id={isPlayer ? 'tutorEmail' : 'email'} type="email" value={(isPlayer ? memberData.tutorEmail : memberData.email) || ''} onChange={handleInputChange}/></div>
-                        <div className="space-y-2"><Label htmlFor={isPlayer ? 'tutorPhone' : 'phone'}>Teléfono de Contacto</Label><Input id={isPlayer ? 'tutorPhone' : 'phone'} type="tel" value={(isPlayer ? memberData.tutorPhone : memberData.phone) || ''} onChange={handleInputChange}/></div>
+                        <div className="space-y-2"><Label htmlFor={isPlayer ? 'tutorEmail' : 'email'}>{t('fields.contactEmail')}</Label><Input id={isPlayer ? 'tutorEmail' : 'email'} type="email" value={(isPlayer ? memberData.tutorEmail : memberData.email) || ''} onChange={handleInputChange}/></div>
+                        <div className="space-y-2"><Label htmlFor={isPlayer ? 'tutorPhone' : 'phone'}>{t('fields.contactPhone')}</Label><Input id={isPlayer ? 'tutorPhone' : 'phone'} type="tel" value={(isPlayer ? memberData.tutorPhone : memberData.phone) || ''} onChange={handleInputChange}/></div>
                     </div>
-                    <div className="space-y-2"><Label htmlFor="iban">IBAN (para cobro de cuotas)</Label><Input id="iban" value={memberData.iban || ''} onChange={handleInputChange}/></div>
+                    <div className="space-y-2"><Label htmlFor="iban">{t('fields.iban')}</Label><Input id="iban" value={memberData.iban || ''} onChange={handleInputChange}/></div>
                  </div>
               </TabsContent>
 
               <TabsContent value="sports" className="pt-6">
                  <div className="space-y-6">
-                    {isPlayer && <div className="space-y-2"><Label htmlFor="jerseyNumber">Dorsal</Label><Input id="jerseyNumber" type="number" value={memberData.jerseyNumber || ''} onChange={handleInputChange} /></div>}
-                    <div className="space-y-2"><Label htmlFor="kitSize">Talla de Equipación</Label><Input id="kitSize" value={memberData.kitSize || ''} onChange={handleInputChange} /></div>
+                    {isPlayer && <div className="space-y-2"><Label htmlFor="jerseyNumber">{t('fields.jerseyNumber')}</Label><Input id="jerseyNumber" type="number" value={memberData.jerseyNumber || ''} onChange={handleInputChange} /></div>}
+                    <div className="space-y-2"><Label htmlFor="kitSize">{t('fields.kitSize')}</Label><Input id="kitSize" value={memberData.kitSize || ''} onChange={handleInputChange} /></div>
                     <div className="space-y-2">
-                        <Label htmlFor="monthlyFee">{isPlayer ? "Cuota Mensual (€)" : "Pago Mensual (€)"}</Label>
+                        <Label htmlFor="monthlyFee">{isPlayer ? t('fields.monthlyFee') : t('fields.monthlyPayment')}</Label>
                         <Input id={isPlayer ? "monthlyFee" : "monthlyPayment"} type="number" value={(isPlayer ? memberData.monthlyFee : memberData.monthlyPayment) ?? ''} onChange={handleInputChange} readOnly/>
                     </div>
                     {isPlayer && (
                         <div className="flex items-center space-x-2 pt-4">
                            <Checkbox id="medicalCheckCompleted" checked={memberData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} disabled/>
-                           <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                           <Label htmlFor="medicalCheckCompleted">{t('fields.medicalCheck')}</Label>
                          </div>
                     )}
                  </div>
@@ -232,14 +232,12 @@ export default function AccountPage() {
         <CardHeader>
            <Button onClick={handleSaveChanges} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                <Save className="mr-2 h-4 w-4"/> Guardar Cambios
+                <Save className="mr-2 h-4 w-4"/> {t('common.saveChanges')}
            </Button>
         </CardHeader>
       </Card>
     </div>
   );
 }
-
-    
 
     
