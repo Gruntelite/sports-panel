@@ -142,7 +142,7 @@
         "loginError": "Fallo en el Inicio de Sesión",
         "loginErrorDesc": "El correo electrónico o la contraseña son incorrectos.",
         "stats": {
-            "0": "+130 Clubs nos Eligen",
+            "0": "+130 Clubes nos Eligen",
             "1": "+9h de Ahorro Semanal",
             "2": "95% Tasa de Retención"
         }
@@ -366,6 +366,103 @@
             "eventsTitle": "Partidos y Eventos",
             "eventsDescription": "Estos son los partidos y eventos programados para el día seleccionado.",
             "noEvents": "No hay partidos ni eventos para hoy."
+        }
+    },
+    "treasury": {
+        "description": "Visualiza la salud financiera de tu club, gestiona cuotas, patrocinios y gastos.",
+        "stats": {
+            "expectedIncome": "Ingresos Previstos",
+            "totalExpenses": "Gastos Totales",
+            "sponsorshipIncome": "Ingresos por Patrocinios",
+            "staffPayments": "Pagos a Staff",
+            "incomeDesc": "Cuotas de jugadores, socios y otros.",
+            "expensesDesc": "Sueldos, alquileres, material, etc.",
+            "sponsorshipDesc": "Total de ingresos por patrocinio.",
+            "staffPaymentsDesc": "Sueldos de entrenadores y staff.",
+            "monthly": "Mensual",
+            "annual": "Anual",
+            "currentMonth": "Mes Actual",
+            "fullYear": "Año Completo"
+        },
+        "chart": {
+            "title": "Evolución Anual",
+            "description": "Vista general de ingresos y gastos a lo largo del año.",
+            "income": "Ingresos",
+            "expenses": "Gastos",
+            "year": "Año"
+        },
+        "tabs": {
+            "accounting": "Contabilidad",
+            "fees": "Cuotas y Pagos",
+            "sponsorships": "Patrocinios",
+            "expenses": "Gastos",
+            "otherPayments": "Otros Ingresos/Pagos"
+        },
+        "accounting": {
+            "title": "Resumen de Contabilidad",
+            "description": "Desglose de ingresos y gastos para el mes seleccionado.",
+            "totalIncome": "Ingresos Totales",
+            "totalExpenses": "Gastos Totales",
+            "balance": "Balance Mensual",
+            "category": "Categoría",
+            "amount": "Importe",
+            "playerFees": "Cuotas de Jugadores",
+            "socioFees": "Cuotas de Socios",
+            "socioFeesAnnual": "Cuotas Anuales de Socios",
+            "sponsorship": "Patrocinio",
+            "oneTimePayment": "Pago Puntual",
+            "registrations": "Inscripciones",
+            "coachSalaries": "Sueldos de Entrenadores",
+            "staffSalary": "Sueldo de Staff",
+            "staffSalaryAnnual": "Sueldo Anual de Staff",
+            "noMovements": "No hay movimientos para este mes."
+        },
+        "fees": {
+            "title": "Gestión de Cuotas y Pagos",
+            "description": "Consulta un listado de todos los pagos y cuotas de los miembros del club.",
+            "playerFeeExclusion": "Excluir meses del cobro de cuota a jugadores",
+            "staffPaymentExclusion": "Excluir meses del pago a staff y entrenadores",
+            "months": "mes(es)",
+            "select": "Seleccionar",
+            "filterByRole": "Filtrar por rol",
+            "allRoles": "Todos los roles",
+            "players": "Jugadores",
+            "coaches": "Entrenadores",
+            "staff": "Staff",
+            "socios": "Socios",
+            "filterByTeam": "Filtrar por equipo",
+            "allTeams": "Todos los equipos",
+            "member": "Miembro",
+            "team": "Equipo",
+            "role": "Rol",
+            "income": "Ingreso (Cuota)",
+            "expense": "Gasto (Sueldo)"
+        },
+        "sponsorships": {
+            "title": "Gestión de Patrocinios",
+            "description": "Añade, edita y elimina los acuerdos de patrocinio del club.",
+            "add": "Añadir Patrocinio",
+            "sponsor": "Patrocinador",
+            "amount": "Importe",
+            "actions": "Acciones",
+            "none": "Todavía no has añadido ningún patrocinio."
+        },
+        "expenses": {
+            "recurringTitle": "Gastos Recurrentes",
+            "recurringDescription": "Gestiona los gastos fijos mensuales del club.",
+            "oneOffTitle": "Gastos Puntuales",
+            "oneOffDescription": "Registra los gastos extraordinarios o no periódicos."
+        },
+        "otherPayments": {
+            "title": "Otros Ingresos y Pagos",
+            "description": "Gestiona cobros y pagos puntuales a miembros, equipos o por eventos.",
+            "add": "Añadir Pago",
+            "concept": "Concepto",
+            "amount": "Cantidad",
+            "issueDate": "Fecha de Emisión",
+            "recipients": "Destinatarios",
+            "actions": "Acciones",
+            "none": "No hay pagos puntuales registrados."
         }
     }
 }

@@ -116,9 +116,9 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
                 }
             });
             sponsorships.forEach(s => {
-                if (s.frequency === 'monthly' && !s.excludedMonths?.includes(month)) {
+                if (s.frequency === 'monthly' && !s.excludedMonths?.includes(getMonth(new Date(year, s.id.length, 1)))) {
                     addOrUpdate(`${t('treasury.accounting.sponsorship')}: ${s.sponsorName}`, s.amount, 'income');
-                } else if (s.frequency === 'annual' && month === 0) {
+                } else if (s.frequency === 'annual' && getMonth(new Date(year, s.id.length, 1)) === 0) {
                     addOrUpdate(`${t('treasury.accounting.sponsorship')}: ${s.sponsorName}`, s.amount, 'income');
                 }
             });
