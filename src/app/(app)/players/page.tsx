@@ -671,7 +671,7 @@ export default function PlayersPage() {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                      <ScrollArea className="h-[400px]">
-                      <DropdownMenuLabel>Mostrar/Ocultar Columnas</DropdownMenuLabel>
+                      <DropdownMenuLabel>{t('players.toggleColumns')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
                       {allColumnFields.map(field => (
                           <DropdownMenuCheckboxItem
@@ -756,7 +756,7 @@ export default function PlayersPage() {
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
-                      aria-label="Seleccionar todo"
+                      aria-label={t('players.selectAll')}
                     />
                   </TableHead>
                    {allPossibleColumns.map(field => (
@@ -810,7 +810,7 @@ export default function PlayersPage() {
                                               <AlertCircle className="h-4 w-4 text-destructive" />
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                              <p>Faltan datos por rellenar</p>
+                                              <p>{t('players.missingData')}</p>
                                             </TooltipContent>
                                         </Tooltip>
                                       )}
@@ -898,7 +898,7 @@ export default function PlayersPage() {
                         <div className="sm:hidden mb-4">
                             <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar sección..." />
+                                    <SelectValue placeholder={t('players.selectSection')} />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="personal">{t('players.personalData')}</SelectItem>
@@ -920,31 +920,31 @@ export default function PlayersPage() {
                         <div className={cn("pt-6 space-y-6", modalSection !== 'personal' && 'hidden sm:block')}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="name">Nombre</Label>
+                                    <Label htmlFor="name">{t('players.fields.name')}</Label>
                                     <Input id="name" autoComplete="off" value={playerData.name || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="lastName">Apellidos</Label>
+                                    <Label htmlFor="lastName">{t('players.fields.lastName')}</Label>
                                     <Input id="lastName" autoComplete="off" value={playerData.lastName || ''} onChange={handleInputChange} />
                                 </div>
                             </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="birthDate">Fecha de Nacimiento</Label>
+                                    <Label htmlFor="birthDate">{t('players.fields.birthDate')}</Label>
                                     <DatePicker 
                                         date={playerData.birthDate ? parseISO(playerData.birthDate) : undefined}
                                         onDateChange={(date) => handleDateChange('birthDate', date)}
                                     />
-                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">Edad: {calculateAge(playerData.birthDate)} años</p>}
+                                    {playerData.birthDate && <p className="text-xs text-muted-foreground">{t('players.age')}: {calculateAge(playerData.birthDate)} {t('players.years')}</p>}
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="dni">NIF</Label>
+                                    <Label htmlFor="dni">{t('players.fields.dni')}</Label>
                                     <Input id="dni" value={playerData.dni || ''} onChange={handleInputChange} />
                                 </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="sex">Sexo</Label>
+                                        <Label htmlFor="sex">{t('players.fields.sex')}</Label>
                                         <Select value={playerData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
-                                            <SelectTrigger><SelectValue placeholder="Seleccionar..." /></SelectTrigger>
+                                            <SelectTrigger><SelectValue placeholder={t('players.fields.select')} /></SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="masculino">Masculino</SelectItem>
                                                 <SelectItem value="femenino">Femenino</SelectItem>
@@ -954,39 +954,39 @@ export default function PlayersPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="nationality">Nacionalidad</Label>
+                                        <Label htmlFor="nationality">{t('players.fields.nationality')}</Label>
                                         <Input id="nationality" value={playerData.nationality || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="healthCardNumber">Nº Tarjeta Sanitaria</Label>
+                                        <Label htmlFor="healthCardNumber">{t('players.fields.healthCard')}</Label>
                                         <Input id="healthCardNumber" value={playerData.healthCardNumber || ''} onChange={handleInputChange} />
                                     </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="address">Dirección</Label>
+                                <Label htmlFor="address">{t('players.fields.address')}</Label>
                                 <Input id="address" value={playerData.address || ''} onChange={handleInputChange} />
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="city">Ciudad</Label>
+                                    <Label htmlFor="city">{t('players.fields.city')}</Label>
                                     <Input id="city" value={playerData.city || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="postalCode">Código Postal</Label>
+                                    <Label htmlFor="postalCode">{t('players.fields.postalCode')}</Label>
                                     <Input id="postalCode" value={playerData.postalCode || ''} onChange={handleInputChange} />
                                 </div>
                             </div>
                             <div className="p-4 border rounded-md mt-4 space-y-4 bg-muted/50">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                    <Label>Fecha de Alta</Label>
+                                    <Label>{t('players.fields.startDate')}</Label>
                                     <DatePicker 
                                         date={playerData.startDate ? parseISO(playerData.startDate) : undefined}
                                         onDateChange={(date) => handleDateChange('startDate', date)}
                                     />
                                     </div>
                                     <div className="space-y-2">
-                                    <Label>Fecha de Baja</Label>
+                                    <Label>{t('players.fields.endDate')}</Label>
                                     <DatePicker 
                                         date={playerData.endDate ? parseISO(playerData.endDate) : undefined}
                                         onDateChange={(date) => handleDateChange('endDate', date)}
@@ -996,34 +996,34 @@ export default function PlayersPage() {
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="currentlyActive" checked={playerData.currentlyActive} onCheckedChange={(checked) => handleCheckboxChange('currentlyActive', checked as boolean)} />
-                                <Label htmlFor="currentlyActive">Actualmente de alta</Label>
+                                <Label htmlFor="currentlyActive">{t('players.fields.currentlyActive')}</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox id="hasInterruption" checked={(playerData.interruptions?.length || 0) > 0} onCheckedChange={(checked) => {
                                     if(checked) { handleAddInterruption() }
                                     else { setPlayerData(prev => ({...prev, interruptions: []}))}
                                 }} />
-                                <Label htmlFor="hasInterruption">Ha tenido interrupciones en su alta</Label>
+                                <Label htmlFor="hasInterruption">{t('players.fields.hasInterruptions')}</Label>
                             </div>
                             {(playerData.interruptions?.length || 0) > 0 && (
                                 <div className="space-y-2 pl-6">
                                     {playerData.interruptions?.map((interruption, index) => (
                                         <div key={interruption.id} className="flex items-end gap-2">
                                             <div className="space-y-1">
-                                                <Label>Inicio Interrupción</Label>
+                                                <Label>{t('players.fields.interruptionStart')}</Label>
                                                     <DatePicker date={interruption.startDate ? parseISO(interruption.startDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'startDate', date)} />
                                             </div>
                                             <div className="space-y-1">
-                                                <Label>Fin Interrupción</Label>
+                                                <Label>{t('players.fields.interruptionEnd')}</Label>
                                                     <DatePicker date={interruption.endDate ? parseISO(interruption.endDate) : undefined} onDateChange={(date) => handleInterruptionDateChange(index, 'endDate', date)} />
                                             </div>
                                             <Button variant="ghost" size="icon" onClick={() => handleRemoveInterruption(interruption.id)}><Trash className="h-4 w-4 text-destructive"/></Button>
                                         </div>
                                     ))}
-                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>Añadir otra interrupción</Button>
+                                    <Button variant="outline" size="sm" onClick={handleAddInterruption}>{t('players.fields.addInterruption')}</Button>
                                 </div>
                             )}
-                            <p className="text-sm font-medium text-muted-foreground pt-2">Antigüedad en el club: <span className="text-foreground">{calculateTenure(playerData)}</span></p>
+                            <p className="text-sm font-medium text-muted-foreground pt-2">{t('players.fields.tenure')}: <span className="text-foreground">{calculateTenure(playerData)}</span></p>
                             </div>
                         </div>
 
@@ -1034,24 +1034,24 @@ export default function PlayersPage() {
                                     checked={playerData.isOwnTutor || false}
                                     onCheckedChange={(checked) => handleCheckboxChange('isOwnTutor', checked as boolean)}
                                 />
-                                <Label htmlFor="isOwnTutor" className="font-normal">El jugador es su propio tutor (mayor de 18 años)</Label>
+                                <Label htmlFor="isOwnTutor" className="font-normal">{t('players.isOwnTutor')}</Label>
                             </div>
                                 
                                 {!(playerData.isOwnTutor) && (
                                     <div className="space-y-6 p-4 border rounded-md bg-muted/50">
-                                        <h4 className="font-medium">Datos del Tutor/a</h4>
+                                        <h4 className="font-medium">{t('players.tutorData')}</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorName">Nombre</Label>
+                                                <Label htmlFor="tutorName">{t('players.fields.name')}</Label>
                                                 <Input id="tutorName" autoComplete="off" value={playerData.tutorName || ''} onChange={handleInputChange} />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorLastName">Apellidos</Label>
+                                                <Label htmlFor="tutorLastName">{t('players.fields.lastName')}</Label>
                                                 <Input id="tutorLastName" autoComplete="off" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
                                             </div>
                                         </div>
                                         <div className="space-y-2">
-                                            <Label htmlFor="tutorDni">NIF del Tutor/a</Label>
+                                            <Label htmlFor="tutorDni">{t('players.fields.tutorDni')}</Label>
                                             <Input id="tutorDni" value={playerData.tutorDni || ''} onChange={handleInputChange} />
                                         </div>
                                     </div>
@@ -1059,29 +1059,29 @@ export default function PlayersPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? "Email" : "Email del Tutor/a"}</Label>
+                                        <Label htmlFor="tutorEmail">{playerData.isOwnTutor ? t('players.fields.email') : t('players.fields.tutorEmail')}</Label>
                                         <Input id="tutorEmail" type="email" value={playerData.tutorEmail || ''} onChange={handleInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? "Teléfono" : "Teléfono del Tutor/a"}</Label>
+                                        <Label htmlFor="tutorPhone">{playerData.isOwnTutor ? t('players.fields.phone') : t('players.fields.tutorPhone')}</Label>
                                         <Input id="tutorPhone" type="tel" value={playerData.tutorPhone || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="iban">IBAN Cuenta Bancaria</Label>
+                                    <Label htmlFor="iban">{t('players.fields.iban')}</Label>
                                     <Input id="iban" value={playerData.iban || ''} onChange={handleInputChange} />
                                 </div>
                         </div>
 
                         <div className={cn("pt-6 space-y-6", modalSection !== 'sports' && 'hidden sm:block')}>
                             <div className="space-y-2">
-                                <Label htmlFor="teamId">Equipo</Label>
+                                <Label htmlFor="teamId">{t('players.fields.team')}</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona un equipo" />
+                                        <SelectValue placeholder={t('players.fields.selectTeam')} />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="unassigned">Sin equipo</SelectItem>
+                                        <SelectItem value="unassigned">{t('players.unassigned')}</SelectItem>
                                         {teams.map(team => (
                                             <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                                         ))}
@@ -1090,21 +1090,21 @@ export default function PlayersPage() {
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <div className="space-y-2">
-                                    <Label htmlFor="jerseyNumber">Dorsal</Label>
+                                    <Label htmlFor="jerseyNumber">{t('players.fields.jerseyNumber')}</Label>
                                     <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="monthlyFee">Cuota (€)</Label>
+                                    <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
                                     <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="kitSize">Talla de Equipación</Label>
-                                    <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleInputChange} />
+                                    <Label htmlFor="kitSize">{t('players.fields.kitSize')}</Label>
+                                    <Input id="kitSize" placeholder={t('players.fields.kitSizePlaceholder')} value={playerData.kitSize || ''} onChange={handleInputChange} />
                                 </div>
                             </div>
                             <div className="flex items-center space-x-2 pt-4">
                             <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
-                            <Label htmlFor="medicalCheckCompleted">Revisión médica completada</Label>
+                            <Label htmlFor="medicalCheckCompleted">{t('players.fields.medicalCheck')}</Label>
                             </div>
                         </div>
 
@@ -1164,7 +1164,7 @@ export default function PlayersPage() {
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setIsBulkDeleteAlertOpen(false)}>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleBulkDelete} disabled={isDeleting}>
-              {isDeleting ? <Loader2 className="animate-spin" /> : 'Eliminar Jugadores'}
+              {isDeleting ? <Loader2 className="animate-spin" /> : t('players.deletePlayers')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1227,7 +1227,7 @@ export default function PlayersPage() {
             </Button>
             <Button onClick={handleSendUpdateRequests} disabled={saving || selectedPlayers.length === 0}>
               {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-              {saving ? 'Enviando...' : t('players.sendTo', { count: selectedPlayers.length })}
+              {saving ? t('players.sending') : t('players.sendTo', { count: selectedPlayers.length })}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1235,5 +1235,7 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
+    
 
     
