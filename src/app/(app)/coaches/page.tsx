@@ -145,27 +145,17 @@ export default function CoachesPage() {
   
   const [modalSection, setModalSection] = useState<EditModalSection>('personal');
 
-    const coachFields = {
-    personal: [
-        { id: "name", label: t('coaches.fields.name') }, { id: "birthDate", label: t('coaches.fields.birthDate') }, { id: "dni", label: t('coaches.fields.dni') },
-        { id: "sex", label: t('coaches.fields.sex') }, { id: "nationality", label: t('coaches.fields.nationality') },
-        { id: "address", label: t('coaches.fields.address') }, { id: "city", label: t('coaches.fields.city') }, { id: "postalCode", label: t('coaches.fields.postalCode') },
-    ],
-    contact: [
-        { id: "tutorName", label: t('coaches.fields.tutorName') }, { id: "tutorLastName", label: t('coaches.fields.tutorLastName') },
-        { id: "tutorDni", label: t('coaches.fields.tutorDni') }, { id: "email", label: t('coaches.fields.contactEmail') },
-        { id: "phone", label: t('coaches.fields.contactPhone') },
-    ],
-    payment: [
-        { id: "role", label: t('coaches.fields.role') }, { id: "teamName", label: t('coaches.fields.team') }, { id: "iban", label: t('coaches.fields.iban') },
-        { id: "monthlyPayment", label: t('coaches.fields.monthlyPayment') }, { id: "kitSize", label: t('coaches.fields.kitSize') },
-    ]
-};
+  const coachFieldsRaw = t('coaches.coachFields');
+  const coachFields = (coachFieldsRaw && typeof coachFieldsRaw === 'object' && !Array.isArray(coachFieldsRaw)) ? coachFieldsRaw : {
+    personal: [],
+    contact: [],
+    payment: []
+  };
 
   const allColumnFields = [
-    ...coachFields.personal,
-    ...coachFields.contact,
-    ...coachFields.payment
+    ...(Array.isArray(coachFields.personal) ? coachFields.personal : []),
+    ...(Array.isArray(coachFields.contact) ? coachFields.contact : []),
+    ...(Array.isArray(coachFields.payment) ? coachFields.payment : [])
   ];
   
   const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
@@ -859,8 +849,7 @@ export default function CoachesPage() {
           </div>
         </CardContent>
         <CardFooter>
-          <div className="text-xs text-muted-foreground">
-            {t('coaches.showing')} <strong>{filteredCoaches.length}</strong> {t('coaches.of')} <strong>{coaches.length}</strong> {t('coaches.coachesCount')}
+          <div className="text-xs text-muted-foreground" dangerouslySetInnerHTML={{ __html: t('coaches.showing', { count: filteredCoaches.length, total: coaches.length }) }}>
           </div>
         </CardFooter>
       </Card>
@@ -906,7 +895,7 @@ export default function CoachesPage() {
                         <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
-                    <div>
+                    <Tabs value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full">
                         <div className="sm:hidden mb-4">
                             <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
                                 <SelectTrigger>
@@ -920,16 +909,14 @@ export default function CoachesPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <Tabs defaultValue="personal" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
-                            <TabsList className="grid w-full grid-cols-4">
-                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('coaches.personalData')}</TabsTrigger>
-                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('coaches.contactAndTutor')}</TabsTrigger>
-                                <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>{t('coaches.roleAndTeam')}</TabsTrigger>
-                                <TabsTrigger value="custom">{t('coaches.otherData')}</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'personal' && 'hidden sm:block')}>
+                        <TabsList className="hidden sm:grid w-full grid-cols-4">
+                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('coaches.personalData')}</TabsTrigger>
+                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('coaches.contactAndTutor')}</TabsTrigger>
+                            <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>{t('coaches.roleAndTeam')}</TabsTrigger>
+                            <TabsTrigger value="custom">{t('coaches.otherData')}</TabsTrigger>
+                        </TabsList>
+                        
+                        <TabsContent value="personal" className="pt-6 space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">{t('coaches.fields.name')}</Label>
@@ -1041,9 +1028,9 @@ export default function CoachesPage() {
                             )}
                             <p className="text-sm font-medium text-muted-foreground pt-2">{t('coaches.tenure')}: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
                             </div>
-                        </div>
+                        </TabsContent>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'contact' && 'hidden sm:block')}>
+                        <TabsContent value="contact" className="pt-6 space-y-6">
                             <div className="flex items-center space-x-2">
                                 <Checkbox 
                                     id="isOwnTutor" 
@@ -1083,9 +1070,9 @@ export default function CoachesPage() {
                                         <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
-                        </div>
+                        </TabsContent>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'payment' && 'hidden sm:block')}>
+                        <TabsContent value="payment" className="pt-6 space-y-6">
                             <div className="space-y-2">
                                 <Label htmlFor="role">{t('coaches.fields.role')}</Label>
                                 <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
@@ -1125,9 +1112,9 @@ export default function CoachesPage() {
                                     <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
                                 </div>
                             </div>
-                        </div>
+                        </TabsContent>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'custom' && 'hidden sm:block')}>
+                        <TabsContent value="custom" className="pt-6 space-y-6">
                             {coachCustomFields.length > 0 ? coachCustomFields.map(field => (
                                 <div key={field.id} className="space-y-2">
                                     <Label htmlFor={field.id}>{field.name}</Label>
@@ -1141,8 +1128,8 @@ export default function CoachesPage() {
                             )) : (
                                 <p className="text-center text-muted-foreground pt-10">{t('coaches.noCustomFields')}</p>
                             )}
-                        </div>
-                    </div>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">

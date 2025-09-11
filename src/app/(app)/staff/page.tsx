@@ -86,8 +86,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "../ui/separator";
 import { useTranslation } from "@/components/i18n-provider";
 
-const staffFields = [{ id: 'name', label: 'Nombre' }, { id: 'role', label: 'Cargo' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'payment', label: 'Pago' }];
-const socioFields = [{ id: 'name', label: 'Nombre' }, { id: 'socioNumber', label: 'Nº Socio' }, { id: 'email', label: 'Email' }, { id: 'phone', label: 'Teléfono' }, { id: 'dni', label: 'NIF' }, { id: 'fee', label: 'Cuota' }];
 const MONTHS = [
     { label: "Enero", value: 0 }, { label: "Febrero", value: 1 }, { label: "Marzo", value: 2 },
     { label: "Abril", value: 3 }, { label: "Mayo", value: 4 }, { label: "Junio", value: 5 },
@@ -124,6 +122,9 @@ export default function StaffPage() {
   const [visibleSocioColumns, setVisibleSocioColumns] = useState<Set<string>>(new Set(['name', 'socioNumber', 'email', 'fee']));
 
   const [modalSection, setModalSection] = useState<EditModalSection>('data');
+
+  const staffFields = t('staff.staffFields');
+  const socioFields = t('staff.socioFields');
 
   const staffCustomFields = customFields.filter(f => f.appliesTo.includes('staff'));
   const allPossibleStaffColumns = [...staffFields, ...staffCustomFields];
@@ -480,7 +481,7 @@ export default function StaffPage() {
                               <ScrollArea className="h-[400px]">
                                 <DropdownMenuLabel>{t('staff.toggleColumns')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                {staffFields.map(field => (
+                                {allPossibleStaffColumns.map(field => (
                                     <DropdownMenuCheckboxItem
                                       key={field.id}
                                       className="capitalize"
@@ -528,7 +529,7 @@ export default function StaffPage() {
                                   field.id !== 'name' && field.id !== 'role' && 'hidden sm:table-cell'
                                 )}
                               >
-                                {(field as CustomFieldDef).name || (field as {label: string}).label}
+                                {field.label || field.name}
                               </TableHead>
                           ))}
                           <TableHead>
@@ -629,7 +630,7 @@ export default function StaffPage() {
                               <ScrollArea className="h-[400px]">
                                 <DropdownMenuLabel>{t('staff.toggleColumns')}</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                {socioFields.map(field => (
+                                {allPossibleSocioColumns.map(field => (
                                     <DropdownMenuCheckboxItem
                                       key={field.id}
                                       className="capitalize"
@@ -677,7 +678,7 @@ export default function StaffPage() {
                                   field.id !== 'name' && field.id !== 'email' && 'hidden sm:table-cell'
                                 )}
                               >
-                                {(field as CustomFieldDef).name || (field as {label: string}).label}
+                                {field.label || field.name}
                               </TableHead>
                           ))}
                           <TableHead>
@@ -782,7 +783,7 @@ export default function StaffPage() {
                       <Input id="member-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                   </div>
                   
-                  <div>
+                  <Tabs value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full">
                         <div className="sm:hidden mb-4">
                              <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
                                 <SelectTrigger>
@@ -795,15 +796,13 @@ export default function StaffPage() {
                                 </SelectContent>
                             </Select>
                         </div>
-                        <Tabs defaultValue="data" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
-                            <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="data">{t('staff.data')}</TabsTrigger>
-                                <TabsTrigger value="payment">{t('staff.payments')}</TabsTrigger>
-                                <TabsTrigger value="custom">{t('staff.otherData')}</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
+                        <TabsList className="hidden sm:grid w-full grid-cols-3">
+                            <TabsTrigger value="data">{t('staff.data')}</TabsTrigger>
+                            <TabsTrigger value="payment">{t('staff.payments')}</TabsTrigger>
+                            <TabsTrigger value="custom">{t('staff.otherData')}</TabsTrigger>
+                        </TabsList>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'data' && 'hidden sm:block')}>
+                        <TabsContent value="data" className="pt-6 space-y-6">
                            {modalType === 'staff' ? (
                               <div className="space-y-6">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -832,9 +831,9 @@ export default function StaffPage() {
                                 </div>
                               </div>
                             )}
-                        </div>
+                        </TabsContent>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'payment' && 'hidden sm:block')}>
+                        <TabsContent value="payment" className="pt-6 space-y-6">
                            {modalType === 'staff' ? (
                                 <>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -856,9 +855,9 @@ export default function StaffPage() {
                                 )}
                                 </>
                            )}
-                        </div>
+                        </TabsContent>
 
-                         <div className={cn("pt-6 space-y-4", modalSection !== 'custom' && 'hidden sm:block')}>
+                         <TabsContent value="custom" className="pt-6 space-y-4">
                             {currentCustomFields.length > 0 ? (
                                 currentCustomFields.map(field => (
                                     <div key={field.id} className="space-y-2">
@@ -874,8 +873,8 @@ export default function StaffPage() {
                             ) : (
                                 <p className="text-center text-sm text-muted-foreground py-8">{t('staff.noCustomFields')}</p>
                             )}
-                        </div>
-                  </div>
+                        </TabsContent>
+                  </Tabs>
               </div>
             </ScrollArea>
             <DialogFooter className="border-t pt-4">
@@ -907,5 +906,3 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
-
-    
