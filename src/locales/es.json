@@ -348,5 +348,24 @@
                 "name": "Nombre", "lastName": "Apellidos", "email": "Email", "phone": "Teléfono", "dni": "NIF", "paymentType": "Tipo de Cuota", "fee": "Importe Cuota (€)", "socioNumber": "Número de Socio"
             }
         }
+    },
+    "dashboard": {
+        "stats": {
+            "totalPlayers": "Total de Jugadores",
+            "totalCoaches": "Total de Entrenadores",
+            "teams": "Equipos",
+            "monthlyIncome": "Ingresos Previstos (Mes)",
+            "totalIncomeIn": "Total en"
+        },
+        "dailySchedule": {
+            "title": "Agenda del Día",
+            "today": "Hoy",
+            "trainingsTitle": "Entrenamientos",
+            "trainingsDescription": "Estos son los entrenamientos programados para el día seleccionado.",
+            "noTrainings": "No hay entrenamientos programados para hoy.",
+            "eventsTitle": "Partidos y Eventos",
+            "eventsDescription": "Estos son los partidos y eventos programados para el día seleccionado.",
+            "noEvents": "No hay partidos ni eventos para hoy."
+        }
     }
 }

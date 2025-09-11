@@ -13,7 +13,7 @@ const translations = { es, ca };
 type Locale = 'es' | 'ca';
 
 interface I18nContextType {
-  t: (key: string, params?: { [key: string]: string | number }) => string;
+  t: (key: string, params?: { [key: string | number]: string | number }) => any;
   locale: Locale;
   setLocale: (locale: Locale) => void;
 }
@@ -30,8 +30,10 @@ export function useTranslation() {
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
   const [locale, setLocale] = useState<Locale>('es');
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
+    setIsMounted(true);
     const savedLocale = localStorage.getItem('locale') as Locale;
     if (savedLocale && (savedLocale === 'es' || savedLocale === 'ca')) {
       setLocale(savedLocale);
@@ -70,36 +72,34 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('locale', newLocale);
   }, []);
 
-  const t = useCallback((key: string, params?: { [key: string]: string | number }): string => {
-    const lang = translations[locale] || translations.es;
-    let result: any = lang;
+  const t = useCallback((key: string, params?: { [key: string | number]: string | number }): any => {
+      const lang = translations[locale] || translations.es;
+      let result: any = lang;
+      
+      try {
+          const keys = key.split('.');
+          for (const k of keys) {
+              result = result?.[k];
+              if (result === undefined) {
+                  return key;
+              }
+          }
+      } catch(e) {
+          return key;
+      }
+      
+      if (typeof result === 'string' && params) {
+        return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
+          return acc.replace(`{${paramKey}}`, String(paramValue));
+        }, result);
+      }
+      
+      return result || key;
+    }, [locale]);
     
-    try {
-        const keys = key.split('.');
-        for (const k of keys) {
-            result = result?.[k];
-            if (result === undefined) {
-                console.warn(`Translation key not found: ${key}`);
-                return key;
-            }
-        }
-    } catch(e) {
-        console.warn(`Error accessing translation key: ${key}`);
-        return key;
-    }
-    
-    if (typeof result === 'string' && params) {
-      return Object.entries(params).reduce((acc, [paramKey, paramValue]) => {
-        return acc.replace(`{${paramKey}}`, String(paramValue));
-      }, result);
-    }
-    
-    if(Array.isArray(result)){
-      return result.map(item => item.label || item).join(', ');
-    }
-
-    return result || key;
-  }, [locale]);
+  if (!isMounted) {
+    return null;
+  }
     
   return (
     <I18nContext.Provider value={{ t, locale, setLocale: handleSetLocale }}>

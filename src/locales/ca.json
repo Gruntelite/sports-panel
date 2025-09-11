@@ -348,5 +348,24 @@
                 "name": "Nom", "lastName": "Cognoms", "email": "Email", "phone": "Telèfon", "dni": "NIF", "paymentType": "Tipus de Quota", "fee": "Import Quota (€)", "socioNumber": "Número de Soci"
             }
         }
+    },
+    "dashboard": {
+        "stats": {
+            "totalPlayers": "Total de Jugadors",
+            "totalCoaches": "Total d'Entrenadors",
+            "teams": "Equips",
+            "monthlyIncome": "Ingressos Previstos (Mes)",
+            "totalIncomeIn": "Total a"
+        },
+        "dailySchedule": {
+            "title": "Agenda del Dia",
+            "today": "Avui",
+            "trainingsTitle": "Entrenaments",
+            "trainingsDescription": "Aquests són els entrenaments programats per al dia seleccionat.",
+            "noTrainings": "No hi ha entrenaments programats per avui.",
+            "eventsTitle": "Partits i Esdeveniments",
+            "eventsDescription": "Aquests són els partits i esdeveniments programats per al dia seleccionat.",
+            "noEvents": "No hi ha partits ni esdeveniments per avui."
+        }
     }
 }
