@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles, Languages, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -60,12 +60,12 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
         const payload = {
             clubId: clubId,
             recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Soporte SportsPanel' }],
-            subject: `Consulta de Soporte: ${subject}`,
+            subject: `Consulta de Soporte: ${'${subject}'}`,
             htmlContent: `
-                <p><strong>Club ID:</strong> ${clubId}</p>
-                <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+                <p><strong>Club ID:</strong> ${'${clubId}'}</p>
+                <p><strong>Usuario:</strong> ${'${userProfile.name}'} (${'${userProfile.email}'})</p>
                 <hr>
-                <p>${message.replace(/\n/g, '<br>')}</p>
+                <p>${'${message.replace(/\n/g, \'<br>\')}'}</p>
             `,
         };
 
@@ -125,15 +125,15 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
         const payload = {
             clubId: clubId,
             recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Reseñas SportsPanel' }],
-            subject: `Nueva Reseña de ${rating} Estrellas de ${userProfile.name}`,
+            subject: `Nueva Reseña de ${'${rating}'} Estrellas de ${'${userProfile.name}'}`,
             htmlContent: `
                 <h2>Nueva Reseña de SportsPanel</h2>
-                <p><strong>Club ID:</strong> ${clubId}</p>
-                <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+                <p><strong>Club ID:</strong> ${'${clubId}'}</p>
+                <p><strong>Usuario:</strong> ${'${userProfile.name}'} (${'${userProfile.email}'})</p>
                 <hr>
-                <h3>Puntuación: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</h3>
+                <h3>Puntuación: ${'${ \'★\'.repeat(rating) }'}${'${ \'☆\'.repeat(5 - rating) }'} (${'${rating}'}/5)</h3>
                 <h3>Comentario:</h3>
-                <p>${comment.replace(/\n/g, '<br>') || '<em>Sin comentario.</em>'}</p>
+                <p>${'${comment.replace(/\n/g, \'<br>\') || \'<em>Sin comentario.</em>\'}'}</p>
             `,
         };
         
@@ -306,7 +306,6 @@ export function Sidebar() {
                     </nav>
                 </div>
                 <div className="mt-auto p-4 space-y-2">
-                     <LanguageSwitcher/>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="w-full justify-center gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20">
@@ -316,6 +315,10 @@ export function Sidebar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" align="end">
+                            <div className="px-1 py-1.5">
+                                <LanguageSwitcher />
+                            </div>
+                            <DropdownMenuSeparator />
                              <DropdownMenuItem asChild>
                                 <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
                                     <Download className="mr-2 h-4 w-4" />
