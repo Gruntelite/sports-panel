@@ -1167,7 +1167,7 @@ export default function CoachesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t('coaches.step2Title')}</DialogTitle>
-            <DialogDescription>{t('coaches.step2Desc')}</DialogHeader>
+            <DialogDescription>{t('coaches.step2Desc')}</DialogDescription>
           </DialogHeader>
           <div className="py-4">
             <div className="flex items-center p-2 border rounded-md">
