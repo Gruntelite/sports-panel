@@ -130,10 +130,10 @@ export default function ImporterPage() {
     ];
     
     const tabs = [
-        { id: "players", label: "Jugadores", icon: Users, columns: playerColumns },
-        { id: "coaches", label: "Entrenadores", icon: UserSquare, columns: coachColumns },
-        { id: "staff", label: "Staff y Directiva", icon: Briefcase, columns: staffColumns },
-        { id: "socios", label: "Socios", icon: Handshake, columns: socioColumns },
+        { id: "players", label: t('importer.types.players'), icon: Users, columns: playerColumns },
+        { id: "coaches", label: t('importer.types.coaches'), icon: UserSquare, columns: coachColumns },
+        { id: "staff", label: t('importer.types.staff'), icon: Briefcase, columns: staffColumns },
+        { id: "socios", label: t('importer.types.socios'), icon: Handshake, columns: socioColumns },
     ]
 
   return (
@@ -158,7 +158,7 @@ export default function ImporterPage() {
                     <SelectItem key={tab.id} value={tab.id}>
                         <div className="flex items-center gap-2">
                             <tab.icon className="h-4 w-4" />
-                            {t(`importer.types.${tab.id}`)}
+                            {tab.label}
                         </div>
                     </SelectItem>
                 ))}
@@ -169,7 +169,7 @@ export default function ImporterPage() {
        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full hidden sm:block">
         <TabsList className="grid w-full grid-cols-4">
             {tabs.map(tab => (
-                 <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4" />{t(`importer.types.${tab.id}`)}</TabsTrigger>
+                 <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4" />{tab.label}</TabsTrigger>
             ))}
         </TabsList>
       </Tabs>
