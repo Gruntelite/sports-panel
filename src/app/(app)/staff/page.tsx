@@ -613,7 +613,7 @@ export default function StaffPage() {
                     <div className="flex-1">
                       <CardTitle>{t('staff.tabs.socios')}</CardTitle>
                       <CardDescription>
-                        {t('staff.sociosDescription')}
+                        {t('staff.socioDescription')}
                       </CardDescription>
                     </div>
                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
@@ -906,3 +906,4 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+
