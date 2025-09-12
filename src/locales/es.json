@@ -296,7 +296,7 @@
         { "label": "Waterpolo", "value": "waterpolo" },
         { "label": "Windsurf", "value": "windsurf" }
     ],
-     "communications": {
+    "communications": {
         "description": "Contacta con los miembros de tu club y configura tus envíos.",
         "tabs": {
             "directSend": "Envío Directo",
@@ -870,7 +870,7 @@
         "noEventsTitle": "Aún no has creado ningún evento",
         "noEventsDesc": "Crea tu primer formulario de inscripción para empezar a recibir registros.",
         "confirmDeleteTitle": "¿Eliminar Evento?",
-        "confirmDeleteDesc": "Estás a punto de eliminar el evento '{eventName}' y todos sus datos de inscripción. Esta acción es irreversible.",
+        "confirmDeleteDesc": "Estás a punto de eliminar el evento '{eventName}' y todas sus datos de inscripción. Esta acción es irreversible.",
         "modal": {
             "createTitle": "Crear Nuevo Formulario de Inscripción",
             "editTitle": "Editar Formulario de Inscripción",
