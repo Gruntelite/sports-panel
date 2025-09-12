@@ -66,7 +66,7 @@
         "features": [
             { "title": "Gestió Centralitzada de Membres i Equips", "description": "Administra fitxes de jugadors, entrenadors, staff i equips en un únic lloc. Accedeix a tota la informació a l'instant." },
             { "title": "Tresoreria i Quotes", "description": "Porta un control clar dels ingressos per quotes, despeses i la salut financera del teu club sense complicacions." },
-            { "title": "Comunicació Integrada", "description": "Envia correus electrònics a equips, grups o a tot el club directament des de la plataforma." },
+             { "title": "Comunicació Integrada", "description": "Envia correus electrònics a equips, grups o a tot el club directament des de la plataforma." },
             { "title": "Importador de BBDD", "description": "Importa fàcilment la teva base de dades de membres (jugadors, tècnics, etc.) mitjançant arxius CSV per a una posada en marxa ràpida." },
             { "title": "Actualització de Dades Digitalitzada", "description": "Envia sol·licituds automàtiques als teus membres perquè actualitzin les seves dades. La informació se sincronitza a l'instant." },
             { "title": "Formularis d'Inscripció", "description": "Crea i publica formularis per a esdeveniments, campus o captacions. Gestiona inscrits i pagaments de forma centralitzada." },
@@ -683,40 +683,34 @@
         "sending": "Enviant...",
         "sendTo": "Enviar a {count} Jugador(s)",
         "fields": {
-            "name": "Nom",
-            "lastName": "Cognoms",
-            "birthDate": "Data de Naixement",
-            "dni": "NIF",
-            "sex": "Sexe",
-            "select": "Seleccionar...",
-            "nationality": "Nacionalitat",
-            "healthCard": "Nº Targeta Sanitària",
-            "address": "Adreça",
-            "city": "Ciutat",
-            "postalCode": "Codi Postal",
-            "startDate": "Data d'Alta",
-            "endDate": "Data de Baixa",
-            "currentlyActive": "Actualment d'alta",
-            "hasInterruptions": "Ha tingut interrupcions en la seva alta",
-            "interruptionStart": "Inici Interrupció",
-            "interruptionEnd": "Fi Interrupció",
-            "addInterruption": "Afegir una altra interrupció",
-            "tenure": "Antiguitat al club",
-            "tutorName": "Nom del Tutor/a",
-            "tutorLastName": "Cognoms del Tutor/a",
-            "tutorDni": "NIF del Tutor/a",
-            "email": "Email",
-            "tutorEmail": "Email del Tutor/a",
-            "phone": "Telèfon",
-            "tutorPhone": "Telèfon del Tutor/a",
-            "iban": "IBAN Compte Bancari",
-            "team": "Equip",
-            "selectTeam": "Selecciona un equip",
-            "jerseyNumber": "Dorsal",
-            "monthlyFee": "Quota (€)",
-            "kitSize": "Talla d'Equipació",
-            "kitSizePlaceholder": "p.ex., L, 12, M",
-            "medicalCheck": "Revisió mèdica completada"
+            "personal": [
+                {"id": "name", "label": "Nom"},
+                {"id": "lastName", "label": "Cognoms"},
+                {"id": "birthDate", "label": "Data de Naixement"},
+                {"id": "dni", "label": "NIF"},
+                {"id": "sex", "label": "Sexe"},
+                {"id": "nationality", "label": "Nacionalitat"},
+                {"id": "healthCardNumber", "label": "Nº Targeta Sanitària"},
+                {"id": "address", "label": "Adreça"},
+                {"id": "city", "label": "Ciutat"},
+                {"id": "postalCode", "label": "Codi Postal"}
+            ],
+            "contact": [
+                {"id": "isOwnTutor", "label": "És el seu propi tutor/a"},
+                {"id": "tutorName", "label": "Nom del Tutor/a"},
+                {"id": "tutorLastName", "label": "Cognoms del Tutor/a"},
+                {"id": "tutorDni", "label": "NIF del Tutor/a"},
+                {"id": "tutorEmail", "label": "Email de Contacte"},
+                {"id": "tutorPhone", "label": "Telèfon de Contacte"},
+                {"id": "iban", "label": "IBAN"}
+            ],
+            "sports": [
+                {"id": "teamName", "label": "Equip"},
+                {"id": "jerseyNumber", "label": "Dorsal"},
+                {"id": "monthlyFee", "label": "Quota Mensual (€)"},
+                {"id": "kitSize", "label": "Talla d'Equipació"},
+                {"id": "medicalCheckCompleted", "label": "Revisió mèdica completada"}
+            ]
         }
     },
     "coaches": {
@@ -1329,3 +1323,4 @@
         }
     }
 }
+

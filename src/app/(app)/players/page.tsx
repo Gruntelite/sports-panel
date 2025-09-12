@@ -128,7 +128,9 @@ export default function PlayersPage() {
   
   const playerFields = t('players.fields', { returnObjects: true });
   
-  const allColumnFields = playerFields ? [...playerFields.personal, ...playerFields.contact, ...playerFields.sports] : [];
+  const allColumnFields = (playerFields && Array.isArray(playerFields.personal) && Array.isArray(playerFields.contact) && Array.isArray(playerFields.sports))
+    ? [...playerFields.personal, ...playerFields.contact, ...playerFields.sports]
+    : [];
 
   const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
 
@@ -1077,7 +1079,7 @@ export default function PlayersPage() {
                                     />
                                 </div>
                             )) : (
-                                <p className="text-center text-muted-foreground pt-10">{t('players.noCustomFields')}</p>
+                                <p className="text-center text-sm text-muted-foreground py-8">{t('players.noCustomFields')}</p>
                             )}
                         </div>
                     </div>
