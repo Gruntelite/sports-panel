@@ -529,7 +529,7 @@
         "expenses": {
             "recurringTitle": "Despeses Recurrents",
             "recurringDescription": "Gestiona les despeses fixes mensuals del club.",
-            "oneOffTitle": "Despeses Puntuels",
+            "oneOffTitle": "Despeses Puntuals",
             "oneOffDescription": "Registra les despeses extraordinàries o no periòdiques."
         },
         "otherPayments": {
