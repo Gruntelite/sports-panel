@@ -141,11 +141,9 @@ export default function CoachesPage() {
   
   const coachFields = t('coaches.coachFields', { returnObjects: true });
 
-  const allColumnFields = [
-    ...(coachFields.personal || []),
-    ...(coachFields.contact || []),
-    ...(coachFields.payment || [])
-  ];
+  const allColumnFields = (Array.isArray(coachFields.personal) && Array.isArray(coachFields.contact) && Array.isArray(coachFields.payment)) ? 
+  [...coachFields.personal, ...coachFields.contact, ...coachFields.payment] : [];
+
   
   const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
   
@@ -661,7 +659,7 @@ export default function CoachesPage() {
                      <ScrollArea className="h-[400px]">
                       <DropdownMenuLabel>{t('coaches.toggleColumns')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {allColumnFields.map(field => (
+                      {allPossibleColumns.map(field => (
                           <DropdownMenuCheckboxItem
                             key={field.id}
                             className="capitalize"
@@ -670,19 +668,7 @@ export default function CoachesPage() {
                             onSelect={(e) => e.preventDefault()}
                             disabled={field.id === 'name'}
                           >
-                            {field.label}
-                          </DropdownMenuCheckboxItem>
-                      ))}
-                      {coachCustomFields.length > 0 && <DropdownMenuSeparator />}
-                      {coachCustomFields.map(field => (
-                          <DropdownMenuCheckboxItem
-                            key={field.id}
-                            className="capitalize"
-                            checked={visibleColumns.has(field.id)}
-                            onCheckedChange={() => toggleColumnVisibility(field.id)}
-                            onSelect={(e) => e.preventDefault()}
-                          >
-                            {field.name}
+                            {(field as { label: string }).label || (field as CustomFieldDef).name}
                           </DropdownMenuCheckboxItem>
                       ))}
                       </ScrollArea>

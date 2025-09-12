@@ -128,13 +128,9 @@ export default function PlayersPage() {
   
   const playerFields = t('players.fields', { returnObjects: true });
 
-  const allColumnFields = Array.isArray(playerFields.personal) && Array.isArray(playerFields.contact) && Array.isArray(playerFields.sports)
-    ? [
-        ...playerFields.personal,
-        ...playerFields.contact,
-        ...playerFields.sports,
-      ]
-    : [];
+  const allColumnFields = (Array.isArray(playerFields.personal) && Array.isArray(playerFields.contact) && Array.isArray(playerFields.sports)) ? 
+  [...playerFields.personal, ...playerFields.contact, ...playerFields.sports] : [];
+
 
   const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
 
@@ -1214,3 +1210,4 @@ export default function PlayersPage() {
     
 
     
+
