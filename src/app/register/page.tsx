@@ -22,14 +22,14 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
-import { ArrowLeft, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, Loader2, CheckCircle2, Languages } from "lucide-react";
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { createClubAction } from "@/lib/actions";
 import { v4 as uuidv4 } from 'uuid';
 import Image from "next/image";
 import { useTranslation } from "@/components/i18n-provider";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 declare global {
     interface Window {
@@ -52,7 +52,7 @@ export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
-  const { t, locale } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
   const sports = Array.isArray(t('sports', { returnObjects: true })) ? t('sports', { returnObjects: true }) as { label: string, value: string }[] : [];
 
 
@@ -122,7 +122,18 @@ export default function RegisterPage() {
             </Link>
         </div>
         <div className="absolute top-4 right-4 z-10">
-            <LanguageSwitcher />
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white gap-1">
+                        <Languages className="h-4 w-4" />
+                        {locale === 'es' ? 'Castellano' : 'Català'}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
         <Image 
           src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
@@ -166,7 +177,17 @@ export default function RegisterPage() {
                     <Logo />
                     <span className="font-bold text-lg">SportsPanel</span>
                 </Link>
-                <LanguageSwitcher />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Languages className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </header>
         

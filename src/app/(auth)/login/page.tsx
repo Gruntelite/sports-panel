@@ -21,10 +21,10 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { Logo } from "@/components/logo";
 import Image from "next/image";
-import { ArrowLeft, Star } from "lucide-react";
+import { ArrowLeft, Languages, Star } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/components/i18n-provider";
-import { LanguageSwitcher } from "@/components/language-switcher";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +32,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
   
   const stats = [
     { text: t('login.stats.0') },
@@ -80,7 +80,18 @@ export default function LoginPage() {
             </Link>
         </div>
         <div className="absolute top-4 right-4 z-10">
-            <LanguageSwitcher />
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white gap-1">
+                        <Languages className="h-4 w-4" />
+                        {locale === 'es' ? 'Castellano' : 'Català'}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
         </div>
         <Image 
           src="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/A%C3%B1adir%20un%20t%C3%ADtulo%20(4).png?alt=media&token=f99b057a-e436-4f7d-8507-7bc767d161bf"
@@ -109,7 +120,17 @@ export default function LoginPage() {
                     <Logo />
                     <span className="font-bold text-lg">SportsPanel</span>
                 </Link>
-                 <LanguageSwitcher />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Languages className="h-5 w-5" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                        <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </header>
 

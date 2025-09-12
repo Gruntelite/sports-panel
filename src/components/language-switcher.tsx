@@ -1,40 +1,28 @@
 
-'use client';
+"use client";
 
 import { useTranslation } from '@/components/i18n-provider';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Languages } from 'lucide-react';
-
-const locales: ('es' | 'ca')[] = ['es', 'ca'];
-const localeNames: {[key: string]: string} = {
-    es: 'Castellano',
-    ca: 'Català'
-}
 
 export function LanguageSwitcher() {
   const { locale, setLocale } = useTranslation();
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon">
-          <Languages className="h-[1.2rem] w-[1.2rem]" />
-          <span className="sr-only">Seleccionar idioma</span>
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        {locales.map((loc) => (
-             <DropdownMenuItem key={loc} onClick={() => setLocale(loc)} disabled={locale === loc}>
-                {localeNames[loc]}
-            </DropdownMenuItem>
-        ))}
-      </DropdownMenuContent>
+        <DropdownMenuTrigger asChild>
+            <Button variant="ghost" className="text-sm font-medium gap-1 hover:bg-background/10 hover:text-white">
+                <Languages className="h-4 w-4" />
+                {locale === 'es' ? 'Castellano' : 'Català'}
+            </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+        </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+
+    

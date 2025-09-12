@@ -5,7 +5,7 @@ import * as React from 'react';
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle, UserCheck, Database, ClipboardList, AlertTriangle, Download, Send } from "lucide-react";
+import { ArrowRight, Users, CircleDollarSign, Mail, Calendar, Home, FolderArchive, CheckCircle, Clock, Wallet, MessageCircle, BarChart3, Menu, Star, HelpCircle, UserCheck, Database, ClipboardList, AlertTriangle, Download, Send, Languages } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
@@ -24,7 +24,7 @@ import { sendEmailWithSmtpAction } from '@/lib/email';
 import { Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { useTranslation } from '@/components/i18n-provider';
-import { LanguageSwitcher } from '@/components/language-switcher';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 function ContactForm() {
     const { toast } = useToast();
@@ -50,7 +50,13 @@ function ContactForm() {
             <p>${message.replace(/\n/g, '<br>')}</p>
         `);
 
-        const result = await sendEmailWithSmtpAction(payload);
+        const result = await sendEmailWithSmtpAction({clubId: "VWxHRR6HzumBnSdLfTtP", recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Contacto Web SportsPanel' }], subject: `Nuevo Mensaje de Contacto de: ${name}`, htmlContent: `
+            <p><strong>Nombre:</strong> ${name}</p>
+            <p><strong>Email de Contacto:</strong> ${email}</p>
+            <hr>
+            <p><strong>Mensaje:</strong></p>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+        `});
 
         if (result.success) {
             toast({ title: t('contact.successTitle'), description: t('contact.successDescription')});
@@ -94,7 +100,7 @@ function ContactForm() {
 
 export default function LandingPage() {
   const [isYearly, setIsYearly] = React.useState(false);
-  const { t } = useTranslation();
+  const { t, locale, setLocale } = useTranslation();
 
   const features = [
     {
@@ -214,7 +220,18 @@ export default function LandingPage() {
             </div>
           </Link>
           <nav className="ml-auto hidden md:flex items-center gap-4 sm:gap-6">
-            <LanguageSwitcher />
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="text-sm font-medium gap-1">
+                        <Languages className="h-4 w-4" />
+                        {locale === 'es' ? 'Castellano' : 'Català'}
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
             <Link href="#features" className="text-sm font-medium hover:underline underline-offset-4" prefetch={false}>
               {t('landing.nav.features')}
             </Link>
@@ -566,3 +583,5 @@ export default function LandingPage() {
     </Dialog>
   );
 }
+
+    

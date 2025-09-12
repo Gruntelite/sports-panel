@@ -4,13 +4,12 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "../logo";
 import { useTranslation } from "../i18n-provider";
-import { LanguageSwitcher } from "../language-switcher";
 
 const menuItems = [
     { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
@@ -31,7 +30,7 @@ const menuItems = [
 
 export function Header() {
     const pathname = usePathname();
-    const { t } = useTranslation();
+    const { t, locale, setLocale } = useTranslation();
     const currentPageKey = menuItems.find(item => pathname.includes(item.href))?.label || 'sidebar.dashboard';
     const currentPage = t(currentPageKey);
 
@@ -42,7 +41,17 @@ export function Header() {
                 {currentPage}
             </h1>
              <div className="ml-auto">
-                <LanguageSwitcher />
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon">
+                            <Languages className="h-[1.2rem] w-[1.2rem]" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
             </div>
         </header>
 
@@ -97,5 +106,3 @@ export function Header() {
         </>
     )
 }
-
-    

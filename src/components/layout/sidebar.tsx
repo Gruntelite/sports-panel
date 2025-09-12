@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles, Languages, ChevronDown } from "lucide-react";
+import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles, Languages } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -18,10 +18,9 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "../ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "../ui/dropdown-menu";
 import { differenceInDays, isFuture } from "date-fns";
 import { useTranslation } from "../i18n-provider";
-import { LanguageSwitcher } from "../language-switcher";
 
 
 const menuItems = [
@@ -57,24 +56,29 @@ function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfi
         e.preventDefault();
         setIsSending(true);
         
-        const payload = {
-            clubId: clubId,
-            recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Soporte SportsPanel' }],
-            subject: `Consulta de Soporte: ${'${subject}'}`,
-            htmlContent: `
-                <p><strong>Club ID:</strong> ${'${clubId}'}</p>
-                <p><strong>Usuario:</strong> ${'${userProfile.name}'} (${'${userProfile.email}'})</p>
-                <hr>
-                <p>${'${message.replace(/\n/g, \'<br>\')}'}</p>
-            `,
-        };
+        const payload = new FormData();
+        payload.append('clubId', clubId);
+        payload.append('recipients', JSON.stringify([{ email: 'info.sportspanel@gmail.com', name: 'Soporte SportsPanel' }]));
+        payload.append('subject', `Consulta de Soporte: ${subject}`);
+        payload.append('htmlContent', `
+            <p><strong>Club ID:</strong> ${clubId}</p>
+            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+            <hr>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+        `);
 
-        const result = await sendEmailWithSmtpAction(payload);
+        const result = await sendEmailWithSmtpAction({clubId, recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Soporte SportsPanel' }], subject: `Consulta de Soporte: ${subject}`, htmlContent: `
+            <p><strong>Club ID:</strong> ${clubId}</p>
+            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+            <hr>
+            <p>${message.replace(/\n/g, '<br>')}</p>
+        `});
 
         if (result.success) {
             toast({ title: t('contact.successTitle'), description: t('contact.successDescription')});
             setSubject("");
             setMessage("");
+            // Ideally close the dialog here
         } else {
             toast({ variant: "destructive", title: t('contact.errorTitle'), description: result.error});
         }
@@ -122,27 +126,35 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
         }
         setIsSending(true);
         
-        const payload = {
-            clubId: clubId,
-            recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Reseñas SportsPanel' }],
-            subject: `Nueva Reseña de ${'${rating}'} Estrellas de ${'${userProfile.name}'}`,
-            htmlContent: `
-                <h2>Nueva Reseña de SportsPanel</h2>
-                <p><strong>Club ID:</strong> ${'${clubId}'}</p>
-                <p><strong>Usuario:</strong> ${'${userProfile.name}'} (${'${userProfile.email}'})</p>
-                <hr>
-                <h3>Puntuación: ${'${ \'★\'.repeat(rating) }'}${'${ \'☆\'.repeat(5 - rating) }'} (${'${rating}'}/5)</h3>
-                <h3>Comentario:</h3>
-                <p>${'${comment.replace(/\n/g, \'<br>\') || \'<em>Sin comentario.</em>\'}'}</p>
-            `,
-        };
+        const payload = new FormData();
+        payload.append('clubId', clubId); // Use sender club for their SMTP config
+        payload.append('recipients', JSON.stringify([{ email: 'info.sportspanel@gmail.com', name: 'Reseñas SportsPanel' }]));
+        payload.append('subject', `Nueva Reseña de ${rating} Estrellas de ${userProfile.name}`);
+        payload.append('htmlContent', `
+            <h2>Nueva Reseña de SportsPanel</h2>
+            <p><strong>Club ID:</strong> ${clubId}</p>
+            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+            <hr>
+            <h3>Puntuación: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</h3>
+            <h3>Comentario:</h3>
+            <p>${comment.replace(/\n/g, '<br>') || '<em>Sin comentario.</em>'}</p>
+        `);
         
-        const result = await sendEmailWithSmtpAction(payload);
+        const result = await sendEmailWithSmtpAction({clubId, recipients: [{ email: 'info.sportspanel@gmail.com', name: 'Reseñas SportsPanel' }], subject: `Nueva Reseña de ${rating} Estrellas de ${userProfile.name}`, htmlContent: `
+            <h2>Nueva Reseña de SportsPanel</h2>
+            <p><strong>Club ID:</strong> ${clubId}</p>
+            <p><strong>Usuario:</strong> ${userProfile.name} (${userProfile.email})</p>
+            <hr>
+            <h3>Puntuación: ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</h3>
+            <h3>Comentario:</h3>
+            <p>${comment.replace(/\n/g, '<br>') || '<em>Sin comentario.</em>'}</p>
+        `});
 
         if (result.success) {
             toast({ title: t('review.successTitle'), description: t('review.successDescription')});
             setRating(0);
             setComment("");
+             // Ideally close the dialog here
         } else {
             toast({ variant: "destructive", title: t('contact.errorTitle'), description: result.error});
         }
@@ -192,7 +204,7 @@ function ReviewForm({clubId, userProfile}: {clubId: string, userProfile: UserPro
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
-    const { t } = useTranslation();
+    const { t, locale, setLocale } = useTranslation();
 
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [clubId, setClubId] = useState<string | null>(null);
@@ -315,9 +327,16 @@ export function Sidebar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" align="end">
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                                <LanguageSwitcher />
-                            </DropdownMenuItem>
+                             <DropdownMenuSub>
+                                <DropdownMenuSubTrigger>
+                                    <Languages className="mr-2 h-4 w-4" />
+                                    <span>{locale === 'es' ? 'Castellano' : 'Català'}</span>
+                                </DropdownMenuSubTrigger>
+                                <DropdownMenuSubContent>
+                                    <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                                </DropdownMenuSubContent>
+                            </DropdownMenuSub>
                             <DropdownMenuSeparator />
                              <DropdownMenuItem asChild>
                                 <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
@@ -372,3 +391,4 @@ export function Sidebar() {
     );
 }
 
+    
