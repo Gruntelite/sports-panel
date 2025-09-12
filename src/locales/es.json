@@ -772,11 +772,22 @@
         "interruptionEnd": "Fin Interrupción",
         "addInterruption": "Añadir otra interrupción",
         "tenure": "Antigüedad en el club",
-        "coachFields": [
-            {"id": "name", "label": "Nombre"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
-            {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"}, {"id": "address", "label": "Dirección"},
-            {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}
-        ],
+        "coachFields": {
+            "personal": [
+                {"id": "name", "label": "Nombre"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
+                {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"}, {"id": "address", "label": "Dirección"},
+                {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}
+            ],
+            "contact": [
+                {"id": "tutorName", "label": "Nombre del Tutor/a"}, {"id": "tutorLastName", "label": "Apellidos del Tutor/a"},
+                {"id": "tutorDni", "label": "NIF del Tutor/a"}, {"id": "email", "label": "Email de Contacto"},
+                {"id": "phone", "label": "Teléfono de Contacto"}
+            ],
+            "payment": [
+                {"id": "role", "label": "Cargo"}, {"id": "teamName", "label": "Equipo"}, {"id": "iban", "label": "IBAN"},
+                {"id": "monthlyPayment", "label": "Pago Mensual (€)"}, {"id": "kitSize", "label": "Talla de Equipación"}
+            ]
+        },
         "fields": {
             "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "nationality": "Nacionalidad",
             "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal", "tutorName": "Nombre del Tutor/a",
@@ -1229,7 +1240,89 @@
                 "delete": "No se pudo eliminar el lote de solicitud."
             }
         }
+    },
+    "clubSettings": {
+        "title": "Ajustes del Club",
+        "description": "Personaliza tu plataforma, gestiona tu suscripción y configura los campos personalizados.",
+        "selectSection": "Seleccionar sección...",
+        "tabs": {
+            "settings": "General y Seguridad",
+            "customization": "Personalización",
+            "subscription": "Suscripción"
+        },
+        "general": {
+            "title": "Ajustes Generales",
+            "clubName": "Nombre del Club",
+            "clubNameHint": "Máximo 30 caracteres.",
+            "clubLogo": "Logo del Club",
+            "downloadGuide": "Descargar Guía de Logo",
+            "mainColor": "Color Principal",
+            "save": "Guardar Cambios"
+        },
+        "security": {
+            "title": "Seguridad de la Cuenta",
+            "description": "Actualiza tu dirección de correo y contraseña de inicio de sesión.",
+            "emailLabel": "Dirección de Correo",
+            "newPasswordLabel": "Nueva Contraseña",
+            "newPasswordPlaceholder": "Dejar en blanco para no cambiar",
+            "confirmPasswordLabel": "Confirmar Nueva Contraseña",
+            "currentPasswordLabel": "Contraseña Actual (para confirmar cambios)",
+            "currentPasswordRequired": "La contraseña actual es necesaria para guardar cambios.",
+            "emailUpdatedTitle": "Correo Actualizado",
+            "emailUpdatedDesc": "Tu correo de inicio de sesión ha sido actualizado.",
+            "passwordUpdatedTitle": "Contraseña Actualizada",
+            "passwordUpdatedDesc": "Tu contraseña ha sido cambiada.",
+            "passwordsNoMatch": "Las nuevas contraseñas no coinciden.",
+            "passwordLength": "La nueva contraseña debe tener al menos 6 caracteres.",
+            "authErrorTitle": "Error de Autenticación",
+            "authErrorDesc": "La contraseña actual es incorrecta.",
+            "save": "Guardar Cambios de Seguridad"
+        },
+        "customization": {
+            "title": "Campos Personalizados",
+            "description": "Crea campos adicionales para las fichas de tus miembros (jugadores, entrenadores, etc.).",
+            "addField": "Añadir Campo",
+            "modal": {
+                "title": "Crear Nuevo Campo Personalizado",
+                "fieldName": "Nombre del Campo",
+                "fieldNamePlaceholder": "p.ej., Número de Socio, Alergias",
+                "fieldType": "Tipo de Campo",
+                "types": {
+                    "text": "Texto",
+                    "number": "Número",
+                    "date": "Fecha"
+                },
+                "appliesTo": "Se aplica a",
+                "memberTypes": {
+                    "player": "Jugadores",
+                    "coach": "Entrenadores",
+                    "staff": "Staff"
+                }
+            },
+            "fieldInfo": "Tipo: {type}, Aplica a: {appliesTo}",
+            "noFields": "Aún no has creado ningún campo personalizado.",
+            "missingDataTitle": "Datos Incompletos",
+            "missingDataDesc": "El nombre del campo y al menos un tipo de miembro son obligatorios.",
+            "fieldAddedTitle": "Campo Añadido",
+            "fieldAddedDesc": "El nuevo campo personalizado se ha creado correctamente.",
+            "fieldRemovedTitle": "Campo Eliminado",
+            "fieldRemovedDesc": "El campo personalizado ha sido eliminado."
+        },
+        "subscription": {
+            "title": "Suscripción",
+            "description": "Consulta el estado de tu suscripción, facturas y métodos de pago.",
+            "redirect": "Para gestionar tu suscripción, serás redirigido a nuestro portal de pago seguro gestionado por Stripe.",
+            "portalButton": "Gestionar Suscripción"
+        },
+        "errors": {
+            "load": "No se pudieron cargar los ajustes del club.",
+            "saveGeneral": "No se pudieron guardar los ajustes generales.",
+            "saveSecurity": "No se pudieron guardar los ajustes de seguridad.",
+            "saveField": "No se pudo añadir el campo personalizado.",
+            "removeField": "No se pudo eliminar el campo personalizado."
+        },
+        "success": {
+            "general": "Los ajustes generales se han guardado correctamente."
+        }
     }
 }
-
-    
