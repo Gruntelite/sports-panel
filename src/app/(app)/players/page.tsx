@@ -77,7 +77,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
@@ -93,27 +92,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { MemberDetailModal } from "@/components/member-detail-modal";
 import { useTranslation } from "@/components/i18n-provider";
+import { Separator } from "@/components/ui/separator";
 
-
-const playerFields = {
-    personal: [
-        { id: "name", label: "Nombre" }, { id: "lastName", label: "Apellidos" }, { id: "birthDate", label: "Fecha de Nacimiento" },
-        { id: "dni", label: "NIF" }, { id: "sex", label: "Sexo" }, { id: "nationality", label: "Nacionalidad" },
-        { id: "healthCardNumber", label: "Nº Tarjeta Sanitaria" }, { id: "address", label: "Dirección" },
-        { id: "city", label: "Ciudad" }, { id: "postalCode", label: "Código Postal" },
-    ],
-    contact: [
-        { id: "tutorName", label: "Nombre del Tutor/a" }, { id: "tutorLastName", label: "Apellidos del Tutor/a" },
-        { id: "tutorDni", label: "NIF del Tutor/a" }, { id: "tutorEmail", label: "Email de Contacto" },
-        { id: "tutorPhone", label: "Teléfono de Contacto" }, { id: "iban", label: "IBAN" },
-    ],
-    sports: [
-        { id: "teamName", label: "Equipo" }, { id: "jerseyNumber", label: "Dorsal" }, { id: "monthlyFee", label: "Cuota Mensual (€)" },
-        { id: "kitSize", label: "Talla de Equipación" }, { id: "medicalCheckCompleted", label: "Revisión médica completada" },
-    ]
-};
-
-type EditModalSection = 'personal' | 'contact' | 'sports' | 'custom';
 
 export default function PlayersPage() {
   const { t } = useTranslation();
@@ -146,12 +126,12 @@ export default function PlayersPage() {
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'monthlyFee', 'tutorEmail']));
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
   
-  const [modalSection, setModalSection] = useState<EditModalSection>('personal');
+  const playerFields = t('players.fields', { returnObjects: true });
 
   const allColumnFields = [
-    ...playerFields.personal,
-    ...playerFields.contact,
-    ...playerFields.sports
+    ...(playerFields.personal || []),
+    ...(playerFields.contact || []),
+    ...(playerFields.sports || [])
   ];
 
   const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
@@ -340,7 +320,6 @@ export default function PlayersPage() {
   const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
     setModalMode(mode);
     setPlayerData(mode === 'edit' && player ? player : { customFields: {}, interruptions: [] });
-    setModalSection('personal');
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -894,30 +873,12 @@ export default function PlayersPage() {
                         <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
-                    <div>
-                        <div className="sm:hidden mb-4">
-                            <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={t('players.selectSection')} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="personal">{t('players.personalData')}</SelectItem>
-                                    <SelectItem value="contact">{t('players.contactAndBank')}</SelectItem>
-                                    <SelectItem value="sports">{t('players.sportsData')}</SelectItem>
-                                    <SelectItem value="custom">{t('players.otherData')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <Tabs defaultValue="personal" value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full hidden sm:block">
-                            <TabsList className="grid w-full grid-cols-4">
-                                <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('players.personalData')}</TabsTrigger>
-                                <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('players.contactAndBank')}</TabsTrigger>
-                                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>{t('players.sportsData')}</TabsTrigger>
-                                <TabsTrigger value="custom">{t('players.otherData')}</TabsTrigger>
-                            </TabsList>
-                        </Tabs>
-
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'personal' && 'hidden sm:block')}>
+                    <div className="space-y-8">
+                         <div className="space-y-6">
+                            <div className="flex items-center">
+                                <h3 className="text-lg font-semibold text-primary">{t('players.personalData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">{t('players.fields.name')}</Label>
@@ -1027,7 +988,11 @@ export default function PlayersPage() {
                             </div>
                         </div>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'contact' && 'hidden sm:block')}>
+                        <div className="space-y-6">
+                             <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('players.contactAndBank')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox 
                                     id="isOwnTutor" 
@@ -1073,7 +1038,11 @@ export default function PlayersPage() {
                                 </div>
                         </div>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'sports' && 'hidden sm:block')}>
+                        <div className="space-y-6">
+                            <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('players.sportsData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="teamId">{t('players.fields.team')}</Label>
                                 <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId || 'unassigned'}>
@@ -1108,7 +1077,11 @@ export default function PlayersPage() {
                             </div>
                         </div>
 
-                        <div className={cn("pt-6 space-y-6", modalSection !== 'custom' && 'hidden sm:block')}>
+                        <div className="space-y-6">
+                             <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('players.otherData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             {playerCustomFields.length > 0 ? playerCustomFields.map(field => (
                                 <div key={field.id} className="space-y-2">
                                     <Label htmlFor={field.id}>{field.name}</Label>

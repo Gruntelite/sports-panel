@@ -80,7 +80,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
@@ -95,8 +94,7 @@ import { MemberDetailModal } from "@/components/member-detail-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "@/components/i18n-provider";
-
-type EditModalSection = 'personal' | 'contact' | 'sports' | 'payment';
+import { Separator } from "@/components/ui/separator";
 
 export default function EditTeamPage() {
   const { t } = useTranslation();
@@ -119,8 +117,6 @@ export default function EditTeamPage() {
   const [modalType, setModalType] = useState<'player' | 'coach'>('player');
   const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
   
-  const [modalSection, setModalSection] = useState<EditModalSection>('personal');
-
   const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [] });
   const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [] });
 
@@ -450,7 +446,6 @@ export default function EditTeamPage() {
   const handleOpenModal = (mode: 'add' | 'edit', memberType: 'player' | 'coach', member?: TeamMember) => {
     setModalMode(mode);
     setModalType(memberType);
-    setModalSection('personal');
     
     if (mode === 'add') {
       if (memberType === 'player') {
@@ -990,34 +985,12 @@ export default function EditTeamPage() {
                         <Input id="member-image-upload" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
-                    <Tabs value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full">
-                        <div className="sm:hidden mb-4">
-                            <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={t('coaches.selectSection')} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="personal">{t('coaches.personalData')}</SelectItem>
-                                    <SelectItem value="contact">{t('coaches.contactAndTutor')}</SelectItem>
-                                    {modalType === 'player' ? (
-                                        <SelectItem value="sports">{t('players.sportsData')}</SelectItem>
-                                    ) : (
-                                        <SelectItem value="payment">{t('coaches.roleAndTeam')}</SelectItem>
-                                    )}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <TabsList className={`hidden sm:grid w-full ${modalType === 'player' ? 'grid-cols-3' : 'grid-cols-3'}`}>
-                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('coaches.personalData')}</TabsTrigger>
-                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('coaches.contactAndTutor')}</TabsTrigger>
-                            {modalType === 'player' ? (
-                                <TabsTrigger value="sports"><Shield className="mr-2 h-4 w-4"/>{t('players.sportsData')}</TabsTrigger>
-                            ) : (
-                                <TabsTrigger value="payment"><CircleDollarSign className="mr-2 h-4 w-4"/>{t('coaches.roleAndTeam')}</TabsTrigger>
-                            )}
-                        </TabsList>
-                        
-                        <TabsContent value="personal" className="pt-6 space-y-6">
+                    <div className="space-y-8">
+                         <div className="space-y-6">
+                             <div className="flex items-center">
+                                <h3 className="text-lg font-semibold text-primary">{t('coaches.personalData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">{t('coaches.fields.name')}</Label>
@@ -1118,9 +1091,13 @@ export default function EditTeamPage() {
                             )}
                             <p className="text-sm font-medium text-muted-foreground pt-2">{t('coaches.tenure')}: <span className="text-foreground">{calculateTenure(currentData)}</span></p>
                             </div>
-                        </TabsContent>
+                        </div>
 
-                        <TabsContent value="contact" className="pt-6 space-y-6">
+                        <div className="space-y-6">
+                             <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('coaches.contactAndTutor')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox 
                                     id="isOwnTutor" 
@@ -1160,10 +1137,14 @@ export default function EditTeamPage() {
                                         <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleMemberInputChange} />
                                     </div>
                                 </div>
-                        </TabsContent>
+                        </div>
                         
                         {modalType === 'player' ? (
-                            <TabsContent value="sports" className="pt-6 space-y-6">
+                            <div className="space-y-6">
+                                <div className="flex items-center pt-6">
+                                    <h3 className="text-lg font-semibold text-primary">{t('players.sportsData')}</h3>
+                                    <Separator className="flex-1 ml-4" />
+                                </div>
                                 <div className="space-y-2">
                                     <Label htmlFor="iban">{t('coaches.fields.iban')}</Label>
                                     <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
@@ -1203,9 +1184,13 @@ export default function EditTeamPage() {
                                         </div>
                                     </div>
                                 </div>
-                            </TabsContent>
+                            </div>
                         ) : (
-                            <TabsContent value="payment" className="pt-6 space-y-6">
+                            <div className="space-y-6">
+                                <div className="flex items-center pt-6">
+                                    <h3 className="text-lg font-semibold text-primary">{t('coaches.roleAndTeam')}</h3>
+                                    <Separator className="flex-1 ml-4" />
+                                </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="iban">{t('coaches.fields.iban')}</Label>
@@ -1230,9 +1215,9 @@ export default function EditTeamPage() {
                                         </SelectContent>
                                     </Select>
                                 </div>
-                            </TabsContent>
+                            </div>
                         )}
-                    </Tabs>
+                    </div>
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">

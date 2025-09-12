@@ -76,7 +76,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
@@ -93,6 +92,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { MemberDetailModal } from "@/components/member-detail-modal";
 import { useTranslation } from "@/components/i18n-provider";
+import { Separator } from "@/components/ui/separator";
 
 const technicalRoles = [
     "Entrenador",
@@ -108,10 +108,6 @@ const technicalRoles = [
     "Analista",
     "Otro",
 ];
-
-
-
-type EditModalSection = 'personal' | 'contact' | 'payment' | 'custom';
 
 export default function CoachesPage() {
   const { t } = useTranslation();
@@ -143,19 +139,12 @@ export default function CoachesPage() {
   const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'role', 'teamName', 'email']));
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
   
-  const [modalSection, setModalSection] = useState<EditModalSection>('personal');
-
-  const coachFieldsRaw = t('coaches.coachFields');
-  const coachFields = (coachFieldsRaw && typeof coachFieldsRaw === 'object' && !Array.isArray(coachFieldsRaw)) ? coachFieldsRaw : {
-    personal: [],
-    contact: [],
-    payment: []
-  };
+  const coachFields = t('coaches.coachFields', { returnObjects: true });
 
   const allColumnFields = [
-    ...(Array.isArray(coachFields.personal) ? coachFields.personal : []),
-    ...(Array.isArray(coachFields.contact) ? coachFields.contact : []),
-    ...(Array.isArray(coachFields.payment) ? coachFields.payment : [])
+    ...(coachFields.personal || []),
+    ...(coachFields.contact || []),
+    ...(coachFields.payment || [])
   ];
   
   const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
@@ -345,7 +334,6 @@ export default function CoachesPage() {
   const handleOpenModal = (mode: 'add' | 'edit', coach?: Coach) => {
     setModalMode(mode);
     setCoachData(mode === 'edit' && coach ? coach : { interruptions: [], customFields: {} });
-    setModalSection('personal');
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -895,28 +883,12 @@ export default function CoachesPage() {
                         <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
-                    <Tabs value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full">
-                        <div className="sm:hidden mb-4">
-                            <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder={t('coaches.selectSection')} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="personal">{t('coaches.personalData')}</SelectItem>
-                                    <SelectItem value="contact">{t('coaches.contactAndTutor')}</SelectItem>
-                                    <SelectItem value="payment">{t('coaches.roleAndTeam')}</SelectItem>
-                                    <SelectItem value="custom">{t('coaches.otherData')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <TabsList className="hidden sm:grid w-full grid-cols-4">
-                            <TabsTrigger value="personal"><User className="mr-2 h-4 w-4"/>{t('coaches.personalData')}</TabsTrigger>
-                            <TabsTrigger value="contact"><Contact className="mr-2 h-4 w-4"/>{t('coaches.contactAndTutor')}</TabsTrigger>
-                            <TabsTrigger value="payment"><Briefcase className="mr-2 h-4 w-4"/>{t('coaches.roleAndTeam')}</TabsTrigger>
-                            <TabsTrigger value="custom">{t('coaches.otherData')}</TabsTrigger>
-                        </TabsList>
-                        
-                        <TabsContent value="personal" className="pt-6 space-y-6">
+                    <div className="space-y-8">
+                        <div className="space-y-6">
+                            <div className="flex items-center">
+                                <h3 className="text-lg font-semibold text-primary">{t('coaches.personalData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="name">{t('coaches.fields.name')}</Label>
@@ -1028,9 +1000,13 @@ export default function CoachesPage() {
                             )}
                             <p className="text-sm font-medium text-muted-foreground pt-2">{t('coaches.tenure')}: <span className="text-foreground">{calculateTenure(coachData)}</span></p>
                             </div>
-                        </TabsContent>
+                        </div>
 
-                        <TabsContent value="contact" className="pt-6 space-y-6">
+                        <div className="space-y-6">
+                            <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('coaches.contactAndTutor')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="flex items-center space-x-2">
                                 <Checkbox 
                                     id="isOwnTutor" 
@@ -1070,9 +1046,13 @@ export default function CoachesPage() {
                                         <Input id="phone" type="tel" value={coachData.phone || ''} onChange={handleInputChange} />
                                     </div>
                                 </div>
-                        </TabsContent>
+                        </div>
 
-                        <TabsContent value="payment" className="pt-6 space-y-6">
+                        <div className="space-y-6">
+                            <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('coaches.roleAndTeam')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             <div className="space-y-2">
                                 <Label htmlFor="role">{t('coaches.fields.role')}</Label>
                                 <Select onValueChange={(value) => handleSelectChange('role', value)} value={coachData.role}>
@@ -1112,9 +1092,13 @@ export default function CoachesPage() {
                                     <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleInputChange} />
                                 </div>
                             </div>
-                        </TabsContent>
+                        </div>
 
-                        <TabsContent value="custom" className="pt-6 space-y-6">
+                        <div className="space-y-6">
+                             <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('coaches.otherData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             {coachCustomFields.length > 0 ? coachCustomFields.map(field => (
                                 <div key={field.id} className="space-y-2">
                                     <Label htmlFor={field.id}>{field.name}</Label>
@@ -1128,8 +1112,8 @@ export default function CoachesPage() {
                             )) : (
                                 <p className="text-center text-muted-foreground pt-10">{t('coaches.noCustomFields')}</p>
                             )}
-                        </TabsContent>
-                    </Tabs>
+                        </div>
+                    </div>
                 </div>
             </ScrollArea>
             <DialogFooter className="pt-4 border-t">

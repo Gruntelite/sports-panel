@@ -93,8 +93,6 @@ const MONTHS = [
     { label: "Octubre", value: 9 }, { label: "Noviembre", value: 10 }, { label: "Diciembre", value: 11 }
 ];
 
-type EditModalSection = 'data' | 'payment' | 'custom';
-
 export default function StaffPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
@@ -121,10 +119,8 @@ export default function StaffPage() {
   const [visibleStaffColumns, setVisibleStaffColumns] = useState<Set<string>>(new Set(['name', 'role', 'email', 'payment']));
   const [visibleSocioColumns, setVisibleSocioColumns] = useState<Set<string>>(new Set(['name', 'socioNumber', 'email', 'fee']));
 
-  const [modalSection, setModalSection] = useState<EditModalSection>('data');
-
-  const staffFields = t('staff.staffFields');
-  const socioFields = t('staff.socioFields');
+  const staffFields = t('staff.staffFields', { returnObjects: true });
+  const socioFields = t('staff.socioFields', { returnObjects: true });
 
   const staffCustomFields = customFields.filter(f => f.appliesTo.includes('staff'));
   const allPossibleStaffColumns = [...staffFields, ...staffCustomFields];
@@ -232,7 +228,6 @@ export default function StaffPage() {
   const handleOpenModal = (mode: 'add' | 'edit', type: 'staff' | 'socio', member?: Staff | Socio) => {
     setModalMode(mode);
     setModalType(type);
-    setModalSection('data');
     if(type === 'staff') {
       setStaffData(mode === 'edit' && member ? (member as Staff) : { paymentFrequency: 'monthly', excludedMonths: [], customFields: {} });
       setSocioData({ paymentType: 'monthly', fee: 0, excludedMonths: [], customFields: {} });
@@ -783,26 +778,12 @@ export default function StaffPage() {
                       <Input id="member-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                   </div>
                   
-                  <Tabs value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)} className="w-full">
-                        <div className="sm:hidden mb-4">
-                             <Select value={modalSection} onValueChange={(value) => setModalSection(value as EditModalSection)}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Seleccionar sección..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="data">{t('staff.data')}</SelectItem>
-                                    <SelectItem value="payment">{t('staff.payments')}</SelectItem>
-                                    <SelectItem value="custom">{t('staff.otherData')}</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <TabsList className="hidden sm:grid w-full grid-cols-3">
-                            <TabsTrigger value="data">{t('staff.data')}</TabsTrigger>
-                            <TabsTrigger value="payment">{t('staff.payments')}</TabsTrigger>
-                            <TabsTrigger value="custom">{t('staff.otherData')}</TabsTrigger>
-                        </TabsList>
-
-                        <TabsContent value="data" className="pt-6 space-y-6">
+                  <div className="space-y-8">
+                        <div className="space-y-6">
+                           <div className="flex items-center">
+                                <h3 className="text-lg font-semibold text-primary">{t('staff.data')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                            {modalType === 'staff' ? (
                               <div className="space-y-6">
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -831,9 +812,13 @@ export default function StaffPage() {
                                 </div>
                               </div>
                             )}
-                        </TabsContent>
+                        </div>
 
-                        <TabsContent value="payment" className="pt-6 space-y-6">
+                        <div className="space-y-6">
+                           <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('staff.payments')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                            {modalType === 'staff' ? (
                                 <>
                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -855,9 +840,13 @@ export default function StaffPage() {
                                 )}
                                 </>
                            )}
-                        </TabsContent>
+                        </div>
 
-                         <TabsContent value="custom" className="pt-6 space-y-4">
+                         <div className="space-y-6">
+                            <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('staff.otherData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
                             {currentCustomFields.length > 0 ? (
                                 currentCustomFields.map(field => (
                                     <div key={field.id} className="space-y-2">
@@ -873,8 +862,8 @@ export default function StaffPage() {
                             ) : (
                                 <p className="text-center text-sm text-muted-foreground py-8">{t('staff.noCustomFields')}</p>
                             )}
-                        </TabsContent>
-                  </Tabs>
+                        </div>
+                  </div>
               </div>
             </ScrollArea>
             <DialogFooter className="border-t pt-4">
@@ -906,4 +895,3 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
-
