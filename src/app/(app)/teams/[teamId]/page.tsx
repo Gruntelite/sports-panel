@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -1175,7 +1174,7 @@ export default function EditTeamPage() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     <div className="space-y-2">
                                         <Label htmlFor="kitSize">{t('coaches.fields.kitSize')}</Label>
-                                        <Input id="kitSize" placeholder="p.ej., L, 12, M" value={playerData.kitSize || ''} onChange={handleMemberInputChange} />
+                                        <Input id="kitSize" placeholder={t('players.fields.kitSizePlaceholder')} value={playerData.kitSize || ''} onChange={handleMemberInputChange} />
                                     </div>
                                     <div className="flex items-end pb-1">
                                         <div className="flex items-center space-x-2">
@@ -1249,3 +1248,5 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
+
