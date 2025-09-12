@@ -220,7 +220,7 @@
         "name": "Nombre",
         "lastName": "Apellidos",
         "birthDate": "Fecha de Nacimiento",
-        "dni": "DNI/NIF",
+        "dni": "NIF",
         "address": "Dirección",
         "city": "Ciudad",
         "postalCode": "Código Postal",
@@ -683,40 +683,32 @@
         "sending": "Enviando...",
         "sendTo": "Enviar a {count} Jugador(es)",
         "fields": {
-            "name": "Nombre",
-            "lastName": "Apellidos",
-            "birthDate": "Fecha de Nacimiento",
-            "dni": "NIF",
-            "sex": "Sexo",
-            "select": "Seleccionar...",
-            "nationality": "Nacionalidad",
-            "healthCard": "Nº Tarjeta Sanitaria",
-            "address": "Dirección",
-            "city": "Ciudad",
-            "postalCode": "Código Postal",
-            "startDate": "Fecha de Alta",
-            "endDate": "Fecha de Baja",
-            "currentlyActive": "Actualmente de alta",
-            "hasInterruptions": "Ha tenido interrupciones en su alta",
-            "interruptionStart": "Inicio Interrupción",
-            "interruptionEnd": "Fin Interrupción",
-            "addInterruption": "Añadir otra interrupción",
-            "tenure": "Antigüedad en el club",
-            "tutorName": "Nombre del Tutor/a",
-            "tutorLastName": "Apellidos del Tutor/a",
-            "tutorDni": "NIF del Tutor/a",
-            "email": "Email",
-            "tutorEmail": "Email del Tutor/a",
-            "phone": "Teléfono",
-            "tutorPhone": "Teléfono del Tutor/a",
-            "iban": "IBAN Cuenta Bancaria",
-            "team": "Equipo",
-            "selectTeam": "Selecciona un equipo",
-            "jerseyNumber": "Dorsal",
-            "monthlyFee": "Cuota (€)",
-            "kitSize": "Talla de Equipación",
-            "kitSizePlaceholder": "p.ej., L, 12, M",
-            "medicalCheck": "Revisión médica completada"
+            "personal": [
+                {"id": "name", "label": "Nombre"}, {"id": "lastName", "label": "Apellidos"}, {"id": "birthDate", "label": "Fecha de Nacimiento"},
+                {"id": "dni", "label": "NIF"}, {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"},
+                {"id": "healthCardNumber", "label": "Nº Tarjeta Sanitaria"}, {"id": "address", "label": "Dirección"},
+                {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}, {"id": "startDate", "label": "Fecha de Alta"},
+                {"id": "endDate", "label": "Fecha de Baja"}
+            ],
+            "contact": [
+                {"id": "isOwnTutor", "label": "Es su propio tutor/a"}, {"id": "tutorName", "label": "Nombre del Tutor/a"},
+                {"id": "tutorLastName", "label": "Apellidos del Tutor/a"}, {"id": "tutorDni", "label": "NIF del Tutor/a"},
+                {"id": "tutorEmail", "label": "Email de Contacto"}, {"id": "tutorPhone", "label": "Teléfono de Contacto"},
+                {"id": "iban", "label": "IBAN"}
+            ],
+            "sports": [
+                {"id": "teamName", "label": "Equipo"}, {"id": "jerseyNumber", "label": "Dorsal"},
+                {"id": "monthlyFee", "label": "Cuota Mensual (€)"}, {"id": "kitSize", "label": "Talla de Equipación"},
+                {"id": "medicalCheckCompleted", "label": "Revisión médica completada"}
+            ],
+            "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "select": "Seleccionar...",
+            "nationality": "Nacionalidad", "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal",
+            "startDate": "Fecha de Alta", "endDate": "Fecha de Baja", "currentlyActive": "Actualmente de alta", "hasInterruptions": "Ha tenido interrupciones en su alta",
+            "interruptionStart": "Inicio Interrupción", "interruptionEnd": "Fin Interrupción", "addInterruption": "Añadir otra interrupción", "tenure": "Antigüedad en el club",
+            "tutorName": "Nombre del Tutor/a", "tutorLastName": "Apellidos del Tutor/a", "tutorDni": "NIF del Tutor/a", "email": "Email",
+            "tutorEmail": "Email del Tutor/a", "phone": "Teléfono", "tutorPhone": "Teléfono del Tutor/a", "iban": "IBAN Cuenta Bancaria", "team": "Equipo",
+            "selectTeam": "Selecciona un equipo", "jerseyNumber": "Dorsal", "monthlyFee": "Cuota (€)", "kitSize": "Talla de Equipación",
+            "kitSizePlaceholder": "p.ej., L, 12, M", "medicalCheck": "Revisión médica completada"
         }
     },
     "coaches": {
@@ -1329,3 +1321,4 @@
         }
     }
 }
+

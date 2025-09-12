@@ -993,11 +993,11 @@ export default function PlayersPage() {
                                         <h4 className="font-medium">{t('players.tutorData')}</h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorName">{t('players.fields.name')}</Label>
+                                                <Label htmlFor="tutorName">{t('players.fields.tutorName')}</Label>
                                                 <Input id="tutorName" autoComplete="off" value={playerData.tutorName || ''} onChange={handleInputChange} />
                                             </div>
                                             <div className="space-y-2">
-                                                <Label htmlFor="tutorLastName">{t('players.fields.lastName')}</Label>
+                                                <Label htmlFor="tutorLastName">{t('players.fields.tutorLastName')}</Label>
                                                 <Input id="tutorLastName" autoComplete="off" value={playerData.tutorLastName || ''} onChange={handleInputChange} />
                                             </div>
                                         </div>
@@ -1194,3 +1194,4 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+

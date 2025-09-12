@@ -684,33 +684,31 @@
         "sendTo": "Enviar a {count} Jugador(s)",
         "fields": {
             "personal": [
-                {"id": "name", "label": "Nom"},
-                {"id": "lastName", "label": "Cognoms"},
-                {"id": "birthDate", "label": "Data de Naixement"},
-                {"id": "dni", "label": "NIF"},
-                {"id": "sex", "label": "Sexe"},
-                {"id": "nationality", "label": "Nacionalitat"},
-                {"id": "healthCardNumber", "label": "Nº Targeta Sanitària"},
-                {"id": "address", "label": "Adreça"},
-                {"id": "city", "label": "Ciutat"},
-                {"id": "postalCode", "label": "Codi Postal"}
+                {"id": "name", "label": "Nom"}, {"id": "lastName", "label": "Cognoms"}, {"id": "birthDate", "label": "Data de Naixement"},
+                {"id": "dni", "label": "NIF"}, {"id": "sex", "label": "Sexe"}, {"id": "nationality", "label": "Nacionalitat"},
+                {"id": "healthCardNumber", "label": "Nº Targeta Sanitària"}, {"id": "address", "label": "Adreça"},
+                {"id": "city", "label": "Ciutat"}, {"id": "postalCode", "label": "Codi Postal"}, {"id": "startDate", "label": "Data d'Alta"},
+                {"id": "endDate", "label": "Data de Baixa"}
             ],
             "contact": [
-                {"id": "isOwnTutor", "label": "És el seu propi tutor/a"},
-                {"id": "tutorName", "label": "Nom del Tutor/a"},
-                {"id": "tutorLastName", "label": "Cognoms del Tutor/a"},
-                {"id": "tutorDni", "label": "NIF del Tutor/a"},
-                {"id": "tutorEmail", "label": "Email de Contacte"},
-                {"id": "tutorPhone", "label": "Telèfon de Contacte"},
+                {"id": "isOwnTutor", "label": "És el seu propi tutor/a"}, {"id": "tutorName", "label": "Nom del Tutor/a"},
+                {"id": "tutorLastName", "label": "Cognoms del Tutor/a"}, {"id": "tutorDni", "label": "NIF del Tutor/a"},
+                {"id": "tutorEmail", "label": "Email de Contacte"}, {"id": "tutorPhone", "label": "Telèfon de Contacte"},
                 {"id": "iban", "label": "IBAN"}
             ],
             "sports": [
-                {"id": "teamName", "label": "Equip"},
-                {"id": "jerseyNumber", "label": "Dorsal"},
-                {"id": "monthlyFee", "label": "Quota Mensual (€)"},
-                {"id": "kitSize", "label": "Talla d'Equipació"},
+                {"id": "teamName", "label": "Equip"}, {"id": "jerseyNumber", "label": "Dorsal"},
+                {"id": "monthlyFee", "label": "Quota Mensual (€)"}, {"id": "kitSize", "label": "Talla d'Equipació"},
                 {"id": "medicalCheckCompleted", "label": "Revisió mèdica completada"}
-            ]
+            ],
+            "name": "Nom", "lastName": "Cognoms", "birthDate": "Data de Naixement", "dni": "NIF", "sex": "Sexe", "select": "Seleccionar...",
+            "nationality": "Nacionalitat", "healthCard": "Nº Targeta Sanitària", "address": "Adreça", "city": "Ciutat", "postalCode": "Codi Postal",
+            "startDate": "Data d'Alta", "endDate": "Data de Baixa", "currentlyActive": "Actualment d'alta", "hasInterruptions": "Ha tingut interrupcions en la seva alta",
+            "interruptionStart": "Inici Interrupció", "interruptionEnd": "Fi Interrupció", "addInterruption": "Afegir una altra interrupció", "tenure": "Antiguitat al club",
+            "tutorName": "Nom del Tutor/a", "tutorLastName": "Cognoms del Tutor/a", "tutorDni": "NIF del Tutor/a", "email": "Email",
+            "tutorEmail": "Email del Tutor/a", "phone": "Telèfon", "tutorPhone": "Telèfon del Tutor/a", "iban": "IBAN Compte Bancari", "team": "Equip",
+            "selectTeam": "Selecciona un equip", "jerseyNumber": "Dorsal", "monthlyFee": "Quota (€)", "kitSize": "Talla d'Equipació",
+            "kitSizePlaceholder": "p.ex., L, 12, M", "medicalCheck": "Revisió mèdica completada"
         }
     },
     "coaches": {
@@ -857,7 +855,7 @@
         "description": "Gestiona la informació dels membres de la directiva i la base social del club.",
         "tabs": {
             "staff": "Staff i Directiva",
-            "socios": "Socis"
+            "socios": "Socios"
         },
         "staffDescription": "Membres de la junta directiva, administratius i altre personal del club.",
         "socioDescription": "Llistat de tots els socis registrats al club.",
