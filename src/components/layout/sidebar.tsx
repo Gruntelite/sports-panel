@@ -315,9 +315,9 @@ export function Sidebar() {
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" align="end">
-                            <div className="px-1 py-1.5">
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                 <LanguageSwitcher />
-                            </div>
+                            </DropdownMenuItem>
                             <DropdownMenuSeparator />
                              <DropdownMenuItem asChild>
                                 <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
@@ -372,4 +372,3 @@ export function Sidebar() {
     );
 }
 
-    

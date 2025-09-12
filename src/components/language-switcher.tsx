@@ -9,8 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Languages, ChevronDown } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { Languages } from 'lucide-react';
 
 const locales: ('es' | 'ca')[] = ['es', 'ca'];
 const localeNames: {[key: string]: string} = {
@@ -22,20 +21,20 @@ export function LanguageSwitcher() {
   const { locale, setLocale } = useTranslation();
 
   return (
-    <div className="px-1 py-1.5 w-full">
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon">
+          <Languages className="h-[1.2rem] w-[1.2rem]" />
+          <span className="sr-only">Seleccionar idioma</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
         {locales.map((loc) => (
-            <Button
-                key={loc}
-                variant="ghost"
-                onClick={() => setLocale(loc)}
-                disabled={locale === loc}
-                className={cn("w-full justify-start", locale === loc && "font-bold")}
-            >
-            {localeNames[loc]}
-            </Button>
+             <DropdownMenuItem key={loc} onClick={() => setLocale(loc)} disabled={locale === loc}>
+                {localeNames[loc]}
+            </DropdownMenuItem>
         ))}
-    </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
-
-    
