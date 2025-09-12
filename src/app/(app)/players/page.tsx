@@ -727,11 +727,7 @@ export default function PlayersPage() {
                    {allPossibleColumns.map(field => (
                       <TableHead 
                         key={field.id}
-                        className={cn(
-                            'min-w-[150px]',
-                            !visibleColumns.has(field.id) && 'hidden md:table-cell',
-                            field.id !== 'name' && field.id !== 'tutorEmail' && 'hidden sm:table-cell'
-                        )}
+                        className={cn('min-w-[150px]', !visibleColumns.has(field.id) && 'hidden')}
                       >
                           {(field as CustomFieldDef).name || (field as {label: string}).label}
                       </TableHead>
@@ -754,12 +750,7 @@ export default function PlayersPage() {
                     {allPossibleColumns.map(field => (
                           <TableCell 
                             key={field.id} 
-                            className={cn(
-                                'min-w-[150px]',
-                                !visibleColumns.has(field.id) && 'hidden md:table-cell',
-                                field.id !== 'name' && field.id !== 'tutorEmail' && 'hidden sm:table-cell',
-                                field.id === 'name' && 'font-medium'
-                            )}
+                            className={cn('min-w-[150px]', !visibleColumns.has(field.id) && 'hidden', field.id === 'name' && 'font-medium')}
                           >
                               {field.id === 'name' ? (
                                   <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingPlayer(player)}>
@@ -1195,3 +1186,6 @@ export default function PlayersPage() {
   );
 }
 
+
+
+    

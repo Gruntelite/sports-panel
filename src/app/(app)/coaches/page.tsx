@@ -739,9 +739,8 @@ export default function CoachesPage() {
                       <TableHead 
                         key={field.id}
                         className={cn(
-                            'min-w-[150px]',
-                            !visibleColumns.has(field.id) && 'hidden md:table-cell',
-                            field.id !== 'name' && field.id !== 'email' && 'hidden lg:table-cell'
+                          'min-w-[150px]',
+                          !visibleColumns.has(field.id) && 'hidden'
                         )}
                       >
                           {(field as CustomFieldDef).name || (field as {label: string}).label}
@@ -766,9 +765,9 @@ export default function CoachesPage() {
                           <TableCell 
                             key={field.id} 
                             className={cn(
-                                field.id === 'name' && 'font-medium',
-                                !visibleColumns.has(field.id) && 'hidden md:table-cell',
-                                field.id !== 'name' && field.id !== 'email' && 'hidden lg:table-cell'
+                              'min-w-[150px]',
+                              !visibleColumns.has(field.id) && 'hidden',
+                              field.id === 'name' && 'font-medium'
                             )}
                           >
                               {field.id === 'name' ? (
@@ -1168,7 +1167,7 @@ export default function CoachesPage() {
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>{t('coaches.step2Title')}</DialogTitle>
-            <DialogDescription>{t('coaches.step2Desc')}</DialogDescription>
+            <DialogDescription>{t('coaches.step2Desc')}</DialogHeader>
           </DialogHeader>
           <div className="py-4">
             <div className="flex items-center p-2 border rounded-md">
@@ -1210,3 +1209,5 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
+    
