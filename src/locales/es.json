@@ -456,8 +456,6 @@
             "staffPayments": "Pagos a Staff",
             "incomeDesc": "Cuotas de jugadores, socios y otros.",
             "expensesDesc": "Sueldos, alquileres, material, etc.",
-            "sponsorshipDesc": "Total de ingresos por patrocinio.",
-            "staffPaymentsDesc": "Sueldos de entrenadores y staff.",
             "monthly": "Mensual",
             "annual": "Anual",
             "currentMonth": "Mes Actual",
@@ -923,7 +921,6 @@
         ]
     },
     "registrations": {
-        "title": "Inscripciones y Eventos",
         "description": "Crea y gestiona formularios de inscripción para campus, eventos o captaciones.",
         "createEvent": "Crear Evento/Inscripción",
         "from": "Del",
@@ -954,6 +951,7 @@
             "createTitle": "Crear Nuevo Formulario de Inscripción",
             "editTitle": "Editar Formulario de Inscripción",
             "description": "Configura los detalles y los campos de tu formulario.",
+            "selectSection": "Seleccionar sección...",
             "tabs": {
                 "general": "General",
                 "config": "Configuración",

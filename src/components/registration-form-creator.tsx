@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -304,7 +303,7 @@ export function RegistrationFormCreator({ onFormSaved, initialData, mode }: Regi
                       name="description"
                       render={({ field }) => (
                       <FormItem>
-                          <FormLabel>{t('registrations.modal.description')}</FormLabel>
+                          <FormLabel>{t('registrations.modal.descriptionLabel')}</FormLabel>
                           <FormControl>
                           <Textarea placeholder={t('registrations.modal.descriptionPlaceholder')} {...field} />
                           </FormControl>
