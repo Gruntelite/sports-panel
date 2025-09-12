@@ -9,6 +9,7 @@ runConfig:
   # The following secrets are required for the app to function.
   # They will be granted to your backend's service account.
   # Ensure you have the Secret Manager and Cloud Build APIs enabled in your project.
+  maxDuration: 120s
   secrets:
     - FIREBASE_API_KEY
     - FIREBASE_AUTH_DOMAIN
