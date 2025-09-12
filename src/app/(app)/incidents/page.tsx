@@ -304,7 +304,7 @@ function IncidentsTab() {
       <AlertDialog open={!!incidentToDelete} onOpenChange={(open) => !open && setIncidentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('incidents.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>{t('incidents.confirmDeleteDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -588,7 +588,7 @@ function ProtocolsTab() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('incidents.confirmDeleteTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
               {t('incidents.confirmDeleteDescProtocol')}
             </AlertDialogDescription>

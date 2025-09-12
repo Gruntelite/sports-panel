@@ -1013,5 +1013,101 @@
             "paymentStatusUpdated": "Estat del pagament actualitzat.",
             "paymentStatusError": "No s'ha pogut actualitzar l'estat del pagament."
         }
+    },
+    "incidents": {
+        "description": "Registra i gestiona incidències, i mantén a mà els protocols d'actuació del club.",
+        "selectSection": "Seleccionar secció...",
+        "tabs": {
+            "incidents": "Incidències",
+            "protocols": "Protocols"
+        },
+        "errors": {
+            "loadIncidents": "No s'han pogut carregar les incidències.",
+            "dateTypeRequired": "La data i el tipus són obligatoris.",
+            "saveIncident": "No s'ha pogut desar la incidència.",
+            "deleteIncident": "No s'ha pogut eliminar la incidència.",
+            "loadProtocols": "No s'han pogut carregar els protocols.",
+            "authErrorTitle": "Error d'autenticació",
+            "authErrorDesc": "Si us plau, torna a iniciar sessió.",
+            "missingDataTitle": "Falten Dades",
+            "missingDataDesc": "Has d'introduir un nom i seleccionar un arxiu.",
+            "fileTooLargeTitle": "Arxiu massa gran",
+            "fileTooLargeDesc": "L'arxiu no pot superar els 10 MB.",
+            "uploadErrorTitle": "Error en Pujar",
+            "uploadErrorDescDefault": "S'ha produït un error en pujar l'arxiu.",
+            "uploadErrorUnauthorized": "No tens permisos per pujar arxius.",
+            "deleteProtocol": "No s'ha pogut eliminar el protocol."
+        },
+        "incidentUpdated": "Incidència Actualitzada",
+        "incidentUpdatedDesc": "La incidència s'ha actualitzat correctament.",
+        "incidentCreated": "Incidència Creada",
+        "incidentCreatedDesc": "La nova incidència s'ha registrat correctament.",
+        "incidentDeleted": "Incidència Eliminada",
+        "incidentDeletedDesc": "La incidència ha estat eliminada.",
+        "confirmDeleteDesc": "Aquesta acció no es pot desfer. S'eliminarà permanentment el registre de la incidència.",
+        "confirmDeleteDescProtocol": "Aquesta acció no es pot desfer. S'eliminarà permanentment el protocol.",
+        "incidents": {
+            "history": "Historial d'Incidències",
+            "register": "Registrar Incidència",
+            "table": {
+                "date": "Data",
+                "type": "Tipus",
+                "involved": "Implicats",
+                "status": "Estat",
+                "actions": "Accions"
+            },
+            "edit": "Editar",
+            "delete": "Eliminar",
+            "noIncidents": "No hi ha cap incidència registrada.",
+            "modal": {
+                "addTitle": "Registrar Nova Incidència",
+                "editTitle": "Editar Incidència",
+                "date": "Data de la Incidència",
+                "type": "Tipus d'Incidència",
+                "selectType": "Selecciona un tipus...",
+                "involved": "Persones Implicades",
+                "involvedPlaceholder": "Noms separats per comes",
+                "description": "Descripció de la Incidència",
+                "descriptionPlaceholder": "Detalla què ha passat...",
+                "status": "Estat",
+                "selectStatus": "Selecciona un estat...",
+                "save": "Desar Incidència"
+            }
+        },
+        "protocols": {
+            "title": "Protocols d'Actuació",
+            "description": "Emmagatzema i accedeix ràpidament als protocols del club.",
+            "uploadButton": "Pujar Protocol",
+            "modal": {
+                "title": "Pujar Nou Protocol",
+                "description": "Puja un arxiu (PDF, Word...) per tenir-lo sempre a mà.",
+                "nameLabel": "Nom del Protocol",
+                "namePlaceholder": "p.ex., Protocol d'Actuació en cas de Lesió",
+                "fileLabel": "Arxiu del Protocol",
+                "fileHint": "Mida màxima: 10MB.",
+                "saveButton": "Pujar i Desar"
+            },
+            "table": {
+                "fileName": "Nom de l'Arxiu",
+                "uploadDate": "Data de Pujada",
+                "actions": "Accions"
+            },
+            "noProtocols": "No hi ha cap protocol pujat.",
+            "uploadSuccessTitle": "Protocol Pujat",
+            "uploadSuccessDesc": "L'arxiu '{protocolName}' s'ha pujat correctament.",
+            "deleteSuccessTitle": "Protocol Eliminat",
+            "deleteSuccessDesc": "El protocol '{protocolName}' ha estat eliminat."
+        },
+        "types": {
+            "injury": "Lesió",
+            "behavior": "Comportament",
+            "administrative": "Administrativa",
+            "other": "Altres"
+        },
+        "status": {
+            "open": "Oberta",
+            "inProgress": "En Progrés",
+            "resolved": "Resolta"
+        }
     }
 }

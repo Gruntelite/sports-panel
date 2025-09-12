@@ -1013,5 +1013,101 @@
             "paymentStatusUpdated": "Estado del pago actualizado.",
             "paymentStatusError": "No se pudo actualizar el estado del pago."
         }
+    },
+    "incidents": {
+        "description": "Registra y gestiona incidencias, y ten a mano los protocolos de actuación del club.",
+        "selectSection": "Seleccionar sección...",
+        "tabs": {
+            "incidents": "Incidencias",
+            "protocols": "Protocolos"
+        },
+        "errors": {
+            "loadIncidents": "No se pudieron cargar las incidencias.",
+            "dateTypeRequired": "La fecha y el tipo son obligatorios.",
+            "saveIncident": "No se pudo guardar la incidencia.",
+            "deleteIncident": "No se pudo eliminar la incidencia.",
+            "loadProtocols": "No se pudieron cargar los protocolos.",
+            "authErrorTitle": "Error de autenticación",
+            "authErrorDesc": "Por favor, vuelve a iniciar sesión.",
+            "missingDataTitle": "Faltan Datos",
+            "missingDataDesc": "Debes introducir un nombre y seleccionar un archivo.",
+            "fileTooLargeTitle": "Archivo demasiado grande",
+            "fileTooLargeDesc": "El archivo no puede superar los 10 MB.",
+            "uploadErrorTitle": "Error al Subir",
+            "uploadErrorDescDefault": "Se ha producido un error al subir el archivo.",
+            "uploadErrorUnauthorized": "No tienes permisos para subir archivos.",
+            "deleteProtocol": "No se pudo eliminar el protocolo."
+        },
+        "incidentUpdated": "Incidencia Actualizada",
+        "incidentUpdatedDesc": "La incidencia se ha actualizado correctamente.",
+        "incidentCreated": "Incidencia Creada",
+        "incidentCreatedDesc": "La nueva incidencia se ha registrado correctamente.",
+        "incidentDeleted": "Incidencia Eliminada",
+        "incidentDeletedDesc": "La incidencia ha sido eliminada.",
+        "confirmDeleteDesc": "Esta acción no se puede deshacer. Se eliminará permanentemente el registro de la incidencia.",
+        "confirmDeleteDescProtocol": "Esta acción no se puede deshacer. Se eliminará permanentemente el protocolo.",
+        "incidents": {
+            "history": "Historial de Incidencias",
+            "register": "Registrar Incidencia",
+            "table": {
+                "date": "Fecha",
+                "type": "Tipo",
+                "involved": "Implicados",
+                "status": "Estado",
+                "actions": "Acciones"
+            },
+            "edit": "Editar",
+            "delete": "Eliminar",
+            "noIncidents": "No hay ninguna incidencia registrada.",
+            "modal": {
+                "addTitle": "Registrar Nueva Incidencia",
+                "editTitle": "Editar Incidencia",
+                "date": "Fecha de la Incidencia",
+                "type": "Tipo de Incidencia",
+                "selectType": "Selecciona un tipo...",
+                "involved": "Personas Implicadas",
+                "involvedPlaceholder": "Nombres separados por comas",
+                "description": "Descripción de la Incidencia",
+                "descriptionPlaceholder": "Detalla qué ha sucedido...",
+                "status": "Estado",
+                "selectStatus": "Selecciona un estado...",
+                "save": "Guardar Incidencia"
+            }
+        },
+        "protocols": {
+            "title": "Protocolos de Actuación",
+            "description": "Almacena y accede rápidamente a los protocolos del club.",
+            "uploadButton": "Subir Protocolo",
+            "modal": {
+                "title": "Subir Nuevo Protocolo",
+                "description": "Sube un archivo (PDF, Word...) para tenerlo siempre a mano.",
+                "nameLabel": "Nombre del Protocolo",
+                "namePlaceholder": "p.ej., Protocolo de Actuación en caso de Lesión",
+                "fileLabel": "Archivo del Protocolo",
+                "fileHint": "Tamaño máximo: 10MB.",
+                "saveButton": "Subir y Guardar"
+            },
+            "table": {
+                "fileName": "Nombre del Archivo",
+                "uploadDate": "Fecha de Subida",
+                "actions": "Acciones"
+            },
+            "noProtocols": "No hay ningún protocolo subido.",
+            "uploadSuccessTitle": "Protocolo Subido",
+            "uploadSuccessDesc": "El archivo '{protocolName}' se ha subido correctamente.",
+            "deleteSuccessTitle": "Protocolo Eliminado",
+            "deleteSuccessDesc": "El protocolo '{protocolName}' ha sido eliminado."
+        },
+        "types": {
+            "injury": "Lesión",
+            "behavior": "Comportamiento",
+            "administrative": "Administrativa",
+            "other": "Otro"
+        },
+        "status": {
+            "open": "Abierta",
+            "inProgress": "En Progreso",
+            "resolved": "Resuelta"
+        }
     }
 }
