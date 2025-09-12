@@ -83,7 +83,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { MemberDetailModal } from "@/components/member-detail-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "../ui/separator";
+import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/components/i18n-provider";
 
 const MONTHS = [
@@ -895,3 +895,6 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+
+    
+    
