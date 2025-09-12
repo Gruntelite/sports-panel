@@ -143,7 +143,6 @@ export default function CoachesPage() {
 
   const allColumnFields = (Array.isArray(coachFields.personal) && Array.isArray(coachFields.contact) && Array.isArray(coachFields.payment)) ? 
   [...coachFields.personal, ...coachFields.contact, ...coachFields.payment] : [];
-
   
   const coachCustomFields = customFields.filter(f => f.appliesTo.includes('coach'));
   

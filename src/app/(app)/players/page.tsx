@@ -127,10 +127,9 @@ export default function PlayersPage() {
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
   
   const playerFields = t('players.fields', { returnObjects: true });
-
+  
   const allColumnFields = (Array.isArray(playerFields.personal) && Array.isArray(playerFields.contact) && Array.isArray(playerFields.sports)) ? 
   [...playerFields.personal, ...playerFields.contact, ...playerFields.sports] : [];
-
 
   const playerCustomFields = customFields.filter(f => f.appliesTo.includes('player'));
 
@@ -650,7 +649,7 @@ export default function PlayersPage() {
                      <ScrollArea className="h-[400px]">
                       <DropdownMenuLabel>{t('players.toggleColumns')}</DropdownMenuLabel>
                       <DropdownMenuSeparator />
-                      {allColumnFields.map(field => (
+                      {allPossibleColumns.map(field => (
                           <DropdownMenuCheckboxItem
                             key={field.id}
                             className="capitalize"
@@ -660,18 +659,6 @@ export default function PlayersPage() {
                             disabled={field.id === 'name'}
                           >
                             {field.label}
-                          </DropdownMenuCheckboxItem>
-                      ))}
-                      {playerCustomFields.length > 0 && <DropdownMenuSeparator />}
-                      {playerCustomFields.map(field => (
-                          <DropdownMenuCheckboxItem
-                            key={field.id}
-                            className="capitalize"
-                            checked={visibleColumns.has(field.id)}
-                            onCheckedChange={() => toggleColumnVisibility(field.id)}
-                            onSelect={(e) => e.preventDefault()}
-                          >
-                            {field.name}
                           </DropdownMenuCheckboxItem>
                       ))}
                       </ScrollArea>
@@ -1206,8 +1193,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
-    
-
-    
-
