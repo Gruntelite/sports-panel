@@ -79,7 +79,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, writeBatch, setDoc, where, orderBy } from "firebase/firestore";
+import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Team, Coach, ClubMember, Interruption, CustomFieldDef } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
@@ -1095,7 +1095,7 @@ export default function CoachesPage() {
                                     />
                                 </div>
                             )) : (
-                                <p className="text-center text-muted-foreground pt-10">{t('coaches.noCustomFields')}</p>
+                                <p className="text-center text-sm text-muted-foreground pt-10">{t('coaches.noCustomFields')}</p>
                             )}
                         </div>
                     </div>

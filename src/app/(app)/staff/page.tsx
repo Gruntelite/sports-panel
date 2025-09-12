@@ -85,6 +85,7 @@ import { MemberDetailModal } from "@/components/member-detail-modal";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/components/i18n-provider";
+import { Trash2 } from "lucide-react";
 
 const MONTHS = [
     { label: "Enero", value: 0 }, { label: "Febrero", value: 1 }, { label: "Marzo", value: 2 },
@@ -895,6 +896,3 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
-
-    
-    
