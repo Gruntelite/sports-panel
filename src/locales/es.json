@@ -320,7 +320,7 @@
         "membersSelected": "{count} miembro(s) seleccionado(s)",
         "selectFrom": "Seleccionar de {count} miembros filtrados...",
         "selectRecipients": "Seleccionar Destinatarios",
-        "selectRecipientsDesc": "Selecciona los miembros que recibirán este correo.",
+        "selectRecipientsDesc": "Elige los miembros que recibirán este correo.",
         "searchMember": "Buscar miembro...",
         "noMemberFound": "No se encontró ningún miembro.",
         "selectAll": "Seleccionar todos los {count} miembros",
@@ -456,6 +456,8 @@
             "staffPayments": "Pagos a Staff",
             "incomeDesc": "Cuotas de jugadores, socios y otros.",
             "expensesDesc": "Sueldos, alquileres, material, etc.",
+            "sponsorshipDesc": "Ingresos totales por acuerdos de patrocinio.",
+            "staffPaymentsDesc": "Pagos totales a entrenadores y staff.",
             "monthly": "Mensual",
             "annual": "Anual",
             "currentMonth": "Mes Actual",
@@ -627,7 +629,8 @@
                 "noEvents": "No hay eventos para este día.",
                 "close": "Cerrar"
             }
-        }
+        },
+        "daysOfWeek": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
     },
     "players": {
         "title": "Jugadores",

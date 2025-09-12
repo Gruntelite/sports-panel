@@ -320,7 +320,7 @@
         "membersSelected": "{count} membre(s) seleccionat(s)",
         "selectFrom": "Seleccionar de {count} membres filtrats...",
         "selectRecipients": "Seleccionar Destinataris",
-        "selectRecipientsDesc": "Selecciona els membres que rebran aquest correu.",
+        "selectRecipientsDesc": "Tria els membres que rebran aquest correu.",
         "searchMember": "Cercar membre...",
         "noMemberFound": "No s'ha trobat cap membre.",
         "selectAll": "Seleccionar tots els {count} membres",
@@ -361,7 +361,7 @@
         "smtpUserPlaceholder": "el-teu-email@exemple.com",
         "fromEmailLabel": "Correu Remitent",
         "fromEmailPlaceholder": "noreply@exemple.com",
-        "fromEmailDesc": "Aquest és el correu que apareixerà com a remitent. De vegades ha de ser el mateix que l'usuari.",
+        "fromEmailDesc": "Aquest és el correu que apareixerà como a remitent. De vegades ha de ser el mateix que l'usuari.",
         "passwordGuide": {
             "title": "Guia per obtenir la Contrasenya d'Aplicació de Gmail",
             "step1Title": "Activa la Verificació en 2 Passos",
@@ -456,6 +456,8 @@
             "staffPayments": "Pagaments a Staff",
             "incomeDesc": "Quotes de jugadors, socis i altres.",
             "expensesDesc": "Sous, lloguers, material, etc.",
+            "sponsorshipDesc": "Ingressos totals per acords de patrocini.",
+            "staffPaymentsDesc": "Pagaments totals a entrenadors i staff.",
             "monthly": "Mensual",
             "annual": "Anual",
             "currentMonth": "Mes Actual",
@@ -607,7 +609,7 @@
             "addEventToSelection": "Afegir esdeveniment a la selecció",
             "assignTemplate": "Assignar plantilla a selecció",
             "revertToDefault": "Revertir a plantilla per defecte",
-            "daysShort": ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"],
+            "daysShort": ["Dl", "Dm", "Dc", "Dj", "Dv", "Ds", "Dg"],
             "modal": {
                 "addTitle": "Afegir Nou Esdeveniment",
                 "editTitle": "Editar Esdeveniment",
@@ -627,7 +629,8 @@
                 "noEvents": "No hi ha esdeveniments per a aquest dia.",
                 "close": "Tancar"
             }
-        }
+        },
+        "daysOfWeek": ["Dilluns", "Dimarts", "Dimecres", "Dijous", "Divendres", "Dissabte", "Diumenge"]
     },
     "players": {
         "title": "Jugadors",
