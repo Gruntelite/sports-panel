@@ -19,6 +19,7 @@ import { Checkbox } from "./ui/checkbox";
 import { ScrollArea } from "./ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { sendEmailWithSmtpAction } from "@/lib/email";
+import { useTranslation } from "./i18n-provider";
 
 const MEMBER_TYPES = [
     { value: 'Jugador', label: 'Jugadores' },
@@ -27,6 +28,7 @@ const MEMBER_TYPES = [
 ];
 
 export function DirectEmailSender() {
+    const { t } = useTranslation();
     const [clubId, setClubId] = useState<string | null>(null);
     const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
     const [teams, setTeams] = useState<Team[]>([]);
@@ -93,7 +95,7 @@ export function DirectEmailSender() {
 
         } catch (error) {
             console.error("Error fetching club members:", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los destinatarios."});
+            toast({ variant: "destructive", title: t('common.error'), description: t('directEmail.errors.loadRecipients')});
         } finally {
             setLoading(false);
         }
@@ -131,7 +133,7 @@ export function DirectEmailSender() {
     
     const handleFormSubmit = async (formData: FormData) => {
         if (!clubId) {
-            toast({ variant: "destructive", title: "Error", description: "No se ha podido identificar el club." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('directEmail.errors.noClub') });
             return;
         }
 
@@ -146,7 +148,7 @@ export function DirectEmailSender() {
         }).filter(item => item.email);
 
         if (recipients.length === 0) {
-            toast({ variant: "destructive", title: "Error", description: "Debes seleccionar al menos un destinatario con email." });
+            toast({ variant: "destructive", title: t('common.error'), description: t('directEmail.errors.noRecipients') });
             return;
         }
 
@@ -159,15 +161,15 @@ export function DirectEmailSender() {
 
         if (result.success) {
             toast({
-                title: "¡Correos enviados!",
-                description: `Se han enviado ${result.count} correos correctamente.`,
+                title: t('directEmail.successTitle'),
+                description: t('directEmail.successDesc', { count: result.count || 0 }),
             });
             formRef.current?.reset();
             setSelectedMemberIds(new Set());
         } else {
             toast({
                 variant: "destructive",
-                title: "Error de Envío",
+                title: t('directEmail.errors.sendErrorTitle'),
                 description: result.error,
             });
         }
@@ -177,6 +179,11 @@ export function DirectEmailSender() {
     
     const recipientCount = selectedMemberIds.size;
     const isAllFilteredSelected = filteredMembers.length > 0 && recipientCount === filteredMembers.length;
+    const memberTypeLabels = {
+        'Jugador': t('directEmail.memberTypes.player'),
+        'Entrenador': t('directEmail.memberTypes.coach'),
+        'Staff': t('directEmail.memberTypes.staff'),
+    };
 
     if (loading) {
         return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>
@@ -186,43 +193,43 @@ export function DirectEmailSender() {
         <Card>
             <form ref={formRef} action={handleFormSubmit}>
                 <CardHeader>
-                    <CardTitle>Enviar Correo Directo</CardTitle>
+                    <CardTitle>{t('directEmail.title')}</CardTitle>
                     <CardDescription>
-                        Redacta un correo y envíalo a grupos de miembros o a personas específicas.
+                        {t('directEmail.description')}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Filtrar destinatarios por tipo</Label>
+                            <Label>{t('directEmail.filterByType')}</Label>
                              <Popover open={isTypePopoverOpen} onOpenChange={setIsTypePopoverOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start font-normal">
-                                        {selectedTypes.size > 0 ? `${selectedTypes.size} tipo(s) seleccionado(s)` : "Seleccionar tipo..."}
+                                        {selectedTypes.size > 0 ? t('directEmail.typesSelected', { count: selectedTypes.size }) : t('directEmail.selectType')}
                                         <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                                     <Command>
-                                        <CommandInput placeholder="Buscar tipo..." />
+                                        <CommandInput placeholder={t('directEmail.searchType')} />
                                         <CommandList>
-                                            <CommandEmpty>No se encontró el tipo.</CommandEmpty>
+                                            <CommandEmpty>{t('directEmail.noTypeFound')}</CommandEmpty>
                                             <CommandGroup>
-                                                {MEMBER_TYPES.map(type => (
+                                                {Object.entries(memberTypeLabels).map(([value, label]) => (
                                                     <CommandItem
-                                                        key={type.value}
+                                                        key={value}
                                                         onSelect={() => {
                                                             const newSelection = new Set(selectedTypes);
-                                                            if (newSelection.has(type.value)) {
-                                                                newSelection.delete(type.value);
+                                                            if (newSelection.has(value)) {
+                                                                newSelection.delete(value);
                                                             } else {
-                                                                newSelection.add(type.value);
+                                                                newSelection.add(value);
                                                             }
                                                             setSelectedTypes(newSelection);
                                                         }}
                                                     >
-                                                        <Check className={cn("mr-2 h-4 w-4", selectedTypes.has(type.value) ? "opacity-100" : "opacity-0")} />
-                                                        {type.label}
+                                                        <Check className={cn("mr-2 h-4 w-4", selectedTypes.has(value) ? "opacity-100" : "opacity-0")} />
+                                                        {label}
                                                     </CommandItem>
                                                 ))}
                                             </CommandGroup>
@@ -232,19 +239,19 @@ export function DirectEmailSender() {
                             </Popover>
                         </div>
                         <div className="space-y-2">
-                            <Label>Filtrar destinatarios por equipo</Label>
+                            <Label>{t('directEmail.filterByTeam')}</Label>
                             <Popover open={isTeamPopoverOpen} onOpenChange={setIsTeamPopoverOpen}>
                                 <PopoverTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start font-normal">
-                                        {selectedTeams.size > 0 ? `${selectedTeams.size} equipo(s) seleccionado(s)` : "Seleccionar equipo..."}
+                                        {selectedTeams.size > 0 ? t('directEmail.teamsSelected', { count: selectedTeams.size }) : t('directEmail.selectTeam')}
                                         <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                     </Button>
                                 </PopoverTrigger>
                                  <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
                                     <Command>
-                                        <CommandInput placeholder="Buscar equipo..." />
+                                        <CommandInput placeholder={t('directEmail.searchTeam')} />
                                         <CommandList>
-                                            <CommandEmpty>No se encontró el equipo.</CommandEmpty>
+                                            <CommandEmpty>{t('directEmail.noTeamFound')}</CommandEmpty>
                                             <CommandGroup>
                                                 {teams.map(team => (
                                                     <CommandItem
@@ -272,27 +279,27 @@ export function DirectEmailSender() {
                     </div>
 
                     <div className="space-y-2">
-                        <Label>Destinatarios</Label>
+                        <Label>{t('directEmail.recipients')}</Label>
                          <Dialog open={isMemberSelectOpen} onOpenChange={setIsMemberSelectOpen}>
                             <DialogTrigger asChild>
                                  <Button variant="outline" className="w-full md:w-auto justify-start font-normal truncate">
                                     <span className="truncate pr-2">
-                                     {selectedMemberIds.size > 0 ? `${selectedMemberIds.size} miembro(s) seleccionado(s)` : `Seleccionar destinatarios (${filteredMembers.length} filtrados)...`}
+                                     {selectedMemberIds.size > 0 ? t('directEmail.membersSelected', { count: selectedMemberIds.size }) : t('directEmail.selectFrom', { count: filteredMembers.length })}
                                     </span>
                                     <UserPlus className="ml-auto h-4 w-4 shrink-0 opacity-50" />
                                 </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-md">
                                  <DialogHeader>
-                                    <DialogTitle>Seleccionar Destinatarios</DialogTitle>
+                                    <DialogTitle>{t('directEmail.selectRecipients')}</DialogTitle>
                                     <DialogDescription>
-                                        Selecciona los miembros que recibirán este correo.
+                                        {t('directEmail.selectRecipientsDesc')}
                                     </DialogDescription>
                                 </DialogHeader>
                                 <Command>
-                                    <CommandInput placeholder="Buscar miembro..." />
+                                    <CommandInput placeholder={t('directEmail.searchMember')} />
                                     <CommandList>
-                                        <CommandEmpty>No se encontró ningún miembro.</CommandEmpty>
+                                        <CommandEmpty>{t('directEmail.noMemberFound')}</CommandEmpty>
                                         <CommandGroup>
                                             <CommandItem onSelect={() => handleSelectAllFiltered(!isAllFilteredSelected)} className="flex items-center space-x-2 font-semibold cursor-pointer">
                                                 <Checkbox
@@ -300,7 +307,7 @@ export function DirectEmailSender() {
                                                     checked={isAllFilteredSelected}
                                                     onCheckedChange={(checked) => handleSelectAllFiltered(checked as boolean)}
                                                 />
-                                                <label htmlFor="select-all" className="flex-1 cursor-pointer">Seleccionar todos los {filteredMembers.length} miembros</label>
+                                                <label htmlFor="select-all" className="flex-1 cursor-pointer">{t('directEmail.selectAll', { count: filteredMembers.length })}</label>
                                             </CommandItem>
                                             <ScrollArea className="h-64">
                                                 {filteredMembers.map((member) => (
@@ -319,7 +326,7 @@ export function DirectEmailSender() {
                                                             htmlFor={`select-${member.id}`}
                                                             className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 flex-1 cursor-pointer"
                                                         >
-                                                        {member.name} <span className="text-xs text-muted-foreground">({member.type})</span>
+                                                        {member.name} <span className="text-xs text-muted-foreground">({memberTypeLabels[member.type as keyof typeof memberTypeLabels]})</span>
                                                         </label>
                                                     </CommandItem>
                                                 ))}
@@ -329,26 +336,26 @@ export function DirectEmailSender() {
                                 </Command>
                                 <DialogFooter>
                                     <DialogClose asChild>
-                                        <Button>Aceptar</Button>
+                                        <Button>{t('common.accept')}</Button>
                                     </DialogClose>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
                         <p className="text-xs text-muted-foreground">
-                            El correo se enviará a <span className="font-semibold">{recipientCount}</span> destinatario(s).
+                            {t('directEmail.sendTo', { count: recipientCount })}
                         </p>
                     </div>
                     
                     <div className="space-y-2">
-                        <Label htmlFor="subject">Asunto</Label>
-                        <Input name="subject" id="subject" placeholder="Asunto del correo electrónico" required/>
+                        <Label htmlFor="subject">{t('directEmail.subject')}</Label>
+                        <Input name="subject" id="subject" placeholder={t('directEmail.subjectPlaceholder')} required/>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="body">Mensaje</Label>
-                        <Textarea name="htmlContent" id="body" placeholder="Escribe aquí tu mensaje... (Puedes usar HTML)" className="min-h-[200px]" required/>
+                        <Label htmlFor="body">{t('directEmail.message')}</Label>
+                        <Textarea name="htmlContent" id="body" placeholder={t('directEmail.messagePlaceholder')} className="min-h-[200px]" required/>
                     </div>
                     <div className="space-y-2">
-                        <Label htmlFor="attachments">Adjuntos</Label>
+                        <Label htmlFor="attachments">{t('directEmail.attachments')}</Label>
                         <Input name="attachments" id="attachments" type="file" multiple />
                     </div>
                      
@@ -356,7 +363,7 @@ export function DirectEmailSender() {
                  <CardFooter className="border-t pt-6">
                     <Button type="submit" className="w-full md:w-auto ml-auto" disabled={recipientCount === 0 || sending}>
                         {sending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                        {sending ? "Enviando..." : `Enviar Correo a ${recipientCount} Miembro(s)`}
+                        {sending ? t('directEmail.sending') : t('directEmail.sendAction', { count: recipientCount })}
                     </Button>
                 </CardFooter>
             </form>

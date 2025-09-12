@@ -19,6 +19,7 @@ import { Loader2, KeyRound, ExternalLink, Info } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "./ui/select";
 import Link from "next/link";
+import { useTranslation } from "./i18n-provider";
 
 const formSchema = z.object({
   smtpHost: z.string().min(1, "El Host SMTP es obligatorio."),
@@ -32,6 +33,7 @@ type FormData = z.infer<typeof formSchema>;
 type Provider = "gmail" | "other";
 
 export function EmailSettings() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
@@ -116,14 +118,14 @@ export function EmailSettings() {
         }, { merge: true });
 
         toast({
-            title: "¡Configuración Guardada!",
-            description: "Tu configuración de envío de correo ha sido actualizada.",
+            title: t('emailSettings.successTitle'),
+            description: t('emailSettings.successDesc'),
         });
     } catch (error) {
          toast({
             variant: "destructive",
-            title: "Error al Guardar",
-            description: "No se pudo guardar la configuración.",
+            title: t('emailSettings.errors.saveErrorTitle'),
+            description: t('emailSettings.errors.saveErrorDesc'),
         });
     } finally {
         setSaving(false);
@@ -133,8 +135,8 @@ export function EmailSettings() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Configuración de Correo (SMTP)</CardTitle>
-        <CardDescription>Introduce tus credenciales SMTP para habilitar el envío de correos desde tu propia cuenta.</CardDescription>
+        <CardTitle>{t('emailSettings.title')}</CardTitle>
+        <CardDescription>{t('emailSettings.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         {loading ? (
@@ -145,25 +147,25 @@ export function EmailSettings() {
             <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <div className="space-y-2">
-                    <Label>Proveedor de Correo</Label>
+                    <Label>{t('emailSettings.provider')}</Label>
                     <Select value={provider} onValueChange={handleProviderChange}>
                         <SelectTrigger className="w-[280px]">
-                           <SelectValue placeholder="Selecciona tu proveedor" />
+                           <SelectValue placeholder={t('emailSettings.selectProvider')} />
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="gmail">Gmail</SelectItem>
-                            <SelectItem value="other">Otro (SMTP Personalizado)</SelectItem>
+                            <SelectItem value="other">{t('emailSettings.otherProvider')}</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
                 
                  <Alert variant="default">
                     <Info className="h-4 w-4"/>
-                    <AlertTitle>Límites de Envío</AlertTitle>
+                    <AlertTitle>{t('emailSettings.limitAlertTitle')}</AlertTitle>
                     <AlertDescription>
                         {provider === 'gmail' 
-                         ? "Las cuentas de Gmail estándar tienen un límite de envío de 500 correos cada 24 horas. Las cuentas de Google Workspace pueden tener límites superiores."
-                         : "Por favor, consulta con tu proveedor de correo para conocer los límites de envío diarios o por hora que aplican a tu cuenta."
+                         ? t('emailSettings.limitAlertGmail')
+                         : t('emailSettings.limitAlertOther')
                         }
                     </AlertDescription>
                 </Alert>
@@ -177,7 +179,7 @@ export function EmailSettings() {
                             <FormItem>
                                 <FormLabel>Host SMTP</FormLabel>
                                 <FormControl>
-                                <Input placeholder="p.ej., smtp.miempresa.com" {...field} />
+                                <Input placeholder={t('emailSettings.smtpHostPlaceholder')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -190,7 +192,7 @@ export function EmailSettings() {
                             <FormItem>
                                 <FormLabel>Puerto SMTP</FormLabel>
                                 <FormControl>
-                                <Input type="number" placeholder="p.ej., 465, 587" {...field} />
+                                <Input type="number" placeholder={t('emailSettings.smtpPortPlaceholder')} {...field} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -204,9 +206,9 @@ export function EmailSettings() {
                 name="smtpUser"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Usuario SMTP (Tu correo)</FormLabel>
+                    <FormLabel>{t('emailSettings.smtpUserLabel')}</FormLabel>
                     <FormControl>
-                      <Input type="email" placeholder="tu-email@ejemplo.com" {...field} />
+                      <Input type="email" placeholder={t('emailSettings.smtpUserPlaceholder')} {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -219,11 +221,11 @@ export function EmailSettings() {
                     name="smtpFromEmail"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Email Remitente</FormLabel>
+                        <FormLabel>{t('emailSettings.fromEmailLabel')}</FormLabel>
                         <FormControl>
-                        <Input type="email" placeholder="noreply@ejemplo.com" {...field} />
+                        <Input type="email" placeholder={t('emailSettings.fromEmailPlaceholder')} {...field} />
                         </FormControl>
-                        <FormDescription>Este es el correo que aparecerá como remitente. A veces debe ser el mismo que el usuario.</FormDescription>
+                        <FormDescription>{t('emailSettings.fromEmailDesc')}</FormDescription>
                         <FormMessage />
                     </FormItem>
                     )}
@@ -232,19 +234,19 @@ export function EmailSettings() {
                 
                 <Alert>
                     <KeyRound className="h-4 w-4"/>
-                    <AlertTitle>Guía para obtener la Contraseña de Aplicación de Gmail</AlertTitle>
+                    <AlertTitle>{t('emailSettings.passwordGuide.title')}</AlertTitle>
                     <AlertDescription>
                         <ol className="list-decimal list-inside space-y-2 mt-2">
                           <li>
-                            <b>Activa la Verificación en 2 Pasos</b> en tu cuenta de Google. Es un requisito obligatorio.
-                            <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">Ir a Seguridad de Google <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                            <b>{t('emailSettings.passwordGuide.step1Title')}</b> {t('emailSettings.passwordGuide.step1Desc')}
+                            <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/security" target="_blank">{t('emailSettings.passwordGuide.goToGoogleSecurity')} <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
                           </li>
                           <li>
-                            <b>Genera una contraseña de aplicación.</b>
-                            <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">Ir a Contraseñas de App <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
+                            <b>{t('emailSettings.passwordGuide.step2Title')}</b>
+                            <Button variant="link" asChild className="px-1 h-auto"><Link href="https://myaccount.google.com/apppasswords" target="_blank">{t('emailSettings.passwordGuide.goToAppPasswords')} <ExternalLink className="ml-1 h-3 w-3"/></Link></Button>
                           </li>
-                          <li>En "Seleccionar aplicación", elige "Otra", escribe "SportsPanel" y pulsa "Generar".</li>
-                          <li>Copia la contraseña de 16 letras que aparece y pégala en el campo de abajo.</li>
+                          <li>{t('emailSettings.passwordGuide.step3')}</li>
+                          <li>{t('emailSettings.passwordGuide.step4')}</li>
                         </ol>
                     </AlertDescription>
                 </Alert>
@@ -254,7 +256,7 @@ export function EmailSettings() {
                 name="smtpPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña de Aplicación</FormLabel>
+                    <FormLabel>{t('emailSettings.passwordLabel')}</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="xxxx xxxx xxxx xxxx" {...field} />
                     </FormControl>
@@ -264,9 +266,9 @@ export function EmailSettings() {
               />
               <Button type="submit" disabled={saving} className="w-full">
                 {saving ? (
-                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Guardando...</>
+                  <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> {t('emailSettings.saving')}</>
                 ) : (
-                  'Guardar Configuración'
+                  t('emailSettings.saveButton')
                 )}
               </Button>
             </form>
