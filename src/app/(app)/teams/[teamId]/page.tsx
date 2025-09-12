@@ -1150,11 +1150,11 @@ export default function EditTeamPage() {
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                                     <div className="space-y-2">
-                                        <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{currentData.isOwnTutor ? t('coaches.fields.email') : t('coaches.fields.tutorEmail')}</Label>
+                                        <Label htmlFor={modalType === 'player' ? 'tutorEmail' : 'email'}>{t(currentData.isOwnTutor ? 'coaches.fields.email' : modalType === 'player' ? 'players.fields.tutorEmail' : 'coaches.fields.tutorEmail')}</Label>
                                         <Input id={modalType === 'player' ? "tutorEmail" : "email"} type="email" value={modalType === 'player' ? (currentData as Player).tutorEmail || '' : (currentData as Coach).email || ''} onChange={handleMemberInputChange} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{currentData.isOwnTutor ? t('coaches.fields.phone') : t('coaches.fields.tutorPhone')}</Label>
+                                        <Label htmlFor={modalType === 'player' ? 'tutorPhone' : 'phone'}>{t(currentData.isOwnTutor ? 'coaches.fields.phone' : modalType === 'player' ? 'players.fields.tutorPhone' : 'coaches.fields.tutorPhone')}</Label>
                                         <Input id={modalType === 'player' ? "tutorPhone" : "phone"} type="tel" value={modalType === 'player' ? (currentData as Player).tutorPhone || '' : (currentData as Coach).phone || ''} onChange={handleMemberInputChange} />
                                     </div>
                                 </div>
@@ -1292,5 +1292,4 @@ export default function EditTeamPage() {
   );
 }
 
-
-
+    
