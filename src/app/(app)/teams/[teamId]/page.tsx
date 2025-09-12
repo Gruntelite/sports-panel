@@ -116,8 +116,8 @@ export default function EditTeamPage() {
   const [modalType, setModalType] = useState<'player' | 'coach'>('player');
   const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
   
-  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [] });
-  const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [] });
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
+  const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [], customFields: {} });
 
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -448,19 +448,19 @@ export default function EditTeamPage() {
     
     if (mode === 'add') {
       if (memberType === 'player') {
-        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee, interruptions: [] });
-        setCoachData({interruptions: []});
+        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee, interruptions: [], customFields: {} });
+        setCoachData({interruptions: [], customFields: {}});
       } else {
-        setCoachData({ teamId: teamId, interruptions: [] });
-        setPlayerData({interruptions: []});
+        setCoachData({ teamId: teamId, interruptions: [], customFields: {} });
+        setPlayerData({interruptions: [], customFields: {}});
       }
     } else if (member) {
       if (memberType === 'player') {
         setPlayerData(member.data as Player);
-        setCoachData({interruptions: []});
+        setCoachData({interruptions: [], customFields: {}});
       } else {
         setCoachData(member.data as Coach);
-        setPlayerData({interruptions: []});
+        setPlayerData({interruptions: [], customFields: {}});
       }
     }
     
@@ -523,16 +523,17 @@ export default function EditTeamPage() {
         const contactName = `${dataToSave.name} ${dataToSave.lastName}`;
         
         if(contactEmail){
-            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            const userRef = doc(db, "users", playerDocRef.id);
             await setDoc(userRef, {
                 email: contactEmail,
                 name: contactName,
                 role: 'Family',
+                clubId: clubId,
                 playerId: playerDocRef.id,
             });
             toast({
-                title: "Registro de Usuario Creado",
-                description: `Se ha creado un registro de usuario para ${contactName}.`,
+                title: "Acceso a la app creado",
+                description: `Se ha creado una cuenta de usuario para la familia de ${contactName}.`,
             });
         }
       }
@@ -589,18 +590,18 @@ export default function EditTeamPage() {
         const coachDocRef = await addDoc(collection(db, "clubs", clubId, "coaches"), dataToSave);
         toast({ title: "Entrenador añadido", description: `${coachData.name} ha sido añadido al equipo.` });
         
-        // Automatic user record creation
         if (dataToSave.email) {
-            const userRef = doc(collection(db, "clubs", clubId, "users"));
+            const userRef = doc(db, "users", coachDocRef.id);
             await setDoc(userRef, {
                 email: dataToSave.email,
                 name: `${dataToSave.name} ${dataToSave.lastName}`,
                 role: 'Entrenador',
+                clubId: clubId,
                 coachId: coachDocRef.id,
             });
             toast({
-                title: "Registro de Usuario Creado",
-                description: `Se ha creado un registro de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
+                title: "Acceso a la app creado",
+                description: `Se ha creado una cuenta de usuario para ${dataToSave.name} ${dataToSave.lastName}.`,
             });
         }
       }
@@ -695,6 +696,26 @@ export default function EditTeamPage() {
     }
   };
 
+    const handleCustomFieldChange = (fieldId: string, value: any) => {
+        if (modalType === 'player') {
+            setPlayerData(prev => ({
+            ...prev,
+            customFields: {
+                ...prev.customFields,
+                [fieldId]: value,
+            }
+            }));
+        } else {
+            setCoachData(prev => ({
+            ...prev,
+            customFields: {
+                ...prev.customFields,
+                [fieldId]: value,
+            }
+            }));
+        }
+    };
+
   const isAllSelected = teamMembers.filter(m => m.role === 'Jugador').length > 0 && selectedMembers.length === teamMembers.filter(m => m.role === 'Jugador').length;
 
   if (loading) {
@@ -706,6 +727,7 @@ export default function EditTeamPage() {
   }
   
   const currentData = modalType === 'player' ? playerData : coachData;
+  const currentCustomFields = customFields.filter(f => f.appliesTo.includes(modalType));
   const playerCount = teamMembers.filter(m => m.role === 'Jugador').length;
   const coachCount = teamMembers.filter(m => m.role === 'Entrenador').length;
 
@@ -1216,6 +1238,27 @@ export default function EditTeamPage() {
                                 </div>
                             </div>
                         )}
+                        <div className="space-y-6">
+                            <div className="flex items-center pt-6">
+                                <h3 className="text-lg font-semibold text-primary">{t('staff.otherData')}</h3>
+                                <Separator className="flex-1 ml-4" />
+                            </div>
+                            {currentCustomFields.length > 0 ? (
+                                currentCustomFields.map(field => (
+                                    <div key={field.id} className="space-y-2">
+                                        <Label htmlFor={field.id}>{field.name}</Label>
+                                        <Input
+                                            id={field.id}
+                                            type={field.type}
+                                            value={(currentData.customFields as any)?.[field.id] || ''}
+                                            onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
+                                        />
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-center text-sm text-muted-foreground py-8">{t('staff.noCustomFields')}</p>
+                            )}
+                        </div>
                     </div>
                 </div>
             </ScrollArea>
@@ -1248,5 +1291,6 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
 
 
