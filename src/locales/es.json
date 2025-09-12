@@ -772,22 +772,11 @@
         "interruptionEnd": "Fin Interrupción",
         "addInterruption": "Añadir otra interrupción",
         "tenure": "Antigüedad en el club",
-        "coachFields": {
-            "personal": [
-                {"id": "name", "label": "Nombre"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
-                {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"}, {"id": "address", "label": "Dirección"},
-                {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}
-            ],
-            "contact": [
-                {"id": "tutorName", "label": "Nombre del Tutor/a"}, {"id": "tutorLastName", "label": "Apellidos del Tutor/a"},
-                {"id": "tutorDni", "label": "NIF del Tutor/a"}, {"id": "email", "label": "Email de Contacto"},
-                {"id": "phone", "label": "Teléfono de Contacto"}
-            ],
-            "payment": [
-                {"id": "role", "label": "Cargo"}, {"id": "teamName", "label": "Equipo"}, {"id": "iban", "label": "IBAN"},
-                {"id": "monthlyPayment", "label": "Pago Mensual (€)"}, {"id": "kitSize", "label": "Talla de Equipación"}
-            ]
-        },
+        "coachFields": [
+            {"id": "name", "label": "Nombre"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
+            {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"}, {"id": "address", "label": "Dirección"},
+            {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}
+        ],
         "fields": {
             "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "nationality": "Nacionalidad",
             "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal", "tutorName": "Nombre del Tutor/a",
@@ -1109,5 +1098,138 @@
             "inProgress": "En Progreso",
             "resolved": "Resuelta"
         }
+    },
+    "clubFiles": {
+        "title": "Archivos del Club",
+        "description": "Gestiona todos los documentos importantes del club y de sus miembros.",
+        "tabs": {
+            "documents": "Documentos",
+            "request": "Solicitar Archivo"
+        },
+        "allDocumentsTitle": "Todos los Documentos",
+        "allDocumentsDesc": "Busca, filtra y gestiona todos los archivos del club.",
+        "searchPlaceholder": "Buscar por nombre...",
+        "filterByCategory": "Filtrar por categoría",
+        "allCategories": "Todas las categorías",
+        "filterByOwner": "Filtrar por propietario",
+        "allOwners": "Todos los propietarios",
+        "uploadButton": "Subir Documento",
+        "uploadModal": {
+            "title": "Subir Nuevo Documento",
+            "description": "Añade un nuevo archivo al repositorio del club.",
+            "nameLabel": "Nombre del Documento",
+            "namePlaceholder": "p.ej., Autorización Desplazamiento",
+            "categoryLabel": "Categoría",
+            "categoryPlaceholder": "Selecciona una categoría",
+            "assignLabel": "Asignar a",
+            "ownerPlaceholder": "Seleccionar propietario...",
+            "searchOwnerPlaceholder": "Buscar miembro...",
+            "noOwnerFound": "No se encontró ningún miembro.",
+            "fileLabel": "Archivo",
+            "fileHint": "Tamaño máximo: 10MB.",
+            "saveButton": "Subir y Guardar"
+        },
+        "table": {
+            "fileName": "Nombre del Archivo",
+            "category": "Categoría",
+            "owner": "Propietario",
+            "uploadDate": "Fecha de Subida",
+            "actions": "Acciones"
+        },
+        "noDocuments": "No se han encontrado documentos con los filtros actuales.",
+        "noCategory": "Sin categoría",
+        "club": "Club",
+        "confirmDeleteTitle": "¿Eliminar Documento?",
+        "confirmDeleteDesc": "Esta acción no se puede deshacer. El archivo se eliminará permanentemente.",
+        "roles": {
+            "player": "Jugador",
+            "coach": "Entrenador"
+        },
+        "categories": [
+            { "value": "identificacion", "label": "Identificación (DNI/Pasaporte)" },
+            { "value": "medico", "label": "Médico (Certificados, Informes)" },
+            { "value": "autorizacion", "label": "Autorizaciones" },
+            { "value": "federativo", "label": "Federativo (Fichas, Licencias)" },
+            { "value": "club", "label": "Documentación del Club" },
+            { "value": "otro", "label": "Otro" }
+        ],
+        "errors": {
+            "loadError": "No se pudieron cargar los documentos.",
+            "authErrorTitle": "Error de autenticación",
+            "authErrorDesc": "Por favor, vuelve a iniciar sesión.",
+            "missingDataTitle": "Faltan Datos",
+            "missingDataDesc": "Debes rellenar todos los campos obligatorios.",
+            "fileTooLargeTitle": "Archivo demasiado grande",
+            "fileTooLargeDesc": "El archivo no puede superar los 10 MB.",
+            "uploadErrorDesc": "Se ha producido un error al subir el archivo.",
+            "uploadErrorUnauthorized": "No tienes permisos para subir archivos.",
+            "uploadErrorTitle": "Error al Subir",
+            "deleteError": "No se pudo eliminar el documento.",
+            "uploadErrorDescDefault": "Se ha producido un error al subir el archivo.",
+            "loadErrorDetails": "No se pudieron cargar los detalles de la solicitud."
+        },
+        "uploadSuccessTitle": "Archivo Subido",
+        "uploadSuccessDesc": "El archivo '{documentName}' se ha subido correctamente.",
+        "deleteSuccessTitle": "Documento Eliminado",
+        "deleteSuccessDesc": "El documento '{documentName}' ha sido eliminado.",
+        "fileRequest": {
+            "title": "Solicitar Archivos a Miembros",
+            "description": "Envía un enlace seguro a uno o varios miembros para que suban un documento.",
+            "docTitleLabel": "Nombre del Documento a Solicitar",
+            "docTitlePlaceholder": "p.ej., Foto de carnet, Copia del DNI",
+            "messageLabel": "Mensaje Adicional (Opcional)",
+            "messagePlaceholder": "Añade aquí cualquier instrucción o comentario...",
+            "attachmentLabel": "Adjuntar Archivo (Opcional)",
+            "attachmentHint": "Puedes adjuntar un documento (PDF, Word...) para que el destinatario lo rellene y lo vuelva a subir.",
+            "filterByType": "Filtrar por Tipo",
+            "selectType": "Seleccionar tipo...",
+            "typesSelected": "{count} tipo(s) seleccionado(s)",
+            "searchType": "Buscar tipo...",
+            "noTypeFound": "No se encontró el tipo.",
+            "filterByTeam": "Filtrar por Equipo",
+            "selectTeam": "Seleccionar equipo...",
+            "teamsSelected": "{count} equipo(s) seleccionado(s)",
+            "searchTeam": "Buscar equipo...",
+            "noTeamFound": "No se encontró el equipo.",
+            "recipients": "Destinatarios",
+            "membersSelected": "{count} miembro(s) seleccionado(s)",
+            "selectFrom": "Seleccionar de {count} miembros filtrados...",
+            "selectRecipients": "Seleccionar Destinatarios",
+            "selectRecipientsDesc": "Elige los miembros que recibirán esta solicitud de archivo.",
+            "searchMember": "Buscar miembro...",
+            "noMemberFound": "No se encontró ningún miembro.",
+            "selectAll": "Seleccionar todos los {count} miembros",
+            "sendTo": "La solicitud se enviará a {count} destinatario(s).",
+            "sending": "Enviando...",
+            "sendRequest": "Enviar Solicitud a {count} Miembro(s)",
+            "successTitle": "Solicitudes Enviadas",
+            "successDesc": "Se han enviado {count} solicitudes de archivo correctamente.",
+            "errors": {
+                "noClub": "No se pudo identificar el club.",
+                "noRecipients": "Debes seleccionar al menos un destinatario.",
+                "noDocTitle": "El título del documento es obligatorio."
+            }
+        },
+        "history": {
+            "title": "Historial de Solicitudes",
+            "description": "Consulta el estado de los lotes de solicitudes de archivos enviados.",
+            "noRequests": "Aún no se ha enviado ninguna solicitud de archivos.",
+            "requestedOn": "Solicitado el",
+            "of": "de",
+            "completed": "completados",
+            "viewDetails": "Ver Detalles",
+            "delete": "Eliminar Lote",
+            "modalTitle": "Detalles del Lote",
+            "modalDescription": "Listado de miembros que aún no han subido el archivo solicitado.",
+            "allCompleted": "¡Genial! Todos los miembros han completado la solicitud.",
+            "close": "Cerrar",
+            "confirmDeleteDesc": "¿Estás seguro de que quieres eliminar el lote de solicitud para '{docTitle}'? Se borrarán todas las peticiones asociadas, pero no los archivos que ya se hayan subido.",
+            "deleteSuccess": "Lote de solicitud eliminado correctamente.",
+            "errors": {
+                "delete": "No se pudo eliminar el lote de solicitud."
+            }
+        }
     }
 }
+
+    

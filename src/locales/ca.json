@@ -574,7 +574,7 @@
         },
         "editor": {
             "title": "Editor d'Horaris",
-            "description": "Modifica els entrenaments per al {day}.",
+            "description": "Modifica los entrenamientos para el {day}.",
             "generalSettings": "Ajustos Generals",
             "templateColor": "Color de la Plantilla",
             "venues": "Instal·lacions",
@@ -1109,5 +1109,138 @@
             "inProgress": "En Progrés",
             "resolved": "Resolta"
         }
+    },
+    "clubFiles": {
+        "title": "Arxius del Club",
+        "description": "Gestiona tots els documents importants del club i dels seus membres.",
+        "tabs": {
+            "documents": "Documents",
+            "request": "Sol·licitar Arxiu"
+        },
+        "allDocumentsTitle": "Tots els Documents",
+        "allDocumentsDesc": "Busca, filtra i gestiona tots els arxius del club.",
+        "searchPlaceholder": "Cercar per nom...",
+        "filterByCategory": "Filtrar per categoria",
+        "allCategories": "Totes les categories",
+        "filterByOwner": "Filtrar per propietari",
+        "allOwners": "Tots els propietaris",
+        "uploadButton": "Pujar Document",
+        "uploadModal": {
+            "title": "Pujar Nou Document",
+            "description": "Afegeix un nou arxiu al repositori del club.",
+            "nameLabel": "Nom del Document",
+            "namePlaceholder": "p.ex., Autorització Desplaçament",
+            "categoryLabel": "Categoria",
+            "categoryPlaceholder": "Selecciona una categoria",
+            "assignLabel": "Assignar a",
+            "ownerPlaceholder": "Seleccionar propietari...",
+            "searchOwnerPlaceholder": "Cercar membre...",
+            "noOwnerFound": "No s'ha trobat cap membre.",
+            "fileLabel": "Arxiu",
+            "fileHint": "Mida màxima: 10MB.",
+            "saveButton": "Pujar i Desar"
+        },
+        "table": {
+            "fileName": "Nom de l'Arxiu",
+            "category": "Categoria",
+            "owner": "Propietari",
+            "uploadDate": "Data de Pujada",
+            "actions": "Accions"
+        },
+        "noDocuments": "No s'han trobat documents amb els filtres actuals.",
+        "noCategory": "Sense categoria",
+        "club": "Club",
+        "confirmDeleteTitle": "Eliminar Document?",
+        "confirmDeleteDesc": "Aquesta acció no es pot desfer. L'arxiu s'eliminarà permanentment.",
+        "roles": {
+            "player": "Jugador",
+            "coach": "Entrenador"
+        },
+        "categories": [
+            { "value": "identificacion", "label": "Identificació (DNI/Passaport)" },
+            { "value": "medico", "label": "Mèdic (Certificats, Informes)" },
+            { "value": "autorizacion", "label": "Autoritzacions" },
+            { "value": "federativo", "label": "Federatiu (Fitxes, Llicències)" },
+            { "value": "club", "label": "Documentació del Club" },
+            { "value": "otro", "label": "Altres" }
+        ],
+        "errors": {
+            "loadError": "No s'han pogut carregar els documents.",
+            "authErrorTitle": "Error d'autenticació",
+            "authErrorDesc": "Si us plau, torna a iniciar sessió.",
+            "missingDataTitle": "Falten Dades",
+            "missingDataDesc": "Has d'omplir tots els camps obligatoris.",
+            "fileTooLargeTitle": "Arxiu massa gran",
+            "fileTooLargeDesc": "L'arxiu no pot superar els 10 MB.",
+            "uploadErrorDesc": "S'ha produït un error en pujar l'arxiu.",
+            "uploadErrorUnauthorized": "No tens permisos per pujar arxius.",
+            "uploadErrorTitle": "Error en Pujar",
+            "deleteError": "No s'ha pogut eliminar el document.",
+            "uploadErrorDescDefault": "S'ha produït un error en pujar l'arxiu.",
+            "loadErrorDetails": "No s'han pogut carregar els detalls de la sol·licitud."
+        },
+        "uploadSuccessTitle": "Arxiu Pujat",
+        "uploadSuccessDesc": "L'arxiu '{documentName}' s'ha pujat correctament.",
+        "deleteSuccessTitle": "Document Eliminat",
+        "deleteSuccessDesc": "El document '{documentName}' ha estat eliminat.",
+        "fileRequest": {
+            "title": "Sol·licitar Arxius a Membres",
+            "description": "Envia un enllaç segur a un o diversos membres perquè pugin un document.",
+            "docTitleLabel": "Nom del Document a Sol·licitar",
+            "docTitlePlaceholder": "p.ex., Foto de carnet, Còpia del DNI",
+            "messageLabel": "Missatge Addicional (Opcional)",
+            "messagePlaceholder": "Afegeix aquí qualsevol instrucció o comentari...",
+            "attachmentLabel": "Adjuntar Arxiu (Opcional)",
+            "attachmentHint": "Pots adjuntar un document (PDF, Word...) perquè el destinatari l'ompli i el torni a pujar.",
+            "filterByType": "Filtrar per Tipus",
+            "selectType": "Seleccionar tipus...",
+            "typesSelected": "{count} tipus seleccionat(s)",
+            "searchType": "Cercar tipus...",
+            "noTypeFound": "No s'ha trobat el tipus.",
+            "filterByTeam": "Filtrar per Equip",
+            "selectTeam": "Seleccionar equip...",
+            "teamsSelected": "{count} equip(s) seleccionat(s)",
+            "searchTeam": "Cercar equip...",
+            "noTeamFound": "No s'ha trobat l'equip.",
+            "recipients": "Destinataris",
+            "membersSelected": "{count} membre(s) seleccionat(s)",
+            "selectFrom": "Seleccionar de {count} membres filtrats...",
+            "selectRecipients": "Seleccionar Destinataris",
+            "selectRecipientsDesc": "Tria els membres que rebran aquesta sol·licitud d'arxiu.",
+            "searchMember": "Cercar membre...",
+            "noMemberFound": "No s'ha trobat cap membre.",
+            "selectAll": "Seleccionar tots els {count} membres",
+            "sendTo": "La sol·licitud s'enviarà a {count} destinatari(s).",
+            "sending": "Enviant...",
+            "sendRequest": "Enviar Sol·licitud a {count} Membre(s)",
+            "successTitle": "Sol·licituds Enviades",
+            "successDesc": "S'han enviat {count} sol·licituds d'arxiu correctament.",
+            "errors": {
+                "noClub": "No s'ha pogut identificar el club.",
+                "noRecipients": "Has de seleccionar almenys un destinatari.",
+                "noDocTitle": "El títol del document és obligatori."
+            }
+        },
+        "history": {
+            "title": "Historial de Sol·licituds",
+            "description": "Consulta l'estat dels lots de sol·licituds d'arxius enviats.",
+            "noRequests": "Encara no s'ha enviat cap sol·licitud d'arxius.",
+            "requestedOn": "Sol·licitat el",
+            "of": "de",
+            "completed": "completats",
+            "viewDetails": "Veure Detalls",
+            "delete": "Eliminar Lot",
+            "modalTitle": "Detalls del Lot",
+            "modalDescription": "Llistat de membres que encara no han pujat l'arxiu sol·licitat.",
+            "allCompleted": "Genial! Tots els membres han completat la sol·licitud.",
+            "close": "Tancar",
+            "confirmDeleteDesc": "Estàs segur que vols eliminar el lot de sol·licitud per a '{docTitle}'? S'esborraran totes les peticions associades, però no els arxius que ja s'hagin pujat.",
+            "deleteSuccess": "Lot de sol·licitud eliminat correctament.",
+            "errors": {
+                "delete": "No s'ha pogut eliminar el lot de sol·licitud."
+            }
+        }
     }
 }
+
+    
