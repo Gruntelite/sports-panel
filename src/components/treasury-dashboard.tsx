@@ -246,14 +246,6 @@ function FinancialChart({ players, oneTimePayments, coaches, sponsorships, recur
     );
 }
 
-const MONTHS = [
-    { label: "Enero", value: 0 }, { label: "Febrero", value: 1 }, { label: "Marzo", value: 2 },
-    { label: "Abril", value: 3 }, { label: "Mayo", value: 4 }, { label: "Junio", value: 5 },
-    { label: "Julio", value: 6 }, { label: "Agosto", value: 7 }, { label: "Septiembre", value: 8 },
-    { label: "Octubre", value: 9 }, { label: "Noviembre", value: 10 }, { label: "Diciembre", value: 11 }
-];
-
-
 export function TreasuryDashboard() {
   const { t, locale } = useTranslation();
   const { toast } = useToast();
@@ -318,6 +310,8 @@ export function TreasuryDashboard() {
   const [localCoachFeeExcluded, setLocalCoachFeeExcluded] = useState<number[]>([]);
   const [hasChanges, setHasChanges] = useState(false);
   const [timeRange, setTimeRange] = useState<'monthly' | 'annual'>('monthly');
+
+  const MONTHS = t('months', { returnObjects: true }) as { label: string; value: number }[];
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -1240,11 +1234,11 @@ export function TreasuryDashboard() {
                                 <DropdownMenuContent align="end">
                                     <DropdownMenuItem onSelect={() => handleOpenSponsorshipModal('edit', spon)}>
                                         <Edit className="mr-2 h-4 w-4" />
-                                        Editar
+                                        {t('teams.edit')}
                                     </DropdownMenuItem>
                                     <DropdownMenuItem className="text-destructive" onSelect={() => setSponsorshipToDelete(spon)}>
                                         <Trash2 className="mr-2 h-4 w-4" />
-                                        Eliminar
+                                        {t('teams.delete')}
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                                 </DropdownMenu>
@@ -1309,7 +1303,7 @@ export function TreasuryDashboard() {
                                 <TableRow key={expense.id}>
                                     <TableCell>{expense.title}</TableCell>
                                     <TableCell>{expense.amount.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'})}</TableCell>
-                                    <TableCell>{format(new Date(expense.date), "LLL yyyy", { locale: es })}</TableCell>
+                                    <TableCell>{format(new Date(expense.date), "LLL yyyy", { locale: locale === 'ca' ? ca : es })}</TableCell>
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
@@ -1672,5 +1666,3 @@ export function TreasuryDashboard() {
     </>
   );
 }
-
-    

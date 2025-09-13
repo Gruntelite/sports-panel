@@ -1,3 +1,4 @@
+
 {
     "common": {
         "saveChanges": "Desar Canvis",
@@ -295,6 +296,12 @@
         { "label": "Waterpolo", "value": "waterpolo" },
         { "label": "Windsurf", "value": "windsurf" }
     ],
+    "months": [
+        { "label": "Gener", "value": 0 }, { "label": "Febrer", "value": 1 }, { "label": "Març", "value": 2 },
+        { "label": "Abril", "value": 3 }, { "label": "Maig", "value": 4 }, { "label": "Juny", "value": 5 },
+        { "label": "Juliol", "value": 6 }, { "label": "Agost", "value": 7 }, { "label": "Setembre", "value": 8 },
+        { "label": "Octubre", "value": 9 }, { "label": "Novembre", "value": 10 }, { "label": "Desembre", "value": 11 }
+    ],
     "communications": {
         "description": "Contacta amb els membres del teu club i configura els teus enviaments.",
         "tabs": {
@@ -541,7 +548,7 @@
             "recurringDescription": "Gestiona les despeses fixes mensuals del club.",
             "oneOffTitle": "Despeses Puntuals",
             "oneOffDescription": "Registra les despeses extraordinàries o no periòdiques.",
-            "add": "Afegir",
+            "add": "Afegir Despesa",
             "modal": {
                 "addRecurringTitle": "Afegir Despesa Recurrent",
                 "editRecurringTitle": "Editar Despesa Recurrent",
@@ -982,7 +989,7 @@
         "confirmDeleteDesc": "Estàs a punt d'eliminar l'esdeveniment '{eventName}' i totes les seves dades d'inscripció. Aquesta acció és irreversible.",
         "modal": {
             "createTitle": "Crear Nou Formulari d'Inscripció",
-            "editTitle": "Editar Formulari d'Inscripció",
+            "editTitle": "Editar Formulari",
             "description": "Configura els detalls i els camps del teu formulari.",
             "selectSection": "Seleccionar secció...",
             "tabs": {
@@ -1067,9 +1074,10 @@
             "fileTooLargeTitle": "Arxiu massa gran",
             "fileTooLargeDesc": "L'arxiu no pot superar els 10 MB.",
             "uploadErrorTitle": "Error en Pujar",
-            "uploadErrorDescDefault": "S'ha produït un error en pujar l'arxiu.",
+            "uploadErrorDesc": "S'ha produït un error en pujar l'arxiu.",
             "uploadErrorUnauthorized": "No tens permisos per pujar arxius.",
-            "deleteProtocol": "No s'ha pogut eliminar el protocol."
+            "deleteProtocol": "No s'ha pogut eliminar el protocol.",
+            "uploadErrorDescDefault": "S'ha produït un error en pujar l'arxiu."
         },
         "incidentUpdated": "Incidència Actualitzada",
         "incidentUpdatedDesc": "La incidència s'ha actualitzat correctament.",
