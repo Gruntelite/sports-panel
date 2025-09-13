@@ -549,6 +549,7 @@
             "oneOffTitle": "Despeses Puntuals",
             "oneOffDescription": "Registra les despeses extraordinàries o no periòdiques.",
             "add": "Afegir Despesa",
+            "expenseExclusion": "Excloure mesos de les despeses recurrents",
             "modal": {
                 "addRecurringTitle": "Afegir Despesa Recurrent",
                 "editRecurringTitle": "Editar Despesa Recurrent",
@@ -1367,3 +1368,5 @@
         }
     }
 }
+
+    

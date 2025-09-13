@@ -1618,7 +1618,7 @@ export function TreasuryDashboard() {
                 <div className="space-y-2"><Label htmlFor="re-title">{t('treasury.otherPayments.concept')}</Label><Input id="re-title" placeholder={t('treasury.expenses.modal.conceptPlaceholderRecurring')} value={recurringExpenseData.title || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
                 <div className="space-y-2"><Label htmlFor="re-amount">{t('treasury.otherPayments.amount')} (€)</Label><Input id="re-amount" type="number" value={recurringExpenseData.amount || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
                 <div className="space-y-2">
-                    <Label>{t('treasury.fees.staffPaymentExclusion')}</Label>
+                    <Label>{t('treasury.expenses.expenseExclusion')}</Label>
                     <div className="grid grid-cols-3 gap-2">
                         {MONTHS.map(month => (
                             <Button
@@ -1666,3 +1666,5 @@ export function TreasuryDashboard() {
     </>
   );
 }
+
+    

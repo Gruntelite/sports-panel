@@ -549,6 +549,7 @@
             "oneOffTitle": "Gastos Puntuales",
             "oneOffDescription": "Registra los gastos extraordinarios o no periódicos.",
             "add": "Añadir Gasto",
+            "expenseExclusion": "Excluir meses de los gastos recurrentes",
             "modal": {
                 "addRecurringTitle": "Añadir Gasto Recurrente",
                 "editRecurringTitle": "Editar Gasto Recurrente",
@@ -1123,3 +1124,5 @@
         }
     }
 }
+
+    
