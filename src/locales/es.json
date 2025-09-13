@@ -524,13 +524,35 @@
             "sponsor": "Patrocinador",
             "amount": "Importe",
             "actions": "Acciones",
-            "none": "Todavía no has añadido ningún patrocinio."
+            "none": "Todavía no has añadido ningún patrocinio.",
+            "modal": {
+                "createTitle": "Añadir Nuevo Patrocinio",
+                "editTitle": "Editar Patrocinio",
+                "description": "Rellena la información del acuerdo de patrocinio.",
+                "sponsorName": "Nombre del Patrocinador",
+                "sponsorPlaceholder": "p.ej., Empresa S.L.",
+                "frequency": "Frecuencia",
+                "descriptionLabel": "Descripción (Opcional)",
+                "descriptionPlaceholder": "Detalles del acuerdo, contacto, etc.",
+                "confirmDelete": "Esta acción no se puede deshacer. Se eliminará permanentemente el patrocinio de \"{sponsorName}\"."
+            }
         },
         "expenses": {
             "recurringTitle": "Gastos Recurrentes",
             "recurringDescription": "Gestiona los gastos fijos mensuales del club.",
             "oneOffTitle": "Gastos Puntuales",
-            "oneOffDescription": "Registra los gastos extraordinarios o no periódicos."
+            "oneOffDescription": "Registra los gastos extraordinarios o no periódicos.",
+            "add": "Añadir",
+            "modal": {
+                "addRecurringTitle": "Añadir Gasto Recurrente",
+                "editRecurringTitle": "Editar Gasto Recurrente",
+                "conceptPlaceholderRecurring": "p.ej., Alquiler de campos",
+                "addOneOffTitle": "Añadir Gasto Puntual",
+                "editOneOffTitle": "Editar Gasto Puntual",
+                "conceptPlaceholderOneOff": "p.ej., Compra de balones",
+                "confirmDeleteRecurring": "Se eliminará permanentemente el gasto recurrente \"{title}\".",
+                "confirmDeleteOneOff": "Se eliminará permanentemente el gasto \"{title}\"."
+            }
         },
         "otherPayments": {
             "title": "Otros Ingresos y Pagos",
@@ -541,7 +563,24 @@
             "issueDate": "Fecha de Emisión",
             "recipients": "Destinatarios",
             "actions": "Acciones",
-            "none": "No hay pagos puntuales registrados."
+            "none": "No hay pagos puntuales registrados.",
+            "modal": {
+                "createTitle": "Crear Nuevo Pago Puntual",
+                "editTitle": "Editar Pago Puntual",
+                "description": "Define los detalles del cobro único que quieres generar. Se notificará a los destinatarios seleccionados.",
+                "conceptPlaceholder": "p.ej., Inscripción Campus Verano",
+                "descriptionLabel": "Descripción (Opcional)",
+                "descriptionPlaceholder": "Información adicional sobre el pago.",
+                "targetTeams": "Equipos Destinatarios",
+                "selectTeams": "Seleccionar equipos...",
+                "searchTeam": "Buscar equipo...",
+                "noTeamFound": "No se encontraron equipos.",
+                "individualUsers": "Usuarios Individuales",
+                "selectUsers": "Seleccionar usuarios...",
+                "searchUser": "Buscar usuario...",
+                "noUserFound": "No se encontraron usuarios.",
+                "confirmDelete": "Esta acción no se puede deshacer. Se eliminará permanentemente el pago \"{concept}\"."
+            }
         }
     },
     "schedules": {
@@ -556,258 +595,14 @@
         "enableOrder": "Habilitar Ordenación",
         "saveOrder": "Guardar Orden",
         "createTemplateTitle": "Crear Nueva Plantilla",
-        "createTemplateDesc": "Dale un nombre a tu nueva plantilla de horarios.",
+        "createTemplateDesc": "Rellena los detalles para crear una nueva plantilla en tu club.",
         "templateName": "Nombre de la plantilla",
-        "renameTemplateTitle": "Renombrar Plantilla",
-        "renameTemplateDesc": "Introduce el nuevo nombre para la plantilla '{templateName}'.",
-        "newTemplateName": "Nuevo nombre",
-        "templateCreated": "Plantilla creada",
-        "templateCreatedDesc": "La plantilla '{templateName}' ha sido creada correctamente.",
-        "templateRenamed": "Plantilla renombrada",
-        "templateRenamedDesc": "El nombre de la plantilla se ha actualizado.",
-        "templateDeleted": "Plantilla eliminada",
-        "templateDeletedDesc": "La plantilla de horarios ha sido eliminada.",
-        "deleteTemplateConfirmTitle": "¿Eliminar plantilla?",
-        "deleteTemplateConfirmDesc": "Estás a punto de eliminar la plantilla '{templateName}'. Esta acción no se puede deshacer.",
-        "tabs": {
-            "editor": "Editor de Plantilla",
-            "calendar": "Calendario de Eventos",
-            "preview": "Vista Previa Semanal"
-        },
-        "editor": {
-            "title": "Editor de Horarios",
-            "description": "Modifica los entrenamientos para el {day}.",
-            "generalSettings": "Ajustes Generales",
-            "templateColor": "Color de la Plantilla",
-            "venues": "Instalaciones",
-            "newVenuePlaceholder": "Nombre de la nueva instalación...",
-            "venueAdded": "Instalación añadida",
-            "venueAddedDesc": "La nueva instalación ha sido añadida a la plantilla.",
-            "venueRemoved": "Instalación eliminada",
-            "venueRemovedDesc": "La instalación ha sido eliminada de la plantilla.",
-            "startTime": "Hora de Inicio",
-            "endTime": "Hora de Fin",
-            "assignmentsFor": "Asignaciones para el {day}",
-            "team": "Equipo",
-            "venue": "Instalación",
-            "start": "Inicio",
-            "end": "Fin",
-            "addAssignment": "Añadir Asignación",
-            "saveTemplate": "Guardar Cambios en la Plantilla",
-            "templateSaved": "Plantilla guardada",
-            "templateSavedDesc": "Los cambios para el {day} se han guardado correctamente.",
-            "noVenues": "Sin instalaciones"
-        },
-        "calendar": {
-            "today": "Hoy",
-            "defaultTemplate": "Plantilla por Defecto",
-            "selectTemplate": "Seleccionar plantilla",
-            "searchTemplate": "Buscar plantilla...",
-            "noTemplateFound": "No se encontró la plantilla.",
-            "actions": "Acciones",
-            "addEvent": "Añadir Evento",
-            "addEventToSelection": "Añadir evento a la selección",
-            "assignTemplate": "Asignar plantilla a selección",
-            "revertToDefault": "Revertir a plantilla por defecto",
-            "daysShort": ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
-            "modal": {
-                "addTitle": "Añadir Nuevo Evento",
-                "editTitle": "Editar Evento",
-                "description": "Crea un evento personalizado en el calendario.",
-                "eventTitle": "Título del evento",
-                "startDate": "Fecha de inicio",
-                "endDate": "Fecha de fin",
-                "startTime": "Hora de inicio",
-                "endTime": "Hora de fin",
-                "location": "Ubicación",
-                "eventColor": "Color del evento",
-                "deleteEvent": "Eliminar Evento",
-                "saveEvent": "Guardar Evento"
-            },
-            "dayDetail": {
-                "title": "Detalles del",
-                "noEvents": "No hay eventos para este día.",
-                "close": "Cerrar"
-            }
-        },
-        "daysOfWeek": ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-    },
-    "players": {
-        "title": "Jugadores",
-        "description": "Gestiona los jugadores de tu club y su información.",
-        "requestUpdate": "Solicitar Actualización",
-        "columns": "Columnas",
-        "toggleColumns": "Mostrar/Ocultar Columnas",
-        "filterByTeam": "Filtrar por equipo",
-        "allTeams": "Todos los equipos",
-        "actions": "Acciones",
-        "assignToTeam": "Asignar a Equipo",
-        "deleteSelected": "Eliminar Seleccionados",
-        "addPlayer": "Añadir Jugador",
-        "selectAll": "Seleccionar todo",
-        "missingData": "Faltan datos por rellenar",
-        "toggleMenu": "Alternar menú",
-        "viewProfile": "Ver Ficha",
-        "edit": "Editar",
-        "delete": "Eliminar",
-        "showing": "Mostrando",
-        "of": "de",
-        "playersCount": "jugadores",
-        "addPlayerTitle": "Añadir Nuevo Jugador",
-        "editPlayerTitle": "Editar Jugador",
-        "addPlayerDesc": "Rellena la información para añadir un nuevo jugador al club.",
-        "editPlayerDesc": "Modifica la información del jugador.",
-        "playerPhoto": "Foto del Jugador",
-        "upload": "Subir",
-        "selectSection": "Seleccionar sección...",
-        "personalData": "Datos Personales",
-        "contactAndBank": "Contacto y Banco",
-        "sportsData": "Datos Deportivos",
-        "otherData": "Otros Datos",
-        "age": "Edad",
-        "years": "años",
-        "isOwnTutor": "El jugador es su propio tutor (mayor de 18 años)",
-        "tutorData": "Datos del Tutor/a",
-        "unassigned": "Sin equipo",
-        "noCustomFields": "No hay campos personalizados para los jugadores.",
-        "confirmDeleteTitle": "¿Estás seguro?",
-        "confirmDeleteDesc": "Esta acción no se puede deshacer. Se eliminará permanentemente al jugador {playerName}.",
-        "confirmBulkDeleteDesc": "Esta acción no se puede deshacer. Se eliminarán permanentemente {playerCount} jugadores.",
-        "deletePlayers": "Eliminar Jugadores",
-        "step1Title": "Paso 1: Selecciona los campos a actualizar",
-        "step1Desc": "Elige qué información quieres que actualicen los miembros de tu club.",
-        "nextStep": "Siguiente: Seleccionar Miembros",
-        "step2Title": "Paso 2: Selecciona los destinatarios",
-        "step2Desc": "Elige los jugadores que recibirán la solicitud de actualización.",
-        "back": "Atrás",
-        "sending": "Enviando...",
-        "sendTo": "Enviar a {count} Jugador(es)",
-        "fields": {
-            "personal": [
-                {"id": "name", "label": "Nombre"}, {"id": "lastName", "label": "Apellidos"}, {"id": "birthDate", "label": "Fecha de Nacimiento"},
-                {"id": "dni", "label": "NIF"}, {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"},
-                {"id": "healthCardNumber", "label": "Nº Tarjeta Sanitaria"}, {"id": "address", "label": "Dirección"},
-                {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}, {"id": "startDate", "label": "Fecha de Alta"},
-                {"id": "endDate", "label": "Fecha de Baja"}
-            ],
-            "contact": [
-                {"id": "isOwnTutor", "label": "Es su propio tutor/a"}, {"id": "tutorName", "label": "Nombre del Tutor/a"},
-                {"id": "tutorLastName", "label": "Apellidos del Tutor/a"}, {"id": "tutorDni", "label": "NIF del Tutor/a"},
-                {"id": "tutorEmail", "label": "Email de Contacto"}, {"id": "tutorPhone", "label": "Teléfono de Contacto"},
-                {"id": "iban", "label": "IBAN"}
-            ],
-            "sports": [
-                {"id": "teamName", "label": "Equipo"}, {"id": "jerseyNumber", "label": "Dorsal"},
-                {"id": "monthlyFee", "label": "Cuota Mensual (€)"}, {"id": "kitSize", "label": "Talla de Equipación"},
-                {"id": "medicalCheckCompleted", "label": "Revisión médica completada"}
-            ],
-            "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "select": "Seleccionar...",
-            "nationality": "Nacionalidad", "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal",
-            "startDate": "Fecha de Alta", "endDate": "Fecha de Baja", "currentlyActive": "Actualmente de alta", "hasInterruptions": "Ha tenido interrupciones en su alta",
-            "interruptionStart": "Inicio Interrupción", "interruptionEnd": "Fin Interrupción", "addInterruption": "Añadir otra interrupción", "tenure": "Antigüedad en el club",
-            "tutorName": "Nombre del Tutor/a", "tutorLastName": "Apellidos del Tutor/a", "tutorDni": "NIF del Tutor/a", "email": "Email",
-            "tutorEmail": "Email del Tutor/a", "phone": "Teléfono", "tutorPhone": "Teléfono del Tutor/a", "iban": "IBAN Cuenta Bancaria", "team": "Equipo",
-            "selectTeam": "Selecciona un equipo", "jerseyNumber": "Dorsal", "monthlyFee": "Cuota (€)", "kitSize": "Talla de Equipación",
-            "kitSizePlaceholder": "p.ej., L, 12, M", "medicalCheck": "Revisión médica completada"
-        }
-    },
-    "coaches": {
-        "title": "Entrenadores",
-        "description": "Gestiona los entrenadores y el cuerpo técnico de tu club.",
-        "requestUpdate": "Solicitar Actualización",
-        "columns": "Columnas",
-        "toggleColumns": "Mostrar/Ocultar Columnas",
-        "filterByTeam": "Filtrar por equipo",
-        "allTeams": "Todos los equipos",
-        "actions": "Acciones",
-        "assignToTeam": "Asignar a Equipo",
-        "unassigned": "Sin equipo",
-        "deleteSelected": "Eliminar Seleccionados",
-        "addCoach": "Añadir Entrenador",
-        "selectAll": "Seleccionar todo",
-        "missingData": "Faltan datos por rellenar",
-        "toggleMenu": "Alternar menú",
-        "viewProfile": "Ver Ficha",
-        "edit": "Editar",
-        "delete": "Eliminar",
-        "showing": "Mostrando <strong>{count}</strong> de <strong>{total}</strong> entrenadores",
-        "coachesCount": "entrenadores",
-        "addCoachTitle": "Añadir Nuevo Entrenador",
-        "editCoachTitle": "Editar Entrenador",
-        "addCoachDesc": "Rellena la información para añadir un nuevo miembro al cuerpo técnico.",
-        "editCoachDesc": "Modifica la información del miembro del cuerpo técnico.",
-        "coachPhoto": "Foto del Entrenador",
-        "upload": "Subir",
-        "selectSection": "Seleccionar sección...",
-        "personalData": "Datos Personales",
-        "contactAndTutor": "Contacto y Tutor",
-        "roleAndTeam": "Rol y Equipo",
-        "otherData": "Otros Datos",
-        "age": "Edad",
-        "years": "años",
-        "isOwnTutor": "El entrenador es su propio tutor (mayor de 18 años)",
-        "tutorData": "Datos del Tutor/a",
-        "noCustomFields": "No hay campos personalizados para los entrenadores.",
-        "confirmDeleteTitle": "¿Estás seguro?",
-        "confirmDeleteDesc": "Esta acción no se puede deshacer. Se eliminará permanentemente a {coachName}.",
-        "confirmBulkDeleteDesc": "Esta acción no se puede deshacer. Se eliminarán permanentemente {coachCount} entrenadores.",
-        "deleteCoaches": "Eliminar Entrenadores",
-        "step1Title": "Paso 1: Selecciona los campos a actualizar",
-        "step1Desc": "Elige qué información quieres que actualice el cuerpo técnico.",
-        "nextStep": "Siguiente: Seleccionar Miembros",
-        "step2Title": "Paso 2: Selecciona los destinatarios",
-        "step2Desc": "Elige los entrenadores que recibirán la solicitud de actualización.",
-        "back": "Atrás",
-        "sendTo": "Enviar a {count} Entrenador(es)",
-        "startDate": "Fecha de Alta",
-        "endDate": "Fecha de Baja",
-        "currentlyActive": "Actualmente de alta",
-        "hasInterruptions": "Ha tenido interrupciones en su alta",
-        "interruptionStart": "Inicio Interrupción",
-        "interruptionEnd": "Fin Interrupción",
-        "addInterruption": "Añadir otra interrupción",
-        "tenure": "Antigüedad en el club",
-        "coachFields": {
-            "personal": [
-                {"id": "name", "label": "Nombre"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
-                {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"}, {"id": "address", "label": "Dirección"},
-                {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}
-            ],
-            "contact": [
-                {"id": "tutorName", "label": "Nombre del Tutor/a"}, {"id": "tutorLastName", "label": "Apellidos del Tutor/a"},
-                {"id": "tutorDni", "label": "NIF del Tutor/a"}, {"id": "email", "label": "Email de Contacto"},
-                {"id": "phone", "label": "Teléfono de Contacto"}
-            ],
-            "payment": [
-                {"id": "role", "label": "Cargo"}, {"id": "teamName", "label": "Equipo"}, {"id": "iban", "label": "IBAN"},
-                {"id": "monthlyPayment", "label": "Pago Mensual (€)"}, {"id": "kitSize", "label": "Talla de Equipación"}
-            ]
-        },
-        "fields": {
-            "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "nationality": "Nacionalidad",
-            "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal", "tutorName": "Nombre del Tutor/a",
-            "tutorLastName": "Apellidos del Tutor/a", "tutorDni": "NIF del Tutor/a", "email": "Email", "phone": "Teléfono", "role": "Cargo",
-            "team": "Equipo Asignado", "iban": "IBAN Cuenta Bancaria", "monthlyPayment": "Pago Mensual (€)", "kitSize": "Talla de Equipación",
-            "contactEmail": "Email de Contacto", "contactPhone": "Teléfono de Contacto"
-        }
-    },
-    "teams": {
-        "title": "Equipos",
-        "description": "Organiza y gestiona todos los equipos de tu club.",
-        "cancelOrder": "Cancelar Ordenación",
-        "enableOrder": "Habilitar Ordenación",
-        "saveOrder": "Guardar Orden",
-        "createTeam": "Crear Equipo",
-        "createTeamTitle": "Crear Nuevo Equipo",
-        "createTeamDesc": "Rellena los detalles para crear un nuevo equipo en tu club.",
-        "teamName": "Nombre del equipo",
         "level": "Nivel/Categoría",
         "minAge": "Edad Mín.",
         "maxAge": "Edad Máx.",
         "image": "Imagen del Equipo",
         "ages": "Edades",
         "edit": "Editar",
-        "delete": "Eliminar",
         "players": "Jugadores",
         "coaches": "Entrenadores",
         "confirmDeleteTitle": "¿Eliminar Equipo?",
@@ -944,7 +739,7 @@
         "confirmDeleteDesc": "Estás a punto de eliminar el evento '{eventName}' y todas sus datos de inscripción. Esta acción es irreversible.",
         "modal": {
             "createTitle": "Crear Nuevo Formulario de Inscripción",
-            "editTitle": "Editar Formulario de Inscripción",
+            "editTitle": "Editar Formulario",
             "description": "Configura los detalles y los campos de tu formulario.",
             "selectSection": "Seleccionar sección...",
             "tabs": {
@@ -994,14 +789,14 @@
             }
         },
         "form": {
-            "title": "Inscritos en: {formTitle}",
+            "title": "Inscritos a: {formTitle}",
             "description": "{count} de {total} plazas ocupadas.",
             "listTitle": "Listado de Inscritos",
             "listDescription": "Aquí puedes ver todas las personas que se han registrado a través del formulario.",
             "downloadCsv": "Descargar CSV",
             "date": "Fecha Inscripción",
             "paid": "Pagado",
-            "noSubmissions": "Aún no hay ninguna inscripción para este evento.",
+            "noSubmissions": "Todavía no hay ninguna inscripción para este evento.",
             "notFound": "Formulario no encontrado.",
             "submissionDate": "Fecha de Inscripción",
             "paymentStatus": "Estado del Pago",
@@ -1010,7 +805,7 @@
         }
     },
     "incidents": {
-        "description": "Registra y gestiona incidencias, y ten a mano los protocolos de actuación del club.",
+        "description": "Registra y gestiona incidencias, y mantén a mano los protocolos de actuación del club.",
         "selectSection": "Seleccionar sección...",
         "tabs": {
             "incidents": "Incidencias",
@@ -1029,9 +824,10 @@
             "fileTooLargeTitle": "Archivo demasiado grande",
             "fileTooLargeDesc": "El archivo no puede superar los 10 MB.",
             "uploadErrorTitle": "Error al Subir",
-            "uploadErrorDescDefault": "Se ha producido un error al subir el archivo.",
+            "uploadErrorDesc": "Se ha producido un error al subir el archivo.",
             "uploadErrorUnauthorized": "No tienes permisos para subir archivos.",
-            "deleteProtocol": "No se pudo eliminar el protocolo."
+            "deleteProtocol": "No se pudo eliminar el protocolo.",
+            "uploadErrorDescDefault": "Se ha producido un error al subir el archivo."
         },
         "incidentUpdated": "Incidencia Actualizada",
         "incidentUpdatedDesc": "La incidencia se ha actualizado correctamente.",
@@ -1063,7 +859,7 @@
                 "involved": "Personas Implicadas",
                 "involvedPlaceholder": "Nombres separados por comas",
                 "description": "Descripción de la Incidencia",
-                "descriptionPlaceholder": "Detalla qué ha sucedido...",
+                "descriptionPlaceholder": "Detalla lo ocurrido...",
                 "status": "Estado",
                 "selectStatus": "Selecciona un estado...",
                 "save": "Guardar Incidencia"
@@ -1097,7 +893,7 @@
             "injury": "Lesión",
             "behavior": "Comportamiento",
             "administrative": "Administrativa",
-            "other": "Otro"
+            "other": "Otros"
         },
         "status": {
             "open": "Abierta",
@@ -1157,7 +953,7 @@
             { "value": "autorizacion", "label": "Autorizaciones" },
             { "value": "federativo", "label": "Federativo (Fichas, Licencias)" },
             { "value": "club", "label": "Documentación del Club" },
-            { "value": "otro", "label": "Otro" }
+            { "value": "otro", "label": "Otros" }
         ],
         "errors": {
             "loadError": "No se pudieron cargar los documentos.",
@@ -1211,7 +1007,7 @@
             "successTitle": "Solicitudes Enviadas",
             "successDesc": "Se han enviado {count} solicitudes de archivo correctamente.",
             "errors": {
-                "noClub": "No se pudo identificar el club.",
+                "noClub": "No se ha podido identificar el club.",
                 "noRecipients": "Debes seleccionar al menos un destinatario.",
                 "noDocTitle": "El título del documento es obligatorio."
             }
@@ -1219,7 +1015,7 @@
         "history": {
             "title": "Historial de Solicitudes",
             "description": "Consulta el estado de los lotes de solicitudes de archivos enviados.",
-            "noRequests": "Aún no se ha enviado ninguna solicitud de archivos.",
+            "noRequests": "Todavía no se ha enviado ninguna solicitud de archivos.",
             "requestedOn": "Solicitado el",
             "of": "de",
             "completed": "completados",
@@ -1229,7 +1025,7 @@
             "modalDescription": "Listado de miembros que aún no han subido el archivo solicitado.",
             "allCompleted": "¡Genial! Todos los miembros han completado la solicitud.",
             "close": "Cerrar",
-            "confirmDeleteDesc": "¿Estás seguro de que quieres eliminar el lote de solicitud para '{docTitle}'? Se borrarán todas las peticiones asociadas, pero no los archivos que ya se hayan subido.",
+            "confirmDeleteDesc": "¿Seguro que quieres eliminar el lote de solicitud para '{docTitle}'? Se borrarán todas las peticiones asociadas, pero no los archivos que ya se hayan subido.",
             "deleteSuccess": "Lote de solicitud eliminado correctamente.",
             "errors": {
                 "delete": "No se pudo eliminar el lote de solicitud."
@@ -1321,4 +1117,3 @@
         }
     }
 }
-

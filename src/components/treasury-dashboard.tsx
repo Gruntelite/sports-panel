@@ -33,7 +33,7 @@ import { Label } from "./ui/label";
 import { Textarea } from "./ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "./ui/command";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, getMonth, getYear, parseISO, startOfMonth, endOfMonth, addMonths, subMonths } from "date-fns";
@@ -1271,11 +1271,11 @@ export function TreasuryDashboard() {
                         <CardTitle>{t('treasury.expenses.recurringTitle')}</CardTitle>
                         <CardDescription>{t('treasury.expenses.recurringDescription')}</CardDescription>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => handleOpenRecurringExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleOpenRecurringExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />{t('treasury.expenses.add')}</Button>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
                     <Table>
-                        <TableHeader><TableRow><TableHead>Concepto</TableHead><TableHead>Importe</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow><TableHead>{t('treasury.otherPayments.concept')}</TableHead><TableHead>{t('treasury.otherPayments.amount')}</TableHead><TableHead>{t('treasury.otherPayments.actions')}</TableHead></TableRow></TableHeader>
                         <TableBody>
                             {recurringExpenses.map(expense => (
                                 <TableRow key={expense.id}>
@@ -1284,7 +1284,7 @@ export function TreasuryDashboard() {
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                            <DropdownMenuContent><DropdownMenuItem onSelect={() => handleOpenRecurringExpenseModal('edit', expense)}>Editar</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setRecurringExpenseToDelete(expense)}>Eliminar</DropdownMenuItem></DropdownMenuContent>
+                                            <DropdownMenuContent><DropdownMenuItem onSelect={() => handleOpenRecurringExpenseModal('edit', expense)}>{t('teams.edit')}</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setRecurringExpenseToDelete(expense)}>{t('teams.delete')}</DropdownMenuItem></DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
@@ -1299,11 +1299,11 @@ export function TreasuryDashboard() {
                         <CardTitle>{t('treasury.expenses.oneOffTitle')}</CardTitle>
                         <CardDescription>{t('treasury.expenses.oneOffDescription')}</CardDescription>
                     </div>
-                    <Button size="sm" variant="outline" onClick={() => handleOpenOneOffExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />Añadir</Button>
+                    <Button size="sm" variant="outline" onClick={() => handleOpenOneOffExpenseModal('add')}><PlusCircle className="mr-2 h-4 w-4" />{t('treasury.expenses.add')}</Button>
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
                     <Table>
-                        <TableHeader><TableRow><TableHead>Concepto</TableHead><TableHead>Importe</TableHead><TableHead>Fecha</TableHead><TableHead>Acciones</TableHead></TableRow></TableHeader>
+                        <TableHeader><TableRow><TableHead>{t('treasury.otherPayments.concept')}</TableHead><TableHead>{t('treasury.otherPayments.amount')}</TableHead><TableHead>{t('treasury.otherPayments.issueDate')}</TableHead><TableHead>{t('treasury.otherPayments.actions')}</TableHead></TableRow></TableHeader>
                         <TableBody>
                              {oneOffExpenses.map(expense => (
                                 <TableRow key={expense.id}>
@@ -1313,7 +1313,7 @@ export function TreasuryDashboard() {
                                     <TableCell>
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild><Button size="icon" variant="ghost"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                            <DropdownMenuContent><DropdownMenuItem onSelect={() => handleOpenOneOffExpenseModal('edit', expense)}>Editar</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setOneOffExpenseToDelete(expense)}>Eliminar</DropdownMenuItem></DropdownMenuContent>
+                                            <DropdownMenuContent><DropdownMenuItem onSelect={() => handleOpenOneOffExpenseModal('edit', expense)}>{t('teams.edit')}</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setOneOffExpenseToDelete(expense)}>{t('teams.delete')}</DropdownMenuItem></DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
                                 </TableRow>
@@ -1368,12 +1368,12 @@ export function TreasuryDashboard() {
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuItem onSelect={() => handleOpenPaymentModal('edit', payment)}>
                                     <Edit className="mr-2 h-4 w-4" />
-                                    Editar
+                                    {t('teams.edit')}
                                   </DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onSelect={() => setPaymentToDelete(payment)}>
                                     <Trash2 className="mr-2 h-4 w-4" />
-                                    Eliminar
+                                    {t('teams.delete')}
                                   </DropdownMenuItem>
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -1399,37 +1399,37 @@ export function TreasuryDashboard() {
     <Dialog open={isPaymentModalOpen} onOpenChange={setIsPaymentModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{paymentModalMode === 'add' ? 'Crear Nuevo Pago Puntual' : 'Editar Pago Puntual'}</DialogTitle>
+            <DialogTitle>{paymentModalMode === 'add' ? t('treasury.otherPayments.modal.createTitle') : t('treasury.otherPayments.modal.editTitle')}</DialogTitle>
             <DialogDescription>
-              Define los detalles del cobro único que quieres generar. Se notificará a los destinatarios seleccionados.
+              {t('treasury.otherPayments.modal.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="payment-concept">Concepto</Label>
-              <Input id="payment-concept" placeholder="p.ej., Inscripción Campus Verano" value={paymentData.concept || ''} onChange={(e) => setPaymentData(prev => ({...prev, concept: e.target.value}))} />
+              <Label htmlFor="payment-concept">{t('treasury.otherPayments.concept')}</Label>
+              <Input id="payment-concept" placeholder={t('treasury.otherPayments.modal.conceptPlaceholder')} value={paymentData.concept || ''} onChange={(e) => setPaymentData(prev => ({...prev, concept: e.target.value}))} />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="payment-description">Descripción (Opcional)</Label>
-              <Textarea id="payment-description" placeholder="Información adicional sobre el pago." value={paymentData.description || ''} onChange={(e) => setPaymentData(prev => ({...prev, description: e.target.value}))} />
+              <Label htmlFor="payment-description">{t('treasury.otherPayments.modal.descriptionLabel')}</Label>
+              <Textarea id="payment-description" placeholder={t('treasury.otherPayments.modal.descriptionPlaceholder')} value={paymentData.description || ''} onChange={(e) => setPaymentData(prev => ({...prev, description: e.target.value}))} />
             </div>
              <div className="space-y-2">
-              <Label htmlFor="payment-amount">Cantidad (€)</Label>
+              <Label htmlFor="payment-amount">{t('treasury.otherPayments.amount')} (€)</Label>
               <Input id="payment-amount" type="number" placeholder="30.00" value={paymentData.amount || ''} onChange={(e) => setPaymentData(prev => ({...prev, amount: e.target.value}))} />
             </div>
              <div className="space-y-2">
-              <Label>Equipos Destinatarios</Label>
+              <Label>{t('treasury.otherPayments.modal.targetTeams')}</Label>
                <Popover open={isTeamSelectOpen} onOpenChange={setIsTeamSelectOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start font-normal">
-                    {(paymentData.targetTeamIds?.length || 0) > 0 ? getTargetTeamNames(paymentData.targetTeamIds!) : "Seleccionar equipos..."}
+                    {(paymentData.targetTeamIds?.length || 0) > 0 ? getTargetTeamNames(paymentData.targetTeamIds!) : t('treasury.otherPayments.modal.selectTeams')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
-                    <CommandInput placeholder="Buscar equipo..." />
+                    <CommandInput placeholder={t('treasury.otherPayments.modal.searchTeam')} />
                     <CommandList>
-                      <CommandEmpty>No se encontraron equipos.</CommandEmpty>
+                      <CommandEmpty>{t('treasury.otherPayments.modal.noTeamFound')}</CommandEmpty>
                       <CommandGroup>
                         {teams.map((team) => (
                           <CommandItem
@@ -1461,18 +1461,18 @@ export function TreasuryDashboard() {
               </Popover>
             </div>
             <div className="space-y-2">
-              <Label>Usuarios Individuales</Label>
+              <Label>{t('treasury.otherPayments.modal.individualUsers')}</Label>
                <Popover open={isUserSelectOpen} onOpenChange={setIsUserSelectOpen}>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="w-full justify-start font-normal">
-                    {(paymentData.targetUserIds?.length || 0) > 0 ? getTargetUserNames(paymentData.targetUserIds!) : "Seleccionar usuarios..."}
+                    {(paymentData.targetUserIds?.length || 0) > 0 ? getTargetUserNames(paymentData.targetUserIds!) : t('treasury.otherPayments.modal.selectUsers')}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                   <Command>
-                    <CommandInput placeholder="Buscar usuario..." />
+                    <CommandInput placeholder={t('treasury.otherPayments.modal.searchUser')} />
                     <CommandList>
-                      <CommandEmpty>No se encontraron usuarios.</CommandEmpty>
+                      <CommandEmpty>{t('treasury.otherPayments.modal.noUserFound')}</CommandEmpty>
                       <CommandGroup>
                         {users.map((user) => (
                           <CommandItem
@@ -1506,11 +1506,11 @@ export function TreasuryDashboard() {
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary">Cancelar</Button>
+              <Button type="button" variant="secondary">{t('common.cancel')}</Button>
             </DialogClose>
             <Button onClick={handleSavePayment} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Guardar Pago
+                {t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1518,15 +1518,15 @@ export function TreasuryDashboard() {
       <AlertDialog open={!!paymentToDelete} onOpenChange={(open) => !open && setPaymentToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-                Esta acción no se puede deshacer. Se eliminará permanentemente el pago "{paymentToDelete?.concept}".
+                {t('treasury.otherPayments.modal.confirmDelete', { concept: paymentToDelete?.concept })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeletePayment} disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {saving ? <Loader2 className="animate-spin" /> : t('teams.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
@@ -1535,35 +1535,35 @@ export function TreasuryDashboard() {
     <Dialog open={isSponsorshipModalOpen} onOpenChange={setIsSponsorshipModalOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{sponsorshipModalMode === 'add' ? 'Añadir Nuevo Patrocinio' : 'Editar Patrocinio'}</DialogTitle>
+            <DialogTitle>{sponsorshipModalMode === 'add' ? t('treasury.sponsorships.modal.createTitle') : t('treasury.sponsorships.modal.editTitle')}</DialogTitle>
             <DialogDescription>
-              Rellena la información del acuerdo de patrocinio.
+              {t('treasury.sponsorships.modal.description')}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="spon-name">Nombre del Patrocinador</Label>
-              <Input id="spon-name" placeholder="p.ej., Empresa S.L." value={sponsorshipData.sponsorName || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, sponsorName: e.target.value}))} />
+              <Label htmlFor="spon-name">{t('treasury.sponsorships.modal.sponsorName')}</Label>
+              <Input id="spon-name" placeholder={t('treasury.sponsorships.modal.sponsorPlaceholder')} value={sponsorshipData.sponsorName || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, sponsorName: e.target.value}))} />
             </div>
              <div className="grid grid-cols-2 gap-4">
                <div className="space-y-2">
-                <Label htmlFor="spon-amount">Cantidad (€)</Label>
+                <Label htmlFor="spon-amount">{t('treasury.sponsorships.amount')} (€)</Label>
                 <Input id="spon-amount" type="number" value={sponsorshipData.amount || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, amount: e.target.value}))} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="spon-freq">Frecuencia</Label>
+                <Label htmlFor="spon-freq">{t('treasury.sponsorships.modal.frequency')}</Label>
                 <Select value={sponsorshipData.frequency} onValueChange={(value: 'monthly' | 'annual') => setSponsorshipData(prev => ({...prev, frequency: value}))}>
                   <SelectTrigger id="spon-freq"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="monthly">Mensual</SelectItem>
-                    <SelectItem value="annual">Anual</SelectItem>
+                    <SelectItem value="monthly">{t('treasury.stats.monthly')}</SelectItem>
+                    <SelectItem value="annual">{t('treasury.stats.annual')}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
             {sponsorshipData.frequency === 'monthly' && (
                 <div className="space-y-2">
-                    <Label>Meses a Excluir del Pago</Label>
+                    <Label>{t('treasury.fees.staffPaymentExclusion')}</Label>
                     <div className="grid grid-cols-3 gap-2">
                         {MONTHS.map(month => (
                             <Button
@@ -1586,17 +1586,17 @@ export function TreasuryDashboard() {
                 </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="spon-desc">Descripción (Opcional)</Label>
-              <Textarea id="spon-desc" placeholder="Detalles del acuerdo, contacto, etc." value={sponsorshipData.description || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, description: e.target.value}))} />
+              <Label htmlFor="spon-desc">{t('treasury.sponsorships.modal.descriptionLabel')}</Label>
+              <Textarea id="spon-desc" placeholder={t('treasury.sponsorships.modal.descriptionPlaceholder')} value={sponsorshipData.description || ''} onChange={(e) => setSponsorshipData(prev => ({...prev, description: e.target.value}))} />
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
-              <Button type="button" variant="secondary">Cancelar</Button>
+              <Button type="button" variant="secondary">{t('common.cancel')}</Button>
             </DialogClose>
             <Button onClick={handleSaveSponsorship} disabled={saving}>
                 {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Guardar Patrocinio
+                {t('common.saveChanges')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1604,27 +1604,27 @@ export function TreasuryDashboard() {
       <AlertDialog open={!!sponsorshipToDelete} onOpenChange={(open) => !open && setSponsorshipToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el patrocinio de "{sponsorshipToDelete?.sponsorName}".
+             {t('treasury.sponsorships.modal.confirmDelete', { sponsorName: sponsorshipToDelete?.sponsorName })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteSponsorship} disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : 'Eliminar'}
+              {saving ? <Loader2 className="animate-spin" /> : t('teams.delete')}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
     <Dialog open={isRecurringExpenseModalOpen} onOpenChange={setIsRecurringExpenseModalOpen}>
-        <DialogContent><DialogHeader><DialogTitle>{recurringExpenseModalMode === 'add' ? 'Añadir Gasto Recurrente' : 'Editar Gasto Recurrente'}</DialogTitle></DialogHeader>
+        <DialogContent><DialogHeader><DialogTitle>{recurringExpenseModalMode === 'add' ? t('treasury.expenses.modal.addRecurringTitle') : t('treasury.expenses.modal.editRecurringTitle')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
-                <div className="space-y-2"><Label htmlFor="re-title">Concepto</Label><Input id="re-title" placeholder="p.ej., Alquiler de campos" value={recurringExpenseData.title || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
-                <div className="space-y-2"><Label htmlFor="re-amount">Importe (€)</Label><Input id="re-amount" type="number" value={recurringExpenseData.amount || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
+                <div className="space-y-2"><Label htmlFor="re-title">{t('treasury.otherPayments.concept')}</Label><Input id="re-title" placeholder={t('treasury.expenses.modal.conceptPlaceholderRecurring')} value={recurringExpenseData.title || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
+                <div className="space-y-2"><Label htmlFor="re-amount">{t('treasury.otherPayments.amount')} (€)</Label><Input id="re-amount" type="number" value={recurringExpenseData.amount || ''} onChange={(e) => setRecurringExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
                 <div className="space-y-2">
-                    <Label>Meses a Excluir del Pago</Label>
+                    <Label>{t('treasury.fees.staffPaymentExclusion')}</Label>
                     <div className="grid grid-cols-3 gap-2">
                         {MONTHS.map(month => (
                             <Button
@@ -1646,29 +1646,31 @@ export function TreasuryDashboard() {
                     </div>
                 </div>
             </div>
-            <DialogFooter><DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose><Button onClick={handleSaveRecurringExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Guardar</Button></DialogFooter>
+            <DialogFooter><DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose><Button onClick={handleSaveRecurringExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}{t('common.saveChanges')}</Button></DialogFooter>
         </DialogContent>
     </Dialog>
     <AlertDialog open={!!recurringExpenseToDelete} onOpenChange={(open) => !open && setRecurringExpenseToDelete(null)}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Estás seguro?</AlertDialogTitle><AlertDialogDescription>Se eliminará permanentemente el gasto recurrente "{recurringExpenseToDelete?.title}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDeleteRecurringExpense} disabled={saving}>Eliminar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('treasury.expenses.modal.confirmDeleteRecurring', { title: recurringExpenseToDelete?.title })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction onClick={handleDeleteRecurringExpense} disabled={saving}>{t('teams.delete')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
     </AlertDialog>
 
     <Dialog open={isOneOffExpenseModalOpen} onOpenChange={setIsOneOffExpenseModalOpen}>
-        <DialogContent><DialogHeader><DialogTitle>{oneOffExpenseModalMode === 'add' ? 'Añadir Gasto Puntual' : 'Editar Gasto Puntual'}</DialogTitle></DialogHeader>
+        <DialogContent><DialogHeader><DialogTitle>{oneOffExpenseModalMode === 'add' ? t('treasury.expenses.modal.addOneOffTitle') : t('treasury.expenses.modal.editOneOffTitle')}</DialogTitle></DialogHeader>
             <div className="space-y-4 py-4">
-                <div className="space-y-2"><Label htmlFor="oe-title">Concepto</Label><Input id="oe-title" placeholder="p.ej., Compra de balones" value={oneOffExpenseData.title || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
-                <div className="space-y-2"><Label htmlFor="oe-desc">Descripción (Opcional)</Label><Textarea id="oe-desc" value={oneOffExpenseData.description || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, description: e.target.value}))} /></div>
+                <div className="space-y-2"><Label htmlFor="oe-title">{t('treasury.otherPayments.concept')}</Label><Input id="oe-title" placeholder={t('treasury.expenses.modal.conceptPlaceholderOneOff')} value={oneOffExpenseData.title || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, title: e.target.value}))} /></div>
+                <div className="space-y-2"><Label htmlFor="oe-desc">{t('treasury.otherPayments.modal.descriptionLabel')}</Label><Textarea id="oe-desc" value={oneOffExpenseData.description || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, description: e.target.value}))} /></div>
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label htmlFor="oe-amount">Importe (€)</Label><Input id="oe-amount" type="number" value={oneOffExpenseData.amount || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
-                    <div className="space-y-2"><Label htmlFor="oe-date">Fecha</Label><Input id="oe-date" type="date" value={oneOffExpenseData.date?.split('T')[0] || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, date: e.target.value}))} /></div>
+                    <div className="space-y-2"><Label htmlFor="oe-amount">{t('treasury.otherPayments.amount')} (€)</Label><Input id="oe-amount" type="number" value={oneOffExpenseData.amount || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, amount: e.target.value}))} /></div>
+                    <div className="space-y-2"><Label htmlFor="oe-date">{t('treasury.otherPayments.issueDate')}</Label><Input id="oe-date" type="date" value={oneOffExpenseData.date?.split('T')[0] || ''} onChange={(e) => setOneOffExpenseData(prev => ({...prev, date: e.target.value}))} /></div>
                 </div>
             </div>
-            <DialogFooter><DialogClose asChild><Button variant="secondary">Cancelar</Button></DialogClose><Button onClick={handleSaveOneOffExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}Guardar</Button></DialogFooter>
+            <DialogFooter><DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose><Button onClick={handleSaveOneOffExpense} disabled={saving}>{saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}{t('common.saveChanges')}</Button></DialogFooter>
         </DialogContent>
     </Dialog>
     <AlertDialog open={!!oneOffExpenseToDelete} onOpenChange={(open) => !open && setOneOffExpenseToDelete(null)}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>¿Estás seguro?</AlertDialogTitle><AlertDialogDescription>Se eliminará permanentemente el gasto "{oneOffExpenseToDelete?.title}".</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={handleDeleteOneOffExpense} disabled={saving}>Eliminar</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
+        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>{t('common.confirmDeleteTitle')}</AlertDialogTitle><AlertDialogDescription>{t('treasury.expenses.modal.confirmDeleteOneOff', { title: oneOffExpenseToDelete?.title })}</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel><AlertDialogAction onClick={handleDeleteOneOffExpense} disabled={saving}>{t('teams.delete')}</AlertDialogAction></AlertDialogFooter></AlertDialogContent>
     </AlertDialog>
     </>
   );
 }
+
+    

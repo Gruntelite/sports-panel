@@ -1,4 +1,3 @@
-
 {
     "common": {
         "saveChanges": "Desar Canvis",
@@ -524,13 +523,35 @@
             "sponsor": "Patrocinador",
             "amount": "Import",
             "actions": "Accions",
-            "none": "Encara no has afegit cap patrocini."
+            "none": "Encara no has afegit cap patrocini.",
+            "modal": {
+                "createTitle": "Afegir Nou Patrocini",
+                "editTitle": "Editar Patrocini",
+                "description": "Emplena la informació de l'acord de patrocini.",
+                "sponsorName": "Nom del Patrocinador",
+                "sponsorPlaceholder": "p.ex., Empresa S.L.",
+                "frequency": "Freqüència",
+                "descriptionLabel": "Descripció (Opcional)",
+                "descriptionPlaceholder": "Detalls de l'acord, contacte, etc.",
+                "confirmDelete": "Aquesta acció no es pot desfer. S'eliminarà permanentment el patrocini de \"{sponsorName}\"."
+            }
         },
         "expenses": {
             "recurringTitle": "Despeses Recurrents",
             "recurringDescription": "Gestiona les despeses fixes mensuals del club.",
             "oneOffTitle": "Despeses Puntuals",
-            "oneOffDescription": "Registra les despeses extraordinàries o no periòdiques."
+            "oneOffDescription": "Registra les despeses extraordinàries o no periòdiques.",
+            "add": "Afegir",
+            "modal": {
+                "addRecurringTitle": "Afegir Despesa Recurrent",
+                "editRecurringTitle": "Editar Despesa Recurrent",
+                "conceptPlaceholderRecurring": "p.ex., Lloguer de camps",
+                "addOneOffTitle": "Afegir Despesa Puntual",
+                "editOneOffTitle": "Editar Despesa Puntual",
+                "conceptPlaceholderOneOff": "p.ex., Compra de pilotes",
+                "confirmDeleteRecurring": "S'eliminarà permanentment la despesa recurrent \"{title}\".",
+                "confirmDeleteOneOff": "S'eliminarà permanentment la despesa \"{title}\"."
+            }
         },
         "otherPayments": {
             "title": "Altres Ingressos i Pagaments",
@@ -541,7 +562,24 @@
             "issueDate": "Data d'Emissió",
             "recipients": "Destinataris",
             "actions": "Accions",
-            "none": "No hi ha pagaments puntuals registrats."
+            "none": "No hi ha pagaments puntuals registrats.",
+            "modal": {
+                "createTitle": "Crear Nou Pagament Puntual",
+                "editTitle": "Editar Pagament Puntual",
+                "description": "Defineix els detalls del cobrament únic que vols generar. Es notificarà als destinataris seleccionats.",
+                "conceptPlaceholder": "p.ex., Inscripció Campus Estiu",
+                "descriptionLabel": "Descripció (Opcional)",
+                "descriptionPlaceholder": "Informació addicional sobre el pagament.",
+                "targetTeams": "Equips Destinataris",
+                "selectTeams": "Seleccionar equips...",
+                "searchTeam": "Cercar equip...",
+                "noTeamFound": "No s'han trobat equips.",
+                "individualUsers": "Usuaris Individuals",
+                "selectUsers": "Seleccionar usuaris...",
+                "searchUser": "Cercar usuari...",
+                "noUserFound": "No s'han trobat usuaris.",
+                "confirmDelete": "Aquesta acció no es pot desfer. S'eliminarà permanentment el pagament \"{concept}\"."
+            }
         }
     },
     "schedules": {
@@ -855,7 +893,7 @@
         "description": "Gestiona la informació dels membres de la directiva i la base social del club.",
         "tabs": {
             "staff": "Staff i Directiva",
-            "socios": "Socios"
+            "socios": "Socis"
         },
         "staffDescription": "Membres de la junta directiva, administratius i altre personal del club.",
         "socioDescription": "Llistat de tots els socis registrats al club.",
@@ -1321,4 +1359,3 @@
         }
     }
 }
-
