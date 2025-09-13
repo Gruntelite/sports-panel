@@ -65,9 +65,6 @@ type WeeklySchedule = {
   Domingo: DailyScheduleEntry[];
 };
 
-const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"] as const;
-type DayOfWeek = typeof daysOfWeek[number];
-
 const TEMPLATE_COLORS = [
     { name: "Default", value: "hsl(210 40% 96.1%)", css: "bg-muted/50"}, // muted
     { name: "Green", value: "#dcfce7", css: "bg-green-100/60"},
@@ -101,6 +98,9 @@ const TEMPLATE_BG_COLORS: {[key: string]: string} = {
 
 
 const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate | undefined, innerRef: React.Ref<HTMLDivElement> }) => {
+    const { t } = useTranslation();
+    const daysOfWeek = t('schedules.daysOfWeek', { returnObjects: true }) as string[];
+
     if (!template) {
         return (
             <div className="flex items-center justify-center h-64 text-muted-foreground">
@@ -224,7 +224,7 @@ const WeeklyScheduleView = ({ template, innerRef }: { template: ScheduleTemplate
                                 </div>
                                 <div className="flex flex-grow">
                                     {daysOfWeek.map(day => {
-                                        const dayEvents = processDayEvents(weeklySchedule[day]?.filter(e => e.venueId === venue.id));
+                                        const dayEvents = processDayEvents(weeklySchedule[day as keyof WeeklySchedule]?.filter(e => e.venueId === venue.id));
                                         return (
                                             <div key={day} className="w-[220px] flex-shrink-0 border-r relative bg-card">
                                                 <div className="text-center font-medium p-2 h-[41px] border-b">{day}</div>
@@ -659,7 +659,7 @@ function CalendarView() {
       </CardHeader>
         <div className="sticky top-0 z-10 bg-card">
             <div className="grid grid-cols-7 border-b border-border">
-                {t('schedules.calendar.daysShort', { returnObjects: true }).map((day: string) => (
+                {(t('schedules.calendar.daysShort', { returnObjects: true }) as string[]).map((day: string) => (
                     <div key={day} className="text-center font-semibold py-2 text-muted-foreground text-sm">{day}</div>
                 ))}
             </div>
@@ -855,6 +855,9 @@ function CalendarView() {
 
 export default function SchedulesPage() {
   const { t } = useTranslation();
+  const daysOfWeek = t('schedules.daysOfWeek', { returnObjects: true }) as string[];
+  type DayOfWeek = typeof daysOfWeek[number];
+
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -1327,7 +1330,7 @@ export default function SchedulesPage() {
   const displayedEvents = useMemo(() => {
     if (!displayTemplate || !currentVenue) return [];
     
-    const dailyEvents = displayTemplate.weeklySchedule[currentDay];
+    const dailyEvents = displayTemplate.weeklySchedule[currentDay as keyof WeeklySchedule];
     if (!dailyEvents) return [];
     
     const venueEvents = dailyEvents.filter(event => event.venueId === currentVenue.id);

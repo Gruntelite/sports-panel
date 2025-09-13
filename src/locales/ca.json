@@ -622,7 +622,7 @@
         },
         "editor": {
             "title": "Editor d'Horaris",
-            "description": "Modifica los entrenamientos para el {day}.",
+            "description": "Modifica els entrenaments per al {day}.",
             "generalSettings": "Ajustos Generals",
             "templateColor": "Color de la Plantilla",
             "venues": "Instal·lacions",
@@ -655,7 +655,7 @@
             "addEventToSelection": "Afegir esdeveniment a la selecció",
             "assignTemplate": "Assignar plantilla a selecció",
             "revertToDefault": "Revertir a plantilla per defecte",
-            "daysShort": ["Dl", "Dm", "Dc", "Dj", "Dv", "Ds", "Dg"],
+            "daysShort": ["Dl", "Dt", "Dc", "Dj", "Dv", "Ds", "Dg"],
             "modal": {
                 "addTitle": "Afegir Nou Esdeveniment",
                 "editTitle": "Editar Esdeveniment",
@@ -1368,5 +1368,3 @@
         }
     }
 }
-
-    
