@@ -287,7 +287,7 @@ export default function StaffPage() {
       
       setIsModalOpen(false);
       setStaffData({});
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
         console.error("Error saving staff: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el miembro." });
@@ -336,7 +336,7 @@ export default function StaffPage() {
       
       setIsModalOpen(false);
       setSocioData({});
-      fetchData(clubId);
+      if(clubId) fetchData(clubId);
     } catch (error) {
         console.error("Error saving socio: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo guardar el socio." });
@@ -366,7 +366,7 @@ export default function StaffPage() {
         await batch.commit();
 
         toast({ title: "Miembro eliminado", description: `${itemToDelete.name} ${itemToDelete.lastName} ha sido eliminado.`});
-        fetchData(clubId);
+        if(clubId) fetchData(clubId);
     } catch (error) {
         console.error("Error deleting item: ", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar al miembro." });
@@ -520,9 +520,8 @@ export default function StaffPage() {
                               <TableHead 
                                 key={field.id} 
                                 className={cn(
-                                  "min-w-[150px]",
-                                  !visibleStaffColumns.has(field.id) && 'hidden md:table-cell',
-                                  field.id !== 'name' && field.id !== 'role' && 'hidden sm:table-cell'
+                                  'min-w-[150px]',
+                                  !visibleStaffColumns.has(field.id) && 'hidden'
                                 )}
                               >
                                 {field.label || field.name}
@@ -540,9 +539,8 @@ export default function StaffPage() {
                                 <TableCell 
                                   key={field.id} 
                                   className={cn(
-                                    "min-w-[150px]",
-                                    !visibleStaffColumns.has(field.id) && 'hidden md:table-cell',
-                                    field.id !== 'name' && field.id !== 'role' && 'hidden sm:table-cell',
+                                    'min-w-[150px]',
+                                    !visibleStaffColumns.has(field.id) && 'hidden',
                                     field.id === 'name' && 'font-medium'
                                   )}
                                 >
@@ -670,8 +668,7 @@ export default function StaffPage() {
                                 key={field.id}
                                 className={cn(
                                   "min-w-[150px]",
-                                  !visibleSocioColumns.has(field.id) && 'hidden md:table-cell',
-                                  field.id !== 'name' && field.id !== 'email' && 'hidden sm:table-cell'
+                                  !visibleSocioColumns.has(field.id) && 'hidden'
                                 )}
                               >
                                 {field.label || field.name}
@@ -690,8 +687,7 @@ export default function StaffPage() {
                                   key={field.id}
                                   className={cn(
                                     "min-w-[150px]",
-                                    !visibleSocioColumns.has(field.id) && 'hidden md:table-cell',
-                                    field.id !== 'name' && field.id !== 'email' && 'hidden sm:table-cell',
+                                    !visibleSocioColumns.has(field.id) && 'hidden',
                                     field.id === 'name' && 'font-medium'
                                   )}
                                 >
