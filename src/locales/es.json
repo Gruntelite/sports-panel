@@ -1367,5 +1367,54 @@
         "success": {
             "general": "Los ajustes generales se han guardado correctamente."
         }
+    },
+    "memberDetail": {
+        "years": "años",
+        "close": "Cerrar",
+        "edit": "Editar Ficha",
+        "attachedDocuments": "Documentos Adjuntos",
+        "groups": {
+            "personal": "Datos Personales",
+            "contact": "Datos de Contacto",
+            "sports": "Datos Deportivos",
+            "professional": "Datos Profesionales",
+            "socio": "Datos de Socio",
+            "other": "Otros Datos"
+        },
+        "fields": {
+            "dni": "NIF/NIE",
+            "birthDate": "Fecha de Nacimiento",
+            "sex": "Sexo",
+            "nationality": "Nacionalidad",
+            "healthCard": "Nº Tarjeta Sanitaria",
+            "address": "Dirección",
+            "startDate": "Fecha de Alta",
+            "tutor": "Tutor/a Principal",
+            "ownPlayer": "El propio jugador",
+            "contactEmail": "Email de Contacto",
+            "contactPhone": "Teléfono de Contacto",
+            "paymentData": "Datos de Pago",
+            "iban": "IBAN",
+            "monthlyFee": "Cuota Mensual",
+            "team": "Equipo",
+            "jersey": "Dorsal",
+            "position": "Posición",
+            "kitSize": "Talla Equipación",
+            "email": "Email",
+            "phone": "Teléfono",
+            "monthlyPayment": "Pago Mensual",
+            "role": "Cargo",
+            "teamAssigned": "Equipo Asignado",
+            "socioNumber": "Número de Socio",
+            "feeType": "Tipo de Cuota",
+            "feeAmount": "Importe Cuota",
+            "date": "Fecha"
+        },
+        "roles": {
+            "player": "Jugador",
+            "coach": "Entrenador",
+            "staff": "Staff",
+            "socio": "Socio"
+        }
     }
 }

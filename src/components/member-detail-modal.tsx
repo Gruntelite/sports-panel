@@ -4,7 +4,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
-import { es } from "date-fns/locale";
+import { es, ca } from "date-fns/locale";
 import type { Player, Coach, Staff, Socio, CustomFieldDef, Document } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,10 @@ import { Badge } from "@/components/ui/badge";
 import { CheckCircle, XCircle, User, Contact, Shield, Briefcase, Handshake, FolderArchive, Download } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
+import { useTranslation } from "./i18n-provider";
 
 const DetailItem = ({ label, value, isSubtitle }: { label: string; value?: string | number | null | boolean; isSubtitle?: boolean }) => {
+    const { t, locale } = useTranslation();
     if (isSubtitle) {
         return <h4 className="font-semibold text-primary pt-4 pb-2 border-b">{label}</h4>
     }
@@ -26,15 +28,18 @@ const DetailItem = ({ label, value, isSubtitle }: { label: string; value?: strin
     if (typeof value === 'boolean') {
         displayValue = value ? <CheckCircle className="h-5 w-5 text-green-500" /> : <XCircle className="h-5 w-5 text-red-500" />;
     }
-     if (label.toLowerCase().includes("fecha") && typeof value === 'string') {
+     if (label.toLowerCase().includes(t('memberDetail.fields.birthDate').toLowerCase()) && typeof value === 'string') {
         try {
             const date = parseISO(value);
             const age = new Date().getFullYear() - date.getFullYear();
-            if (label.toLowerCase().includes("nacimiento")) {
-                 displayValue = `${format(date, "d 'de' LLLL 'de' yyyy", { locale: es })} (${age} años)`;
-            } else {
-                 displayValue = format(date, "d 'de' LLLL 'de' yyyy", { locale: es });
-            }
+            displayValue = `${format(date, "d 'de' LLLL 'de' yyyy", { locale: locale === 'ca' ? ca : es })} (${age} ${t('memberDetail.years')})`;
+        } catch (e) {
+            displayValue = value;
+        }
+     } else if (label.toLowerCase().includes(t('memberDetail.fields.date').toLowerCase()) && typeof value === 'string') {
+         try {
+            const date = parseISO(value);
+            displayValue = format(date, "d 'de' LLLL 'de' yyyy", { locale: locale === 'ca' ? ca : es });
         } catch (e) {
             displayValue = value;
         }
@@ -57,6 +62,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], do
     onClose: () => void;
     onEdit: () => void;
 }) {
+    const { t } = useTranslation();
     if (!member) return null;
 
     const getFieldGroups = () => {
@@ -74,52 +80,52 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], do
             case 'player':
                 const p = member as Player;
                 groups = [
-                    { title: "Datos Personales", icon: User, fields: [
-                        { label: "NIF/NIE", value: p.dni }, { label: "Fecha de Nacimiento", value: p.birthDate }, { label: "Sexo", value: p.sex }, { label: "Nacionalidad", value: p.nationality }, { label: "Nº Tarjeta Sanitaria", value: p.healthCardNumber}, { label: "Dirección", value: `${p.address || ''}, ${p.postalCode || ''}, ${p.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: "Fecha de Alta", value: p.startDate },
+                    { title: t('memberDetail.groups.personal'), icon: User, fields: [
+                        { label: t('memberDetail.fields.dni'), value: p.dni }, { label: t('memberDetail.fields.birthDate'), value: p.birthDate }, { label: t('memberDetail.fields.sex'), value: p.sex }, { label: t('memberDetail.fields.nationality'), value: p.nationality }, { label: t('memberDetail.fields.healthCard'), value: p.healthCardNumber}, { label: t('memberDetail.fields.address'), value: `${p.address || ''}, ${p.postalCode || ''}, ${p.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: t('memberDetail.fields.startDate'), value: p.startDate },
                     ]},
-                    { title: "Datos de Contacto", icon: Contact, fields: [
-                        { label: "Tutor/a Principal", value: p.isOwnTutor ? 'El propio jugador' : `${p.tutorName} ${p.tutorLastName}` }, { label: "Email de Contacto", value: p.tutorEmail }, { label: "Teléfono de Contacto", value: p.tutorPhone },
-                        { label: "Datos de Pago", isSubtitle: true },
-                        { label: "IBAN", value: p.iban }, { label: "Cuota Mensual", value: p.monthlyFee ? `${p.monthlyFee}€` : 'N/A' },
+                    { title: t('memberDetail.groups.contact'), icon: Contact, fields: [
+                        { label: t('memberDetail.fields.tutor'), value: p.isOwnTutor ? t('memberDetail.fields.ownPlayer') : `${p.tutorName} ${p.tutorLastName}` }, { label: t('memberDetail.fields.contactEmail'), value: p.tutorEmail }, { label: t('memberDetail.fields.contactPhone'), value: p.tutorPhone },
+                        { label: t('memberDetail.fields.paymentData'), isSubtitle: true },
+                        { label: t('memberDetail.fields.iban'), value: p.iban }, { label: t('memberDetail.fields.monthlyFee'), value: p.monthlyFee ? `${p.monthlyFee}€` : 'N/A' },
                     ]},
-                    { title: "Datos Deportivos", icon: Shield, fields: [
-                        { label: "Equipo", value: p.teamName }, { label: "Dorsal", value: p.jerseyNumber }, { label: "Posición", value: p.position }, { label: "Talla Equipación", value: p.kitSize },
-                        ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
+                    { title: t('memberDetail.groups.sports'), icon: Shield, fields: [
+                        { label: t('memberDetail.fields.team'), value: p.teamName }, { label: t('memberDetail.fields.jersey'), value: p.jerseyNumber }, { label: t('memberDetail.fields.position'), value: p.position }, { label: t('memberDetail.fields.kitSize'), value: p.kitSize },
+                        ...(customFieldsItems.length > 0 ? [{ label: t('memberDetail.groups.other'), isSubtitle: true }, ...customFieldsItems] : [])
                     ]},
                 ];
                 return groups;
             case 'coach':
                  const c = member as Coach;
                  groups = [
-                    { title: "Datos Personales", icon: User, fields: [
-                        { label: "NIF/NIE", value: c.dni }, { label: "Fecha de Nacimiento", value: c.birthDate }, { label: "Sexo", value: c.sex }, { label: "Nacionalidad", value: c.nationality }, { label: "Dirección", value: `${c.address || ''}, ${c.postalCode || ''}, ${c.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: "Fecha de Alta", value: c.startDate },
+                    { title: t('memberDetail.groups.personal'), icon: User, fields: [
+                        { label: t('memberDetail.fields.dni'), value: c.dni }, { label: t('memberDetail.fields.birthDate'), value: c.birthDate }, { label: t('memberDetail.fields.sex'), value: c.sex }, { label: t('memberDetail.fields.nationality'), value: c.nationality }, { label: t('memberDetail.fields.address'), value: `${c.address || ''}, ${c.postalCode || ''}, ${c.city || ''}`.replace(/, ,/g, ',').replace(/^,|,$/g, '')}, { label: t('memberDetail.fields.startDate'), value: c.startDate },
                     ]},
-                    { title: "Datos de Contacto", icon: Contact, fields: [
-                        { label: "Email", value: c.email }, { label: "Teléfono", value: c.phone },
-                        { label: "Datos de Pago", isSubtitle: true },
-                        { label: "IBAN", value: c.iban }, { label: "Pago Mensual", value: c.monthlyPayment ? `${c.monthlyPayment}€` : 'N/A' },
+                    { title: t('memberDetail.groups.contact'), icon: Contact, fields: [
+                        { label: t('memberDetail.fields.email'), value: c.email }, { label: t('memberDetail.fields.phone'), value: c.phone },
+                        { label: t('memberDetail.fields.paymentData'), isSubtitle: true },
+                        { label: t('memberDetail.fields.iban'), value: c.iban }, { label: t('memberDetail.fields.monthlyPayment'), value: c.monthlyPayment ? `${c.monthlyPayment}€` : 'N/A' },
                     ]},
-                    { title: "Datos Profesionales", icon: Briefcase, fields: [
-                        { label: "Cargo", value: c.role }, { label: "Equipo Asignado", value: c.teamName }, { label: "Talla Equipación", value: c.kitSize },
-                        ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
+                    { title: t('memberDetail.groups.professional'), icon: Briefcase, fields: [
+                        { label: t('memberDetail.fields.role'), value: c.role }, { label: t('memberDetail.fields.teamAssigned'), value: c.teamName }, { label: t('memberDetail.fields.kitSize'), value: c.kitSize },
+                        ...(customFieldsItems.length > 0 ? [{ label: t('memberDetail.groups.other'), isSubtitle: true }, ...customFieldsItems] : [])
                     ]},
                  ];
                  return groups;
             case 'staff':
                  const s = member as Staff;
                  groups = [
-                      { title: "Datos Personales", icon: User, fields: [{ label: "Email", value: s.email }, { label: "Teléfono", value: s.phone } ]},
-                      { title: "Datos Profesionales", icon: Briefcase, fields: [{ label: "Cargo", value: s.role },
-                         ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
+                      { title: t('memberDetail.groups.personal'), icon: User, fields: [{ label: t('memberDetail.fields.email'), value: s.email }, { label: t('memberDetail.fields.phone'), value: s.phone } ]},
+                      { title: t('memberDetail.groups.professional'), icon: Briefcase, fields: [{ label: t('memberDetail.fields.role'), value: s.role },
+                         ...(customFieldsItems.length > 0 ? [{ label: t('memberDetail.groups.other'), isSubtitle: true }, ...customFieldsItems] : [])
                       ]},
                  ];
                  return groups;
             case 'socio':
                  const so = member as Socio;
                  groups = [
-                     { title: "Datos Personales", icon: User, fields: [{ label: "Email", value: so.email }, { label: "Teléfono", value: so.phone }, { label: "NIF", value: so.dni } ]},
-                     { title: "Datos de Socio", icon: Handshake, fields: [{ label: "Número de Socio", value: so.socioNumber }, { label: "Tipo de Cuota", value: so.paymentType }, { label: "Importe Cuota", value: `${so.fee}€` },
-                        ...(customFieldsItems.length > 0 ? [{ label: "Otros Datos", isSubtitle: true }, ...customFieldsItems] : [])
+                     { title: t('memberDetail.groups.personal'), icon: User, fields: [{ label: t('memberDetail.fields.email'), value: so.email }, { label: t('memberDetail.fields.phone'), value: so.phone }, { label: t('memberDetail.fields.dni'), value: so.dni } ]},
+                     { title: t('memberDetail.groups.socio'), icon: Handshake, fields: [{ label: t('memberDetail.fields.socioNumber'), value: so.socioNumber }, { label: t('memberDetail.fields.feeType'), value: so.paymentType }, { label: t('memberDetail.fields.feeAmount'), value: `${so.fee}€` },
+                        ...(customFieldsItems.length > 0 ? [{ label: t('memberDetail.groups.other'), isSubtitle: true }, ...customFieldsItems] : [])
                      ]},
                  ];
                  return groups;
@@ -129,10 +135,10 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], do
     const fieldGroups = getFieldGroups();
     
     const roleMap: {[key: string]: string} = {
-        player: 'Jugador',
-        coach: 'Entrenador',
-        staff: 'Staff',
-        socio: 'Socio'
+        player: t('memberDetail.roles.player'),
+        coach: t('memberDetail.roles.coach'),
+        staff: t('memberDetail.roles.staff'),
+        socio: t('memberDetail.roles.socio')
     }
 
   return (
@@ -174,7 +180,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], do
                  <div className="space-y-3">
                     <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
                         <FolderArchive className="h-5 w-5"/>
-                        Documentos Adjuntos
+                        {t('memberDetail.attachedDocuments')}
                     </h3>
                     <div className="space-y-2">
                         {documents.map(doc => (
@@ -193,8 +199,8 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], do
             </div>
         </ScrollArea>
         <DialogFooter className="pt-4 border-t flex-shrink-0">
-          <Button variant="outline" onClick={onClose}>Cerrar</Button>
-          <Button onClick={onEdit}>Editar Ficha</Button>
+          <Button variant="outline" onClick={onClose}>{t('memberDetail.close')}</Button>
+          <Button onClick={onEdit}>{t('memberDetail.edit')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -1276,7 +1276,7 @@
             "modalDescription": "Llistat de membres que encara no han pujat l'arxiu sol·licitat.",
             "allCompleted": "Genial! Tots els membres han completat la sol·licitud.",
             "close": "Tancar",
-            "confirmDeleteDesc": "Estàs segur que vols eliminar el lot de sol·licitud per a '{docTitle}'? S'esborraran totes les peticions associades, però no els arxius que ja s'hagin pujat.",
+            "confirmDeleteDesc": "Segur que vols eliminar el lot de sol·licitud per a '{docTitle}'? S'esborraran totes les peticions associades, però no els arxius que ja s'hagin pujat.",
             "deleteSuccess": "Lot de sol·licitud eliminat correctament.",
             "errors": {
                 "delete": "No s'ha pogut eliminar el lot de sol·licitud."
@@ -1365,6 +1365,55 @@
         },
         "success": {
             "general": "Els ajustos generals s'han desat correctament."
+        }
+    },
+    "memberDetail": {
+        "years": "anys",
+        "close": "Tancar",
+        "edit": "Editar Fitxa",
+        "attachedDocuments": "Documents Adjunts",
+        "groups": {
+            "personal": "Dades Personals",
+            "contact": "Dades de Contacte",
+            "sports": "Dades Esportives",
+            "professional": "Dades Professionals",
+            "socio": "Dades de Soci",
+            "other": "Altres Dades"
+        },
+        "fields": {
+            "dni": "NIF/NIE",
+            "birthDate": "Data de Naixement",
+            "sex": "Sexe",
+            "nationality": "Nacionalitat",
+            "healthCard": "Nº Targeta Sanitària",
+            "address": "Adreça",
+            "startDate": "Data d'Alta",
+            "tutor": "Tutor/a Principal",
+            "ownPlayer": "El propi jugador",
+            "contactEmail": "Email de Contacte",
+            "contactPhone": "Telèfon de Contacte",
+            "paymentData": "Dades de Pagament",
+            "iban": "IBAN",
+            "monthlyFee": "Quota Mensual",
+            "team": "Equip",
+            "jersey": "Dorsal",
+            "position": "Posició",
+            "kitSize": "Talla Equipació",
+            "email": "Email",
+            "phone": "Telèfon",
+            "monthlyPayment": "Pagament Mensual",
+            "role": "Càrrec",
+            "teamAssigned": "Equip Assignat",
+            "socioNumber": "Número de Soci",
+            "feeType": "Tipus de Quota",
+            "feeAmount": "Import Quota",
+            "date": "Data"
+        },
+        "roles": {
+            "player": "Jugador",
+            "coach": "Entrenador",
+            "staff": "Staff",
+            "socio": "Soci"
         }
     }
 }
