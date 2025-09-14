@@ -80,6 +80,8 @@ export function EssentialDocs() {
   const [newDocName, setNewDocName] = useState("");
   const [docStatuses, setDocStatuses] = useState<EssentialDocStatus[]>([]);
   const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
+  const [allDocs, setAllDocs] = useState<Document[]>([]);
+  
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
@@ -89,34 +91,16 @@ export function EssentialDocs() {
   const [missingDocsToRequest, setMissingDocsToRequest] = useState<string[]>([]);
 
 
-  const fetchClubData = async (currentClubId: string) => {
-    setLoading(true);
-    try {
-      const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-      const settingsSnap = await getDoc(settingsRef);
-      const settings = (settingsSnap.data() as ClubSettings) || {};
-      setEssentialDocs(settings.essentialDocs || []);
-
-      const members: ClubMember[] = [];
-      const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
-      playersSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Jugador', data: d.data() as Player, email: (d.data() as Player).tutorEmail }));
-      
-      const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
-      coachesSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Entrenador', data: d.data() as Coach, email: (d.data() as Coach).email }));
-      setAllMembers(members);
-
-      const docsSnap = await getDocs(collection(db, "clubs", currentClubId, "documents"));
-      const allDocs = docsSnap.docs.map(d => ({id: d.id, ...d.data()} as Document));
-      
-      const statuses = members.map(member => {
-        const memberDocs = allDocs.filter(d => d.ownerId === member.id);
+  const calculateDocStatuses = (members: ClubMember[], docs: Document[], essentialDocList: string[]) => {
+      return members.map(member => {
+        const memberDocs = docs.filter(d => d.ownerId === member.id);
         const status: EssentialDocStatus = {
             memberId: member.id,
             name: member.name,
             role: member.type,
             docs: {},
         };
-        (settings.essentialDocs || []).forEach(docName => {
+        (essentialDocList || []).forEach(docName => {
             const foundDoc = memberDocs.find(d => 
                 (d.category === 'essential_manual' && d.name === docName) ||
                 (d.category === 'identificacion' && docName.toLowerCase().includes('dni')) ||
@@ -131,7 +115,30 @@ export function EssentialDocs() {
         });
         return status;
     });
+  }
 
+  const fetchClubData = async (currentClubId: string) => {
+    setLoading(true);
+    try {
+      const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      const settings = (settingsSnap.data() as ClubSettings) || {};
+      const essentialDocList = settings.essentialDocs || [];
+      setEssentialDocs(essentialDocList);
+
+      const members: ClubMember[] = [];
+      const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
+      playersSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Jugador', data: d.data() as Player, email: (d.data() as Player).tutorEmail }));
+      
+      const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
+      coachesSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Entrenador', data: d.data() as Coach, email: (d.data() as Coach).email }));
+      setAllMembers(members);
+
+      const docsSnap = await getDocs(collection(db, "clubs", currentClubId, "documents"));
+      const allDocsData = docsSnap.docs.map(d => ({id: d.id, ...d.data()} as Document));
+      setAllDocs(allDocsData);
+      
+      const statuses = calculateDocStatuses(members, allDocsData, essentialDocList);
       setDocStatuses(statuses);
 
     } catch (error) {
@@ -187,8 +194,11 @@ export function EssentialDocs() {
         await updateDoc(settingsRef, {
             essentialDocs: arrayUnion(newDocName.trim())
         });
-        setEssentialDocs(prev => [...prev, newDocName.trim()]);
+        const newEssentialDocs = [...essentialDocs, newDocName.trim()];
+        setEssentialDocs(newEssentialDocs);
         setNewDocName("");
+        const newStatuses = calculateDocStatuses(allMembers, allDocs, newEssentialDocs);
+        setDocStatuses(newStatuses);
         toast({ title: t('clubFiles.essentialDocs.docAdded') });
     } catch(e) {
         toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.addDoc')});
@@ -205,7 +215,10 @@ export function EssentialDocs() {
         await updateDoc(settingsRef, {
             essentialDocs: arrayRemove(docName)
         });
-        setEssentialDocs(prev => prev.filter(d => d !== docName));
+        const newEssentialDocs = essentialDocs.filter(d => d !== docName);
+        setEssentialDocs(newEssentialDocs);
+        const newStatuses = calculateDocStatuses(allMembers, allDocs, newEssentialDocs);
+        setDocStatuses(newStatuses);
         toast({ title: t('clubFiles.essentialDocs.docRemoved')});
     } catch(e) {
         toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.removeDoc')});
@@ -226,20 +239,9 @@ export function EssentialDocs() {
     const handleToggleDocStatus = async (memberId: string, docName: string, hasIt: boolean) => {
         if (!clubId) return;
         
-        const originalStatuses = [...docStatuses];
-        // Optimistic UI update
-        setDocStatuses(prev => prev.map(status => {
-            if(status.memberId === memberId) {
-                const newDocs = {...status.docs};
-                newDocs[docName] = {...newDocs[docName], hasIt: !hasIt};
-                return {...status, docs: newDocs};
-            }
-            return status;
-        }));
-
         try {
             if (hasIt) {
-                 const docsQuery = query(
+                const docsQuery = query(
                     collection(db, "clubs", clubId, "documents"),
                     where("ownerId", "==", memberId),
                     where("category", "==", "essential_manual"),
@@ -249,12 +251,16 @@ export function EssentialDocs() {
                 if (!docsSnapshot.empty) {
                     const docToDelete = docsSnapshot.docs[0];
                     await deleteDoc(docToDelete.ref);
+                    const newAllDocs = allDocs.filter(d => d.id !== docToDelete.id);
+                    setAllDocs(newAllDocs);
+                    const newStatuses = calculateDocStatuses(allMembers, newAllDocs, essentialDocs);
+                    setDocStatuses(newStatuses);
                 }
             } else {
                 const member = allMembers.find(m => m.id === memberId);
                 if(!member) throw new Error("Member not found");
                 
-                await addDoc(collection(db, "clubs", clubId, "documents"), {
+                const newDocRef = await addDoc(collection(db, "clubs", clubId, "documents"), {
                     name: docName,
                     path: `manual_override/${memberId}/${docName}`,
                     createdAt: Timestamp.now(),
@@ -262,10 +268,23 @@ export function EssentialDocs() {
                     ownerName: member.name,
                     category: 'essential_manual',
                 });
+
+                const newDoc = {
+                    id: newDocRef.id,
+                    name: docName,
+                    path: `manual_override/${memberId}/${docName}`,
+                    createdAt: Timestamp.now(),
+                    ownerId: memberId,
+                    ownerName: member.name,
+                    category: 'essential_manual',
+                }
+                const newAllDocs = [...allDocs, newDoc];
+                setAllDocs(newAllDocs);
+                const newStatuses = calculateDocStatuses(allMembers, newAllDocs, essentialDocs);
+                setDocStatuses(newStatuses);
             }
+             toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
         } catch (e) {
-            // Revert UI on error
-            setDocStatuses(originalStatuses);
             toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
         }
     };
