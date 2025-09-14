@@ -53,6 +53,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import { ScrollArea } from "./ui/scroll-area";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 
 
 type EssentialDocStatus = {
@@ -84,7 +85,6 @@ export function EssentialDocs() {
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [filterDoc, setFilterDoc] = useState<string>('all');
   
-  const [statusToggleInfo, setStatusToggleInfo] = useState<{ memberId: string, docName: string, hasIt: boolean } | null>(null);
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
   const [missingDocsToRequest, setMissingDocsToRequest] = useState<string[]>([]);
 
@@ -223,15 +223,22 @@ export function EssentialDocs() {
     });
   }
   
-    const handleToggleDocStatus = async () => {
-        if (!statusToggleInfo || !clubId) return;
-
-        setSaving(true);
-        const { memberId, docName, hasIt } = statusToggleInfo;
+    const handleToggleDocStatus = async (memberId: string, docName: string, hasIt: boolean) => {
+        if (!clubId) return;
+        
+        const originalStatuses = [...docStatuses];
+        // Optimistic UI update
+        setDocStatuses(prev => prev.map(status => {
+            if(status.memberId === memberId) {
+                const newDocs = {...status.docs};
+                newDocs[docName] = {...newDocs[docName], hasIt: !hasIt};
+                return {...status, docs: newDocs};
+            }
+            return status;
+        }));
 
         try {
             if (hasIt) {
-                // It's completed, we want to mark it as pending -> delete the marker doc
                  const docsQuery = query(
                     collection(db, "clubs", clubId, "documents"),
                     where("ownerId", "==", memberId),
@@ -244,7 +251,6 @@ export function EssentialDocs() {
                     await deleteDoc(docToDelete.ref);
                 }
             } else {
-                // It's pending, we want to mark it as completed -> add a marker doc
                 const member = allMembers.find(m => m.id === memberId);
                 if(!member) throw new Error("Member not found");
                 
@@ -257,15 +263,10 @@ export function EssentialDocs() {
                     category: 'essential_manual',
                 });
             }
-            
-            toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
-            fetchClubData(clubId); // Refetch to update UI
-
         } catch (e) {
+            // Revert UI on error
+            setDocStatuses(originalStatuses);
             toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
-        } finally {
-            setSaving(false);
-            setStatusToggleInfo(null);
         }
     };
 
@@ -416,23 +417,34 @@ export function EssentialDocs() {
                                 <TableCell>{status.role}</TableCell>
                                 {essentialDocs.map(docName => (
                                     <TableCell key={docName} className="text-center">
-                                         <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <Button
-                                                    variant="ghost" size="icon"
-                                                    onClick={() => setStatusToggleInfo({ memberId: status.memberId, docName, hasIt: status.docs[docName]?.hasIt })}
-                                                >
-                                                {status.docs[docName]?.hasIt ? (
-                                                    <CheckCircle className="h-5 w-5 text-green-500 mx-auto"/>
-                                                ) : (
-                                                    <AlertTriangle className="h-5 w-5 text-red-500 mx-auto"/>
-                                                )}
-                                                </Button>
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                                <p>{status.docs[docName]?.hasIt ? t('clubFiles.essentialDocs.status.delivered') : t('clubFiles.essentialDocs.status.pending')}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
+                                         <DropdownMenu>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" size="icon">
+                                                             {status.docs[docName]?.hasIt ? (
+                                                                <CheckCircle className="h-5 w-5 text-green-500 mx-auto"/>
+                                                            ) : (
+                                                                <AlertTriangle className="h-5 w-5 text-red-500 mx-auto"/>
+                                                            )}
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{status.docs[docName]?.hasIt ? t('clubFiles.essentialDocs.status.delivered') : t('clubFiles.essentialDocs.status.pending')}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                            <DropdownMenuContent>
+                                                <DropdownMenuItem onSelect={() => handleToggleDocStatus(status.memberId, docName, true)} disabled={!status.docs[docName]?.hasIt}>
+                                                    <AlertTriangle className="mr-2 h-4 w-4 text-red-500"/>
+                                                    {t('clubFiles.essentialDocs.markAsPending')}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onSelect={() => handleToggleDocStatus(status.memberId, docName, false)} disabled={status.docs[docName]?.hasIt}>
+                                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500"/>
+                                                     {t('clubFiles.essentialDocs.markAsDelivered')}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
                                     </TableCell>
                                 ))}
                             </TableRow>
@@ -443,23 +455,6 @@ export function EssentialDocs() {
             </CardContent>
         </Card>
       </div>
-
-       <AlertDialog open={!!statusToggleInfo} onOpenChange={(open) => !open && setStatusToggleInfo(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>{t('clubFiles.essentialDocs.confirmStatusChangeTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('clubFiles.essentialDocs.confirmStatusChangeDesc')}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleToggleDocStatus} disabled={saving}>
-              {saving ? <Loader2 className="animate-spin" /> : t('clubFiles.essentialDocs.confirm')}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
         <DialogContent>

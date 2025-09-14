@@ -1329,9 +1329,8 @@
             "filterByDocument": "Filtrar por documento...",
             "allDocuments": "Todos los documentos",
             "statusUpdated": "Estado del documento actualizado.",
-            "confirmStatusChangeTitle": "¿Cambiar Estado del Documento?",
-            "confirmStatusChangeDesc": "Esta acción marcará el documento como entregado o pendiente manualmente. ¿Estás seguro?",
-            "confirm": "Confirmar",
+            "markAsDelivered": "Marcar como entregado",
+            "markAsPending": "Marcar como pendiente",
             "selectDocsToSendTitle": "Seleccionar Documentos a Solicitar",
             "selectDocsToSendDesc": "Elige cuáles de los documentos pendientes quieres incluir en esta solicitud."
         }
