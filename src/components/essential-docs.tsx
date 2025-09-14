@@ -265,22 +265,17 @@ export function EssentialDocs() {
         
         if(hasIt) { 
             try {
-                const docsQuery = query(
-                    collection(db, "clubs", clubId, "documents"),
-                    where("ownerId", "==", memberId),
-                    where("category", "==", docName)
-                );
-                const docsSnapshot = await getDocs(docsQuery);
-                if (!docsSnapshot.empty) {
-                    const docToDelete = docsSnapshot.docs[0];
-                    await deleteDoc(docToDelete.ref);
+                 const docToDelete = allDocs.find(d => d.ownerId === memberId && d.category === docName);
+
+                if (docToDelete) {
+                    await deleteDoc(doc(db, "clubs", clubId, "documents", docToDelete.id!));
                     
                     const newAllDocs = allDocs.filter(d => d.id !== docToDelete.id);
                     setAllDocs(newAllDocs);
                     const newStatuses = calculateDocStatuses(allMembers, newAllDocs, essentialDocs);
                     setDocStatuses(newStatuses);
+                    toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
                 }
-                toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
             } catch (e) {
                 toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
             }
