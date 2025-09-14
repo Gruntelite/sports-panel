@@ -44,6 +44,7 @@ import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/t
 import { requestFilesAction } from "@/lib/actions";
 import { useTranslation } from "./i18n-provider";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
 
 type EssentialDocStatus = {
   memberId: string;
@@ -70,6 +71,7 @@ export function EssentialDocs() {
   const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
 
 
   useEffect(() => {
@@ -137,6 +139,14 @@ export function EssentialDocs() {
 
     return () => unsubscribe();
   }, [t, toast]);
+  
+  const filteredDocStatuses = docStatuses.filter(status => {
+    if (filterStatus === 'all') return true;
+    const hasPending = Object.values(status.docs).some(doc => !doc.hasIt);
+    if (filterStatus === 'pending') return hasPending;
+    if (filterStatus === 'completed') return !hasPending;
+    return true;
+  });
   
   const handleAddEssentialDoc = async () => {
     if (!clubId || !newDocName.trim()) return;
@@ -265,24 +275,36 @@ export function EssentialDocs() {
                     <CardTitle>{t('clubFiles.essentialDocs.statusTitle')}</CardTitle>
                     <CardDescription>{t('clubFiles.essentialDocs.statusDescription')}</CardDescription>
                  </div>
-                 <Button onClick={handleRequestMissingDocs} disabled={selectedMembers.length === 0 || isSending}>
-                    {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                    {t('clubFiles.essentialDocs.requestSelected', { count: selectedMembers.length })}
-                 </Button>
+                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                    <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)}>
+                        <SelectTrigger className="w-full sm:w-[180px]">
+                            <SelectValue placeholder="Filtrar estado..."/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Todos los miembros</SelectItem>
+                            <SelectItem value="pending">Con doc. pendiente</SelectItem>
+                            <SelectItem value="completed">Completados</SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={handleRequestMissingDocs} disabled={selectedMembers.length === 0 || isSending} className="w-full sm:w-auto">
+                        {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                        {t('clubFiles.essentialDocs.requestSelected', { count: selectedMembers.length })}
+                    </Button>
+                 </div>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedMembers(checked ? docStatuses.map(ds => ds.memberId) : [])} /></TableHead>
+                            <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedMembers(checked ? filteredDocStatuses.map(ds => ds.memberId) : [])} /></TableHead>
                             <TableHead>{t('clubFiles.essentialDocs.table.member')}</TableHead>
                             <TableHead>{t('clubFiles.essentialDocs.table.role')}</TableHead>
                             {essentialDocs.map(doc => <TableHead key={doc}>{doc}</TableHead>)}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {docStatuses.map(status => (
+                        {filteredDocStatuses.map(status => (
                             <TableRow key={status.memberId}>
                                 <TableCell><Checkbox checked={selectedMembers.includes(status.memberId)} onCheckedChange={() => handleSelectMember(status.memberId)} /></TableCell>
                                 <TableCell className="font-medium">{status.name}</TableCell>
