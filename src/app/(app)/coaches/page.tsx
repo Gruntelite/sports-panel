@@ -643,6 +643,10 @@ export default function CoachesPage() {
               return coach.teamName;
           case 'monthlyPayment':
               return value === null || value === undefined ? 'N/A' : `${value} €`;
+           case 'sex':
+                if (value === 'masculino') return t('players.fields.sexOptions.male');
+                if (value === 'femenino') return t('players.fields.sexOptions.female');
+                return value || 'N/A';
           default:
                 return value === null || value === undefined || value === '' ? 'N/A' : String(value);
       }
@@ -931,8 +935,8 @@ export default function CoachesPage() {
                                         <Select value={coachData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
                                             <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="masculino">{t('coaches.fields.sexOptions.male')}</SelectItem>
-                                                <SelectItem value="femenino">{t('coaches.fields.sexOptions.female')}</SelectItem>
+                                                <SelectItem value="masculino">{t('players.fields.sexOptions.male')}</SelectItem>
+                                                <SelectItem value="femenino">{t('players.fields.sexOptions.female')}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

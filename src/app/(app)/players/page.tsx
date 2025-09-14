@@ -635,6 +635,10 @@ export default function PlayersPage() {
               return value === null || value === undefined ? 'N/A' : `${value} €`;
           case 'teamName':
               return <Badge variant="outline">{player.teamName || "Sin equipo"}</Badge>;
+          case 'sex':
+                if (value === 'masculino') return t('players.fields.sexOptions.male');
+                if (value === 'femenino') return t('players.fields.sexOptions.female');
+                return value || 'N/A';
           default:
               return value === null || value === undefined || value === '' ? 'N/A' : String(value);
       }
