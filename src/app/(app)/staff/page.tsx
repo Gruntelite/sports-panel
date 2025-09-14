@@ -19,6 +19,8 @@ import {
   Calendar,
   Check,
   Eye,
+  FolderArchive,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -72,7 +74,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc } from "firebase/firestore";
-import type { Staff, Socio, CustomFieldDef } from "@/lib/types";
+import type { Staff, Socio, CustomFieldDef, Document } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -86,6 +88,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/components/i18n-provider";
 import { Trash2 } from "lucide-react";
+import { ref, getDownloadURL } from "firebase/storage";
 
 const MONTHS = [
     { label: "Enero", value: 0 }, { label: "Febrero", value: 1 }, { label: "Marzo", value: 2 },
@@ -107,7 +110,9 @@ export default function StaffPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [modalType, setModalType] = useState<'staff' | 'socio'>('staff');
+  
   const [viewingMember, setViewingMember] = useState<{member: Staff | Socio, type: 'staff' | 'socio'} | null>(null);
+  const [viewingMemberDocs, setViewingMemberDocs] = useState<Document[]>([]);
 
   const [staffData, setStaffData] = useState<Partial<Staff>>({});
   const [socioData, setSocioData] = useState<Partial<Socio>>({});
@@ -185,6 +190,33 @@ export default function StaffPage() {
     }
     setLoading(false);
   };
+  
+    const handleViewMemberDetails = async (member: Staff | Socio, type: 'staff' | 'socio') => {
+        if (!clubId) return;
+        setViewingMember({ member, type });
+        try {
+            const docsQuery = query(collection(db, "clubs", clubId, "documents"), where("ownerId", "==", member.id));
+            const docsSnapshot = await getDocs(docsQuery);
+            const docsListPromises = docsSnapshot.docs.map(async (docData) => {
+                const docItem = { id: docData.id, ...docData.data() } as Document;
+                 if (docItem.path && !docItem.url) {
+                    try {
+                        const url = await getDownloadURL(ref(storage, docItem.path));
+                        docItem.url = url;
+                    } catch (e) {
+                        console.warn(`Could not get download URL for ${docItem.path}`, e);
+                        docItem.url = '#';
+                    }
+                }
+                return docItem;
+            });
+            const docsList = await Promise.all(docsListPromises);
+            setViewingMemberDocs(docsList);
+        } catch (error) {
+            console.error("Error fetching member documents: ", error);
+            setViewingMemberDocs([]);
+        }
+    };
   
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
@@ -545,7 +577,7 @@ export default function StaffPage() {
                                   )}
                                 >
                                       {field.id === 'name' ? (
-                                          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member, type: 'staff'})}>
+                                          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewMemberDetails(member, 'staff')}>
                                             <Avatar className="h-9 w-9">
                                               <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
                                               <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
@@ -579,7 +611,7 @@ export default function StaffPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>{t('staff.actions')}</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => setViewingMember({member, type: 'staff'})}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleViewMemberDetails(member, 'staff')}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>{t('staff.edit')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
                                     <Send className="mr-2 h-4 w-4" />
@@ -692,7 +724,7 @@ export default function StaffPage() {
                                   )}
                                 >
                                       {field.id === 'name' ? (
-                                          <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member: socio, type: 'socio'})}>
+                                          <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewMemberDetails(socio, 'socio')}>
                                             <Avatar className="h-9 w-9">
                                               <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
                                               <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
@@ -714,7 +746,7 @@ export default function StaffPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>{t('staff.actions')}</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => setViewingMember({member: socio, type: 'socio'})}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleViewMemberDetails(socio, 'socio')}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>{t('staff.edit')}</DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
@@ -739,6 +771,7 @@ export default function StaffPage() {
             member={viewingMember.member} 
             memberType={viewingMember.type}
             customFieldDefs={customFields.filter(f => f.appliesTo.includes(viewingMember.type))}
+            documents={viewingMemberDocs}
             onClose={() => setViewingMember(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingMember.type, viewingMember.member);

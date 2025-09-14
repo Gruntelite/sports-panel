@@ -82,7 +82,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player, ClubMember, CustomFieldDef, Interruption } from "@/lib/types";
+import type { Team, Player, ClubMember, CustomFieldDef, Interruption, Document } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
@@ -116,7 +116,9 @@ export default function PlayersPage() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
   const [isBulkDeleteAlertOpen, setIsBulkDeleteAlertOpen] = useState(false);
+  
   const [viewingPlayer, setViewingPlayer] = useState<Player | null>(null);
+  const [viewingPlayerDocs, setViewingPlayerDocs] = useState<Document[]>([]);
   
   const [isFieldsModalOpen, setIsFieldsModalOpen] = useState(false);
   const [isMembersModalOpen, setIsMembersModalOpen] = useState(false);
@@ -260,6 +262,34 @@ export default function PlayersPage() {
     }
     setLoading(false);
   };
+  
+    const handleViewPlayerDetails = async (player: Player) => {
+        if (!clubId) return;
+        setViewingPlayer(player);
+        try {
+            const docsQuery = query(collection(db, "clubs", clubId, "documents"), where("ownerId", "==", player.id));
+            const docsSnapshot = await getDocs(docsQuery);
+            const docsListPromises = docsSnapshot.docs.map(async (docData) => {
+                const docItem = { id: docData.id, ...docData.data() } as Document;
+                 if (docItem.path && !docItem.url) {
+                    try {
+                        const url = await getDownloadURL(ref(storage, docItem.path));
+                        docItem.url = url;
+                    } catch (e) {
+                        console.warn(`Could not get download URL for ${docItem.path}`, e);
+                        docItem.url = '#';
+                    }
+                }
+                return docItem;
+            });
+            const docsList = await Promise.all(docsListPromises);
+            setViewingPlayerDocs(docsList);
+        } catch (error) {
+            console.error("Error fetching player documents: ", error);
+            setViewingPlayerDocs([]);
+        }
+    };
+
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { id, value, type } = e.target;
@@ -753,7 +783,7 @@ export default function PlayersPage() {
                             className={cn('min-w-[150px]', !visibleColumns.has(field.id) && 'hidden', field.id === 'name' && 'font-medium')}
                           >
                               {field.id === 'name' ? (
-                                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingPlayer(player)}>
+                                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewPlayerDetails(player)}>
                                     <Avatar className="h-9 w-9">
                                       <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
                                       <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
@@ -787,7 +817,7 @@ export default function PlayersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>{t('players.actions')}</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => setViewingPlayer(player)}><Eye className="mr-2 h-4 w-4"/>{t('players.viewProfile')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewPlayerDetails(player)}><Eye className="mr-2 h-4 w-4"/>{t('players.viewProfile')}</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>{t('players.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>
@@ -814,6 +844,7 @@ export default function PlayersPage() {
             member={viewingPlayer} 
             memberType="player"
             customFieldDefs={playerCustomFields}
+            documents={viewingPlayerDocs}
             onClose={() => setViewingPlayer(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingPlayer);

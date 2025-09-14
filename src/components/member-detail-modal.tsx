@@ -5,12 +5,12 @@ import * as React from "react";
 import Image from "next/image";
 import { format, parseISO } from "date-fns";
 import { es } from "date-fns/locale";
-import type { Player, Coach, Staff, Socio, CustomFieldDef } from "@/lib/types";
+import type { Player, Coach, Staff, Socio, CustomFieldDef, Document } from "@/lib/types";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, User, Contact, Shield, Briefcase, Handshake } from "lucide-react";
+import { CheckCircle, XCircle, User, Contact, Shield, Briefcase, Handshake, FolderArchive, Download } from "lucide-react";
 import { Separator } from "./ui/separator";
 import { ScrollArea } from "./ui/scroll-area";
 
@@ -49,10 +49,11 @@ const DetailItem = ({ label, value, isSubtitle }: { label: string; value?: strin
     );
 };
 
-export function MemberDetailModal({ member, memberType, customFieldDefs = [], onClose, onEdit }: {
+export function MemberDetailModal({ member, memberType, customFieldDefs = [], documents = [], onClose, onEdit }: {
     member: Player | Coach | Staff | Socio | null;
     memberType: 'player' | 'coach' | 'staff' | 'socio';
     customFieldDefs: CustomFieldDef[];
+    documents?: Document[];
     onClose: () => void;
     onEdit: () => void;
 }) {
@@ -157,7 +158,7 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
           </div>
         </DialogHeader>
         <ScrollArea className="overflow-y-auto -mr-6 pr-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 py-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-6 py-4">
                {fieldGroups.map(group => group.fields.length > 0 && (
                    <div key={group.title} className="space-y-3">
                        <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
@@ -169,6 +170,26 @@ export function MemberDetailModal({ member, memberType, customFieldDefs = [], on
                        </dl>
                    </div>
                ))}
+               {documents && documents.length > 0 && (
+                 <div className="space-y-3">
+                    <h3 className="text-lg font-semibold flex items-center gap-2 text-primary">
+                        <FolderArchive className="h-5 w-5"/>
+                        Documentos Adjuntos
+                    </h3>
+                    <div className="space-y-2">
+                        {documents.map(doc => (
+                            <div key={doc.id} className="flex items-center justify-between p-2 border rounded-md">
+                                <span className="text-sm font-medium">{doc.name}</span>
+                                <Button asChild variant="outline" size="icon">
+                                    <a href={doc.url} target="_blank" rel="noopener noreferrer">
+                                        <Download className="h-4 w-4"/>
+                                    </a>
+                                </Button>
+                            </div>
+                        ))}
+                    </div>
+                 </div>
+               )}
             </div>
         </ScrollArea>
         <DialogFooter className="pt-4 border-t flex-shrink-0">

@@ -23,6 +23,8 @@ import {
   ChevronRight,
   Trash,
   Eye,
+  FolderArchive,
+  Download,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,7 +86,7 @@ import { useToast } from "@/hooks/use-toast";
 import { auth, db, storage } from "@/lib/firebase";
 import { collection, getDocs, doc, getDoc, addDoc, updateDoc, deleteDoc, query, where, writeBatch, setDoc, orderBy } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import type { Team, Player, Coach, TeamMember, Interruption, CustomFieldDef } from "@/lib/types";
+import type { Team, Player, Coach, TeamMember, Interruption, CustomFieldDef, Document } from "@/lib/types";
 import { v4 as uuidv4 } from 'uuid';
 import { DatePicker } from "@/components/ui/date-picker";
 import { format, parseISO, intervalToDuration, differenceInMilliseconds } from "date-fns";
@@ -114,8 +116,10 @@ export default function EditTeamPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [modalType, setModalType] = useState<'player' | 'coach'>('player');
-  const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
   
+  const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
+  const [viewingMemberDocs, setViewingMemberDocs] = useState<Document[]>([]);
+
   const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
   const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [], customFields: {} });
 
@@ -284,6 +288,33 @@ export default function EditTeamPage() {
       setLoading(false);
     }
   };
+  
+    const handleViewMemberDetails = async (member: Player | Coach, type: 'player' | 'coach') => {
+        if (!clubId) return;
+        setViewingMember({ member, type });
+        try {
+            const docsQuery = query(collection(db, "clubs", clubId, "documents"), where("ownerId", "==", member.id));
+            const docsSnapshot = await getDocs(docsQuery);
+            const docsListPromises = docsSnapshot.docs.map(async (docData) => {
+                const docItem = { id: docData.id, ...docData.data() } as Document;
+                 if (docItem.path && !docItem.url) {
+                    try {
+                        const url = await getDownloadURL(ref(storage, docItem.path));
+                        docItem.url = url;
+                    } catch (e) {
+                        console.warn(`Could not get download URL for ${docItem.path}`, e);
+                        docItem.url = '#';
+                    }
+                }
+                return docItem;
+            });
+            const docsList = await Promise.all(docsListPromises);
+            setViewingMemberDocs(docsList);
+        } catch (error) {
+            console.error("Error fetching member documents: ", error);
+            setViewingMemberDocs([]);
+        }
+    };
 
   useEffect(() => {
     if (clubId && teamId) {
@@ -897,7 +928,7 @@ export default function EditTeamPage() {
                                             />
                                           </TableCell>
                                           <TableCell className="font-medium">
-                                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => setViewingMember({member: member.data as Player | Coach, type: member.role === 'Jugador' ? 'player' : 'coach'})}>
+                                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewMemberDetails(member.data as Player | Coach, member.role === 'Jugador' ? 'player' : 'coach')}>
                                               <Avatar className="h-9 w-9">
                                                 <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
                                                 <AvatarFallback>{member.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
@@ -934,7 +965,7 @@ export default function EditTeamPage() {
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>{t('teams.actions')}</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => setViewingMember({member: member.data as Player | Coach, type: member.role === 'Jugador' ? 'player' : 'coach'})}><Eye className="mr-2 h-4 w-4"/>{t('teams.editTeam.viewProfile')}</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleViewMemberDetails(member.data as Player | Coach, member.role === 'Jugador' ? 'player' : 'coach')}><Eye className="mr-2 h-4 w-4"/>{t('teams.editTeam.viewProfile')}</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleOpenModal('edit', member.role === 'Jugador' ? 'player' : 'coach', member)}>{t('teams.editTeam.edit')}</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="text-destructive" onClick={() => setMemberToDelete(member)}>
@@ -969,6 +1000,7 @@ export default function EditTeamPage() {
             member={viewingMember.member} 
             memberType={viewingMember.type}
             customFieldDefs={customFields.filter(f => f.appliesTo.includes(viewingMember.type))}
+            documents={viewingMemberDocs}
             onClose={() => setViewingMember(null)}
             onEdit={() => {
                 handleOpenModal('edit', viewingMember.type, {id: viewingMember.member.id, name: `${viewingMember.member.name} ${viewingMember.member.lastName}`, role: viewingMember.member.role, data: viewingMember.member});
