@@ -74,6 +74,80 @@ type EssentialDocStatus = {
   };
 };
 
+function ManualUploadDialog({ open, onOpenChange, manualUploadData, onUpload, clubId }: {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    manualUploadData: { memberId: string; memberName: string; docName: string } | null;
+    onUpload: () => void;
+    clubId: string | null;
+}) {
+    const { t } = useTranslation();
+    const { toast } = useToast();
+    const [saving, setSaving] = useState(false);
+    const [fileToUpload, setFileToUpload] = useState<File | null>(null);
+    
+    const handleManualUpload = async () => {
+        if (!clubId || !manualUploadData || !fileToUpload) {
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.errors.missingDataDesc') });
+            return;
+        }
+
+        setSaving(true);
+        const { memberId, memberName, docName } = manualUploadData;
+
+        try {
+            const filePath = `club-documents/${clubId}/${memberId}/${uuidv4()}-${fileToUpload.name}`;
+            const fileRef = ref(storage, filePath);
+            await uploadBytes(fileRef, fileToUpload);
+            
+            const newDoc = {
+                name: docName,
+                path: filePath,
+                createdAt: Timestamp.now(),
+                ownerId: memberId,
+                ownerName: memberName,
+                category: docName,
+            };
+            await addDoc(collection(db, "clubs", clubId, "documents"), newDoc);
+            
+            toast({ title: t('clubFiles.essentialDocs.statusUpdated'), description: t('clubFiles.essentialDocs.fileUploadedDesc') });
+            onUpload();
+            onOpenChange(false);
+            setFileToUpload(null);
+        } catch(e) {
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.errors.uploadErrorDesc') });
+        } finally {
+            setSaving(false);
+        }
+    }
+    
+    return (
+         <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>{t('clubFiles.essentialDocs.manualUploadTitle')}</DialogTitle>
+                    <DialogDescription>{t('clubFiles.essentialDocs.manualUploadDesc', { memberName: manualUploadData?.memberName, docName: manualUploadData?.docName })}</DialogDescription>
+                </DialogHeader>
+                <div className="py-4 space-y-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="manual-file-upload">{t('clubFiles.essentialDocs.file')}</Label>
+                        <Input id="manual-file-upload" type="file" onChange={(e) => setFileToUpload(e.target.files?.[0] || null)} />
+                    </div>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                    <Button onClick={handleManualUpload} disabled={saving || !fileToUpload}>
+                        {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        <Upload className="mr-2 h-4 w-4"/>
+                        {t('clubFiles.uploadButton')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
+
+
 export function EssentialDocs() {
   const { toast } = useToast();
   const { t } = useTranslation();
@@ -98,7 +172,6 @@ export function EssentialDocs() {
   
   const [isManualUploadModalOpen, setIsManualUploadModalOpen] = useState(false);
   const [manualUploadData, setManualUploadData] = useState<{memberId: string, memberName: string, docName: string} | null>(null);
-  const [fileToUpload, setFileToUpload] = useState<File | null>(null);
 
 
   const calculateDocStatuses = (members: ClubMember[], docs: Document[], essentialDocList: string[]) => {
@@ -288,43 +361,9 @@ export function EssentialDocs() {
         }
     };
 
-    const handleManualUpload = async () => {
-        if (!clubId || !manualUploadData || !fileToUpload) {
-            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.errors.missingDataDesc') });
-            return;
-        }
-
-        setSaving(true);
-        const { memberId, memberName, docName } = manualUploadData;
-
-        try {
-            const filePath = `club-documents/${clubId}/${memberId}/${uuidv4()}-${fileToUpload.name}`;
-            const fileRef = ref(storage, filePath);
-            await uploadBytes(fileRef, fileToUpload);
-            
-            const newDoc = {
-                name: docName,
-                path: filePath,
-                createdAt: Timestamp.now(),
-                ownerId: memberId,
-                ownerName: memberName,
-                category: docName,
-            };
-            const newDocRef = await addDoc(collection(db, "clubs", clubId, "documents"), newDoc);
-            
-            const newAllDocs = [...allDocs, { id: newDocRef.id, ...newDoc, url: await getDownloadURL(fileRef)} as Document];
-            setAllDocs(newAllDocs);
-            const newStatuses = calculateDocStatuses(allMembers, newAllDocs, essentialDocs);
-            setDocStatuses(newStatuses);
-
-            toast({ title: t('clubFiles.essentialDocs.statusUpdated'), description: t('clubFiles.essentialDocs.fileUploadedDesc') });
-            setIsManualUploadModalOpen(false);
-            setFileToUpload(null);
-            setManualUploadData(null);
-        } catch(e) {
-            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.errors.uploadErrorDesc') });
-        } finally {
-            setSaving(false);
+    const handleUploadFinished = () => {
+        if (clubId) {
+            fetchClubData(clubId);
         }
     }
 
@@ -525,6 +564,15 @@ export function EssentialDocs() {
             </CardContent>
         </Card>
       </div>
+      {isManualUploadModalOpen && (
+        <ManualUploadDialog 
+            open={isManualUploadModalOpen}
+            onOpenChange={setIsManualUploadModalOpen}
+            manualUploadData={manualUploadData}
+            onUpload={handleUploadFinished}
+            clubId={clubId}
+        />
+      )}
 
       <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
         <DialogContent>
@@ -553,29 +601,6 @@ export function EssentialDocs() {
                 <Button onClick={() => handleSendRequests(missingDocsToRequest)} disabled={isSending}>
                    {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
                     {t('common.send')}
-                </Button>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isManualUploadModalOpen} onOpenChange={setIsManualUploadModalOpen}>
-        <DialogContent>
-            <DialogHeader>
-                 <DialogTitle>{t('clubFiles.essentialDocs.manualUploadTitle')}</DialogTitle>
-                 <DialogDescription>{t('clubFiles.essentialDocs.manualUploadDesc', { memberName: manualUploadData?.memberName, docName: manualUploadData?.docName })}</DialogDescription>
-            </DialogHeader>
-            <div className="py-4 space-y-4">
-                <div className="space-y-2">
-                    <Label htmlFor="manual-file-upload">{t('clubFiles.essentialDocs.file')}</Label>
-                    <Input id="manual-file-upload" type="file" onChange={(e) => setFileToUpload(e.target.files?.[0] || null)} />
-                </div>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
-                <Button onClick={handleManualUpload} disabled={saving || !fileToUpload}>
-                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                    <Upload className="mr-2 h-4 w-4"/>
-                    {t('clubFiles.uploadButton')}
                 </Button>
             </DialogFooter>
         </DialogContent>
