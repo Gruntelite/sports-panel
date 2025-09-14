@@ -57,7 +57,7 @@ import {
   getDownloadURL,
   deleteObject,
 } from "firebase/storage";
-import type { Document, Player, Coach, Staff } from "@/lib/types";
+import type { Document, Player, Coach, Staff, ClubSettings } from "@/lib/types";
 import {
   PlusCircle,
   Loader2,
@@ -119,12 +119,29 @@ function DocumentsList() {
   const [filterOwnerId, setFilterOwnerId] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
 
+  const [allCategories, setAllCategories] = useState<{value: string, label: string}[]>([]);
+  
   const docCategoriesRaw = t('clubFiles.categories', { returnObjects: true });
-  const docCategories = Array.isArray(docCategoriesRaw) ? docCategoriesRaw : [];
+  const hardcodedCategories = Array.isArray(docCategoriesRaw) ? docCategoriesRaw : [];
 
   const fetchData = async (currentClubId: string) => {
     setLoading(true);
     try {
+      const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      const settings = (settingsSnap.data() as ClubSettings) || {};
+      const essentialDocList = settings.essentialDocs || [];
+      const essentialDocCategories = essentialDocList.map(docName => ({ value: docName, label: docName }));
+      
+      const uniqueCategories = [...hardcodedCategories, ...essentialDocCategories].reduce((acc, current) => {
+          if (!acc.find(item => item.value === current.value)) {
+              acc.push(current);
+          }
+          return acc;
+      }, [] as {value: string, label: string}[]);
+
+      setAllCategories(uniqueCategories);
+
       const docsQuery = query(collection(db, "clubs", currentClubId, "documents"), orderBy("createdAt", "desc"));
       const docsSnapshot = await getDocs(docsQuery);
       
@@ -338,7 +355,7 @@ function DocumentsList() {
                   </SelectTrigger>
                   <SelectContent>
                       <SelectItem value="all">{t('clubFiles.allCategories')}</SelectItem>
-                      {docCategories.map(cat => (
+                      {allCategories.map(cat => (
                           <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                       ))}
                   </SelectContent>
@@ -388,7 +405,7 @@ function DocumentsList() {
                             <SelectValue placeholder={t('clubFiles.uploadModal.categoryPlaceholder')} />
                           </SelectTrigger>
                           <SelectContent>
-                            {docCategories.map(cat => (
+                            {allCategories.map(cat => (
                               <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                             ))}
                           </SelectContent>
@@ -494,7 +511,7 @@ function DocumentsList() {
                           {doc.name}
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || t('clubFiles.noCategory')}</Badge>
+                          <Badge variant="outline">{allCategories.find(c => c.value === doc.category)?.label || doc.category || t('clubFiles.noCategory')}</Badge>
                         </TableCell>
                         <TableCell>
                             {doc.ownerName || t('clubFiles.club')}

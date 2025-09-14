@@ -52,7 +52,7 @@ export async function uploadFileFromTokenAction(formData: FormData) {
             createdAt: Timestamp.now(),
             ownerId: userId,
             ownerName: userName,
-            category: 'otro', 
+            category: documentTitle, // Automatically categorize with the essential doc name
         };
         
         // Corrected line: use the admin SDK method to add a document
