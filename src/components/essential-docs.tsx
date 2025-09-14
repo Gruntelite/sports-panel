@@ -265,7 +265,7 @@ export function EssentialDocs() {
         
         if(hasIt) { 
             try {
-                 const docsQuery = query(
+                const docsQuery = query(
                     collection(db, "clubs", clubId, "documents"),
                     where("ownerId", "==", memberId),
                     where("category", "==", docName)
@@ -473,7 +473,7 @@ export function EssentialDocs() {
                  </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-auto relative h-[600px]">
+                <div className="relative h-[600px] overflow-auto border rounded-lg">
                 <Table>
                     <TableHeader className="sticky top-0 bg-card z-10">
                         <TableRow>
@@ -586,4 +586,3 @@ export function EssentialDocs() {
     </TooltipProvider>
   );
 }
-
