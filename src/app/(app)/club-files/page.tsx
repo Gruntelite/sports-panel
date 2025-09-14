@@ -497,10 +497,7 @@ function DocumentsList() {
                           <Badge variant="outline">{docCategories.find(c => c.value === doc.category)?.label || t('clubFiles.noCategory')}</Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <UserIcon className="h-4 w-4 text-muted-foreground" />
                             {doc.ownerName || t('clubFiles.club')}
-                          </div>
                         </TableCell>
                         <TableCell>
                           {format(doc.createdAt.toDate(), "d 'de' LLLL 'de' yyyy", { locale: locale === 'ca' ? ca : es })}
