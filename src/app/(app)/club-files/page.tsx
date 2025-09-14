@@ -146,17 +146,17 @@ function DocumentsList() {
       const docsSnapshot = await getDocs(docsQuery);
       
       const docsListPromises = docsSnapshot.docs.map(async (docData) => {
-          const doc = { id: docData.id, ...docData.data() } as Document;
-          if (doc.path && !doc.url) {
+          const docItem = { id: docData.id, ...docData.data() } as Document;
+          if (docItem.path && !docItem.url) {
               try {
-                  const url = await getDownloadURL(ref(storage, doc.path));
-                  doc.url = url;
+                  const url = await getDownloadURL(ref(storage, docItem.path));
+                  docItem.url = url;
               } catch (e) {
-                  console.warn(`Could not get download URL for ${doc.path}`, e);
-                  doc.url = '#'; // Assign a fallback URL
+                  console.warn(`Could not get download URL for ${docItem.path}`, e);
+                  docItem.url = '#'; // Assign a fallback URL
               }
           }
-          return doc;
+          return docItem;
       });
 
       const docsList = await Promise.all(docsListPromises);
@@ -304,8 +304,18 @@ function DocumentsList() {
     setSaving(true);
 
     try {
-      const fileRef = ref(storage, docToDelete.path);
-      await deleteObject(fileRef);
+      if (docToDelete.path) {
+        try {
+          const fileRef = ref(storage, docToDelete.path);
+          await deleteObject(fileRef);
+        } catch (storageError: any) {
+          if (storageError.code === 'storage/object-not-found') {
+            console.warn(`File not found in Storage: ${docToDelete.path}. Proceeding to delete Firestore doc.`);
+          } else {
+            throw storageError; // Re-throw other storage errors
+          }
+        }
+      }
 
       await deleteDoc(doc(db, "clubs", clubId, "documents", docToDelete.id!));
       

@@ -241,34 +241,37 @@ export function EssentialDocs() {
     });
   }
   
-    const handleMarkAsPending = async (memberId: string, docName: string) => {
+    const handleToggleDocStatus = async (memberId: string, docName: string, hasIt: boolean) => {
         if (!clubId) return;
         
-        try {
-            const docsQuery = query(
-                collection(db, "clubs", clubId, "documents"),
-                where("ownerId", "==", memberId),
-                where("category", "==", docName)
-            );
-            const docsSnapshot = await getDocs(docsQuery);
-            if (!docsSnapshot.empty) {
-                const docToDelete = docsSnapshot.docs[0];
-                await deleteDoc(docToDelete.ref);
-                
-                const newAllDocs = allDocs.filter(d => d.id !== docToDelete.id);
-                setAllDocs(newAllDocs);
-                const newStatuses = calculateDocStatuses(allMembers, newAllDocs, essentialDocs);
-                setDocStatuses(newStatuses);
+        if(hasIt) { // If it has it, we want to mark it as pending (delete it)
+            try {
+                const docsQuery = query(
+                    collection(db, "clubs", clubId, "documents"),
+                    where("ownerId", "==", memberId),
+                    where("category", "==", docName)
+                );
+                const docsSnapshot = await getDocs(docsQuery);
+                if (!docsSnapshot.empty) {
+                    const docToDelete = docsSnapshot.docs[0];
+                    await deleteDoc(docToDelete.ref);
+                    
+                    const newAllDocs = allDocs.filter(d => d.id !== docToDelete.id);
+                    setAllDocs(newAllDocs);
+                    const newStatuses = calculateDocStatuses(allMembers, newAllDocs, essentialDocs);
+                    setDocStatuses(newStatuses);
+                }
+                toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
+            } catch (e) {
+                toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
             }
-            toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
-        } catch (e) {
-            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
+        } else { // If it doesn't have it, we open the manual upload modal
+             const member = allMembers.find(m => m.id === memberId);
+             if (member) {
+                setManualUploadData({ memberId, memberName: member.name, docName });
+                setIsManualUploadModalOpen(true);
+             }
         }
-    };
-    
-    const handleOpenManualUpload = (memberId: string, memberName: string, docName: string) => {
-        setManualUploadData({ memberId, memberName, docName });
-        setIsManualUploadModalOpen(true);
     };
 
     const handleManualUpload = async () => {
@@ -291,7 +294,7 @@ export function EssentialDocs() {
                 createdAt: Timestamp.now(),
                 ownerId: memberId,
                 ownerName: memberName,
-                category: docName,
+                category: docName, // Use docName as the category
             };
             const newDocRef = await addDoc(collection(db, "clubs", clubId, "documents"), newDoc);
             
@@ -477,13 +480,12 @@ export function EssentialDocs() {
                                                 </TooltipContent>
                                             </Tooltip>
                                             <DropdownMenuContent>
-                                                <DropdownMenuItem onSelect={() => handleMarkAsPending(status.memberId, docName)} disabled={!status.docs[docName]?.hasIt}>
-                                                    <AlertTriangle className="mr-2 h-4 w-4 text-red-500"/>
-                                                    {t('clubFiles.essentialDocs.markAsPending')}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onSelect={() => handleOpenManualUpload(status.memberId, status.name, docName)} disabled={status.docs[docName]?.hasIt}>
-                                                    <CheckCircle className="mr-2 h-4 w-4 text-green-500"/>
-                                                     {t('clubFiles.essentialDocs.markAsDelivered')}
+                                                <DropdownMenuItem onSelect={() => handleToggleDocStatus(status.memberId, docName, status.docs[docName]?.hasIt)}>
+                                                    {status.docs[docName]?.hasIt ? (
+                                                        <><AlertTriangle className="mr-2 h-4 w-4 text-red-500"/> {t('clubFiles.essentialDocs.markAsPending')}</>
+                                                    ) : (
+                                                        <><CheckCircle className="mr-2 h-4 w-4 text-green-500"/> {t('clubFiles.essentialDocs.markAsDelivered')}</>
+                                                    )}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>
@@ -514,7 +516,7 @@ export function EssentialDocs() {
                                     checked={missingDocsToRequest.includes(docName)}
                                     disabled
                                 />
-                                <Label htmlFor={`doc-req-${docName}`} className="flex-1 font-normal">{docName}</Label>
+                                <Label htmlFor={`doc-req-${docName}`} className="font-normal flex-1">{docName}</Label>
                             </div>
                         ))}
                     </div>
