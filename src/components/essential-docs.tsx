@@ -263,9 +263,9 @@ export function EssentialDocs() {
     const handleToggleDocStatus = async (memberId: string, docName: string, hasIt: boolean) => {
         if (!clubId) return;
         
-        if(hasIt) { // If it has it, we want to mark it as pending (delete it)
+        if(hasIt) { 
             try {
-                const docsQuery = query(
+                 const docsQuery = query(
                     collection(db, "clubs", clubId, "documents"),
                     where("ownerId", "==", memberId),
                     where("category", "==", docName)
@@ -284,7 +284,7 @@ export function EssentialDocs() {
             } catch (e) {
                 toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
             }
-        } else { // If it doesn't have it, we open the manual upload modal
+        } else {
              const member = allMembers.find(m => m.id === memberId);
              if (member) {
                 setManualUploadData({ memberId, memberName: member.name, docName });
@@ -313,7 +313,7 @@ export function EssentialDocs() {
                 createdAt: Timestamp.now(),
                 ownerId: memberId,
                 ownerName: memberName,
-                category: docName, // Use docName as the category
+                category: docName,
             };
             const newDocRef = await addDoc(collection(db, "clubs", clubId, "documents"), newDoc);
             
