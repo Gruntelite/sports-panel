@@ -12,6 +12,11 @@ import {
   updateDoc,
   arrayUnion,
   arrayRemove,
+  addDoc,
+  query,
+  where,
+  deleteDoc,
+  Timestamp,
 } from "firebase/firestore";
 import type { Player, Coach, Staff, Document, ClubSettings, ClubMember } from "@/lib/types";
 import {
@@ -43,8 +48,12 @@ import { Checkbox } from "./ui/checkbox";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { requestFilesAction } from "@/lib/actions";
 import { useTranslation } from "./i18n-provider";
-import { Badge } from "@/components/ui/badge";
+import { Badge } from "./ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
+import { ScrollArea } from "./ui/scroll-area";
+
 
 type EssentialDocStatus = {
   memberId: string;
@@ -54,6 +63,7 @@ type EssentialDocStatus = {
     [key: string]: {
       name: string;
       hasIt: boolean;
+      docId?: string;
     };
   };
 };
@@ -73,59 +83,66 @@ export function EssentialDocs() {
   const [isSending, setIsSending] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [filterDoc, setFilterDoc] = useState<string>('all');
+  
+  const [statusToggleInfo, setStatusToggleInfo] = useState<{ memberId: string, docName: string, hasIt: boolean } | null>(null);
+  const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
+  const [missingDocsToRequest, setMissingDocsToRequest] = useState<string[]>([]);
+
+
+  const fetchClubData = async (currentClubId: string) => {
+    setLoading(true);
+    try {
+      const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+      const settingsSnap = await getDoc(settingsRef);
+      const settings = (settingsSnap.data() as ClubSettings) || {};
+      setEssentialDocs(settings.essentialDocs || []);
+
+      const members: ClubMember[] = [];
+      const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
+      playersSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Jugador', data: d.data() as Player, email: (d.data() as Player).tutorEmail }));
+      
+      const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
+      coachesSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Entrenador', data: d.data() as Coach, email: (d.data() as Coach).email }));
+      setAllMembers(members);
+
+      const docsSnap = await getDocs(collection(db, "clubs", currentClubId, "documents"));
+      const allDocs = docsSnap.docs.map(d => ({id: d.id, ...d.data()} as Document));
+      
+      const statuses = members.map(member => {
+        const memberDocs = allDocs.filter(d => d.ownerId === member.id);
+        const status: EssentialDocStatus = {
+            memberId: member.id,
+            name: member.name,
+            role: member.type,
+            docs: {},
+        };
+        (settings.essentialDocs || []).forEach(docName => {
+            const foundDoc = memberDocs.find(d => 
+                (d.category === 'essential_manual' && d.name === docName) ||
+                (d.category === 'identificacion' && docName.toLowerCase().includes('dni')) ||
+                (d.category === 'medico' && docName.toLowerCase().includes('médico')) ||
+                (d.name.toLowerCase().includes(docName.toLowerCase().substring(0,5)))
+            );
+            status.docs[docName] = {
+                name: docName,
+                hasIt: !!foundDoc,
+                docId: foundDoc?.id,
+            };
+        });
+        return status;
+    });
+
+      setDocStatuses(statuses);
+
+    } catch (error) {
+      console.error("Error fetching essential docs data:", error);
+      toast({ variant: "destructive", title: t('common.error'), description: "No se pudieron cargar los datos." });
+    }
+    setLoading(false);
+  };
 
 
   useEffect(() => {
-    const fetchClubData = async (currentClubId: string) => {
-      setLoading(true);
-      try {
-        // Fetch essential docs definition
-        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
-        const settings = (settingsSnap.data() as ClubSettings) || {};
-        setEssentialDocs(settings.essentialDocs || []);
-
-        // Fetch all members
-        const members: ClubMember[] = [];
-        const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
-        playersSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Jugador', data: d.data() as Player, email: (d.data() as Player).tutorEmail }));
-        
-        const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
-        coachesSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Entrenador', data: d.data() as Coach, email: (d.data() as Coach).email }));
-        setAllMembers(members);
-
-        // Fetch all documents
-        const docsSnap = await getDocs(collection(db, "clubs", currentClubId, "documents"));
-        const allDocs = docsSnap.docs.map(d => d.data() as Document);
-
-        // Process statuses
-        const statuses = members.map(member => {
-            const memberDocs = allDocs.filter(d => d.ownerId === member.id);
-            const status: EssentialDocStatus = {
-                memberId: member.id,
-                name: member.name,
-                role: member.type,
-                docs: {},
-            };
-            (settings.essentialDocs || []).forEach(docName => {
-                status.docs[docName] = {
-                    name: docName,
-                    hasIt: memberDocs.some(d => d.category === 'identificacion' && docName.toLowerCase().includes('dni')) || // Simple logic, can be improved
-                           memberDocs.some(d => d.category === 'medico' && docName.toLowerCase().includes('médico')) ||
-                           memberDocs.some(d => d.name.toLowerCase().includes(docName.toLowerCase().substring(0,5)))
-                };
-            });
-            return status;
-        });
-        setDocStatuses(statuses);
-
-      } catch (error) {
-        console.error("Error fetching essential docs data:", error);
-        toast({ variant: "destructive", title: t('common.error'), description: "No se pudieron cargar los datos." });
-      }
-      setLoading(false);
-    };
-
     const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
         getDoc(doc(db, "users", user.uid)).then(userDoc => {
@@ -139,7 +156,7 @@ export function EssentialDocs() {
     });
 
     return () => unsubscribe();
-  }, [t, toast]);
+  }, []);
   
   const filteredDocStatuses = docStatuses.filter(status => {
     const statusMatch = (() => {
@@ -155,7 +172,6 @@ export function EssentialDocs() {
         return status.docs[filterDoc] && !status.docs[filterDoc].hasIt;
     })();
     
-    // If filtering by a specific doc, only show pending for that doc.
     if(filterDoc !== 'all') {
         return docMatch;
     }
@@ -207,34 +223,91 @@ export function EssentialDocs() {
     });
   }
   
-  const handleRequestMissingDocs = async () => {
-    if (!clubId || selectedMembers.length === 0) return;
+  const handleToggleDocStatus = async () => {
+    if (!statusToggleInfo || !clubId) return;
+
+    setSaving(true);
+    const { memberId, docName, hasIt } = statusToggleInfo;
+    const member = allMembers.find(m => m.id === memberId);
+    if(!member) {
+        setSaving(false);
+        return;
+    }
+
+    try {
+        if (hasIt) {
+            // It's completed, we want to mark it as pending -> delete the marker doc
+            const memberStatus = docStatuses.find(ds => ds.memberId === memberId);
+            const docIdToDelete = memberStatus?.docs[docName]?.docId;
+            if (docIdToDelete) {
+                await deleteDoc(doc(db, "clubs", clubId, "documents", docIdToDelete));
+            }
+        } else {
+            // It's pending, we want to mark it as completed -> add a marker doc
+            await addDoc(collection(db, "clubs", clubId, "documents"), {
+                name: docName,
+                path: `manual_override/${memberId}/${docName}`,
+                createdAt: Timestamp.now(),
+                ownerId: memberId,
+                ownerName: member.name,
+                category: 'essential_manual',
+            });
+        }
+        
+        toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
+        fetchClubData(clubId); // Refetch to update UI
+
+    } catch (e) {
+        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
+    } finally {
+        setSaving(false);
+        setStatusToggleInfo(null);
+    }
+  };
+
+  const openRequestModal = () => {
+    if (selectedMembers.length === 0) return;
+    
+    const allMissingDocs = new Set<string>();
+    selectedMembers.forEach(memberId => {
+      const status = docStatuses.find(ds => ds.memberId === memberId);
+      if (status) {
+        Object.values(status.docs).forEach(doc => {
+          if (!doc.hasIt) {
+            allMissingDocs.add(doc.name);
+          }
+        });
+      }
+    });
+    
+    setMissingDocsToRequest(Array.from(allMissingDocs));
+    setIsRequestModalOpen(true);
+  };
+
+  const handleSendRequests = async (docsToRequest: string[]) => {
+     if (!clubId || selectedMembers.length === 0 || docsToRequest.length === 0) {
+        setIsRequestModalOpen(false);
+        return;
+    }
     
     setIsSending(true);
     let totalRequestsSent = 0;
-    
+
     for (const memberId of selectedMembers) {
-      const memberStatus = docStatuses.find(ds => ds.memberId === memberId);
       const memberData = allMembers.find(m => m.id === memberId);
-      if (!memberStatus || !memberData || !memberData.email) continue;
-
-      const missingDocs = Object.values(memberStatus.docs).filter(d => !d.hasIt).map(d => d.name);
+      if (!memberData || !memberData.email) continue;
       
-      if (missingDocs.length > 0) {
-        // A request is sent for each missing document for simplicity
-        // This could be batched into a single email in a future improvement
-        const docTitle = t('clubFiles.essentialDocs.missingDocsTitle', { docs: missingDocs.join(', ') });
-        
-        const formData = new FormData();
-        formData.append('clubId', clubId);
-        formData.append('members', JSON.stringify([{ id: memberData.id, name: memberData.name, email: memberData.email }]));
-        formData.append('doc-title', docTitle);
-        formData.append('message', t('clubFiles.essentialDocs.requestMessage', { name: memberData.name, docs: missingDocs.join(', ') }));
+      const docTitle = docsToRequest.join(', ');
 
-        const result = await requestFilesAction(formData);
-        if (result.success) {
-            totalRequestsSent += result.count || 0;
-        }
+      const formData = new FormData();
+      formData.append('clubId', clubId);
+      formData.append('members', JSON.stringify([{ id: memberData.id, name: memberData.name, email: memberData.email }]));
+      formData.append('doc-title', docTitle);
+      formData.append('message', t('clubFiles.essentialDocs.requestMessage', { name: memberData.name, docs: docTitle }));
+
+      const result = await requestFilesAction(formData);
+      if (result.success) {
+          totalRequestsSent += result.count || 0;
       }
     }
     
@@ -246,7 +319,9 @@ export function EssentialDocs() {
     
     setIsSending(false);
     setSelectedMembers([]);
-  }
+    setIsRequestModalOpen(false);
+  };
+
 
   if (loading) {
     return (
@@ -312,7 +387,7 @@ export function EssentialDocs() {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Button onClick={handleRequestMissingDocs} disabled={selectedMembers.length === 0 || isSending} className="w-full sm:w-auto">
+                    <Button onClick={openRequestModal} disabled={selectedMembers.length === 0 || isSending} className="w-full sm:w-auto">
                         {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
                         {t('clubFiles.essentialDocs.requestSelected', { count: selectedMembers.length })}
                     </Button>
@@ -338,12 +413,17 @@ export function EssentialDocs() {
                                 {essentialDocs.map(docName => (
                                     <TableCell key={docName} className="text-center">
                                          <Tooltip>
-                                            <TooltipTrigger>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost" size="icon"
+                                                    onClick={() => setStatusToggleInfo({ memberId: status.memberId, docName, hasIt: status.docs[docName]?.hasIt })}
+                                                >
                                                 {status.docs[docName]?.hasIt ? (
                                                     <CheckCircle className="h-5 w-5 text-green-500 mx-auto"/>
                                                 ) : (
                                                     <AlertTriangle className="h-5 w-5 text-red-500 mx-auto"/>
                                                 )}
+                                                </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
                                                 <p>{status.docs[docName]?.hasIt ? t('clubFiles.essentialDocs.status.delivered') : t('clubFiles.essentialDocs.status.pending')}</p>
@@ -359,8 +439,55 @@ export function EssentialDocs() {
             </CardContent>
         </Card>
       </div>
+
+       <AlertDialog open={!!statusToggleInfo} onOpenChange={(open) => !open && setStatusToggleInfo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t('clubFiles.essentialDocs.confirmStatusChangeTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t('clubFiles.essentialDocs.confirmStatusChangeDesc')}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleToggleDocStatus} disabled={saving}>
+              {saving ? <Loader2 className="animate-spin" /> : t('clubFiles.essentialDocs.confirm')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <Dialog open={isRequestModalOpen} onOpenChange={setIsRequestModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                 <DialogTitle>{t('clubFiles.essentialDocs.selectDocsToSendTitle')}</DialogTitle>
+                 <DialogDescription>{t('clubFiles.essentialDocs.selectDocsToSendDesc')}</DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+                <ScrollArea className="h-64">
+                    <div className="space-y-2">
+                        {missingDocsToRequest.map(docName => (
+                             <div key={docName} className="flex items-center space-x-2 p-2 border rounded-md">
+                                <Checkbox 
+                                    id={`doc-req-${docName}`}
+                                    checked={missingDocsToRequest.includes(docName)}
+                                    disabled
+                                />
+                                <Label htmlFor={`doc-req-${docName}`} className="flex-1 font-normal">{docName}</Label>
+                            </div>
+                        ))}
+                    </div>
+                </ScrollArea>
+            </div>
+             <DialogFooter>
+                <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                <Button onClick={() => handleSendRequests(missingDocsToRequest)} disabled={isSending}>
+                   {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                    {t('common.send')}
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </TooltipProvider>
   );
 }
-
-    

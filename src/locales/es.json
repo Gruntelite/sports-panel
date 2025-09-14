@@ -179,7 +179,7 @@
         "yourEmail": "Tu Email",
         "message": "Mensaje",
         "successTitle": "Mensaje Enviado",
-        "successDescription": "Hemos recibido tu consulta. Te responderemos lo antes posible.",
+        "successDescription": "Hemos recibido tu consulta. Te responderemos a la mayor brevedad.",
         "errorTitle": "Error al enviar",
         "subject": "Asunto"
     },
@@ -1302,7 +1302,8 @@
             "errors": {
                 "addDoc": "No se pudo añadir el documento.",
                 "removeDoc": "No se pudo eliminar el documento.",
-                "noRequestsSent": "No se ha enviado ninguna solicitud. Quizás los miembros seleccionados ya tienen todos los documentos o no tienen un email de contacto."
+                "noRequestsSent": "No se ha enviado ninguna solicitud. Quizás los miembros seleccionados ya tienen todos los documentos o no tienen un email de contacto.",
+                "statusUpdate": "No se pudo actualizar el estado del documento."
             },
             "statusTitle": "Estado de la Documentación",
             "statusDescription": "Consulta qué miembros tienen la documentación pendiente.",
@@ -1326,7 +1327,13 @@
             },
             "filterByStatus": "Filtrar por estado...",
             "filterByDocument": "Filtrar por documento...",
-            "allDocuments": "Todos los documentos"
+            "allDocuments": "Todos los documentos",
+            "statusUpdated": "Estado del documento actualizado.",
+            "confirmStatusChangeTitle": "¿Cambiar Estado del Documento?",
+            "confirmStatusChangeDesc": "Esta acción marcará el documento como entregado o pendiente manualmente. ¿Estás seguro?",
+            "confirm": "Confirmar",
+            "selectDocsToSendTitle": "Seleccionar Documentos a Solicitar",
+            "selectDocsToSendDesc": "Elige cuáles de los documentos pendientes quieres incluir en esta solicitud."
         }
     },
     "clubSettings": {
@@ -1463,5 +1470,3 @@
         }
     }
 }
-
-    

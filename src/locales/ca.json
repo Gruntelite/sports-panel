@@ -1302,7 +1302,8 @@
             "errors": {
                 "addDoc": "No s'ha pogut afegir el document.",
                 "removeDoc": "No s'ha pogut eliminar el document.",
-                "noRequestsSent": "No s'ha enviat cap sol·licitud. Potser els membres seleccionats ja tenen tots els documents o no tenen un email de contacte."
+                "noRequestsSent": "No s'ha enviat cap sol·licitud. Potser els membres seleccionats ja tenen tots els documents o no tenen un email de contacte.",
+                "statusUpdate": "No s'ha pogut actualitzar l'estat del document."
             },
             "statusTitle": "Estat de la Documentació",
             "statusDescription": "Consulta quins membres tenen la documentació pendent.",
@@ -1326,7 +1327,13 @@
             },
             "filterByStatus": "Filtrar per estat...",
             "filterByDocument": "Filtrar per document...",
-            "allDocuments": "Tots els documents"
+            "allDocuments": "Tots els documents",
+            "statusUpdated": "Estat del document actualitzat.",
+            "confirmStatusChangeTitle": "Canviar Estat del Document?",
+            "confirmStatusChangeDesc": "Aquesta acció marcarà el document com a entregat o pendent manualment. Estàs segur?",
+            "confirm": "Confirmar",
+            "selectDocsToSendTitle": "Seleccionar Documents a Sol·licitar",
+            "selectDocsToSendDesc": "Tria quins dels documents pendents vols incloure en aquesta sol·licitud."
         }
     },
     "clubSettings": {
@@ -1463,5 +1470,3 @@
         }
     }
 }
-
-    
