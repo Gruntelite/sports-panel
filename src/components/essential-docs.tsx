@@ -44,7 +44,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Send,
-  Upload
+  Upload,
+  Search
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { Checkbox } from "./ui/checkbox";
@@ -88,6 +89,7 @@ export function EssentialDocs() {
   
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
   const [filterDoc, setFilterDoc] = useState<string>('all');
   
@@ -133,10 +135,16 @@ export function EssentialDocs() {
 
       const members: ClubMember[] = [];
       const playersSnap = await getDocs(collection(db, "clubs", currentClubId, "players"));
-      playersSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Jugador', data: d.data() as Player, email: (d.data() as Player).tutorEmail }));
+      playersSnap.forEach(d => {
+        const data = d.data() as Player;
+        members.push({ id: d.id, name: `${data.name} ${data.lastName}`, type: 'Jugador', data, teamId: data.teamId, email: data.tutorEmail });
+      });
       
       const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
-      coachesSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Entrenador', data: d.data() as Coach, email: (d.data() as Coach).email }));
+      coachesSnap.forEach(d => {
+        const data = d.data() as Coach;
+        members.push({ id: d.id, name: `${data.name} ${data.lastName}`, type: 'Entrenador', data, teamId: data.teamId, email: data.email });
+      });
       setAllMembers(members);
 
       const docsSnap = await getDocs(collection(db, "clubs", currentClubId, "documents"));
@@ -184,11 +192,22 @@ export function EssentialDocs() {
         return status.docs[filterDoc] && !status.docs[filterDoc].hasIt;
     })();
     
+    const searchMatch = (() => {
+        if (!searchTerm.trim()) return true;
+        const lowerSearch = searchTerm.toLowerCase();
+        const member = allMembers.find(m => m.id === status.memberId);
+        const teamName = (member?.data as Player | Coach)?.teamName || '';
+
+        return status.name.toLowerCase().includes(lowerSearch) ||
+               status.role.toLowerCase().includes(lowerSearch) ||
+               teamName.toLowerCase().includes(lowerSearch);
+    })();
+    
     if(filterDoc !== 'all') {
-        return docMatch;
+        return docMatch && searchMatch;
     }
 
-    return statusMatch;
+    return statusMatch && searchMatch;
   });
   
   const handleAddEssentialDoc = async () => {
@@ -410,12 +429,22 @@ export function EssentialDocs() {
         </Card>
 
         <Card>
-            <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <CardHeader>
                  <div>
                     <CardTitle>{t('clubFiles.essentialDocs.statusTitle')}</CardTitle>
                     <CardDescription>{t('clubFiles.essentialDocs.statusDescription')}</CardDescription>
                  </div>
-                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                 <div className="flex flex-col sm:flex-row items-center gap-2 pt-4">
+                    <div className="relative w-full sm:w-auto flex-grow">
+                        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            type="search"
+                            placeholder="Buscar por miembro, rol, equipo..."
+                            className="pl-8 w-full"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
                     <Select value={filterStatus} onValueChange={(value) => { setFilterStatus(value as any); setFilterDoc('all'); }}>
                         <SelectTrigger className="w-full sm:w-[150px]">
                             <SelectValue placeholder={t('clubFiles.essentialDocs.filterByStatus')}/>
@@ -444,9 +473,9 @@ export function EssentialDocs() {
                  </div>
             </CardHeader>
             <CardContent>
-                <div className="overflow-x-auto">
+                <div className="overflow-auto relative h-[600px]">
                 <Table>
-                    <TableHeader>
+                    <TableHeader className="sticky top-0 bg-card z-10">
                         <TableRow>
                             <TableHead className="w-12"><Checkbox onCheckedChange={(checked) => setSelectedMembers(checked ? filteredDocStatuses.map(ds => ds.memberId) : [])} /></TableHead>
                             <TableHead>{t('clubFiles.essentialDocs.table.member')}</TableHead>
@@ -557,3 +586,4 @@ export function EssentialDocs() {
     </TooltipProvider>
   );
 }
+
