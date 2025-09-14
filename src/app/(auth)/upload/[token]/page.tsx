@@ -3,9 +3,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { useParams, notFound } from "next/navigation";
+import { useParams } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
 import type { FileRequest } from "@/lib/types";
 
 import { Button } from "@/components/ui/button";
@@ -18,13 +18,21 @@ import { Logo } from "@/components/logo";
 import { uploadFileFromTokenAction } from "@/lib/upload-action";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
-async function validateToken(token: string): Promise<FileRequest | null> {
+type UploadItem = {
+    docTitle: string;
+    file: File | null;
+    isUploading: boolean;
+    isSubmitted: boolean;
+    requestId: string;
+};
+
+async function validateToken(token: string): Promise<FileRequest[] | null> {
     try {
-        const requestRef = doc(db, "fileRequests", token);
-        const requestSnap = await getDoc(requestRef);
+        const q = query(collection(db, "fileRequests"), where("token", "==", token), where("status", "==", "pending"));
+        const requestSnap = await getDocs(q);
         
-        if (requestSnap.exists() && requestSnap.data().status === 'pending') {
-            return { id: requestSnap.id, ...requestSnap.data() } as FileRequest;
+        if (!requestSnap.empty) {
+            return requestSnap.docs.map(d => ({ id: d.id, ...d.data() } as FileRequest));
         }
         return null;
     } catch (error) {
@@ -39,11 +47,11 @@ export default function UploadFilePage() {
     const { toast } = useToast();
 
     const [loading, setLoading] = useState(true);
-    const [submitting, setSubmitting] = useState(false);
-    const [fileRequest, setFileRequest] = useState<FileRequest | null>(null);
+    const [fileRequests, setFileRequests] = useState<FileRequest[] | null>(null);
+    const [uploadItems, setUploadItems] = useState<UploadItem[]>([]);
     const [clubInfo, setClubInfo] = useState<{name: string, logoUrl: string | null} | null>(null);
-    const [file, setFile] = useState<File | null>(null);
-    const [isSubmitted, setIsSubmitted] = useState(false);
+    const [isAllSubmitted, setIsAllSubmitted] = useState(false);
+    const [userName, setUserName] = useState("");
 
     useEffect(() => {
         if (!token) {
@@ -52,14 +60,24 @@ export default function UploadFilePage() {
         }
 
         const processToken = async () => {
-            const request = await validateToken(token);
-            setFileRequest(request);
+            const requests = await validateToken(token);
+            setFileRequests(requests);
 
-            if (request) {
-                const clubDocRef = doc(db, "clubs", request.clubId);
+            if (requests && requests.length > 0) {
+                const firstRequest = requests[0];
+                setUserName(firstRequest.userName);
+                setUploadItems(requests.map(req => ({
+                    docTitle: req.documentTitle,
+                    file: null,
+                    isUploading: false,
+                    isSubmitted: false,
+                    requestId: req.id,
+                })));
+
+                const clubDocRef = doc(db, "clubs", firstRequest.clubId);
                 const clubDocSnap = await getDoc(clubDocRef);
                 if (clubDocSnap.exists()) {
-                    const settingsRef = doc(db, "clubs", request.clubId, "settings", "config");
+                    const settingsRef = doc(db, "clubs", firstRequest.clubId, "settings", "config");
                     const settingsSnap = await getDoc(settingsRef);
                     setClubInfo({
                         name: clubDocSnap.data().name || 'Club',
@@ -73,29 +91,40 @@ export default function UploadFilePage() {
         processToken();
 
     }, [token]);
+    
+    useEffect(() => {
+        if (uploadItems.length > 0 && uploadItems.every(item => item.isSubmitted)) {
+            setIsAllSubmitted(true);
+        }
+    }, [uploadItems]);
 
-    const handleFileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-        e.preventDefault();
-        if (!file || !token) {
+    const handleFileChange = (index: number, file: File | null) => {
+        setUploadItems(prev => prev.map((item, i) => i === index ? { ...item, file } : item));
+    };
+
+    const handleFileSubmit = async (index: number) => {
+        const item = uploadItems[index];
+        if (!item.file || !token) {
             toast({ variant: "destructive", title: "Error", description: "Por favor, selecciona un archivo." });
             return;
         }
 
-        setSubmitting(true);
+        setUploadItems(prev => prev.map((it, i) => i === index ? { ...it, isUploading: true } : it));
+        
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", item.file);
         formData.append("token", token);
+        formData.append("requestId", item.requestId);
         
         const result = await uploadFileFromTokenAction(formData);
         
         if (result.success) {
-            toast({ title: "¡Archivo Subido!", description: "Gracias, hemos recibido tu archivo correctamente." });
-            setIsSubmitted(true);
+            toast({ title: "¡Archivo Subido!", description: `El archivo ${item.docTitle} se ha subido correctamente.` });
+            setUploadItems(prev => prev.map((it, i) => i === index ? { ...it, isSubmitted: true, isUploading: false } : it));
         } else {
             toast({ variant: "destructive", title: "Error al subir", description: result.error });
+            setUploadItems(prev => prev.map((it, i) => i === index ? { ...it, isUploading: false } : it));
         }
-
-        setSubmitting(false);
     };
     
     if (loading) {
@@ -106,7 +135,7 @@ export default function UploadFilePage() {
         );
     }
     
-    if (!fileRequest) {
+    if (!fileRequests) {
         return (
             <div className="flex items-center justify-center min-h-screen bg-background p-4">
                 <Card className="w-full max-w-lg text-center">
@@ -122,7 +151,7 @@ export default function UploadFilePage() {
         );
     }
     
-     if (isSubmitted) {
+     if (isAllSubmitted) {
          return (
             <div className="flex items-center justify-center min-h-screen bg-background p-4">
                 <Card className="w-full max-w-lg text-center">
@@ -130,8 +159,8 @@ export default function UploadFilePage() {
                         <div className="mx-auto inline-block p-3 rounded-full mb-4">
                            <FileCheck2 className="h-12 w-12 text-green-500"/>
                         </div>
-                        <CardTitle className="text-2xl">¡Archivo Recibido!</CardTitle>
-                        <CardDescription>Gracias por tu colaboración. El club ha recibido tu archivo correctamente. Ya puedes cerrar esta página.</CardDescription>
+                        <CardTitle className="text-2xl">¡Archivos Recibidos!</CardTitle>
+                        <CardDescription>Gracias por tu colaboración. El club ha recibido tus archivos correctamente. Ya puedes cerrar esta página.</CardDescription>
                     </CardHeader>
                 </Card>
             </div>
@@ -151,35 +180,44 @@ export default function UploadFilePage() {
                         </div>
                     )}
                     <h2 className="text-xl font-semibold pt-2">{clubInfo?.name}</h2>
-                    <CardTitle className="text-2xl">Subida de Archivo</CardTitle>
+                    <CardTitle className="text-2xl">Subida de Archivos</CardTitle>
                     <CardDescription>
-                        Hola, {fileRequest.userName}. Sube aquí el documento: <span className="font-semibold text-foreground">{fileRequest.documentTitle}</span>.
+                        Hola, {userName}. Sube aquí la documentación solicitada.
                     </CardDescription>
                 </CardHeader>
-                <CardContent>
-                    {fileRequest.message && (
-                        <Alert className="mb-6">
-                            <AlertTriangle className="h-4 w-4" />
-                            <AlertTitle>Mensaje del Club</AlertTitle>
-                            <AlertDescription>
-                                {fileRequest.message}
-                            </AlertDescription>
-                        </Alert>
-                    )}
-                    <form onSubmit={handleFileSubmit} className="space-y-6">
-                        <div className="space-y-2">
-                            <Label htmlFor="file-upload">Selecciona tu archivo</Label>
-                            <Input id="file-upload" type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} />
-                             <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
-                        </div>
-                        <Button type="submit" className="w-full" disabled={submitting || !file}>
-                            {submitting ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Subiendo...</>
-                            ) : (
-                                <><Upload className="mr-2 h-4 w-4"/> Subir Archivo</>
+                <CardContent className="space-y-6">
+                    {uploadItems.map((item, index) => (
+                        <div key={item.requestId} className="p-4 border rounded-lg space-y-4 relative bg-muted/50">
+                            {item.isSubmitted && (
+                                <div className="absolute inset-0 bg-green-500/10 rounded-lg flex items-center justify-center">
+                                    <FileCheck2 className="h-16 w-16 text-green-500"/>
+                                </div>
                             )}
-                        </Button>
-                    </form>
+                            <div className="space-y-2">
+                                <Label htmlFor={`file-upload-${index}`} className="font-semibold text-lg">{item.docTitle}</Label>
+                                <Input 
+                                    id={`file-upload-${index}`} 
+                                    type="file" 
+                                    onChange={(e) => handleFileChange(index, e.target.files?.[0] || null)}
+                                    disabled={item.isUploading || item.isSubmitted}
+                                />
+                                <p className="text-xs text-muted-foreground">Tamaño máximo: 10 MB.</p>
+                            </div>
+                            <Button 
+                                onClick={() => handleFileSubmit(index)} 
+                                className="w-full" 
+                                disabled={!item.file || item.isUploading || item.isSubmitted}
+                            >
+                                {item.isUploading ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin"/> Subiendo...</>
+                                ) : item.isSubmitted ? (
+                                    <><FileCheck2 className="mr-2 h-4 w-4"/> Subido</>
+                                ) : (
+                                    <><Upload className="mr-2 h-4 w-4"/> Subir {item.docTitle}</>
+                                )}
+                            </Button>
+                        </div>
+                    ))}
                 </CardContent>
             </Card>
         </div>

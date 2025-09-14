@@ -345,12 +345,11 @@ export type FileRequest = {
     clubId: string;
     batchId: string;
     userId: string;
-    userType: 'players' | 'coaches' | 'staff';
     userName: string;
     documentTitle: string;
-    message?: string;
     status: 'pending' | 'completed';
     createdAt: Timestamp;
+    token: string;
     completedAt?: Timestamp;
     filePath?: string;
 }

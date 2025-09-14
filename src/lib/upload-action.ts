@@ -9,9 +9,10 @@ import { Timestamp } from "firebase-admin/firestore";
 export async function uploadFileFromTokenAction(formData: FormData) {
     const file = formData.get('file') as File;
     const token = formData.get('token') as string;
+    const requestId = formData.get('requestId') as string;
 
-    if (!file || !token) {
-        return { success: false, error: 'Falta el archivo o el token.' };
+    if (!file || !token || !requestId) {
+        return { success: false, error: 'Falta el archivo, el token o el ID de la solicitud.' };
     }
     
     if (file.size > 10 * 1024 * 1024) {
@@ -19,20 +20,20 @@ export async function uploadFileFromTokenAction(formData: FormData) {
     }
 
     try {
-        const requestRef = adminDb.collection("fileRequests").doc(token);
+        const requestRef = adminDb.collection("fileRequests").doc(requestId);
         const requestSnap = await requestRef.get();
 
         if (!requestSnap.exists) {
-            return { success: false, error: 'Token no válido o ya utilizado.' };
+            return { success: false, error: 'Solicitud no válida o ya utilizada.' };
         }
         
         const fileRequest = requestSnap.data() as FileRequest;
         
-        if (fileRequest.status !== 'pending') {
-             return { success: false, error: 'Token no válido o ya utilizado.' };
+        if (fileRequest.status !== 'pending' || fileRequest.token !== token) {
+             return { success: false, error: 'Token no válido o solicitud ya completada.' };
         }
 
-        const { clubId, userId, userType, documentTitle, userName } = fileRequest;
+        const { clubId, userId, documentTitle, userName } = fileRequest;
         
         const bucket = adminStorage.bucket();
         const filePath = `club-documents/${clubId}/${userId}/${uuidv4()}-${file.name}`;
@@ -52,10 +53,9 @@ export async function uploadFileFromTokenAction(formData: FormData) {
             createdAt: Timestamp.now(),
             ownerId: userId,
             ownerName: userName,
-            category: documentTitle, // Automatically categorize with the essential doc name
+            category: documentTitle,
         };
         
-        // Corrected line: use the admin SDK method to add a document
         await adminDb.collection("clubs").doc(clubId).collection("documents").add(newDocumentData);
 
         await requestRef.update({

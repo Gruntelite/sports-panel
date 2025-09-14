@@ -126,7 +126,7 @@ function ManualUploadDialog({ open, onOpenChange, manualUploadData, onUpload, cl
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{t('clubFiles.essentialDocs.manualUploadTitle')}</DialogTitle>
-                    <DialogDescription>{t('clubFiles.essentialDocs.manualUploadDesc', { memberName: manualUploadData?.memberName, docName: manualUploadData?.docName })}</DialogDescription>
+                    <DialogDescription>{t('clubFiles.essentialDocs.manualUploadDesc', { memberName: manualUploadData?.memberName || '', docName: manualUploadData?.docName || '' })}</DialogDescription>
                 </DialogHeader>
                 <div className="py-4 space-y-4">
                     <div className="space-y-2">
@@ -168,7 +168,8 @@ export function EssentialDocs() {
   const [filterDoc, setFilterDoc] = useState<string>('all');
   
   const [isRequestModalOpen, setIsRequestModalOpen] = useState(false);
-  const [missingDocsToRequest, setMissingDocsToRequest] = useState<string[]>([]);
+  const [availableDocsToRequest, setAvailableDocsToRequest] = useState<string[]>([]);
+  const [selectedDocsToRequest, setSelectedDocsToRequest] = useState<string[]>([]);
   
   const [isManualUploadModalOpen, setIsManualUploadModalOpen] = useState(false);
   const [manualUploadData, setManualUploadData] = useState<{memberId: string, memberName: string, docName: string} | null>(null);
@@ -383,41 +384,33 @@ export function EssentialDocs() {
       }
     });
     
-    setMissingDocsToRequest(Array.from(allMissingDocs));
+    setAvailableDocsToRequest(Array.from(allMissingDocs));
+    setSelectedDocsToRequest(Array.from(allMissingDocs)); // Select all by default
     setIsRequestModalOpen(true);
   };
 
-  const handleSendRequests = async (docsToRequest: string[]) => {
-     if (!clubId || selectedMembers.length === 0 || docsToRequest.length === 0) {
+  const handleSendRequests = async () => {
+     if (!clubId || selectedMembers.length === 0 || selectedDocsToRequest.length === 0) {
         setIsRequestModalOpen(false);
         return;
     }
     
     setIsSending(true);
-    let totalRequestsSent = 0;
 
-    for (const memberId of selectedMembers) {
-      const memberData = allMembers.find(m => m.id === memberId);
-      if (!memberData || !memberData.email) continue;
-      
-      const docTitle = docsToRequest.join(', ');
-
-      const formData = new FormData();
-      formData.append('clubId', clubId);
-      formData.append('members', JSON.stringify([{ id: memberData.id, name: memberData.name, email: memberData.email }]));
-      formData.append('doc-title', docTitle);
-      formData.append('message', t('clubFiles.essentialDocs.requestMessage', { name: memberData.name, docs: docTitle }));
-
-      const result = await requestFilesAction(formData);
-      if (result.success) {
-          totalRequestsSent += result.count || 0;
-      }
-    }
+    const membersToSend = selectedMembers
+        .map(id => allMembers.find(m => m.id === id))
+        .filter(m => m && m.email) as ClubMember[];
+        
+    const result = await requestFilesAction({
+        clubId,
+        members: membersToSend,
+        documents: selectedDocsToRequest
+    });
     
-    if (totalRequestsSent > 0) {
-        toast({ title: t('clubFiles.essentialDocs.requestsSent'), description: t('clubFiles.essentialDocs.requestsSentDesc', { count: totalRequestsSent })});
+    if (result.success) {
+        toast({ title: t('clubFiles.essentialDocs.requestsSent'), description: t('clubFiles.essentialDocs.requestsSentDesc', { count: result.count || 0 })});
     } else {
-        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.noRequestsSent') });
+        toast({ variant: "destructive", title: t('common.error'), description: result.error || t('clubFiles.essentialDocs.errors.noRequestsSent') });
     }
     
     setIsSending(false);
@@ -583,12 +576,16 @@ export function EssentialDocs() {
             <div className="py-4">
                 <ScrollArea className="h-64">
                     <div className="space-y-2">
-                        {missingDocsToRequest.map(docName => (
+                        {availableDocsToRequest.map(docName => (
                              <div key={docName} className="flex items-center space-x-2 p-2 border rounded-md">
                                 <Checkbox 
                                     id={`doc-req-${docName}`}
-                                    checked={missingDocsToRequest.includes(docName)}
-                                    disabled
+                                    checked={selectedDocsToRequest.includes(docName)}
+                                    onCheckedChange={(checked) => {
+                                        setSelectedDocsToRequest(prev => 
+                                            checked ? [...prev, docName] : prev.filter(d => d !== docName)
+                                        )
+                                    }}
                                 />
                                 <Label htmlFor={`doc-req-${docName}`} className="font-normal flex-1">{docName}</Label>
                             </div>
@@ -598,7 +595,7 @@ export function EssentialDocs() {
             </div>
              <DialogFooter>
                 <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
-                <Button onClick={() => handleSendRequests(missingDocsToRequest)} disabled={isSending}>
+                <Button onClick={handleSendRequests} disabled={isSending || selectedDocsToRequest.length === 0}>
                    {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
                     {t('common.send')}
                 </Button>
