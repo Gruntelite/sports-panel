@@ -749,6 +749,10 @@
                 {"id": "medicalCheckCompleted", "label": "Revisión médica completada"}
             ],
             "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "select": "Seleccionar...",
+            "sexOptions": {
+                "male": "Masculino",
+                "female": "Femenino"
+            },
             "nationality": "Nacionalidad", "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal",
             "startDate": "Fecha de Alta", "endDate": "Fecha de Baja", "currentlyActive": "Actualmente de alta", "hasInterruptions": "Ha tenido interrupciones en su alta",
             "interruptionStart": "Inicio Interrupción", "interruptionEnd": "Fin Interrupción", "addInterruption": "Añadir otra interrupción", "tenure": "Antigüedad en el club",
@@ -831,7 +835,12 @@
             ]
         },
         "fields": {
-            "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo", "nationality": "Nacionalidad",
+            "name": "Nombre", "lastName": "Apellidos", "birthDate": "Fecha de Nacimiento", "dni": "NIF", "sex": "Sexo",
+            "sexOptions": {
+                "male": "Masculino",
+                "female": "Femenino"
+            },
+            "nationality": "Nacionalidad",
             "healthCard": "Nº Tarjeta Sanitaria", "address": "Dirección", "city": "Ciudad", "postalCode": "Código Postal", "tutorName": "Nombre del Tutor/a",
             "tutorLastName": "Apellidos del Tutor/a", "tutorDni": "NIF del Tutor/a", "email": "Email", "phone": "Teléfono", "role": "Cargo",
             "team": "Equipo Asignado", "iban": "IBAN Cuenta Bancaria", "monthlyPayment": "Pago Mensual (€)", "kitSize": "Talla de Equipación",

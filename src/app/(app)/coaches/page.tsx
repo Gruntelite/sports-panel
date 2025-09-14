@@ -931,8 +931,8 @@ export default function CoachesPage() {
                                         <Select value={coachData.sex} onValueChange={(value) => handleSelectChange('sex', value)}>
                                             <SelectTrigger><SelectValue placeholder="..." /></SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="masculino">Masculino</SelectItem>
-                                                <SelectItem value="femenino">Femenino</SelectItem>
+                                                <SelectItem value="masculino">{t('coaches.fields.sexOptions.male')}</SelectItem>
+                                                <SelectItem value="femenino">{t('coaches.fields.sexOptions.female')}</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

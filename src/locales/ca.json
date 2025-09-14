@@ -506,7 +506,7 @@
             "title": "Gestió de Quotes i Pagaments",
             "description": "Consulta un llistat de tots els pagaments i quotes dels membres del club.",
             "playerFeeExclusion": "Excloure mesos del cobrament de quota a jugadors",
-            "staffPaymentExclusion": "Excloure mesos del pagament a staff i entrenadors",
+            "staffPaymentExclusion": "Excloure mesos de les despeses recurrents",
             "months": "mes(os)",
             "select": "Seleccionar",
             "filterByRole": "Filtrar per rol",
@@ -602,7 +602,7 @@
         "enableOrder": "Habilitar Ordenació",
         "saveOrder": "Desar Ordre",
         "createTemplateTitle": "Crear Nova Plantilla",
-        "createTemplateDesc": "Dóna un nom a la teva nova plantilla d'horaris.",
+        "createTemplateDesc": "Emplena els detalls per crear una nova plantilla al teu club.",
         "templateName": "Nom de la plantilla",
         "renameTemplateTitle": "Reanomenar Plantilla",
         "renameTemplateDesc": "Introdueix el nou nom per a la plantilla '{templateName}'.",
@@ -748,6 +748,10 @@
                 {"id": "medicalCheckCompleted", "label": "Revisió mèdica completada"}
             ],
             "name": "Nom", "lastName": "Cognoms", "birthDate": "Data de Naixement", "dni": "NIF", "sex": "Sexe", "select": "Seleccionar...",
+            "sexOptions": {
+                "male": "Masculí",
+                "female": "Femení"
+            },
             "nationality": "Nacionalitat", "healthCard": "Nº Targeta Sanitària", "address": "Adreça", "city": "Ciutat", "postalCode": "Codi Postal",
             "startDate": "Data d'Alta", "endDate": "Data de Baixa", "currentlyActive": "Actualment d'alta", "hasInterruptions": "Ha tingut interrupcions en la seva alta",
             "interruptionStart": "Inici Interrupció", "interruptionEnd": "Fi Interrupció", "addInterruption": "Afegir una altra interrupció", "tenure": "Antiguitat al club",
@@ -830,7 +834,12 @@
             ]
         },
         "fields": {
-            "name": "Nom", "lastName": "Cognoms", "birthDate": "Data de Naixement", "dni": "NIF", "sex": "Sexe", "nationality": "Nacionalitat",
+            "name": "Nom", "lastName": "Cognoms", "birthDate": "Data de Naixement", "dni": "NIF", "sex": "Sexe",
+             "sexOptions": {
+                "male": "Masculí",
+                "female": "Femení"
+            },
+            "nationality": "Nacionalitat",
             "healthCard": "Nº Targeta Sanitària", "address": "Adreça", "city": "Ciutat", "postalCode": "Codi Postal", "tutorName": "Nom del Tutor/a",
             "tutorLastName": "Cognoms del Tutor/a", "tutorDni": "NIF del Tutor/a", "email": "Email", "phone": "Telèfon", "role": "Càrrec",
             "team": "Equip Assignat", "iban": "IBAN Compte Bancari", "monthlyPayment": "Pagament Mensual (€)", "kitSize": "Talla d'Equipació",
