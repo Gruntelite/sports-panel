@@ -430,9 +430,15 @@ export function EssentialDocs() {
 
         <Card>
             <CardHeader>
-                 <div>
-                    <CardTitle>{t('clubFiles.essentialDocs.statusTitle')}</CardTitle>
-                    <CardDescription>{t('clubFiles.essentialDocs.statusDescription')}</CardDescription>
+                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <CardTitle>{t('clubFiles.essentialDocs.statusTitle')}</CardTitle>
+                        <CardDescription>{t('clubFiles.essentialDocs.statusDescription')}</CardDescription>
+                    </div>
+                     <Button onClick={openRequestModal} disabled={selectedMembers.length === 0 || isSending} className="w-full sm:w-auto">
+                        {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
+                        {t('clubFiles.essentialDocs.requestSelected', { count: selectedMembers.length })}
+                    </Button>
                  </div>
                  <div className="flex flex-col sm:flex-row items-center gap-2 pt-4">
                     <div className="relative w-full sm:w-auto flex-grow">
@@ -466,10 +472,6 @@ export function EssentialDocs() {
                             ))}
                         </SelectContent>
                     </Select>
-                    <Button onClick={openRequestModal} disabled={selectedMembers.length === 0 || isSending} className="w-full sm:w-auto">
-                        {isSending ? <Loader2 className="h-4 w-4 animate-spin mr-2"/> : <Send className="h-4 w-4 mr-2"/>}
-                        {t('clubFiles.essentialDocs.requestSelected', { count: selectedMembers.length })}
-                    </Button>
                  </div>
             </CardHeader>
             <CardContent>
