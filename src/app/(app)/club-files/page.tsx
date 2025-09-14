@@ -64,7 +64,6 @@ import {
   Trash2,
   Download,
   Upload,
-  File as FileIcon,
   User as UserIcon,
   Check,
   ChevronsUpDown,
@@ -72,6 +71,7 @@ import {
   Search,
   Send,
   FolderOpen,
+  FileCheck,
 } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
 import { format } from "date-fns";
@@ -88,6 +88,7 @@ import { FileRequestSender } from "@/components/file-request-sender";
 import { RequestHistory } from "@/components/request-history";
 import { Separator } from "@/components/ui/separator";
 import { useTranslation } from "@/components/i18n-provider";
+import { EssentialDocs } from "@/components/essential-docs";
 
 type Owner = {
     id: string;
@@ -489,8 +490,7 @@ function DocumentsList() {
                   {filteredDocuments.length > 0 ? (
                     filteredDocuments.map((doc) => (
                       <TableRow key={doc.id}>
-                        <TableCell className="font-medium flex items-center gap-2">
-                          <FileIcon className="h-4 w-4 text-muted-foreground"/>
+                        <TableCell className="font-medium">
                           {doc.name}
                         </TableCell>
                         <TableCell>
@@ -575,12 +575,16 @@ export default function ClubFilesPage() {
         </p>
       </div>
       <Tabs defaultValue="documents">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="documents"><FolderOpen className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.documents')}</TabsTrigger>
+          <TabsTrigger value="essential"><FileCheck className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.essential')}</TabsTrigger>
           <TabsTrigger value="request"><Send className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.request')}</TabsTrigger>
         </TabsList>
         <TabsContent value="documents" className="mt-6">
             <DocumentsList/>
+        </TabsContent>
+         <TabsContent value="essential" className="mt-6">
+            <EssentialDocs/>
         </TabsContent>
         <TabsContent value="request" className="mt-6 space-y-6">
             <FileRequestSender />
@@ -591,5 +595,3 @@ export default function ClubFilesPage() {
     </div>
   );
 }
-
-    

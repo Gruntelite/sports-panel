@@ -506,7 +506,7 @@
             "title": "Gestió de Quotes i Pagaments",
             "description": "Consulta un llistat de tots els pagaments i quotes dels membres del club.",
             "playerFeeExclusion": "Excloure mesos del cobrament de quota a jugadors",
-            "staffPaymentExclusion": "Excloure mesos de les despeses recurrents",
+            "staffPaymentExclusion": "Excloure mesos dels pagaments a staff i entrenadors",
             "months": "mes(os)",
             "select": "Seleccionar",
             "filterByRole": "Filtrar per rol",
@@ -618,7 +618,8 @@
         "tabs": {
             "editor": "Editor de Plantilla",
             "calendar": "Calendari d'Esdeveniments",
-            "preview": "Vista Prèvia Setmanal"
+            "preview": "Vista Prèvia Setmanal",
+            "selectView": "Seleccionar vista..."
         },
         "editor": {
             "title": "Editor d'Horaris",
@@ -1166,6 +1167,7 @@
         "description": "Gestiona tots els documents importants del club i dels seus membres.",
         "tabs": {
             "documents": "Documents",
+            "essential": "Documentació Essencial",
             "request": "Sol·licitar Arxiu"
         },
         "allDocumentsTitle": "Tots els Documents",
@@ -1290,6 +1292,33 @@
             "errors": {
                 "delete": "No s'ha pogut eliminar el lot de sol·licitud."
             }
+        },
+        "essentialDocs": {
+            "defineTitle": "Definir Documents Essencials",
+            "defineDescription": "Estableix quins documents són obligatoris per a tots els membres.",
+            "newDocPlaceholder": "p.ex., Còpia DNI",
+            "docAdded": "Document essencial afegit.",
+            "docRemoved": "Document essencial eliminat.",
+            "errors": {
+                "addDoc": "No s'ha pogut afegir el document.",
+                "removeDoc": "No s'ha pogut eliminar el document.",
+                "noRequestsSent": "No s'ha enviat cap sol·licitud. Potser els membres seleccionats ja tenen tots els documents o no tenen un email de contacte."
+            },
+            "statusTitle": "Estat de la Documentació",
+            "statusDescription": "Consulta quins membres tenen la documentació pendent.",
+            "requestSelected": "Sol·licitar a {count} seleccionats",
+            "table": {
+                "member": "Membre",
+                "role": "Rol"
+            },
+            "status": {
+                "delivered": "Entregat",
+                "pending": "Pendent"
+            },
+            "missingDocsTitle": "Documentació Pendent: {docs}",
+            "requestMessage": "Hola {name}, et sol·licitem que pugis la següent documentació pendent: {docs}. Fes servir l'enllaç segur que trobaràs al correu. Gràcies!",
+            "requestsSent": "Sol·licituds Enviades",
+            "requestsSentDesc": "S'han enviat {count} correus electrònics sol·licitant la documentació pendent."
         }
     },
     "clubSettings": {

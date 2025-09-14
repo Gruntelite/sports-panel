@@ -1167,6 +1167,7 @@
         "description": "Gestiona todos los documentos importantes del club y de sus miembros.",
         "tabs": {
             "documents": "Documentos",
+            "essential": "Documentación Esencial",
             "request": "Solicitar Archivo"
         },
         "allDocumentsTitle": "Todos los Documentos",
@@ -1291,6 +1292,33 @@
             "errors": {
                 "delete": "No se pudo eliminar el lote de solicitud."
             }
+        },
+        "essentialDocs": {
+            "defineTitle": "Definir Documentos Esenciales",
+            "defineDescription": "Establece qué documentos son obligatorios para todos los miembros.",
+            "newDocPlaceholder": "p.ej., Copia DNI",
+            "docAdded": "Documento esencial añadido.",
+            "docRemoved": "Documento esencial eliminado.",
+            "errors": {
+                "addDoc": "No se pudo añadir el documento.",
+                "removeDoc": "No se pudo eliminar el documento.",
+                "noRequestsSent": "No se ha enviado ninguna solicitud. Quizás los miembros seleccionados ya tienen todos los documentos o no tienen un email de contacto."
+            },
+            "statusTitle": "Estado de la Documentación",
+            "statusDescription": "Consulta qué miembros tienen la documentación pendiente.",
+            "requestSelected": "Solicitar a {count} seleccionados",
+            "table": {
+                "member": "Miembro",
+                "role": "Rol"
+            },
+            "status": {
+                "delivered": "Entregado",
+                "pending": "Pendiente"
+            },
+            "missingDocsTitle": "Documentación Pendiente: {docs}",
+            "requestMessage": "Hola {name}, te solicitamos que subas la siguiente documentación pendiente: {docs}. Usa el enlace seguro que encontrarás en el correo. ¡Gracias!",
+            "requestsSent": "Solicitudes Enviadas",
+            "requestsSentDesc": "Se han enviado {count} correos electrónicos solicitando la documentación pendiente."
         }
     },
     "clubSettings": {

@@ -324,6 +324,7 @@ export type ClubSettings = {
     customFields?: CustomFieldDef[];
     trialEndDate?: Timestamp;
     defaultLanguage?: 'es' | 'ca';
+    essentialDocs?: string[];
 }
 
 export type Incident = {
