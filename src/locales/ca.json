@@ -1308,6 +1308,7 @@
             "statusTitle": "Estat de la Documentació",
             "statusDescription": "Consulta quins membres tenen la documentació pendent.",
             "requestSelected": "Sol·licitar a {count} seleccionats",
+            "searchPlaceholder": "Cercar membre, equip, rol...",
             "table": {
                 "member": "Membre",
                 "role": "Rol"
@@ -1330,9 +1331,13 @@
             "allDocuments": "Tots els documents",
             "statusUpdated": "Estat del document actualitzat.",
             "markAsDelivered": "Marcar com a entregat",
-            "markAsPending": "Marcar como a pendent",
+            "markAsPending": "Marcar com a pendent",
             "selectDocsToSendTitle": "Seleccionar Documents a Sol·licitar",
-            "selectDocsToSendDesc": "Tria quins dels documents pendents vols incloure en aquesta sol·licitud."
+            "selectDocsToSendDesc": "Tria quins dels documents pendents vols incloure en aquesta sol·licitud.",
+            "manualUploadTitle": "Pujada Manual de Document",
+            "manualUploadDesc": "Pujaràs el document '{docName}' per a {memberName}.",
+            "file": "Arxiu",
+            "fileUploadedDesc": "L'arxiu s'ha pujat i l'estat s'ha marcat com a entregat."
         }
     },
     "clubSettings": {

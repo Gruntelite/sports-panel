@@ -1308,6 +1308,7 @@
             "statusTitle": "Estado de la Documentación",
             "statusDescription": "Consulta qué miembros tienen la documentación pendiente.",
             "requestSelected": "Solicitar a {count} seleccionados",
+            "searchPlaceholder": "Buscar miembro, equipo, rol...",
             "table": {
                 "member": "Miembro",
                 "role": "Rol"
@@ -1332,7 +1333,11 @@
             "markAsDelivered": "Marcar como entregado",
             "markAsPending": "Marcar como pendiente",
             "selectDocsToSendTitle": "Seleccionar Documentos a Solicitar",
-            "selectDocsToSendDesc": "Elige cuáles de los documentos pendientes quieres incluir en esta solicitud."
+            "selectDocsToSendDesc": "Elige cuáles de los documentos pendientes quieres incluir en esta solicitud.",
+            "manualUploadTitle": "Subida Manual de Documento",
+            "manualUploadDesc": "Vas a subir el documento '{docName}' para {memberName}.",
+            "file": "Archivo",
+            "fileUploadedDesc": "El archivo se ha subido y el estado se ha marcado como entregado."
         }
     },
     "clubSettings": {
