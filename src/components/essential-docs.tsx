@@ -72,6 +72,7 @@ export function EssentialDocs() {
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'all' | 'pending' | 'completed'>('all');
+  const [filterDoc, setFilterDoc] = useState<string>('all');
 
 
   useEffect(() => {
@@ -141,11 +142,25 @@ export function EssentialDocs() {
   }, [t, toast]);
   
   const filteredDocStatuses = docStatuses.filter(status => {
-    if (filterStatus === 'all') return true;
-    const hasPending = Object.values(status.docs).some(doc => !doc.hasIt);
-    if (filterStatus === 'pending') return hasPending;
-    if (filterStatus === 'completed') return !hasPending;
-    return true;
+    const statusMatch = (() => {
+        if (filterStatus === 'all') return true;
+        const hasAllDocs = Object.values(status.docs).every(doc => doc.hasIt);
+        if (filterStatus === 'completed') return hasAllDocs;
+        if (filterStatus === 'pending') return !hasAllDocs;
+        return true;
+    })();
+
+    const docMatch = (() => {
+        if (filterDoc === 'all') return true;
+        return status.docs[filterDoc] && !status.docs[filterDoc].hasIt;
+    })();
+    
+    // If filtering by a specific doc, only show pending for that doc.
+    if(filterDoc !== 'all') {
+        return docMatch;
+    }
+
+    return statusMatch;
   });
   
   const handleAddEssentialDoc = async () => {
@@ -276,14 +291,25 @@ export function EssentialDocs() {
                     <CardDescription>{t('clubFiles.essentialDocs.statusDescription')}</CardDescription>
                  </div>
                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
-                    <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)}>
-                        <SelectTrigger className="w-full sm:w-[180px]">
-                            <SelectValue placeholder="Filtrar estado..."/>
+                    <Select value={filterStatus} onValueChange={(value) => { setFilterStatus(value as any); setFilterDoc('all'); }}>
+                        <SelectTrigger className="w-full sm:w-[150px]">
+                            <SelectValue placeholder={t('clubFiles.essentialDocs.filterByStatus')}/>
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Todos los miembros</SelectItem>
-                            <SelectItem value="pending">Con doc. pendiente</SelectItem>
-                            <SelectItem value="completed">Completados</SelectItem>
+                            <SelectItem value="all">{t('clubFiles.essentialDocs.statuses.all')}</SelectItem>
+                            <SelectItem value="pending">{t('clubFiles.essentialDocs.statuses.pending')}</SelectItem>
+                            <SelectItem value="completed">{t('clubFiles.essentialDocs.statuses.completed')}</SelectItem>
+                        </SelectContent>
+                    </Select>
+                     <Select value={filterDoc} onValueChange={(value) => { setFilterDoc(value); setFilterStatus('all'); }}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder={t('clubFiles.essentialDocs.filterByDocument')}/>
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">{t('clubFiles.essentialDocs.allDocuments')}</SelectItem>
+                            {essentialDocs.map(doc => (
+                                <SelectItem key={doc} value={doc}>{doc}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                     <Button onClick={handleRequestMissingDocs} disabled={selectedMembers.length === 0 || isSending} className="w-full sm:w-auto">

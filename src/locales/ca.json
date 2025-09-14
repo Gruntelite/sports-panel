@@ -836,7 +836,7 @@
         },
         "fields": {
             "name": "Nom", "lastName": "Cognoms", "birthDate": "Data de Naixement", "dni": "NIF", "sex": "Sexe",
-             "sexOptions": {
+            "sexOptions": {
                 "male": "Masculí",
                 "female": "Femení"
             },
@@ -1318,7 +1318,15 @@
             "missingDocsTitle": "Documentació Pendent: {docs}",
             "requestMessage": "Hola {name}, et sol·licitem que pugis la següent documentació pendent: {docs}. Fes servir l'enllaç segur que trobaràs al correu. Gràcies!",
             "requestsSent": "Sol·licituds Enviades",
-            "requestsSentDesc": "S'han enviat {count} correus electrònics sol·licitant la documentació pendent."
+            "requestsSentDesc": "S'han enviat {count} correus electrònics sol·licitant la documentació pendent.",
+            "statuses": {
+                "all": "Tots",
+                "pending": "Pendents",
+                "completed": "Completats"
+            },
+            "filterByStatus": "Filtrar per estat...",
+            "filterByDocument": "Filtrar per document...",
+            "allDocuments": "Tots els documents"
         }
     },
     "clubSettings": {
@@ -1455,3 +1463,5 @@
         }
     }
 }
+
+    
