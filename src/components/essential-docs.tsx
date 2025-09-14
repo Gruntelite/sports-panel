@@ -43,6 +43,7 @@ import { Checkbox } from "./ui/checkbox";
 import { Tooltip, TooltipProvider, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { requestFilesAction } from "@/lib/actions";
 import { useTranslation } from "./i18n-provider";
+import { Badge } from "@/components/ui/badge";
 
 type EssentialDocStatus = {
   memberId: string;
@@ -66,6 +67,7 @@ export function EssentialDocs() {
   const [essentialDocs, setEssentialDocs] = useState<string[]>([]);
   const [newDocName, setNewDocName] = useState("");
   const [docStatuses, setDocStatuses] = useState<EssentialDocStatus[]>([]);
+  const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
   const [selectedMembers, setSelectedMembers] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
 
@@ -87,6 +89,7 @@ export function EssentialDocs() {
         
         const coachesSnap = await getDocs(collection(db, "clubs", currentClubId, "coaches"));
         coachesSnap.forEach(d => members.push({ id: d.id, name: `${d.data().name} ${d.data().lastName}`, type: 'Entrenador', data: d.data() as Coach, email: (d.data() as Coach).email }));
+        setAllMembers(members);
 
         // Fetch all documents
         const docsSnap = await getDocs(collection(db, "clubs", currentClubId, "documents"));
@@ -311,3 +314,5 @@ export function EssentialDocs() {
     </TooltipProvider>
   );
 }
+
+    
