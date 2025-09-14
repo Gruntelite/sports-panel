@@ -223,47 +223,51 @@ export function EssentialDocs() {
     });
   }
   
-  const handleToggleDocStatus = async () => {
-    if (!statusToggleInfo || !clubId) return;
+    const handleToggleDocStatus = async () => {
+        if (!statusToggleInfo || !clubId) return;
 
-    setSaving(true);
-    const { memberId, docName, hasIt } = statusToggleInfo;
-    const member = allMembers.find(m => m.id === memberId);
-    if(!member) {
-        setSaving(false);
-        return;
-    }
+        setSaving(true);
+        const { memberId, docName, hasIt } = statusToggleInfo;
 
-    try {
-        if (hasIt) {
-            // It's completed, we want to mark it as pending -> delete the marker doc
-            const memberStatus = docStatuses.find(ds => ds.memberId === memberId);
-            const docIdToDelete = memberStatus?.docs[docName]?.docId;
-            if (docIdToDelete) {
-                await deleteDoc(doc(db, "clubs", clubId, "documents", docIdToDelete));
+        try {
+            if (hasIt) {
+                // It's completed, we want to mark it as pending -> delete the marker doc
+                 const docsQuery = query(
+                    collection(db, "clubs", clubId, "documents"),
+                    where("ownerId", "==", memberId),
+                    where("category", "==", "essential_manual"),
+                    where("name", "==", docName)
+                );
+                const docsSnapshot = await getDocs(docsQuery);
+                if (!docsSnapshot.empty) {
+                    const docToDelete = docsSnapshot.docs[0];
+                    await deleteDoc(docToDelete.ref);
+                }
+            } else {
+                // It's pending, we want to mark it as completed -> add a marker doc
+                const member = allMembers.find(m => m.id === memberId);
+                if(!member) throw new Error("Member not found");
+                
+                await addDoc(collection(db, "clubs", clubId, "documents"), {
+                    name: docName,
+                    path: `manual_override/${memberId}/${docName}`,
+                    createdAt: Timestamp.now(),
+                    ownerId: memberId,
+                    ownerName: member.name,
+                    category: 'essential_manual',
+                });
             }
-        } else {
-            // It's pending, we want to mark it as completed -> add a marker doc
-            await addDoc(collection(db, "clubs", clubId, "documents"), {
-                name: docName,
-                path: `manual_override/${memberId}/${docName}`,
-                createdAt: Timestamp.now(),
-                ownerId: memberId,
-                ownerName: member.name,
-                category: 'essential_manual',
-            });
-        }
-        
-        toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
-        fetchClubData(clubId); // Refetch to update UI
+            
+            toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
+            fetchClubData(clubId); // Refetch to update UI
 
-    } catch (e) {
-        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
-    } finally {
-        setSaving(false);
-        setStatusToggleInfo(null);
-    }
-  };
+        } catch (e) {
+            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
+        } finally {
+            setSaving(false);
+            setStatusToggleInfo(null);
+        }
+    };
 
   const openRequestModal = () => {
     if (selectedMembers.length === 0) return;
