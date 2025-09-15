@@ -318,6 +318,21 @@ export default function PlayersPage() {
     }
   };
 
+  const handleRemoveImage = async () => {
+    setSaving(true);
+    try {
+        if (playerData.avatar && !playerData.avatar.includes('placehold.co')) {
+            await deleteObject(ref(storage, playerData.avatar));
+        }
+        setPlayerData(prev => ({ ...prev, avatar: null }));
+        setImagePreview(null);
+        toast({ title: "Foto eliminada" });
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la foto." });
+    }
+    setSaving(false);
+  }
+
   const handleSelectChange = (id: keyof Player, value: string) => {
     setPlayerData(prev => ({ ...prev, [id]: value === 'unassigned' ? '' : value }));
   };
@@ -382,7 +397,7 @@ export default function PlayersPage() {
       const dataToSave = {
         ...playerData,
         teamName,
-        avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
+        avatar: imageUrl === null ? null : (imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`),
         monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
       
@@ -876,12 +891,15 @@ export default function PlayersPage() {
                                 {(playerData.lastName || 'J').charAt(0)}
                             </AvatarFallback>
                         </Avatar>
-                        <Button asChild variant="outline" size="sm">
-                            <label htmlFor="player-image" className="cursor-pointer">
-                                <Upload className="mr-2 h-3 w-3"/>
-                                {t('players.upload')}
-                            </label>
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <label htmlFor="player-image" className="cursor-pointer">
+                                    <Upload className="mr-2 h-3 w-3"/>
+                                    {t('players.upload')}
+                                </label>
+                            </Button>
+                            <Button variant="destructive" size="icon" onClick={handleRemoveImage} disabled={!playerData.avatar || saving}><Trash2 className="h-4 w-4"/></Button>
+                        </div>
                         <Input id="player-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
@@ -1222,5 +1240,7 @@ export default function PlayersPage() {
 }
 
 
+
+    
 
     

@@ -330,6 +330,21 @@ export default function CoachesPage() {
     }
   };
 
+  const handleRemoveImage = async () => {
+    setSaving(true);
+    try {
+        if (coachData.avatar && !coachData.avatar.includes('placehold.co')) {
+            await deleteObject(ref(storage, coachData.avatar));
+        }
+        setCoachData(prev => ({ ...prev, avatar: null }));
+        setImagePreview(null);
+        toast({ title: "Foto eliminada" });
+    } catch(e) {
+        toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar la foto." });
+    }
+    setSaving(false);
+  }
+
   const handleSelectChange = (id: keyof Coach, value: string) => {
     setCoachData(prev => ({ ...prev, [id]: value === 'unassigned' ? '' : value }));
   };
@@ -399,7 +414,7 @@ export default function CoachesPage() {
       const dataToSave = {
         ...coachData,
         teamName,
-        avatar: imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`,
+        avatar: imageUrl === null ? null : (imageUrl || coachData.avatar || `https://placehold.co/40x40.png?text=${(coachData.name || '').charAt(0)}`),
         monthlyPayment: (coachData.monthlyPayment === '' || coachData.monthlyPayment === undefined || coachData.monthlyPayment === null) ? null : Number(coachData.monthlyPayment),
       };
       
@@ -892,12 +907,15 @@ export default function CoachesPage() {
                                 {(coachData.lastName || 'T').charAt(0)}
                             </AvatarFallback>
                         </Avatar>
-                        <Button asChild variant="outline" size="sm">
-                            <label htmlFor="coach-image" className="cursor-pointer">
-                                <Upload className="mr-2 h-3 w-3"/>
-                                {t('coaches.upload')}
-                            </label>
-                        </Button>
+                        <div className="flex items-center gap-2">
+                            <Button asChild variant="outline" size="sm">
+                                <label htmlFor="coach-image" className="cursor-pointer">
+                                    <Upload className="mr-2 h-3 w-3"/>
+                                    {t('coaches.upload')}
+                                </label>
+                            </Button>
+                            <Button variant="destructive" size="icon" onClick={handleRemoveImage} disabled={!coachData.avatar || saving}><Trash2 className="h-4 w-4"/></Button>
+                        </div>
                         <Input id="coach-image" type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
                     </div>
                     
@@ -1243,5 +1261,7 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
+    
 
     

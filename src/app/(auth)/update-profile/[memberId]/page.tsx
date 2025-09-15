@@ -290,7 +290,10 @@ export default function UpdateProfilePage() {
                           height={100}
                           className="rounded-full aspect-square object-cover border"
                         />
-                        <Input id="avatar-upload" type="file" accept="image/*" onChange={handleImageChange} />
+                        <div className="space-y-2">
+                            <Input id="avatar-upload" type="file" accept="image/*" onChange={handleImageChange} />
+                            <p className="text-xs text-muted-foreground">Se recomienda una foto cuadrada.</p>
+                        </div>
                     </div>
                 </div>
             )
@@ -411,6 +414,8 @@ const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithout
 FormLabel.displayName = 'FormLabel';
 const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({className, ...props}, ref) => <div ref={ref} className={className} {...props} />)
 FormControl.displayName = 'FormControl';
+
+    
 
     
 
