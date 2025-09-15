@@ -731,7 +731,7 @@
         "sendTo": "Enviar a {count} Jugador(s)",
         "fields": {
             "personal": [
-                {"id": "name", "label": "Nom"}, {"id": "lastName", "label": "Cognoms"}, {"id": "birthDate", "label": "Data de Naixement"},
+                {"id": "name", "label": "Nom"}, {"id": "lastName", "label": "Cognoms"}, {"id": "avatar", "label": "Foto de Perfil"}, {"id": "birthDate", "label": "Data de Naixement"},
                 {"id": "dni", "label": "NIF"}, {"id": "sex", "label": "Sexe"}, {"id": "nationality", "label": "Nacionalitat"},
                 {"id": "healthCardNumber", "label": "Nº Targeta Sanitària"}, {"id": "address", "label": "Adreça"},
                 {"id": "city", "label": "Ciutat"}, {"id": "postalCode", "label": "Codi Postal"}, {"id": "startDate", "label": "Data d'Alta"},
@@ -820,7 +820,7 @@
         "tenure": "Antiguitat al club",
         "coachFields": {
             "personal": [
-                {"id": "name", "label": "Nom"}, {"id": "birthDate", "label": "Data de Naixement"}, {"id": "dni", "label": "NIF"},
+                {"id": "name", "label": "Nom"}, {"id": "avatar", "label": "Foto de Perfil"}, {"id": "birthDate", "label": "Data de Naixement"}, {"id": "dni", "label": "NIF"},
                 {"id": "sex", "label": "Sexe"}, {"id": "nationality", "label": "Nacionalitat"}, {"id": "address", "label": "Adreça"},
                 {"id": "city", "label": "Ciutat"}, {"id": "postalCode", "label": "Codi Postal"}
             ],
@@ -1337,7 +1337,7 @@
             "manualUploadTitle": "Pujada Manual de Document",
             "manualUploadDesc": "Pujaràs el document '{docName}' per a {memberName}.",
             "file": "Arxiu",
-            "fileUploadedDesc": "L'arxiu s'ha pujat i l'estat s'ha marcat com a entregat."
+            "fileUploadedDesc": "L'arxiu s'ha pujat i l'estat s'ha marcat como a entregat."
         }
     },
     "clubSettings": {
@@ -1474,3 +1474,5 @@
         }
     }
 }
+
+    

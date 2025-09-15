@@ -731,7 +731,7 @@
         "sendTo": "Enviar a {count} Jugador(es)",
         "fields": {
             "personal": [
-                {"id": "name", "label": "Nombre"}, {"id": "lastName", "label": "Apellidos"}, {"id": "birthDate", "label": "Fecha de Nacimiento"},
+                {"id": "name", "label": "Nombre"}, {"id": "lastName", "label": "Apellidos"}, {"id": "avatar", "label": "Foto de Perfil"}, {"id": "birthDate", "label": "Fecha de Nacimiento"},
                 {"id": "dni", "label": "NIF"}, {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"},
                 {"id": "healthCardNumber", "label": "Nº Tarjeta Sanitaria"}, {"id": "address", "label": "Dirección"},
                 {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}, {"id": "startDate", "label": "Fecha de Alta"},
@@ -820,7 +820,7 @@
         "tenure": "Antigüedad en el club",
         "coachFields": {
             "personal": [
-                {"id": "name", "label": "Nombre"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
+                {"id": "name", "label": "Nombre"}, {"id": "avatar", "label": "Foto de Perfil"}, {"id": "birthDate", "label": "Fecha de Nacimiento"}, {"id": "dni", "label": "NIF"},
                 {"id": "sex", "label": "Sexo"}, {"id": "nationality", "label": "Nacionalidad"}, {"id": "address", "label": "Dirección"},
                 {"id": "city", "label": "Ciudad"}, {"id": "postalCode", "label": "Código Postal"}
             ],
@@ -1284,7 +1284,7 @@
             "viewDetails": "Ver Detalles",
             "delete": "Eliminar Lote",
             "modalTitle": "Detalles del Lote",
-            "modalDescription": "Listado de miembros que aún no han subido el archivo solicitado.",
+            "modalDescription": "Listado de miembros que todavía no han subido el archivo solicitado.",
             "allCompleted": "¡Genial! Todos los miembros han completado la solicitud.",
             "close": "Cerrar",
             "confirmDeleteDesc": "¿Seguro que quieres eliminar el lote de solicitud para '{docTitle}'? Se borrarán todas las peticiones asociadas, pero no los archivos que ya se hayan subido.",
@@ -1474,3 +1474,5 @@
         }
     }
 }
+
+    

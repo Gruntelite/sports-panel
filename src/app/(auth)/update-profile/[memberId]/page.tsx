@@ -8,8 +8,9 @@ import { useParams, useSearchParams } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import type { Player, Coach, Staff, CustomFieldDef } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -22,6 +23,7 @@ import { DatePicker } from "@/components/ui/date-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, parseISO } from "date-fns";
 import { cn } from "@/lib/utils";
+import { v4 as uuidv4 } from "uuid";
 
 // Base schema for common fields, all optional for dynamic validation
 const profileSchemaBase = {
@@ -50,6 +52,7 @@ const profileSchemaBase = {
   kitSize: z.string().optional(),
   monthlyPayment: z.preprocess((val) => Number(val), z.number()).optional(),
   role: z.string().optional(),
+  avatar: z.any().optional(), // Added for profile picture
 };
 
 type MemberData = Partial<Player & Coach & Staff>;
@@ -72,6 +75,9 @@ export default function UpdateProfilePage() {
     const [collectionName, setCollectionName] = useState<string | null>(null);
     const [editableFields, setEditableFields] = useState<string[]>([]);
     const [customFieldDefs, setCustomFieldDefs] = useState<CustomFieldDef[]>([]);
+
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [newImageFile, setNewImageFile] = useState<File | null>(null);
     
     const dynamicSchema = z.object(
         Object.fromEntries(
@@ -134,6 +140,7 @@ export default function UpdateProfilePage() {
                     
                     const defaultValues: any = {};
                     fields.forEach(field => {
+                        if (field === 'avatar') return;
                         const fieldValue = data.customFields?.[field] ?? data[field as keyof MemberData];
                         defaultValues[field] = fieldValue || "";
                     });
@@ -152,20 +159,47 @@ export default function UpdateProfilePage() {
         fetchMemberData();
     }, [memberId, memberType, clubId, fieldsParam, form]);
 
+    const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files[0]) {
+            const file = e.target.files[0];
+            setNewImageFile(file);
+            setImagePreview(URL.createObjectURL(file));
+        }
+    };
+
     const onSubmit = async (data: z.infer<typeof dynamicSchema>) => {
-        if (!clubId || !collectionName || !memberId) return;
+        if (!clubId || !collectionName || !memberId || !memberData) return;
 
         setSubmitting(true);
         try {
             const memberRef = doc(db, "clubs", clubId, collectionName, memberId);
             
             const dataToUpdate: any = {};
-            const customFieldsToUpdate: Record<string, any> = memberData?.customFields || {};
+            const customFieldsToUpdate: Record<string, any> = memberData.customFields || {};
 
+            // Handle image upload first
+            let newAvatarUrl = memberData.avatar;
+            if (newImageFile) {
+                const collectionNameForAvatar = memberType === 'player' ? 'player-avatars' : 'coach-avatars';
+                
+                if (memberData.avatar && !memberData.avatar.includes('placehold.co')) {
+                    try {
+                        await deleteObject(ref(storage, memberData.avatar));
+                    } catch (e) {
+                        console.warn("Could not delete old image:", e);
+                    }
+                }
+                const imageRef = ref(storage, `${collectionNameForAvatar}/${clubId}/${uuidv4()}`);
+                await uploadBytes(imageRef, newImageFile);
+                newAvatarUrl = await getDownloadURL(imageRef);
+                dataToUpdate.avatar = newAvatarUrl;
+            }
+
+            // Handle other fields
             Object.entries(data).forEach(([key, value]) => {
                 if (key.startsWith('custom_')) {
                     customFieldsToUpdate[key] = value;
-                } else {
+                } else if (key !== 'avatar') {
                     dataToUpdate[key] = value;
                 }
             });
@@ -229,6 +263,7 @@ export default function UpdateProfilePage() {
           monthlyPayment: { label: 'Pago Mensual', type: 'number' },
           role: { label: 'Cargo' },
           sex: { label: 'Sexo', type: 'select', options: [{value: 'masculino', label: 'Masculino'}, {value: 'femenino', label: 'Femenino'}] },
+          avatar: { label: 'Foto de Perfil', type: 'file' },
         };
         
         if (standardFieldMap[fieldName]) {
@@ -242,6 +277,24 @@ export default function UpdateProfilePage() {
         }
         
         const { label, type, options } = fieldConfig;
+        
+        if (type === 'file' && fieldName === 'avatar') {
+            return (
+                <div key={fieldName} className="space-y-2">
+                    <Label>{label} *</Label>
+                    <div className="flex items-center gap-4">
+                        <Image 
+                          src={imagePreview || memberData?.avatar || `https://placehold.co/100x100.png?text=${memberData?.name?.charAt(0) || 'U'}`}
+                          alt="Vista previa de la foto de perfil"
+                          width={100}
+                          height={100}
+                          className="rounded-full aspect-square object-cover border"
+                        />
+                        <Input id="avatar-upload" type="file" accept="image/*" onChange={handleImageChange} />
+                    </div>
+                </div>
+            )
+        }
 
         return (
              <div key={fieldName} className="space-y-2">
@@ -358,5 +411,7 @@ const FormLabel = React.forwardRef<HTMLLabelElement, React.ComponentPropsWithout
 FormLabel.displayName = 'FormLabel';
 const FormControl = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(({className, ...props}, ref) => <div ref={ref} className={className} {...props} />)
 FormControl.displayName = 'FormControl';
+
+    
 
     
