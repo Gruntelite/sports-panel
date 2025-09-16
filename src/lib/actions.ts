@@ -79,28 +79,32 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
 }
 
 
-export async function requestDataUpdateAction({
-  clubId,
-  members,
-  memberType,
-  fields
-}: {
-  clubId: string;
-  members: { id: string; name: string; email: string }[];
-  memberType: 'player' | 'coach';
-  fields: string[];
-}): Promise<{ success: boolean; error?: string; count?: number }> {
+export async function requestDataUpdateAction(formData: FormData) {
+  const clubId = formData.get('clubId') as string;
+  const members = JSON.parse(formData.get('members') as string);
+  const memberType = formData.get('memberType') as 'player' | 'coach';
+  const fields = formData.get('fields') as string;
+  const subject = formData.get('subject') as string | undefined;
+  const customMessage = formData.get('message') as string | undefined;
+
+
   if (members.length === 0) {
     return { success: false, error: "No se seleccionaron miembros." };
   }
-  if (fields.length === 0) {
+  if (!fields) {
     return { success: false, error: "No se seleccionaron campos para actualizar."};
   }
 
   try {
     const clubDocRef = adminDb.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
-    const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
+    const clubName = clubDocSnap.exists() ? clubDocSnap.data()!.name : 'Tu Club';
+    
+    const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
+    const settingsSnap = await settingsRef.get();
+    const defaultLanguage = settingsSnap.exists() ? settingsSnap.data()!.defaultLanguage || 'es' : 'es';
+    const translations = (await import(`@/locales/${defaultLanguage}.json`)).default;
+
     
     let emailsSent = 0;
     
@@ -109,31 +113,27 @@ export async function requestDataUpdateAction({
     for (const member of members) {
         if (!member.email) continue;
         
-        const fieldsQueryParam = fields.join(',');
-        const appUrl = `https://sportspanel.net`;
-        const updateUrl = `${appUrl}/update-profile/${member.id}?type=${memberType}&clubId=${clubId}&fields=${fieldsQueryParam}`;
+        const updateUrl = `https://sportspanel.net/update-profile/${member.id}?type=${memberType}&clubId=${clubId}&fields=${fields}`;
         
         const collectionName = memberType === 'player' ? 'players' : 'coaches';
         const memberRef = adminDb.collection("clubs").doc(clubId).collection(collectionName).doc(member.id);
         batch.update(memberRef, { updateRequestActive: true });
 
 
-        const emailPayload = {
+        const emailResult = await sendEmailWithSmtpAction({
             clubId,
             recipients: [{ email: member.email, name: member.name }],
-            subject: `Actualiza tus datos en ${clubName}`,
+            subject: subject || `${translations.emailTemplates.updateData.subject} ${clubName}`,
             htmlContent: `
-                <h1>Actualización de Datos</h1>
-                <p>Hola ${member.name},</p>
-                <p>Por favor, ayúdanos a mantener tu información actualizada. Haz clic en el siguiente enlace para revisar y corregir los datos solicitados:</p>
-                <a href="${updateUrl}">Actualizar mis datos</a>
-                <p>Este enlace es de un solo uso.</p>
-                <p>Gracias,</p>
-                <p>El equipo de ${clubName}</p>
+                <h1>${translations.emailTemplates.updateData.title}</h1>
+                <p>${translations.emailTemplates.hello} ${member.name},</p>
+                ${customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>${translations.emailTemplates.updateData.body}</p>`}
+                <a href="${updateUrl}">${translations.emailTemplates.updateData.cta}</a>
+                <p>${translations.emailTemplates.updateData.singleUse}</p>
+                <p>${translations.emailTemplates.thanks},</p>
+                <p>${translations.emailTemplates.team} ${clubName}</p>
             `,
-        };
-
-        const emailResult = await sendEmailWithSmtpAction(emailPayload);
+        });
         if (emailResult.success) {
             emailsSent++;
         } else {
@@ -211,28 +211,26 @@ export async function importDataAction({
 export async function requestFilesAction(formData: FormData) {
   const clubId = formData.get('clubId') as string;
   const members = JSON.parse(formData.get('members') as string) as ClubMember[];
-  const documentTitle = formData.get('doc-title') as string;
-  const message = formData.get('message') as string | undefined;
+  const documentTitles = JSON.parse(formData.get('documents') as string) as string[];
+  const subject = formData.get('subject') as string | undefined;
+  const customMessage = formData.get('message') as string | undefined;
   const attachment = formData.get('attachment') as File | undefined;
   
   if (members.length === 0) return { success: false, error: "No se seleccionaron miembros." };
-  if (!documentTitle) return { success: false, error: "El título del documento es obligatorio." };
+  if (documentTitles.length === 0) return { success: false, error: "No se seleccionaron documentos para solicitar." };
 
   try {
     const clubDocRef = adminDb.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
     const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
 
+    const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
+    const settingsSnap = await settingsRef.get();
+    const defaultLanguage = settingsSnap.exists() ? settingsSnap.data()!.defaultLanguage || 'es' : 'es';
+    const translations = (await import(`@/locales/${defaultLanguage}.json`)).default;
+
     let emailsSent = 0;
     const batch = adminDb.batch();
-
-    const batchRef = adminDb.collection('fileRequestBatches').doc();
-    batch.set(batchRef, {
-      clubId,
-      documentTitle,
-      totalSent: members.length,
-      createdAt: Timestamp.now(),
-    });
 
     for (const member of members) {
       if (!member.email) continue;
@@ -241,17 +239,18 @@ export async function requestFilesAction(formData: FormData) {
                             .update(member.id + Date.now().toString())
                             .digest('hex');
 
-      const requestRef = adminDb.collection("fileRequests").doc();
-      batch.set(requestRef, {
-        clubId,
-        batchId: batchRef.id,
-        userId: member.id,
-        userName: member.name,
-        documentTitle: documentTitle,
-        status: 'pending',
-        createdAt: Timestamp.now(),
-        token: singleUseToken
-      });
+      for (const docTitle of documentTitles) {
+          const requestRef = adminDb.collection("fileRequests").doc();
+          batch.set(requestRef, {
+            clubId,
+            userId: member.id,
+            userName: member.name,
+            documentTitle: docTitle,
+            status: 'pending',
+            createdAt: Timestamp.now(),
+            token: singleUseToken
+          });
+      }
       
       const appUrl = `https://sportspanel.net`;
       const uploadUrl = `${appUrl}/upload/${singleUseToken}`;
@@ -259,16 +258,15 @@ export async function requestFilesAction(formData: FormData) {
       const emailResult = await sendEmailWithSmtpAction({
         clubId,
         recipients: [{ email: member.email, name: member.name }],
-        subject: `Solicitud de documentación: ${clubName}`,
+        subject: subject || `${translations.emailTemplates.fileRequest.subject} ${clubName}`,
         htmlContent: `
-            <h1>Solicitud de Archivo</h1>
-            <p>Hola ${member.name},</p>
-            <p>El club ${clubName} te solicita que subas la siguiente documentación: <strong>${documentTitle}</strong>.</p>
-            ${message ? `<p><strong>Mensaje del club:</strong><br>${message.replace(/\n/g, '<br>')}</p>` : ''}
-            <p>Por favor, utiliza el siguiente enlace seguro para subir tu archivo:</p>
-            <a href="${uploadUrl}">Subir Archivo</a>
-            <p>Gracias,</p>
-            <p>El equipo de ${clubName}</p>
+            <h1>${translations.emailTemplates.fileRequest.title}</h1>
+            <p>${translations.emailTemplates.hello} ${member.name},</p>
+            ${customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>${translations.emailTemplates.fileRequest.body.replace('{clubName}', clubName).replace('{documentTitle}', documentTitles.join(', '))}</p>`}
+            <p>${translations.emailTemplates.fileRequest.instruction}:</p>
+            <a href="${uploadUrl}">${translations.emailTemplates.fileRequest.cta}</a>
+            <p>${translations.emailTemplates.thanks},</p>
+            <p>${translations.emailTemplates.team} ${clubName}</p>
         `,
         attachments: attachment ? [attachment] : []
       });

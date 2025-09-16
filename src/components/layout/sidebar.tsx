@@ -242,8 +242,8 @@ export function Sidebar() {
                             const trialEndDate = (settingsData.trialEndDate as Timestamp)?.toDate();
                             if (trialEndDate && isFuture(trialEndDate)) {
                                 const daysLeft = differenceInDays(trialEndDate, new Date());
-                                if (daysLeft <= 20) {
-                                    setTrialDaysLeft(daysLeft + 1);
+                                if (daysLeft < 10) {
+                                    setTrialDaysLeft(daysLeft);
                                 }
                             }
                         }
