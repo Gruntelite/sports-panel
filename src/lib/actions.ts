@@ -52,7 +52,7 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
         const luminance = getLuminance(themeColor);
         const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
         const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 20);
+        trialEndDate.setDate(trialEndDate.getDate() + 10);
         trialEndDate.setHours(23, 59, 59, 999);
 
         const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
@@ -208,15 +208,15 @@ export async function importDataAction({
     }
 }
 
-export async function requestFilesAction(payload: {
-  clubId: string;
-  members: ClubMember[];
-  documents: string[];
-}): Promise<{ success: boolean; error?: string; count?: number }> {
-  const { clubId, members, documents } = payload;
+export async function requestFilesAction(formData: FormData) {
+  const clubId = formData.get('clubId') as string;
+  const members = JSON.parse(formData.get('members') as string) as ClubMember[];
+  const documentTitle = formData.get('doc-title') as string;
+  const message = formData.get('message') as string | undefined;
+  const attachment = formData.get('attachment') as File | undefined;
   
   if (members.length === 0) return { success: false, error: "No se seleccionaron miembros." };
-  if (documents.length === 0) return { success: false, error: "No se seleccionaron documentos." };
+  if (!documentTitle) return { success: false, error: "El título del documento es obligatorio." };
 
   try {
     const clubDocRef = adminDb.collection("clubs").doc(clubId);
@@ -229,7 +229,7 @@ export async function requestFilesAction(payload: {
     const batchRef = adminDb.collection('fileRequestBatches').doc();
     batch.set(batchRef, {
       clubId,
-      documentTitle: documents.join(', '),
+      documentTitle,
       totalSent: members.length,
       createdAt: Timestamp.now(),
     });
@@ -237,27 +237,21 @@ export async function requestFilesAction(payload: {
     for (const member of members) {
       if (!member.email) continue;
       
-      const memberSpecificDocs = documents;
-
-      if(memberSpecificDocs.length === 0) continue;
-
       const singleUseToken = createHmac('sha256', process.env.TOKEN_SECRET || 'fallback-secret')
                             .update(member.id + Date.now().toString())
                             .digest('hex');
 
-      for (const docTitle of memberSpecificDocs) {
-        const requestRef = adminDb.collection("fileRequests").doc();
-        batch.set(requestRef, {
-          clubId,
-          batchId: batchRef.id,
-          userId: member.id,
-          userName: member.name,
-          documentTitle: docTitle,
-          status: 'pending',
-          createdAt: Timestamp.now(),
-          token: singleUseToken
-        });
-      }
+      const requestRef = adminDb.collection("fileRequests").doc();
+      batch.set(requestRef, {
+        clubId,
+        batchId: batchRef.id,
+        userId: member.id,
+        userName: member.name,
+        documentTitle: documentTitle,
+        status: 'pending',
+        createdAt: Timestamp.now(),
+        token: singleUseToken
+      });
       
       const appUrl = `https://sportspanel.net`;
       const uploadUrl = `${appUrl}/upload/${singleUseToken}`;
@@ -267,14 +261,16 @@ export async function requestFilesAction(payload: {
         recipients: [{ email: member.email, name: member.name }],
         subject: `Solicitud de documentación: ${clubName}`,
         htmlContent: `
-            <h1>Solicitud de Archivos</h1>
+            <h1>Solicitud de Archivo</h1>
             <p>Hola ${member.name},</p>
-            <p>El club ${clubName} te solicita que subas la siguiente documentación: <strong>${memberSpecificDocs.join(', ')}</strong>.</p>
-            <p>Por favor, utiliza el siguiente enlace seguro para subir tus archivos:</p>
-            <a href="${uploadUrl}">Subir Archivos</a>
+            <p>El club ${clubName} te solicita que subas la siguiente documentación: <strong>${documentTitle}</strong>.</p>
+            ${message ? `<p><strong>Mensaje del club:</strong><br>${message.replace(/\n/g, '<br>')}</p>` : ''}
+            <p>Por favor, utiliza el siguiente enlace seguro para subir tu archivo:</p>
+            <a href="${uploadUrl}">Subir Archivo</a>
             <p>Gracias,</p>
             <p>El equipo de ${clubName}</p>
         `,
+        attachments: attachment ? [attachment] : []
       });
 
       if (emailResult.success) {
