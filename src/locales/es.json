@@ -110,12 +110,12 @@
                 "Gestión de miembros y equipos", "Tesorería y control de cuotas", "Comunicación integrada", "+14.000 emails al mes", "Importador de datos", "Solicitud de datos a familias",
                 "Formularios de inscripción", "Calendario y horarios", "Registro de incidencias", "Almacén de documentos"
             ],
-            "cta": "Empieza tu prueba gratuita de 20 días"
+            "cta": "Empieza tu prueba gratuita de 10 días"
         },
         "faq": {
             "title": "Preguntas Frecuentes",
             "subtitle": "¿Tienes dudas? Aquí tienes las respuestas a las preguntas más comunes.",
-            "0": { "question": "¿Ofrecen un periodo de prueba?", "answer": "¡Sí! Ofrecemos una prueba de 20 días para que explores todas las funcionalidades de SportsPanel. Puedes cancelar tu suscripción en cualquier momento. Además, nuestro plan mensual no tiene ningún tipo de permanencia." },
+            "0": { "question": "¿Ofrecen un periodo de prueba?", "answer": "¡Sí! Ofrecemos una prueba de 10 días para que explores todas las funcionalidades de SportsPanel. Puedes cancelar tu suscripción en cualquier momento. Además, nuestro plan mensual no tiene ningún tipo de permanencia." },
             "1": { "question": "¿Puedo importar mis datos existentes de otro programa?", "answer": "Sí. Contamos con un importador de datos mediante archivos CSV. Puedes preparar una hoja de cálculo con tus jugadores, entrenadores o socios y subirlos a la plataforma de forma masiva, ahorrándote horas de trabajo manual." },
             "2": { "question": "¿Mis datos están seguros en la plataforma?", "answer": "La seguridad es nuestra máxima prioridad. Utilizamos la infraestructura de Google Cloud, una de las más seguras del mundo, para proteger tus datos. Todas las conexiones están encriptadas y realizamos copias de seguridad periódicas." },
             "3": { "question": "¿Cómo funciona la comunicación con las familias?", "answer": "Puedes enviar correos electrónicos directamente desde la plataforma. Tienes la opción de segmentar tus envíos por equipos, por tipo de miembro (jugadores, entrenadores...) o a todo el club. Las familias recibirán las notificaciones en su email." },
@@ -159,13 +159,13 @@
         "passwordDesc": "Mínimo 6 caracteres",
         "button": "Empezar Prueba Gratuita",
         "loading": "Creando tu club...",
-        "ctaNote": "No se necesita tarjeta · 20 días de prueba gratis",
+        "ctaNote": "No se necesita tarjeta · 10 días de prueba gratis",
         "hasAccount": "¿Ya tienes una cuenta?",
         "login": "Inicia Sesión",
         "successTitle": "¡Club Creado!",
-        "successDesc": "Tu prueba de 20 días ha comenzado. ¡Bienvenido!",
+        "successDesc": "Tu prueba de 10 días ha comenzado. ¡Bienvenido!",
         "trial": {
-            "title": "20 días de prueba gratis",
+            "title": "10 días de prueba gratis",
             "0": "No necesitas tarjeta de crédito.",
             "1": "Sin compromiso de permanencia.",
             "2": "Cancela cuando quieras.",

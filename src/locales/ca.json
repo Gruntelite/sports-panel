@@ -108,14 +108,14 @@
             "vatNote": "Quota mensual sense IVA inclòs",
             "features": [
                 "Gestió de membres i equips", "Tresoreria i control de quotes", "Comunicació integrada", "+14.000 emails al mes", "Importador de dades", "Sol·licitud de dades a famílies",
-                "Formularis d'inscripció", "Calendari i horaris", "Registre d'incidències", "Magatzem de documents"
+                "Formularis d'inscripció", "Calendari i horaris", "Registro d'incidències", "Magatzem de documents"
             ],
-            "cta": "Comença la teva prova gratuïta de 20 dies"
+            "cta": "Comença la teva prova gratuïta de 10 dies"
         },
         "faq": {
             "title": "Preguntes Freqüents",
             "subtitle": "Tens dubtes? Aquí tens les respostes a les preguntes més comunes.",
-            "0": { "question": "Ofereixen un període de prova?", "answer": "Sí! Oferim una prova de 20 dies perquè exploris totes les funcionalitats de SportsPanel. Pots cancel·lar la teva subscripció en qualsevol moment. A més, el nostre pla mensual no té cap mena de permanència." },
+            "0": { "question": "Ofereixen un període de prova?", "answer": "Sí! Oferim una prova de 10 dies perquè exploris totes les funcionalitats de SportsPanel. Pots cancel·lar la teva subscripció en qualsevol moment. A més, el nostre pla mensual no té cap mena de permanència." },
             "1": { "question": "Puc importar les meves dades existents d'un altre programa?", "answer": "Sí. Comptem amb un importador de dades mitjançant arxius CSV. Pots preparar un full de càlcul amb els teus jugadors, entrenadors o socis i pujar-los a la plataforma de forma massiva, estalviant-te hores de feina manual." },
             "2": { "question": "Les meves dades estan segures a la plataforma?", "answer": "La seguretat és la nostra màxima prioritat. Utilitzem la infraestructura de Google Cloud, una de les més segures del món, per protegir les teves dades. Totes les connexions estan encriptades i realitzem còpies de seguretat periòdiques." },
             "3": { "question": "Com funciona la comunicació amb les famílies?", "answer": "Pots enviar correus electrònics directament des de la plataforma. Tens l'opció de segmentar els teus enviaments per equips, per tipus de membre (jugadors, entrenadors...) o a tot el club. Les famílies rebran les notiticions al seu correu electrònic." },
@@ -159,13 +159,13 @@
         "passwordDesc": "Mínim 6 caràcters",
         "button": "Començar Prova Gratuïta",
         "loading": "Creant el teu club...",
-        "ctaNote": "No es necessita targeta · 20 dies de prova gratis",
+        "ctaNote": "No es necessita targeta · 10 dies de prova gratis",
         "hasAccount": "Ja tens un compte?",
         "login": "Inicia Sessió",
         "successTitle": "Club Creat!",
-        "successDesc": "La teva prova de 20 dies ha començat. Benvingut/da!",
+        "successDesc": "La teva prova de 10 dies ha començat. Benvingut/da!",
         "trial": {
-            "title": "20 dies de prova gratis",
+            "title": "10 dies de prova gratis",
             "0": "No necessites targeta de crèdit.",
             "1": "Sense compromís de permanència.",
             "2": "Cancel·la quan vulguis.",
