@@ -166,7 +166,7 @@ export function Header() {
 
     return (
         <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-        <header className="flex h-14 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
+        <header className="flex h-16 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
                  <Sheet>
                     <SheetTrigger asChild>
@@ -190,12 +190,8 @@ export function Header() {
                                 {menuGroups.map((group, groupIndex) => (
                                     <React.Fragment key={group.title}>
                                         {groupIndex > 0 && <Separator className="my-2" />}
-                                        <AccordionItem value={group.title} className="border-b-0">
-                                            <AccordionTrigger className="px-3 py-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline justify-start gap-2">
-                                                 {group.title}
-                                            </AccordionTrigger>
-                                            <AccordionContent className="pb-0 pl-4">
-                                                {group.items.map((item) => (
+                                        <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.title}</h3>
+                                         {group.items.map((item) => (
                                                 <SheetClose asChild key={item.href}>
                                                     <Link
                                                         href={item.href}
@@ -211,8 +207,6 @@ export function Header() {
                                                     </Link>
                                                 </SheetClose>
                                                 ))}
-                                            </AccordionContent>
-                                        </AccordionItem>
                                     </React.Fragment>
                                 ))}
                             </Accordion>
@@ -264,13 +258,6 @@ export function Header() {
                        </Button>
                     </DropdownMenuTrigger>
                      <DropdownMenuContent align="end" className="w-64">
-                         <DropdownMenuItem asChild>
-                            <Link href="/club-settings">
-                                <Settings className="mr-2 h-4 w-4" />
-                                <span>{t('sidebar.clubSettings')}</span>
-                            </Link>
-                         </DropdownMenuItem>
-                         <DropdownMenuSeparator />
                         <DropdownMenuSub>
                            <DropdownMenuSubTrigger>
                              <Languages className="mr-2 h-4 w-4" />
