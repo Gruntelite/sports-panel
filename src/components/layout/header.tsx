@@ -154,7 +154,7 @@ export function Header() {
                         <SheetHeader>
                              <Link href="#" className="flex items-center" prefetch={false}>
                                 <Logo withText={true}/>
-                            </Link>
+                             </Link>
                         </SheetHeader>
                         <nav className="grid gap-2 text-lg font-medium overflow-y-auto">
                             <Accordion type="multiple" defaultValue={['Miembros']} className="w-full">
@@ -195,7 +195,7 @@ export function Header() {
                     </SheetContent>
                 </Sheet>
                 <div className="hidden md:block">
-                     <Logo withText={true} />
+                     <Logo withText={true} className="text-white"/>
                 </div>
             </div>
 
