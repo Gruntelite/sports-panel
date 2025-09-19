@@ -1,4 +1,3 @@
-
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -41,6 +40,7 @@ const menuGroups = [
             { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
             { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
             { href: "/importer", label: "sidebar.importer", icon: Database },
+            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
         ]
     }
 ];
@@ -48,7 +48,6 @@ const menuGroups = [
 export function Sidebar() {
     const pathname = usePathname();
     const { t } = useTranslation();
-    const defaultOpenAccordion = menuGroups.find(group => group.items.some(item => pathname.startsWith(item.href)))?.title;
 
     return (
         <div className="hidden border-r bg-card text-card-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-40 pt-16">
@@ -80,14 +79,6 @@ export function Sidebar() {
                         </div>
                     ))}
                 </nav>
-            </div>
-             <div className="mt-auto p-4 border-t">
-                <Link href="/club-settings">
-                <Button variant="ghost" className="w-full justify-start gap-3">
-                    <Settings className="h-4 w-4" />
-                    {t('sidebar.clubSettings')}
-                </Button>
-                </Link>
             </div>
         </div>
     );
