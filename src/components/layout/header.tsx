@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "../ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages, HelpCircle, Star, Download, LogOut, Building, ChevronDown } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages, HelpCircle, Star, Download, LogOut, Building, ChevronDown, Home } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -31,13 +31,12 @@ const menuGroups = [
     {
         title: 'Club',
         items: [
-            { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
+            { href: "/dashboard", label: "sidebar.dashboard", icon: Home },
             { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
         ]
     },
     {
         title: 'Miembros',
-        defaultOpen: true,
         items: [
             { href: "/players", label: "sidebar.players", icon: Users },
             { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
@@ -59,7 +58,6 @@ const menuGroups = [
             { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
             { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
             { href: "/importer", label: "sidebar.importer", icon: Database },
-            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
         ]
     }
 ];
@@ -137,7 +135,7 @@ export function Header() {
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
 
     return (
-        <header className="flex h-16 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
+        <header className="flex h-14 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
                  <Sheet>
                     <SheetTrigger asChild>
@@ -157,30 +155,51 @@ export function Header() {
                              </Link>
                         </SheetHeader>
                         <nav className="grid gap-2 text-lg font-medium overflow-y-auto">
-                            <Accordion type="multiple" defaultValue={['Miembros']} className="w-full">
+                            <Accordion type="multiple" defaultValue={['Club', 'Miembros']} className="w-full">
                                 {menuGroups.map((group, groupIndex) => (
                                     <React.Fragment key={group.title}>
                                         {groupIndex > 0 && <Separator className="my-2" />}
-                                        <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.title}</h3>
-                                        {group.items.map((item) => (
-                                        <SheetClose asChild key={item.href}>
-                                            <Link
-                                                href={item.href}
-                                                className={cn(
-                                                    "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
-                                                    pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
-                                                    ? "bg-primary/10 text-primary font-semibold"
-                                                    : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                                                )}
-                                            >
-                                                <item.icon className="h-4 w-4" />
-                                                {t(item.label)}
-                                            </Link>
-                                        </SheetClose>
-                                        ))}
+                                        <AccordionItem value={group.title} className="border-b-0">
+                                            <AccordionTrigger className="px-3 py-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider hover:no-underline justify-start gap-2">
+                                                 {group.title}
+                                            </AccordionTrigger>
+                                            <AccordionContent className="pb-0 pl-4">
+                                                {group.items.map((item) => (
+                                                <SheetClose asChild key={item.href}>
+                                                    <Link
+                                                        href={item.href}
+                                                        className={cn(
+                                                            "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
+                                                            pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href))
+                                                            ? "bg-primary/10 text-primary font-semibold"
+                                                            : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                                        )}
+                                                    >
+                                                        <item.icon className="h-4 w-4" />
+                                                        {t(item.label)}
+                                                    </Link>
+                                                </SheetClose>
+                                                ))}
+                                            </AccordionContent>
+                                        </AccordionItem>
                                     </React.Fragment>
                                 ))}
                             </Accordion>
+                             <Separator className="my-2" />
+                            <SheetClose asChild>
+                                <Link
+                                    href="/club-settings"
+                                    className={cn(
+                                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
+                                        pathname.startsWith('/club-settings')
+                                        ? "bg-primary/10 text-primary font-semibold"
+                                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                                    )}
+                                >
+                                    <Settings className="h-4 w-4" />
+                                    {t('sidebar.clubSettings')}
+                                </Link>
+                            </SheetClose>
                         </nav>
                         <div className="mt-auto">
                              <div className="p-4 border-t">
@@ -195,7 +214,7 @@ export function Header() {
                     </SheetContent>
                 </Sheet>
                 <div className="hidden md:block">
-                     <Logo withText={true} className="text-white"/>
+                     <Logo withText={true} className="text-white" width={36} height={36}/>
                 </div>
             </div>
 
@@ -203,7 +222,7 @@ export function Header() {
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                        <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white flex items-center gap-2">
-                           <Avatar className="h-8 w-8">
+                           <Avatar className="h-7 w-7">
                                 <AvatarImage src={clubLogo || ''} />
                                <AvatarFallback>{clubInitials}</AvatarFallback>
                            </Avatar>
@@ -214,14 +233,17 @@ export function Header() {
                        </Button>
                     </DropdownMenuTrigger>
                      <DropdownMenuContent align="end" className="w-64">
-                         <DropdownMenuLabel>
-                            <span className="font-semibold text-base">{t('header.mainMenu')}</span>
-                         </DropdownMenuLabel>
+                         <DropdownMenuItem asChild>
+                            <Link href="/club-settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>{t('sidebar.clubSettings')}</span>
+                            </Link>
+                         </DropdownMenuItem>
                          <DropdownMenuSeparator />
                         <DropdownMenuSub>
                            <DropdownMenuSubTrigger>
                              <Languages className="mr-2 h-4 w-4" />
-                             <span>Idioma</span>
+                             <span>{t('landing.nav.language', { count: 1, lng: locale.toUpperCase() }) || 'Idioma'}</span>
                            </DropdownMenuSubTrigger>
                            <DropdownMenuPortal>
                                 <DropdownMenuSubContent>
