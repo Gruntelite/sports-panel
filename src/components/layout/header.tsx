@@ -59,6 +59,7 @@ const menuGroups = [
             { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
             { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
             { href: "/importer", label: "sidebar.importer", icon: Database },
+            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
         ]
     }
 ];
@@ -72,6 +73,7 @@ export function Header() {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [clubId, setClubId] = useState<string | null>(null);
     const [clubName, setClubName] = useState<string | null>(null);
+    const [clubLogo, setClubLogo] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
      useEffect(() => {
@@ -91,30 +93,18 @@ export function Header() {
                         if(clubDocSnap.exists()){
                             setClubName(clubDocSnap.data().name);
                         }
-
-                        const initials = (rootUserData.name || "U").split(' ').map((n:string) => n[0]).join('').substring(0, 2);
-
-                        let memberAvatar: string | undefined = undefined;
-                        if(rootUserData.playerId) {
-                            const memberRef = doc(db, "clubs", currentClubId, 'players', rootUserData.playerId);
-                            const memberSnap = await getDoc(memberRef);
-                            if(memberSnap.exists()) memberAvatar = memberSnap.data().avatar;
-                        } else if (rootUserData.coachId) {
-                            const memberRef = doc(db, "clubs", currentClubId, 'coaches', rootUserData.coachId);
-                            const memberSnap = await getDoc(memberRef);
-                            if(memberSnap.exists()) memberAvatar = memberSnap.data().avatar;
-                        } else if (rootUserData.staffId) {
-                            const memberRef = doc(db, "clubs", currentClubId, 'staff', rootUserData.staffId);
-                            const memberSnap = await getDoc(memberRef);
-                            if(memberSnap.exists()) memberAvatar = memberSnap.data().avatar;
+                        
+                        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+                        const settingsSnap = await getDoc(settingsRef);
+                         if (settingsSnap.exists()) {
+                            setClubLogo(settingsSnap.data().logoUrl);
                         }
 
-
+                        const initials = (rootUserData.name || "U").split(' ').map((n:string) => n[0]).join('').substring(0, 2);
                         setUserProfile({
                             name: rootUserData.name || t('sidebar.noName'),
                             email: user.email || t('sidebar.noEmail'),
                             initials: initials,
-                            avatar: memberAvatar
                         });
                     }
                 } catch (error) {
@@ -143,9 +133,11 @@ export function Header() {
         const mailtoLink = `mailto:info.sportspanel@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
         window.location.href = mailtoLink;
     }
+    
+    const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
 
     return (
-        <header className="flex h-16 items-center gap-4 border-b bg-card px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
+        <header className="flex h-16 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
                  <Sheet>
                     <SheetTrigger asChild>
@@ -202,16 +194,18 @@ export function Header() {
                         </div>
                     </SheetContent>
                 </Sheet>
-                <Logo withText={true} />
+                <div className="hidden md:block">
+                     <Logo withText={true} />
+                </div>
             </div>
 
             <div className="flex w-full justify-end items-center gap-2 md:ml-auto md:gap-4">
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                       <Button variant="ghost" className="flex items-center gap-2">
+                       <Button variant="ghost" className="text-white hover:bg-white/10 hover:text-white flex items-center gap-2">
                            <Avatar className="h-8 w-8">
-                                {userProfile ? <AvatarImage src={userProfile.avatar} /> : <Skeleton className="h-8 w-8 rounded-full" />}
-                               <AvatarFallback>{userProfile?.initials || 'U'}</AvatarFallback>
+                                <AvatarImage src={clubLogo || ''} />
+                               <AvatarFallback>{clubInitials}</AvatarFallback>
                            </Avatar>
                             <div className="hidden md:flex flex-col items-start">
                                <span className="font-semibold text-sm">{clubName}</span>
