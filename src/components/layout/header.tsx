@@ -148,8 +148,10 @@ export function Header() {
                            <ChevronDown className="h-4 w-4 opacity-70"/>
                         </Button>
                     </DropdownMenuTrigger>
-                     <DropdownMenuContent align="end">
-                         <DropdownMenuLabel>Tu Club</DropdownMenuLabel>
+                     <DropdownMenuContent align="end" className="w-64">
+                         <DropdownMenuLabel>
+                            <span className="font-semibold text-base">{clubName}</span>
+                         </DropdownMenuLabel>
                          <DropdownMenuSeparator />
                          <DropdownMenuItem asChild>
                             <Link href="/club-settings">
@@ -157,25 +159,20 @@ export function Header() {
                                 <span>Ajustes del Club</span>
                             </Link>
                         </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
 
-                <Separator orientation="vertical" className="h-8 bg-white/20 hidden md:block" />
+                        <DropdownMenuSeparator />
 
-                 <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                         <Button variant="ghost" className="text-sm font-medium gap-1.5 hover:bg-white/10 hover:text-white">
-                            <Avatar className="h-7 w-7 border-2 border-white/50">
+                        <div className="px-2 py-1.5 flex items-center gap-3">
+                            <Avatar className="h-8 w-8 border-2 border-primary/20">
                                 <AvatarImage src={userProfile?.avatar}/>
                                 <AvatarFallback>{userProfile?.initials}</AvatarFallback>
                             </Avatar>
-                           <span className="font-semibold hidden md:inline">{userProfile?.name || <Skeleton className="h-4 w-20 bg-white/20" />}</span>
-                           <ChevronDown className="h-4 w-4 opacity-70"/>
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                         <DropdownMenuLabel>{userProfile?.name}</DropdownMenuLabel>
-                         <DropdownMenuSeparator />
+                            <div>
+                                <p className="font-semibold text-sm">{userProfile?.name}</p>
+                                <p className="text-xs text-muted-foreground">{userProfile?.email}</p>
+                            </div>
+                        </div>
+
                          <DropdownMenuItem asChild>
                             <Link href="/account">
                                 <UserCog className="mr-2 h-4 w-4" />
