@@ -31,7 +31,7 @@ const menuItems = [
 export function Header() {
     const pathname = usePathname();
     const { t, locale, setLocale } = useTranslation();
-    const currentPageKey = menuItems.find(item => pathname.includes(item.href))?.label || 'sidebar.dashboard';
+    const currentPageKey = menuItems.find(item => pathname.startsWith(item.href))?.label || 'sidebar.dashboard';
     const currentPage = t(currentPageKey);
 
     return (
@@ -68,7 +68,7 @@ export function Header() {
                         <span className="sr-only">{t('header.openMenu')}</span>
                     </Button>
                 </SheetTrigger>
-                <SheetContent side="left" className="flex flex-col p-0">
+                <SheetContent side="left" className="flex flex-col p-0 bg-card text-card-foreground">
                     <SheetHeader>
                          <SheetTitle className="sr-only">{t('header.mainMenu')}</SheetTitle>
                     </SheetHeader>
@@ -88,11 +88,11 @@ export function Header() {
                                     <Link
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center gap-4 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors",
-                                        pathname.includes(item.href) && "bg-muted text-foreground"
+                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors",
+                                        pathname.startsWith(item.href) && "bg-muted text-primary-foreground"
                                     )}
                                     >
-                                        <item.icon className="h-5 w-5" />
+                                        <item.icon className="h-4 w-4" />
                                         {t(item.label)}
                                     </Link>
                                 </SheetClose>

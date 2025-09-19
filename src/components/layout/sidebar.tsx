@@ -243,7 +243,7 @@ export function Sidebar() {
                             if (trialEndDate && isFuture(trialEndDate)) {
                                 const daysLeft = differenceInDays(trialEndDate, new Date());
                                 if (daysLeft <= 10) {
-                                    setTrialDaysLeft(daysLeft);
+                                    setTrialDaysLeft(daysLeft + 1);
                                 }
                             }
                         }
@@ -272,25 +272,25 @@ export function Sidebar() {
     }
 
     return (
-        <div className="hidden border-r bg-primary text-primary-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
+        <div className="hidden border-r bg-card text-card-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
             <div className="flex h-full max-h-screen flex-col">
-                <div className="flex h-20 items-center border-b border-primary-foreground/20 px-4 lg:px-6">
+                <div className="flex h-20 items-center border-b px-4 lg:px-6">
                     <Link href="/dashboard" className="flex items-center gap-3 font-semibold">
                          {loading ? (
-                            <Skeleton className="h-8 w-8 rounded-md bg-white/20" />
+                            <Skeleton className="h-8 w-8 rounded-md" />
                          ) : clubLogoUrl ? (
                             <Avatar className="h-8 w-8">
                                 <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
-                                <AvatarFallback className="bg-white/20 text-primary-foreground">{clubName?.charAt(0) || 'C'}</AvatarFallback>
+                                <AvatarFallback className="bg-muted">{clubName?.charAt(0) || 'C'}</AvatarFallback>
                             </Avatar>
                          ) : null}
-                        <span className="font-headline text-lg font-bold text-shadow shadow-black/20">{clubName || <Skeleton className="h-6 w-32 bg-white/20" />}</span>
+                        <span className="font-headline text-lg font-bold">{clubName || <Skeleton className="h-6 w-32" />}</span>
                     </Link>
                 </div>
                  {trialDaysLeft !== null && (
-                    <div className="px-4 lg:px-6 py-2 border-b border-primary-foreground/20 text-center">
-                        <p className="text-sm font-semibold flex items-center justify-center gap-2 bg-white/10 rounded-full py-1">
-                            <Sparkles className="h-4 w-4 text-yellow-300" />
+                    <div className="px-4 lg:px-6 py-2 border-b text-center">
+                        <p className="text-sm font-semibold flex items-center justify-center gap-2 bg-yellow-100 text-yellow-800 rounded-full py-1">
+                            <Sparkles className="h-4 w-4" />
                             {t('sidebar.trialDays', { days: trialDaysLeft })}
                         </p>
                     </div>
@@ -298,16 +298,16 @@ export function Sidebar() {
                 <div className="flex-1 overflow-y-auto pt-4">
                     <nav className="grid items-start px-2 font-medium lg:px-4">
                         {menuItems.map((item) => {
-                            const isActive = pathname.includes(item.href);
+                            const isActive = pathname.startsWith(item.href);
                             return (
                                 <Link
                                     key={item.href}
                                     href={item.href}
                                     className={cn(
-                                        "flex items-center gap-2 rounded-lg px-3 py-1.5 transition-all text-base",
+                                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-base",
                                         isActive
-                                        ? "bg-white text-black"
-                                        : "hover:bg-white/20"
+                                        ? "bg-primary text-primary-foreground"
+                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                                     )}
                                 >
                                     <item.icon className="h-4 w-4" />
@@ -317,13 +317,21 @@ export function Sidebar() {
                         })}
                     </nav>
                 </div>
-                <div className="mt-auto p-4 space-y-2">
-                    <DropdownMenu>
+                <div className="mt-auto p-4 space-y-2 border-t">
+                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="w-full justify-center gap-2 rounded-lg px-3 py-1.5 text-base hover:bg-white/20">
-                                <Logo width={28} height={28} />
-                                <span className="text-base font-semibold">SportsPanel</span>
-                                <MoreVertical className="h-4 w-4 ml-auto"/>
+                            <Button variant="ghost" className="w-full justify-start h-auto py-2">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-9 w-9">
+                                        <AvatarImage src={userProfile?.avatar}/>
+                                        <AvatarFallback>{userProfile?.initials}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="text-left">
+                                        <p className="text-sm font-semibold">{userProfile?.name}</p>
+                                        <p className="text-xs text-muted-foreground">{userProfile?.email}</p>
+                                    </div>
+                                    <MoreVertical className="h-4 w-4 ml-auto"/>
+                                </div>
                             </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent className="w-56 mb-2" align="end">
@@ -353,7 +361,7 @@ export function Sidebar() {
                                 <span>{t('sidebar.helpSupport')}</span>
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem onSelect={handleLogout}>
+                            <DropdownMenuItem onSelect={handleLogout} className="text-destructive">
                                 <LogOut className="mr-2 h-4 w-4" />
                                 <span>{t('sidebar.logout')}</span>
                             </DropdownMenuItem>

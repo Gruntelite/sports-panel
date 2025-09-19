@@ -113,7 +113,7 @@ export default function AppLayout({
 
   if (loading || isRedirecting) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-muted/40">
+      <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-10 w-10 animate-spin text-primary" />
             {isRedirecting && <p className="text-muted-foreground">Redirigiendo al portal de pago...</p>}
@@ -124,11 +124,11 @@ export default function AppLayout({
 
   return (
     <ThemeProvider>
-      <div className="min-h-screen w-full bg-muted/40">
+      <div className="min-h-screen w-full">
         <Sidebar />
         <div className="flex flex-col md:ml-[220px] lg:ml-[280px]">
           <Header />
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
             {children}
           </main>
         </div>
