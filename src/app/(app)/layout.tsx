@@ -122,11 +122,11 @@ export default function AppLayout({
   }
 
   return (
-      <div className="min-h-screen w-full">
+      <div className="min-h-screen w-full bg-muted/40">
+        <Header />
         <Sidebar />
-        <div className="flex flex-col md:ml-[220px] lg:ml-[280px]">
-          <Header />
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6 bg-background">
+        <div className="flex flex-col md:pl-[220px] lg:pl-[280px] pt-16">
+          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
             {children}
           </main>
         </div>

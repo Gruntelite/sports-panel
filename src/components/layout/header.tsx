@@ -4,7 +4,7 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "../ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages, HelpCircle, Star, Download, LogOut } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages, HelpCircle, Star, Download, LogOut, Building, ChevronDown } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -72,7 +72,6 @@ export function Header() {
     const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
     const [clubId, setClubId] = useState<string | null>(null);
     const [clubName, setClubName] = useState<string | null>(null);
-    const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
      useEffect(() => {
@@ -91,13 +90,6 @@ export function Header() {
                         const clubDocSnap = await getDoc(clubDocRef);
                         if(clubDocSnap.exists()){
                             setClubName(clubDocSnap.data().name);
-                        }
-
-                        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-                        const settingsSnap = await getDoc(settingsRef);
-                        if(settingsSnap.exists()){
-                            const settingsData = settingsSnap.data();
-                            setClubLogoUrl(settingsData.logoUrl || null);
                         }
 
                         const initials = (rootUserData.name || "U").split(' ').map((n:string) => n[0]).join('').substring(0, 2);
@@ -137,46 +129,47 @@ export function Header() {
 
     const handleLogout = async () => {
         await signOut(auth);
-        localStorage.removeItem('clubThemeColor');
-        localStorage.removeItem('clubThemeColorForeground');
         router.push("/login");
     }
 
     return (
-        <header className="flex h-16 items-center gap-4 border-b bg-primary text-primary-foreground px-4 lg:px-6 sticky top-0 z-30">
+        <header className="flex h-16 items-center gap-4 border-b bg-gray-800 text-primary-foreground px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
-                {loading ? (
-                    <Skeleton className="h-9 w-9 rounded-md bg-white/20" />
-                ) : clubLogoUrl ? (
-                    <Avatar className="h-9 w-9">
-                        <AvatarImage src={clubLogoUrl} alt={clubName || 'Logo del Club'}/>
-                        <AvatarFallback className="bg-white/20 text-primary-foreground">{clubName?.charAt(0) || 'C'}</AvatarFallback>
-                    </Avatar>
-                ) : null}
-                <span className="font-headline text-xl font-bold hidden md:block">{clubName || <Skeleton className="h-6 w-32 bg-white/20" />}</span>
+                <Logo withText={true} />
             </div>
 
-            <div className="flex w-full justify-end items-center gap-4 md:ml-auto md:gap-2 lg:gap-4">
+            <div className="flex w-full justify-end items-center gap-2 md:gap-4">
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="text-sm font-medium gap-1 hover:bg-background/10 hover:text-white">
-                            <Languages className="h-4 w-4" />
-                            <span className="hidden md:inline">{locale === 'es' ? 'Castellano' : 'Català'}</span>
+                        <Button variant="ghost" className="text-sm font-medium gap-1.5 hover:bg-white/10 hover:text-white">
+                           <Building className="h-4 w-4"/>
+                           <span className="font-semibold">{clubName || <Skeleton className="h-4 w-24 bg-white/20" />}</span>
+                           <ChevronDown className="h-4 w-4 opacity-70"/>
                         </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                     <DropdownMenuContent align="end">
+                         <DropdownMenuLabel>Tu Club</DropdownMenuLabel>
+                         <DropdownMenuSeparator />
+                         <DropdownMenuItem asChild>
+                            <Link href="/club-settings">
+                                <Settings className="mr-2 h-4 w-4" />
+                                <span>Ajustes del Club</span>
+                            </Link>
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
 
+                <Separator orientation="vertical" className="h-8 bg-white/20 hidden md:block" />
+
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="rounded-full w-9 h-9 hover:bg-background/10">
-                            <Avatar className="h-9 w-9">
+                         <Button variant="ghost" className="text-sm font-medium gap-1.5 hover:bg-white/10 hover:text-white">
+                            <Avatar className="h-7 w-7 border-2 border-white/50">
                                 <AvatarImage src={userProfile?.avatar}/>
                                 <AvatarFallback>{userProfile?.initials}</AvatarFallback>
                             </Avatar>
+                           <span className="font-semibold hidden md:inline">{userProfile?.name || <Skeleton className="h-4 w-20 bg-white/20" />}</span>
+                           <ChevronDown className="h-4 w-4 opacity-70"/>
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -188,16 +181,16 @@ export function Header() {
                                 <span>Mi Cuenta</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                           <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
-                                <Download className="mr-2 h-4 w-4" />
-                                <span>{t('sidebar.userGuide')}</span>
-                            </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                            <Star className="mr-2 h-4 w-4" />
-                            <span>{t('sidebar.leaveReview')}</span>
-                        </DropdownMenuItem>
+                        <DropdownMenuSub>
+                           <DropdownMenuSubTrigger>
+                             <Languages className="mr-2 h-4 w-4" />
+                             <span>Idioma</span>
+                           </DropdownMenuSubTrigger>
+                           <DropdownMenuSubContent>
+                               <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                               <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                           </DropdownMenuSubContent>
+                         </DropdownMenuSub>
                         <DropdownMenuItem>
                             <HelpCircle className="mr-2 h-4 w-4" />
                             <span>{t('sidebar.helpSupport')}</span>
@@ -209,62 +202,6 @@ export function Header() {
                         </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
-
-                <div className="md:hidden">
-                    <Sheet>
-                        <SheetTrigger asChild>
-                             <Button
-                                variant="ghost"
-                                size="icon"
-                                className="rounded-full hover:bg-background/10"
-                            >
-                                <Menu className="h-6 w-6" />
-                                <span className="sr-only">{t('header.openMenu')}</span>
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="left" className="flex flex-col p-0 bg-card text-card-foreground">
-                             <SheetHeader>
-                                 <SheetTitle className="sr-only">{t('header.mainMenu')}</SheetTitle>
-                            </SheetHeader>
-                            <nav className="flex flex-col h-full">
-                                <div className="flex h-20 items-center border-b px-4 lg:px-6 shrink-0">
-                                    <Link href="/dashboard" className="flex items-center gap-3 text-lg font-semibold">
-                                        <Logo withText={true}/>
-                                    </Link>
-                                </div>
-                                <div className="flex-1 overflow-y-auto">
-                                    <Accordion type="single" collapsible defaultValue="Miembros" className="w-full px-2 lg:px-4">
-                                    {menuGroups.map((group) => (
-                                        <AccordionItem key={group.title} value={group.title} className="border-b-0">
-                                        <AccordionTrigger className="py-2 text-sm font-semibold text-muted-foreground hover:no-underline hover:text-foreground">
-                                            {group.title}
-                                        </AccordionTrigger>
-                                        <AccordionContent className="pb-2">
-                                            <div className="grid items-start gap-1">
-                                                {group.items.map((item) => (
-                                                    <SheetClose asChild key={item.href}>
-                                                        <Link
-                                                        href={item.href}
-                                                        className={cn(
-                                                            "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm",
-                                                            pathname.startsWith(item.href) && "bg-muted text-primary-foreground"
-                                                        )}
-                                                        >
-                                                            <item.icon className="h-4 w-4" />
-                                                            {t(item.label)}
-                                                        </Link>
-                                                    </SheetClose>
-                                                ))}
-                                                </div>
-                                        </AccordionContent>
-                                        </AccordionItem>
-                                    ))}
-                                    </Accordion>
-                                </div>
-                            </nav>
-                        </SheetContent>
-                    </Sheet>
-                </div>
             </div>
         </header>
     );
