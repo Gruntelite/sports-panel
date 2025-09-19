@@ -18,6 +18,7 @@ import { signOut } from "firebase/auth";
 import { Skeleton } from "../ui/skeleton";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "../ui/separator";
 
 type UserProfile = {
     name: string;
