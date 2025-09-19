@@ -13,7 +13,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 224 71% 4%;
     
-    --primary: 217 91% 60%; /* A more corporate blue */
+    --primary: 173 80% 40%; /* Updated to turquesa */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 240 5% 90%; /* Slightly darker gray for secondary elements */
@@ -22,18 +22,18 @@
     --muted: 240 5% 96%;
     --muted-foreground: 240 4% 46%;
     
-    --accent: 217 91% 96%; /* Lighter blue for accents */
-    --accent-foreground: 217 91% 30%;
+    --accent: 173 80% 96%; /* Lighter turquesa for accents */
+    --accent-foreground: 173 80% 30%;
     
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
     
     --border: 240 6% 90%;
     --input: 240 6% 90%;
-    --ring: 217 91% 60%;
+    --ring: 173 80% 40%;
     --radius: 0.5rem;
 
-    --header-background: 222.2 84% 4.9%;
+    --header-background: 210 29% 24%; /* Updated to landing-dark */
   }
  
   .dark {
@@ -59,7 +59,7 @@
     --input: 217.2 32.6% 17.5%;
     --ring: 173 91% 60%;
 
-    --header-background: 222.2 84% 4.9%;
+    --header-background: 210 29% 24%; /* Updated to landing-dark */
   }
 }
  

@@ -39,7 +39,7 @@ export default {
         foreground: 'hsl(var(--foreground))',
         header: {
           DEFAULT: 'hsl(var(--header-background))',
-          foreground: 'hsl(var(--header-foreground))',
+          foreground: 'hsl(var(--primary-foreground))',
         },
         primary: {
           DEFAULT: 'hsl(var(--primary))',
