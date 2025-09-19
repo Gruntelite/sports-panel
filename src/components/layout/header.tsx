@@ -243,7 +243,7 @@ export function Header() {
                         <DropdownMenuSub>
                            <DropdownMenuSubTrigger>
                              <Languages className="mr-2 h-4 w-4" />
-                             <span>{t('landing.nav.language', { count: 1, lng: locale.toUpperCase() }) || 'Idioma'}</span>
+                             <span>Idioma</span>
                            </DropdownMenuSubTrigger>
                            <DropdownMenuPortal>
                                 <DropdownMenuSubContent>
