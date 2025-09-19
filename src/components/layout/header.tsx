@@ -162,17 +162,6 @@ export function Header() {
 
                         <DropdownMenuSeparator />
 
-                        <div className="px-2 py-1.5 flex items-center gap-3">
-                            <Avatar className="h-8 w-8 border-2 border-primary/20">
-                                <AvatarImage src={userProfile?.avatar}/>
-                                <AvatarFallback>{userProfile?.initials}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <p className="font-semibold text-sm">{userProfile?.name}</p>
-                                <p className="text-xs text-muted-foreground">{userProfile?.email}</p>
-                            </div>
-                        </div>
-
                          <DropdownMenuItem asChild>
                             <Link href="/account">
                                 <UserCog className="mr-2 h-4 w-4" />
