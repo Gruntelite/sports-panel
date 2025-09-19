@@ -18,6 +18,7 @@ import { signOut } from "firebase/auth";
 import { Skeleton } from "../ui/skeleton";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
+import { Separator } from "../ui/separator";
 
 type UserProfile = {
     name: string;
@@ -207,16 +208,20 @@ export function Header() {
             <div className="flex w-full justify-end items-center gap-2 md:ml-auto md:gap-4">
                  <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" className="relative h-10 w-10 rounded-full">
-                           <Avatar>
-                                {userProfile ? <AvatarImage src={userProfile.avatar} /> : <Skeleton className="h-10 w-10 rounded-full" />}
+                       <Button variant="ghost" className="flex items-center gap-2">
+                           <Avatar className="h-8 w-8">
+                                {userProfile ? <AvatarImage src={userProfile.avatar} /> : <Skeleton className="h-8 w-8 rounded-full" />}
                                <AvatarFallback>{userProfile?.initials || 'U'}</AvatarFallback>
                            </Avatar>
-                        </Button>
+                            <div className="hidden md:flex flex-col items-start">
+                               <span className="font-semibold text-sm">{clubName}</span>
+                            </div>
+                           <ChevronDown className="h-4 w-4 text-muted-foreground hidden md:block" />
+                       </Button>
                     </DropdownMenuTrigger>
                      <DropdownMenuContent align="end" className="w-64">
                          <DropdownMenuLabel>
-                            <span className="font-semibold text-base">{clubName}</span>
+                            <span className="font-semibold text-base">{t('header.mainMenu')}</span>
                          </DropdownMenuLabel>
                          <DropdownMenuSeparator />
                         <DropdownMenuSub>
@@ -258,5 +263,3 @@ export function Header() {
         </header>
     );
 }
-
-    
