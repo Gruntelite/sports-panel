@@ -7,19 +7,9 @@ import type { ClubCreationData, ClubMember } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
 
-function getLuminance(hex: string): number {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return 0;
-    
-    const r = parseInt(result[1], 16);
-    const g = parseInt(result[2], 16);
-    const b = parseInt(result[3], 16);
-    
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-}
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
-    const { clubName, adminName, sport, email, password, themeColor, defaultLanguage } = values;
+    const { clubName, adminName, sport, email, password, defaultLanguage } = values;
     
     try {
         const userRecord = await adminAuth.createUser({
@@ -49,16 +39,12 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
             clubId: clubId,
         });
         
-        const luminance = getLuminance(themeColor);
-        const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
         const trialEndDate = new Date();
         trialEndDate.setDate(trialEndDate.getDate() + 10);
         trialEndDate.setHours(23, 59, 59, 999);
 
         const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
         batch.set(settingsRef, {
-            themeColor: themeColor,
-            themeColorForeground: foregroundColor,
             logoUrl: null,
             trialEndDate: Timestamp.fromDate(trialEndDate),
             defaultLanguage: defaultLanguage || 'es',

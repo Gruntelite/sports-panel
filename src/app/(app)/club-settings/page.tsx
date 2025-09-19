@@ -30,18 +30,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { useTranslation } from "@/components/i18n-provider";
 
 
-function getLuminance(hex: string): number {
-    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-    if (!result) return 0;
-    
-    const r = parseInt(result[1], 16);
-    const g = parseInt(result[2], 16);
-    const b = parseInt(result[3], 16);
-    
-    return (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-}
-
-
 export default function ClubSettingsPage() {
     const { toast } = useToast();
     const { t } = useTranslation();
@@ -52,15 +40,12 @@ export default function ClubSettingsPage() {
     const [loadingPortal, setLoadingPortal] = useState(false);
 
     const [clubName, setClubName] = useState('');
-    const [themeColor, setThemeColor] = useState('#2563eb');
     
     const [clubLogoUrl, setClubLogoUrl] = useState<string | null>(null);
     const [newLogo, setNewLogo] = useState<File | null>(null);
     const [logoPreview, setLogoPreview] = useState<string | null>(null);
     const [originalLogoUrl, setOriginalLogoUrl] = useState<string | null>(null);
     
-    const [isYearly, setIsYearly] = useState(false);
-
     // Security state
     const [currentPassword, setCurrentPassword] = useState('');
     const [newEmail, setNewEmail] = useState('');
@@ -113,7 +98,6 @@ export default function ClubSettingsPage() {
             const settingsSnap = await getDoc(settingsRef);
             if (settingsSnap.exists()) {
                 const settingsData = settingsSnap.data();
-                setThemeColor(settingsData?.themeColor || '#2563eb');
                 setClubLogoUrl(settingsData?.logoUrl || null);
                 setOriginalLogoUrl(settingsData?.logoUrl || null);
                 setCustomFields(settingsData?.customFields || []);
@@ -158,19 +142,10 @@ export default function ClubSettingsPage() {
             const clubRef = doc(db, "clubs", clubId);
             await updateDoc(clubRef, { name: clubName });
 
-            const luminance = getLuminance(themeColor);
-            const foregroundColor = luminance > 0.5 ? '#000000' : '#ffffff';
-
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             await setDoc(settingsRef, {
-                themeColor: themeColor,
-                themeColorForeground: foregroundColor,
                 logoUrl: newLogoUrl
             }, { merge: true });
-            
-            localStorage.setItem('clubThemeColor', themeColor);
-            localStorage.setItem('clubThemeColorForeground', foregroundColor);
-            window.dispatchEvent(new Event('storage'));
 
             toast({ title: t('common.saved'), description: t('clubSettings.success.general') });
             setNewLogo(null);
@@ -354,25 +329,6 @@ export default function ClubSettingsPage() {
                                         </Link>
                                     </Button>
                                 </div>
-                            </div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label htmlFor="clubColor">{t('clubSettings.general.mainColor')}</Label>
-                            <div className="flex items-center gap-2">
-                                <Input
-                                    id="clubColor"
-                                    type="color"
-                                    value={themeColor}
-                                    onChange={(e) => setThemeColor(e.target.value)}
-                                    className="p-1 h-10 w-14"
-                                />
-                                <Input
-                                    type="text"
-                                    value={themeColor}
-                                    onChange={(e) => setThemeColor(e.target.value)}
-                                    placeholder="#2563eb"
-                                    className="w-full"
-                                />
                             </div>
                         </div>
                         <Button onClick={handleSaveChanges} disabled={saving}>

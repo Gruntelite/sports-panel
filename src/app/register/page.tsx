@@ -41,7 +41,6 @@ const registerSchema = z.object({
   clubName: z.string().min(3, { message: "El nombre del club debe tener al menos 3 caracteres." }),
   adminName: z.string().min(3, { message: "Tu nombre debe tener al menos 3 caracteres." }),
   sport: z.string().min(1, { message: "Debes seleccionar un deporte." }),
-  themeColor: z.string().regex(/^#[0-9a-f]{6}$/i, { message: "Selecciona un color válido."}),
   email: z.string().email({ message: "Por favor, introduce un correo electrónico válido." }),
   password: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
   defaultLanguage: z.enum(['es', 'ca']),
@@ -62,7 +61,6 @@ export default function RegisterPage() {
       clubName: "",
       adminName: "",
       sport: "",
-      themeColor: "#2563eb",
       email: "",
       password: "",
       defaultLanguage: locale,
@@ -82,7 +80,7 @@ export default function RegisterPage() {
     }
 
     try {
-        const result = await createClubAction(values);
+        const result = await createClubAction({ ...values, themeColor: '#14b8a6' });
 
         if (result.success && result.userId) {
             toast({
@@ -225,7 +223,7 @@ export default function RegisterPage() {
                     </FormItem>
                     )}
                 />
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-4">
                     <FormField
                         control={form.control}
                         name="sport"
@@ -244,22 +242,6 @@ export default function RegisterPage() {
                                     ))}
                                 </SelectContent>
                             </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="themeColor"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>{t('register.colorLabel')}</FormLabel>
-                            <FormControl>
-                                <div className="flex items-center gap-2">
-                                    <Input type="color" className="p-1 h-10 w-14" {...field} />
-                                    <Input type="text" value={field.value} onChange={field.onChange} placeholder="#2563eb" />
-                                </div>
-                            </FormControl>
                             <FormMessage />
                         </FormItem>
                         )}

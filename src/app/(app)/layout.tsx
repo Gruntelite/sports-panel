@@ -3,7 +3,6 @@
 
 import * as React from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
-import { ThemeProvider } from '@/components/theme-provider';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
 import { collection, doc, getDocs, getDoc, query, where, Timestamp, onSnapshot } from 'firebase/firestore';
@@ -123,7 +122,6 @@ export default function AppLayout({
   }
 
   return (
-    <ThemeProvider>
       <div className="min-h-screen w-full">
         <Sidebar />
         <div className="flex flex-col md:ml-[220px] lg:ml-[280px]">
@@ -133,6 +131,5 @@ export default function AppLayout({
           </main>
         </div>
       </div>
-    </ThemeProvider>
   );
 }
