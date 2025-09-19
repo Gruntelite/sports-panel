@@ -4,35 +4,67 @@ import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Logo } from "../logo";
 import { useTranslation } from "../i18n-provider";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 
-const menuItems = [
-    { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
-    { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
-    { href: "/players", label: "sidebar.players", icon: Users },
-    { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
-    { href: "/teams", label: "sidebar.teams", icon: Shield },
-    { href: "/staff", label: "sidebar.staff", icon: Briefcase},
-    { href: "/schedules", label: "sidebar.schedules", icon: Clock },
-    { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
-    { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
-    { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
-    { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
-    { href: "/importer", label: "sidebar.importer", icon: Database },
-    { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
+const menuGroups = [
+    {
+        title: 'Club',
+        items: [
+            { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
+            { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
+        ]
+    },
+    {
+        title: 'Miembros',
+        defaultOpen: true,
+        items: [
+            { href: "/players", label: "sidebar.players", icon: Users },
+            { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
+            { href: "/teams", label: "sidebar.teams", icon: Shield },
+            { href: "/staff", label: "sidebar.staff", icon: Briefcase},
+        ]
+    },
+     {
+        title: 'Planificación',
+        items: [
+            { href: "/schedules", label: "sidebar.schedules", icon: Clock },
+            { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
+            { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
+        ]
+    },
+    {
+        title: 'Administración',
+        items: [
+            { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
+            { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
+            { href: "/importer", label: "sidebar.importer", icon: Database },
+            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
+        ]
+    }
 ];
 
 
 export function Header() {
     const pathname = usePathname();
     const { t, locale, setLocale } = useTranslation();
-    const currentPageKey = menuItems.find(item => pathname.startsWith(item.href))?.label || 'sidebar.dashboard';
-    const currentPage = t(currentPageKey);
+    
+    const findCurrentPage = () => {
+      for (const group of menuGroups) {
+        const foundItem = group.items.find(item => pathname.startsWith(item.href));
+        if (foundItem) {
+          return t(foundItem.label);
+        }
+      }
+      return t('sidebar.dashboard');
+    }
+
+    const currentPage = findCurrentPage();
 
     return (
         <>
@@ -82,22 +114,33 @@ export function Header() {
                             </Link>
                         </div>
                         <div className="flex-1 overflow-y-auto">
-                             <div className="grid items-start p-4 gap-1">
-                            {menuItems.map((item) => (
-                                <SheetClose asChild key={item.href}>
-                                    <Link
-                                    href={item.href}
-                                    className={cn(
-                                        "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors",
-                                        pathname.startsWith(item.href) && "bg-muted text-primary-foreground"
-                                    )}
-                                    >
-                                        <item.icon className="h-4 w-4" />
-                                        {t(item.label)}
-                                    </Link>
-                                </SheetClose>
-                            ))}
-                            </div>
+                             <Accordion type="single" collapsible defaultValue="Miembros" className="w-full px-2 lg:px-4">
+                               {menuGroups.map((group) => (
+                                 <AccordionItem key={group.title} value={group.title} className="border-b-0">
+                                   <AccordionTrigger className="py-2 text-sm font-semibold text-muted-foreground hover:no-underline hover:text-foreground">
+                                    {group.title}
+                                   </AccordionTrigger>
+                                   <AccordionContent className="pb-2">
+                                     <div className="grid items-start gap-1">
+                                        {group.items.map((item) => (
+                                            <SheetClose asChild key={item.href}>
+                                                <Link
+                                                href={item.href}
+                                                className={cn(
+                                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground hover:text-foreground transition-colors text-sm",
+                                                    pathname.startsWith(item.href) && "bg-muted text-primary-foreground"
+                                                )}
+                                                >
+                                                    <item.icon className="h-4 w-4" />
+                                                    {t(item.label)}
+                                                </Link>
+                                            </SheetClose>
+                                        ))}
+                                        </div>
+                                   </AccordionContent>
+                                 </AccordionItem>
+                               ))}
+                            </Accordion>
                         </div>
                     </nav>
                 </SheetContent>
@@ -106,3 +149,5 @@ export function Header() {
         </>
     )
 }
+
+    

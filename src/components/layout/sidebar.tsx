@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Users, Calendar, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles, Languages } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, LogOut, Settings, CircleDollarSign, FolderArchive, Briefcase, User, Shield, ClipboardList, AlertTriangle, HelpCircle, Loader2, Send, Database, MoreVertical, Star, Download, Sparkles, Languages, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
@@ -21,28 +21,51 @@ import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent } from "../ui/dropdown-menu";
 import { differenceInDays, isFuture } from "date-fns";
 import { useTranslation } from "../i18n-provider";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 
 
-const menuItems = [
-    { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
-    { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
-    { href: "/players", label: "sidebar.players", icon: Users },
-    { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
-    { href: "/teams", label: "sidebar.teams", icon: Shield },
-    { href: "/staff", label: "sidebar.staff", icon: Briefcase},
-    { href: "/schedules", label: "sidebar.schedules", icon: Clock },
-    { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
-    { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
-    { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
-    { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
-    { href: "/importer", label: "sidebar.importer", icon: Database },
-    { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
-  ];
+const menuGroups = [
+    {
+        title: 'Club',
+        items: [
+            { href: "/dashboard", label: "sidebar.dashboard", icon: LayoutDashboard },
+            { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
+        ]
+    },
+    {
+        title: 'Miembros',
+        defaultOpen: true,
+        items: [
+            { href: "/players", label: "sidebar.players", icon: Users },
+            { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
+            { href: "/teams", label: "sidebar.teams", icon: Shield },
+            { href: "/staff", label: "sidebar.staff", icon: Briefcase},
+        ]
+    },
+     {
+        title: 'Planificación',
+        items: [
+            { href: "/schedules", label: "sidebar.schedules", icon: Clock },
+            { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
+            { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
+        ]
+    },
+    {
+        title: 'Administración',
+        items: [
+            { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
+            { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
+            { href: "/importer", label: "sidebar.importer", icon: Database },
+            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
+        ]
+    }
+];
 
 type UserProfile = {
     name: string;
     email: string;
     initials: string;
+    avatar?: string;
 }
 
 function HelpForm({clubId, userProfile}: {clubId: string, userProfile: UserProfile}) {
@@ -224,7 +247,8 @@ export function Sidebar() {
                     const rootUserDocSnap = await getDoc(rootUserDocRef);
 
                     if (rootUserDocSnap.exists()) {
-                        const currentClubId = rootUserDocSnap.data().clubId;
+                        const rootUserData = rootUserDocSnap.data();
+                        const currentClubId = rootUserData.clubId;
                         setClubId(currentClubId);
                         
                         const clubDocRef = doc(db, "clubs", currentClubId);
@@ -248,10 +272,29 @@ export function Sidebar() {
                             }
                         }
 
+                        const initials = (rootUserData.name || "U").split(' ').map((n:string) => n[0]).join('').substring(0, 2);
+
+                        let memberAvatar: string | undefined = undefined;
+                        if(rootUserData.playerId) {
+                            const memberRef = doc(db, "clubs", currentClubId, 'players', rootUserData.playerId);
+                            const memberSnap = await getDoc(memberRef);
+                            if(memberSnap.exists()) memberAvatar = memberSnap.data().avatar;
+                        } else if (rootUserData.coachId) {
+                            const memberRef = doc(db, "clubs", currentClubId, 'coaches', rootUserData.coachId);
+                            const memberSnap = await getDoc(memberRef);
+                            if(memberSnap.exists()) memberAvatar = memberSnap.data().avatar;
+                        } else if (rootUserData.staffId) {
+                            const memberRef = doc(db, "clubs", currentClubId, 'staff', rootUserData.staffId);
+                            const memberSnap = await getDoc(memberRef);
+                            if(memberSnap.exists()) memberAvatar = memberSnap.data().avatar;
+                        }
+
+
                         setUserProfile({
-                            name: user.displayName || t('sidebar.noName'),
+                            name: rootUserData.name || t('sidebar.noName'),
                             email: user.email || t('sidebar.noEmail'),
-                            initials: (user.displayName || "U").split(' ').map((n:string) => n[0]).join('')
+                            initials: initials,
+                            avatar: memberAvatar
                         });
                     }
                 } catch (error) {
@@ -270,6 +313,8 @@ export function Sidebar() {
         localStorage.removeItem('clubThemeColorForeground');
         router.push("/login");
     }
+    
+    const defaultOpenAccordion = menuGroups.find(group => group.items.some(item => pathname.startsWith(item.href)))?.title;
 
     return (
         <div className="hidden border-r bg-card text-card-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-50">
@@ -296,26 +341,37 @@ export function Sidebar() {
                     </div>
                 )}
                 <div className="flex-1 overflow-y-auto pt-4">
-                    <nav className="grid items-start px-2 font-medium lg:px-4">
-                        {menuItems.map((item) => {
-                            const isActive = pathname.startsWith(item.href);
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    className={cn(
-                                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-base",
-                                        isActive
-                                        ? "bg-primary text-primary-foreground"
-                                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                                    )}
-                                >
-                                    <item.icon className="h-4 w-4" />
-                                    {t(item.label)}
-                                </Link>
-                            )
-                        })}
-                    </nav>
+                    <Accordion type="single" collapsible defaultValue={defaultOpenAccordion || "Miembros"} className="w-full px-2 lg:px-4">
+                       {menuGroups.map((group) => (
+                         <AccordionItem key={group.title} value={group.title} className="border-b-0">
+                           <AccordionTrigger className="py-2 text-sm font-semibold text-muted-foreground hover:no-underline hover:text-foreground">
+                            {group.title}
+                           </AccordionTrigger>
+                           <AccordionContent className="pb-2">
+                             <nav className="grid items-start gap-1">
+                                {group.items.map((item) => {
+                                    const isActive = pathname.startsWith(item.href);
+                                    return (
+                                        <Link
+                                            key={item.href}
+                                            href={item.href}
+                                            className={cn(
+                                                "flex items-center gap-3 rounded-lg px-3 py-2 transition-all text-sm",
+                                                isActive
+                                                ? "bg-primary text-primary-foreground"
+                                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                            )}
+                                        >
+                                            <item.icon className="h-4 w-4" />
+                                            {t(item.label)}
+                                        </Link>
+                                    )
+                                })}
+                              </nav>
+                           </AccordionContent>
+                         </AccordionItem>
+                       ))}
+                    </Accordion>
                 </div>
                 <div className="mt-auto p-4 space-y-2 border-t">
                      <DropdownMenu>
@@ -398,3 +454,5 @@ export function Sidebar() {
         </div>
     );
 }
+
+    
