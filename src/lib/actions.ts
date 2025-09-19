@@ -377,3 +377,31 @@ export async function sendServerEventAction(eventData: {
     return { success: false, error: 'An unexpected error occurred.' };
   }
 }
+
+export async function sendReviewAction(reviewData: {
+  clubName: string;
+  userName: string;
+  rating: number;
+  comment: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { clubName, userName, rating, comment } = reviewData;
+
+  const subject = `Nueva reseña de SportsPanel: ${rating} estrellas de ${clubName}`;
+  const htmlContent = `
+    <h1>Nueva reseña de SportsPanel</h1>
+    <p><strong>Club:</strong> ${clubName}</p>
+    <p><strong>Usuario:</strong> ${userName}</p>
+    <p><strong>Puntuación:</strong> ${'★'.repeat(rating)}${'☆'.repeat(5 - rating)} (${rating}/5)</p>
+    <p><strong>Comentario:</strong></p>
+    <p>${comment.replace(/\n/g, '<br>')}</p>
+  `;
+  
+  const result = await sendEmailWithSmtpAction({
+    clubId: "VWxHRR6HzumBnSdLfTtP", // SportsPanel's own clubId for SMTP
+    recipients: [{ email: "info.sportspanel@gmail.com", name: "Reseñas SportsPanel" }],
+    subject,
+    htmlContent,
+  });
+
+  return result;
+}

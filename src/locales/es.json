@@ -32,7 +32,7 @@
         "logout": "Cerrar Sesión",
         "supportContact": "Contacto de Soporte",
         "supportDescription": "¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.",
-        "reviewDescription": "Tu opinión es muy importante para nosotros. ¡Gracias por ayudarnos a mejorar!"
+        "language": "Idioma"
     },
     "header": {
         "openMenu": "Abrir menú",
@@ -54,8 +54,8 @@
         "stats": [
             { "title": "AHORRO SEMANAL", "description": "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
             { "title": "TASA DE RETENCIÓN", "description": "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-            { "title": "CLUBS DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
-            { "title": "DIGITALIZACIÓN", "description": "De los procesos internos del club que se pueden gestionar con nosotros." }
+            { "title": "+130 CLUBS DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
+            { "title": "98% DIGITALIZACIÓN", "description": "De los procesos internos del club que se pueden gestionar con nosotros." }
         ],
         "testimonials": {
             "title": "La Confianza de los que Gestionan",
@@ -184,6 +184,7 @@
         "subject": "Asunto"
     },
     "review": {
+        "reviewDescription": "Tu opinión es muy importante para nosotros. ¡Gracias por ayudarnos a mejorar!",
         "errorTitle": "Error",
         "errorDescription": "Por favor, selecciona una puntuación.",
         "successTitle": "¡Gracias por tu reseña!",
@@ -1474,5 +1475,3 @@
         }
     }
 }
-
-    

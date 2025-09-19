@@ -19,13 +19,12 @@ import { Skeleton } from "../ui/skeleton";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "../ui/separator";
+import { sendReviewAction } from "@/lib/actions";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../ui/dialog";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import { Loader2 } from "lucide-react";
 
-type UserProfile = {
-    name: string;
-    email: string;
-    initials: string;
-    avatar?: string;
-}
 
 const menuGroups = [
     {
@@ -73,6 +72,13 @@ export function Header() {
     const [clubName, setClubName] = useState<string | null>(null);
     const [clubLogo, setClubLogo] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    
+    // Review Dialog State
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [rating, setRating] = useState(0);
+    const [hoverRating, setHoverRating] = useState(0);
+    const [comment, setComment] = useState("");
+    const [isSendingReview, setIsSendingReview] = useState(false);
 
      useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -132,9 +138,34 @@ export function Header() {
         window.location.href = mailtoLink;
     }
     
+    const handleReviewSubmit = async () => {
+        if (rating === 0) {
+            toast({ variant: "destructive", title: t('review.errorTitle'), description: t('review.errorDescription') });
+            return;
+        }
+        setIsSendingReview(true);
+        const result = await sendReviewAction({
+            clubName: clubName || "N/A",
+            userName: userProfile?.name || "N/A",
+            rating,
+            comment,
+        });
+        
+        if (result.success) {
+            toast({ title: t('review.successTitle'), description: t('review.successDescription') });
+            setIsReviewOpen(false);
+            setRating(0);
+            setComment("");
+        } else {
+            toast({ variant: "destructive", title: t('common.error'), description: result.error });
+        }
+        setIsSendingReview(false);
+    }
+    
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
 
     return (
+        <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
         <header className="flex h-14 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
                  <Sheet>
@@ -203,12 +234,12 @@ export function Header() {
                         </nav>
                         <div className="mt-auto">
                              <div className="p-4 border-t">
-                                <Link href="https://sportspanel.net" target='_blank'>
+                                <DialogTrigger asChild>
                                     <Button variant="outline" className="w-full justify-start text-base">
                                         <Star className="mr-2 h-4 w-4"/>
                                         {t('sidebar.leaveReview')}
                                     </Button>
-                                </Link>
+                                </DialogTrigger>
                              </div>
                         </div>
                     </SheetContent>
@@ -243,7 +274,7 @@ export function Header() {
                         <DropdownMenuSub>
                            <DropdownMenuSubTrigger>
                              <Languages className="mr-2 h-4 w-4" />
-                             <span>Idioma</span>
+                             <span>{t('sidebar.language')}</span>
                            </DropdownMenuSubTrigger>
                            <DropdownMenuPortal>
                                 <DropdownMenuSubContent>
@@ -258,12 +289,12 @@ export function Header() {
                                 <span>{t('sidebar.userGuide')}</span>
                             </Link>
                         </DropdownMenuItem>
-                         <DropdownMenuItem asChild>
-                            <Link href="https://sportspanel.net" target='_blank'>
+                        <DialogTrigger asChild>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
                                 <Star className="mr-2 h-4 w-4" />
                                 <span>{t('sidebar.leaveReview')}</span>
-                            </Link>
-                        </DropdownMenuItem>
+                            </DropdownMenuItem>
+                        </DialogTrigger>
                         <DropdownMenuItem onClick={handleSupportClick}>
                             <HelpCircle className="mr-2 h-4 w-4" />
                             <span>{t('sidebar.helpSupport')}</span>
@@ -277,5 +308,52 @@ export function Header() {
                 </DropdownMenu>
             </div>
         </header>
+
+         <DialogContent>
+            <DialogHeader>
+                <DialogTitle>{t('sidebar.leaveReview')}</DialogTitle>
+                <DialogDescription>{t('review.reviewDescription')}</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+                 <div className="space-y-2">
+                    <Label>{t('review.rating')}</Label>
+                    <div className="flex items-center gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                        <Star
+                            key={star}
+                            className={cn(
+                            "h-8 w-8 cursor-pointer transition-colors",
+                            (hoverRating || rating) >= star
+                                ? "text-yellow-400 fill-yellow-400"
+                                : "text-gray-300"
+                            )}
+                            onClick={() => setRating(star)}
+                            onMouseEnter={() => setHoverRating(star)}
+                            onMouseLeave={() => setHoverRating(0)}
+                        />
+                        ))}
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <Label htmlFor="comment">{t('review.comment')}</Label>
+                    <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
+                </div>
+            </div>
+            <DialogFooter>
+                 <Button variant="ghost" onClick={() => setIsReviewOpen(false)}>{t('common.cancel')}</Button>
+                 <Button onClick={handleReviewSubmit} disabled={isSendingReview}>
+                    {isSendingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    {t('review.send')}
+                 </Button>
+            </DialogFooter>
+        </DialogContent>
+        </Dialog>
     );
+}
+
+type UserProfile = {
+    name: string;
+    email: string;
+    initials: string;
+    avatar?: string;
 }

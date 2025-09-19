@@ -32,7 +32,7 @@
         "logout": "Tancar Sessió",
         "supportContact": "Contacte de Suport",
         "supportDescription": "Tens algun dubte o problema? Emplena el formulari i t'ajudarem el més aviat possible.",
-        "reviewDescription": "La teva opinió és molt important per a nosaltres. Gràcies per ajudar-nos a millorar!"
+        "language": "Idioma"
     },
     "header": {
         "openMenu": "Obrir menú",
@@ -54,8 +54,8 @@
         "stats": [
             { "title": "ESTALVI SETMANAL", "description": "Temps mitjà que els nostres clubs estalvien en tasques administratives." },
             { "title": "TAXA DE RETENCIÓ", "description": "Dels clubs que proven SportsPanel, la gran majoria s'hi queda." },
-            { "title": "CLUBS ESPORTIUS", "description": "Que ja confien en la nostra plataforma per a la seva gestió diària." },
-            { "title": "DIGITALITZACIÓ", "description": "Dels processos interns del club que es poden gestionar amb nosaltres." }
+            { "title": "+130 CLUBS ESPORTIUS", "description": "Que ja confien en la nostra plataforma per a la seva gestió diària." },
+            { "title": "98% DIGITALITZACIÓ", "description": "Dels processos interns del club que es poden gestionar amb nosaltres." }
         ],
         "testimonials": {
             "title": "La Confiança dels que Gestionen",
@@ -184,6 +184,7 @@
         "subject": "Assumpte"
     },
     "review": {
+        "reviewDescription": "La teva opinió és molt important per a nosaltres. Gràcies per ajudar-nos a millorar!",
         "errorTitle": "Error",
         "errorDescription": "Si us plau, selecciona una puntuació.",
         "successTitle": "Gràcies per la teva ressenya!",
@@ -1474,5 +1475,3 @@
         }
     }
 }
-
-    
