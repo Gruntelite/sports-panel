@@ -78,6 +78,7 @@ import {
 import { es, ca } from "date-fns/locale";
 import { useTranslation } from "@/components/i18n-provider";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
 
 const EVENT_TYPES = [
     { value: 'Entrenamiento', label: 'Entrenamiento', color: 'bg-blue-500/20 text-blue-700 border-blue-500/50', icon: Shield },
@@ -206,12 +207,7 @@ export default function SchedulesPage() {
     }
     setSaving(true);
     
-    let teamName = '';
-    if(eventData.teamId && teams.length > 0) {
-        teamName = teams.find(t => t.id === eventData.teamId)?.name || '';
-    }
-
-    const dataToSave = { ...eventData, teamName };
+    const dataToSave = { ...eventData };
 
     try {
         if(modalMode === 'edit' && eventData.id) {
@@ -386,7 +382,6 @@ export default function SchedulesPage() {
                                         <div className="text-[10px] space-y-0.5 mt-1">
                                             <div className="flex items-center gap-1"><Clock className="h-2.5 w-2.5"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
                                             {event.location && <div className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5"/> {event.location}</div>}
-                                            {event.teamName && <div className="flex items-center gap-1"><Shield className="h-2.5 w-2.5"/> {event.teamName}</div>}
                                         </div>
                                      </div>
                                  );
@@ -400,7 +395,7 @@ export default function SchedulesPage() {
       </div>
 
        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-xl">
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Afegir Nou Esdeveniment' : 'Editar Esdeveniment'}</DialogTitle>
                 <DialogDescription>
@@ -409,7 +404,7 @@ export default function SchedulesPage() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                    <Label htmlFor="event-title">Títol</Label>
+                    <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
                     <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} />
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
