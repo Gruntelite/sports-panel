@@ -101,7 +101,7 @@ const calculateEventPosition = (event: CalendarEvent) => {
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
     const hourHeight = 80;
-    const top = (startOffsetMinutes / 60) * hourHeight + (16*4) ; // 16 is header height, 4 is p-4
+    const top = (startOffsetMinutes / 60) * hourHeight + (16 * 4) ; 
     const height = (durationMinutes / 60) * hourHeight;
 
     return { top, height: Math.max(height, 40) }; // Minimum height
@@ -253,6 +253,48 @@ export default function SchedulesPage() {
 
     const timeSlots = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
+    const dailyEventsWithLayout = useMemo(() => {
+        const daily = new Map<string, any[]>();
+        weekDays.forEach(day => {
+            const dayKey = format(day, 'yyyy-MM-dd');
+            const eventsForDay = filteredEvents
+                .filter(event => isSameDay(event.start.toDate(), day))
+                .sort((a, b) => a.start.seconds - b.start.seconds);
+
+            const layoutEvents = [];
+            let lastEnd = -1;
+            let group: any[] = [];
+            
+            for (const event of eventsForDay) {
+                if (event.start.seconds < lastEnd) {
+                    group.push(event);
+                } else {
+                    if (group.length > 0) layoutEvents.push(group);
+                    group = [event];
+                }
+                lastEnd = Math.max(lastEnd, event.end.seconds);
+            }
+            if (group.length > 0) layoutEvents.push(group);
+
+            const finalLayout: any[] = [];
+            layoutEvents.forEach(group => {
+                const groupWidth = 100 / group.length;
+                group.forEach((event, index) => {
+                     finalLayout.push({
+                        ...event,
+                        layout: {
+                            ...calculateEventPosition(event),
+                            width: `${groupWidth}%`,
+                            left: `${index * groupWidth}%`
+                        }
+                    });
+                })
+            });
+            daily.set(dayKey, finalLayout);
+        });
+        return daily;
+    }, [filteredEvents, weekDays]);
+
   return (
     <>
       <div className="flex flex-col h-[calc(100vh-8rem)]">
@@ -302,34 +344,37 @@ export default function SchedulesPage() {
                 ))}
             </div>
             <div className="col-start-2 col-end-3 grid grid-cols-7 relative">
-                {weekDays.map((day, dayIndex) => (
-                    <div key={day.toString()} className={cn("relative border-r", dayIndex === 6 && "border-r-0")}>
-                        <div className="sticky top-0 bg-background z-10 text-center p-2 h-16 border-b">
-                            <span className="text-sm font-medium text-muted-foreground">{format(day, 'EEE', { locale: locale === 'ca' ? ca : es })}</span>
-                            <p className={cn("text-2xl font-bold", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'd')}</p>
+                {weekDays.map((day, dayIndex) => {
+                     const dayKey = format(day, 'yyyy-MM-dd');
+                     const dayEvents = dailyEventsWithLayout.get(dayKey) || [];
+                     return (
+                        <div key={day.toString()} className={cn("relative border-r", dayIndex === 6 && "border-r-0")}>
+                            <div className="sticky top-0 bg-background z-10 text-center p-2 h-16 border-b">
+                                <span className="text-sm font-medium text-muted-foreground">{format(day, 'EEE', { locale: locale === 'ca' ? ca : es })}</span>
+                                <p className={cn("text-2xl font-bold", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'd')}</p>
+                            </div>
+                            {timeSlots.map(time => <div key={time} className="h-[80px] border-t"></div>)}
+                            
+                            {dayEvents.map(event => {
+                                 return (
+                                     <div 
+                                        key={event.id}
+                                        className={cn("absolute p-2 rounded-lg border flex flex-col cursor-pointer hover:ring-2 hover:ring-primary", event.color)}
+                                        style={{ top: `${event.layout.top}px`, height: `${event.layout.height}px`, width: event.layout.width, left: event.layout.left }}
+                                        onClick={() => handleOpenModal('edit', event)}
+                                     >
+                                        <h4 className="font-bold text-xs leading-tight break-words">{event.title}</h4>
+                                        <div className="text-[10px] space-y-0.5 mt-1">
+                                            <div className="flex items-center gap-1"><Clock className="h-2.5 w-2.5"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
+                                            {event.location && <div className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5"/> {event.location}</div>}
+                                            {event.teamName && <div className="flex items-center gap-1"><Shield className="h-2.5 w-2.5"/> {event.teamName}</div>}
+                                        </div>
+                                     </div>
+                                 );
+                            })}
                         </div>
-                        {timeSlots.map(time => <div key={time} className="h-[80px] border-t"></div>)}
-                        
-                        {filteredEvents.filter(event => isSameDay(event.start.toDate(), day)).map(event => {
-                             const { top, height } = calculateEventPosition(event);
-                             return (
-                                 <div 
-                                    key={event.id}
-                                    className={cn("absolute p-2 rounded-lg border flex flex-col cursor-pointer hover:ring-2 hover:ring-primary w-[calc(100%-8px)] left-1", event.color)}
-                                    style={{ top: `${top}px`, height: `${height}px` }}
-                                    onClick={() => handleOpenModal('edit', event)}
-                                 >
-                                    <h4 className="font-bold text-xs leading-tight break-words">{event.title}</h4>
-                                    <div className="text-[10px] space-y-0.5 mt-1">
-                                        <div className="flex items-center gap-1"><Clock className="h-2.5 w-2.5"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
-                                        {event.location && <div className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5"/> {event.location}</div>}
-                                        {event.teamName && <div className="flex items-center gap-1"><Shield className="h-2.5 w-2.5"/> {event.teamName}</div>}
-                                    </div>
-                                 </div>
-                             );
-                        })}
-                    </div>
-                ))}
+                    )
+                })}
             </div>
           </div>
         </div>
