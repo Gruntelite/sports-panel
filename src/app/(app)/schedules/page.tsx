@@ -27,6 +27,7 @@ import {
   User,
   Shield,
   Calendar as CalendarIcon,
+  Repeat,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -62,6 +63,7 @@ import {
   query,
   where,
   Timestamp,
+  writeBatch,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -73,7 +75,9 @@ import {
   endOfWeek,
   eachDayOfInterval,
   isSameDay,
-  parseISO
+  parseISO,
+  addDays,
+  addWeeks,
 } from "date-fns";
 import { es, ca } from "date-fns/locale";
 import { useTranslation } from "@/components/i18n-provider";
@@ -94,7 +98,7 @@ const timeToMinutes = (time: string) => {
 };
 
 const calculateEventPosition = (event: CalendarEvent) => {
-    const gridStartHour = 0; // Start calendar from 00:00
+    const gridStartHour = 0; 
     const eventStart = event.start.toDate();
     const eventEnd = event.end.toDate();
 
@@ -123,7 +127,7 @@ export default function SchedulesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [eventData, setEventData] = useState<Partial<CalendarEvent>>({});
+  const [eventData, setEventData] = useState<Partial<CalendarEvent & { repeat?: 'none' | 'daily' | 'weekly', repeatUntil?: Date }>>({});
   const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
   
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
@@ -195,7 +199,8 @@ export default function SchedulesPage() {
         type: 'Entrenamiento',
         color: EVENT_TYPES[0].color,
         start: Timestamp.now(), 
-        end: Timestamp.now() 
+        end: Timestamp.now(),
+        repeat: 'none',
     });
     setIsModalOpen(true);
   };
@@ -207,15 +212,56 @@ export default function SchedulesPage() {
     }
     setSaving(true);
     
-    const dataToSave = { ...eventData };
+    const batch = writeBatch(db);
 
     try {
         if(modalMode === 'edit' && eventData.id) {
-            await updateDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id), dataToSave);
+            const dataToUpdate = { ...eventData };
+            delete dataToUpdate.repeat;
+            delete dataToUpdate.repeatUntil;
+            await updateDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id), dataToUpdate);
             toast({ title: "Evento actualizado" });
         } else {
-            await addDoc(collection(db, "clubs", clubId, "calendarEvents"), dataToSave);
-            toast({ title: "Evento creado" });
+            const newEvents: Partial<CalendarEvent>[] = [];
+            const baseEvent = { ...eventData };
+            delete baseEvent.repeat;
+            delete baseEvent.repeatUntil;
+
+            let currentDate = eventData.start.toDate();
+            const repeatUntilDate = eventData.repeatUntil;
+            
+            newEvents.push(baseEvent);
+
+            if (eventData.repeat !== 'none' && repeatUntilDate) {
+                while(currentDate <= repeatUntilDate) {
+                    if(eventData.repeat === 'daily') {
+                       currentDate = addDays(currentDate, 1);
+                    } else if (eventData.repeat === 'weekly') {
+                       currentDate = addWeeks(currentDate, 1);
+                    }
+
+                    if (currentDate <= repeatUntilDate) {
+                        const newStart = new Date(currentDate);
+                        newStart.setHours(eventData.start.toDate().getHours(), eventData.start.toDate().getMinutes());
+                        const newEnd = new Date(currentDate);
+                        newEnd.setHours(eventData.end.toDate().getHours(), eventData.end.toDate().getMinutes());
+
+                        newEvents.push({
+                            ...baseEvent,
+                            start: Timestamp.fromDate(newStart),
+                            end: Timestamp.fromDate(newEnd),
+                        });
+                    }
+                }
+            }
+
+            newEvents.forEach(event => {
+                const docRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
+                batch.set(docRef, event);
+            });
+            await batch.commit();
+
+            toast({ title: "Evento(s) creado(s)" });
         }
         setIsModalOpen(false);
         if (clubId) fetchData(clubId);
@@ -226,6 +272,7 @@ export default function SchedulesPage() {
         setSaving(false);
     }
   };
+
 
   const handleDeleteEvent = async () => {
     if (!clubId || !eventToDelete) return;
@@ -263,7 +310,6 @@ export default function SchedulesPage() {
                 let overlaps = 0;
                 let maxOverlaps = 1;
                 
-                // Find overlapping events
                 for (let i = 0; i < processedEvents.length; i++) {
                     const otherEvent = processedEvents[i];
                     if (
@@ -284,7 +330,6 @@ export default function SchedulesPage() {
                     maxOverlaps: maxOverlaps
                 });
 
-                 // Re-adjust previous events
                 for (let i = 0; i < processedEvents.length - 1; i++) {
                     const otherEvent = processedEvents[i];
                     if (
@@ -351,7 +396,7 @@ export default function SchedulesPage() {
         <div className="flex-grow overflow-auto">
           <div className="grid grid-cols-[60px_1fr]">
             <div className="col-start-1 col-end-2 border-r">
-                <div className="sticky top-0 bg-background z-10 h-16"></div> {/* Spacer for day header */}
+                <div className="sticky top-0 bg-background z-10 h-16"></div>
                 {timeSlots.map(time => (
                     <div key={time} className="h-[80px] relative text-right pr-2 border-t">
                         <span className="text-xs font-semibold text-muted-foreground absolute -top-2 right-2">{time}</span>
@@ -374,11 +419,11 @@ export default function SchedulesPage() {
                                  return (
                                      <div 
                                         key={event.id}
-                                        className={cn("absolute p-2 rounded-lg border flex flex-col cursor-pointer hover:ring-2 hover:ring-primary", event.color)}
+                                        className={cn("absolute p-2 rounded-lg border flex flex-col cursor-pointer hover:ring-2 hover:ring-primary break-words", event.color)}
                                         style={{ top: `${event.layout.top}px`, height: `${event.layout.height}px`, width: event.layout.width, left: event.layout.left }}
                                         onClick={() => handleOpenModal('edit', event)}
                                      >
-                                        <h4 className="font-semibold text-xs leading-tight break-words">{event.title}</h4>
+                                        <h4 className="font-semibold text-xs leading-tight">{event.title}</h4>
                                         <div className="text-[10px] space-y-0.5 mt-1">
                                             <div className="flex items-center gap-1"><Clock className="h-2.5 w-2.5"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
                                             {event.location && <div className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5"/> {event.location}</div>}
@@ -405,10 +450,35 @@ export default function SchedulesPage() {
             <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                     <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
-                    <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} />
+                    <Textarea id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} className="h-10 resize-none"/>
                 </div>
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
+                        <Label>Tipus d'Esdeveniment</Label>
+                        <Select value={eventData.type} onValueChange={handleEventTypeChange}>
+                            <SelectTrigger><SelectValue/></SelectTrigger>
+                            <SelectContent>
+                                {EVENT_TYPES.map(type => (
+                                    <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Hora d'inici</Label>
+                        <Input type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = eventData.start.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: Timestamp.fromDate(newDate)})}}}/>
+                    </div>
+                     <div className="space-y-2">
+                        <Label>Hora de fi</Label>
+                        <Input type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.end) { const [h,m] = e.target.value.split(':'); const newDate = eventData.end.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, end: Timestamp.fromDate(newDate)})}}}/>
+                    </div>
+                </div>
+                 <div className="space-y-2">
+                    <Label>Ubicació (opcional)</Label>
+                    <Input value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                     <div className="space-y-2">
                         <Label>Data</Label>
                         <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => {
                             if (date) {
@@ -421,29 +491,23 @@ export default function SchedulesPage() {
                         }} />
                     </div>
                      <div className="space-y-2">
-                        <Label>Hora d'inici</Label>
-                        <Input type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = eventData.start.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: Timestamp.fromDate(newDate)})}}}/>
+                        <Label>Repetició</Label>
+                        <Select value={eventData.repeat || 'none'} onValueChange={(value: 'none' | 'daily' | 'weekly') => setEventData(prev => ({...prev, repeat: value}))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No se repite</SelectItem>
+                                <SelectItem value="daily">Cada día</SelectItem>
+                                <SelectItem value="weekly">Cada semana</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
-                     <div className="space-y-2">
-                        <Label>Hora de fi</Label>
-                        <Input type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.end) { const [h,m] = e.target.value.split(':'); const newDate = eventData.end.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, end: Timestamp.fromDate(newDate)})}}}/>
+                </div>
+                {eventData.repeat && eventData.repeat !== 'none' && (
+                    <div className="space-y-2">
+                        <Label>Repetir fins</Label>
+                        <DatePicker date={eventData.repeatUntil} onDateChange={(date) => setEventData(prev => ({...prev, repeatUntil: date}))} />
                     </div>
-                </div>
-                <div className="space-y-2">
-                    <Label>Tipus d'Esdeveniment</Label>
-                    <Select value={eventData.type} onValueChange={handleEventTypeChange}>
-                        <SelectTrigger><SelectValue/></SelectTrigger>
-                        <SelectContent>
-                             {EVENT_TYPES.map(type => (
-                                <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <div className="space-y-2">
-                    <Label>Ubicació (opcional)</Label>
-                    <Input value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
-                </div>
+                )}
             </div>
             <DialogFooter className="justify-between">
                 <div>
