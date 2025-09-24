@@ -208,6 +208,25 @@ export default function SchedulesPage() {
     );
     setIsModalOpen(true);
   };
+  
+  const handleTimeslotClick = (day: Date, time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    const startDate = new Date(day);
+    startDate.setHours(hours, minutes);
+    
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 1);
+
+    setModalMode('add');
+    setEventData({
+        type: 'Evento',
+        color: EVENT_TYPES[2].color,
+        start: startDate,
+        end: endDate,
+        repeat: 'none',
+    });
+    setIsModalOpen(true);
+  };
 
   const handleSaveEvent = async () => {
     if (!clubId || !eventData.title || !eventData.start || !eventData.end) {
@@ -425,7 +444,7 @@ export default function SchedulesPage() {
                                 <span className="text-sm font-medium text-muted-foreground">{format(day, 'EEE', { locale: locale === 'ca' ? ca : es })}</span>
                                 <p className={cn("text-2xl font-bold", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'd')}</p>
                             </div>
-                            {timeSlots.map(time => <div key={time} className="h-[80px] border-t"></div>)}
+                            {timeSlots.map(time => <div key={time} className="h-[80px] border-t cursor-pointer" onClick={() => handleTimeslotClick(day, time)}></div>)}
                             
                             {dayEvents.map(event => {
                                  return (
