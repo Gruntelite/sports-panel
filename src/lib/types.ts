@@ -267,6 +267,8 @@ export type CalendarEvent = {
     color: string;
     isTemplateBased?: boolean;
     description?: string;
+    recurrenceId?: string | null;
+    recurrenceException?: Timestamp | null;
 };
 
 export type ScheduleTemplate = {
