@@ -412,20 +412,22 @@ export default function SchedulesPage() {
                     <Label htmlFor="event-title">Títol</Label>
                     <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} />
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                        <Label>Data d'inici</Label>
-                        <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => date && setEventData({...eventData, start: Timestamp.fromDate(date)})} />
+                        <Label>Data</Label>
+                        <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => {
+                            if (date) {
+                                const newStart = eventData.start?.toDate() || new Date();
+                                newStart.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                                const newEnd = eventData.end?.toDate() || new Date();
+                                newEnd.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                                setEventData({...eventData, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd)})
+                            }
+                        }} />
                     </div>
                      <div className="space-y-2">
                         <Label>Hora d'inici</Label>
                         <Input type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = eventData.start.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: Timestamp.fromDate(newDate)})}}}/>
-                    </div>
-                </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label>Data de fi</Label>
-                        <DatePicker date={eventData.end?.toDate()} onDateChange={(date) => date && setEventData({...eventData, end: Timestamp.fromDate(date)})} />
                     </div>
                      <div className="space-y-2">
                         <Label>Hora de fi</Label>
@@ -439,17 +441,6 @@ export default function SchedulesPage() {
                         <SelectContent>
                              {EVENT_TYPES.map(type => (
                                 <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label>Assignar a Equip (opcional)</Label>
-                    <Select value={eventData.teamId} onValueChange={(value) => setEventData({...eventData, teamId: value})}>
-                         <SelectTrigger><SelectValue placeholder="Seleccionar equip..."/></SelectTrigger>
-                        <SelectContent>
-                             {teams.map(team => (
-                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
