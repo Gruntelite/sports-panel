@@ -382,7 +382,7 @@ export default function SchedulesPage() {
                                         style={{ top: `${event.layout.top}px`, height: `${event.layout.height}px`, width: event.layout.width, left: event.layout.left }}
                                         onClick={() => handleOpenModal('edit', event)}
                                      >
-                                        <h4 className="font-bold text-xs leading-tight break-words">{event.title}</h4>
+                                        <h4 className="font-semibold text-xs leading-tight break-words">{event.title}</h4>
                                         <div className="text-[10px] space-y-0.5 mt-1">
                                             <div className="flex items-center gap-1"><Clock className="h-2.5 w-2.5"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
                                             {event.location && <div className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5"/> {event.location}</div>}
