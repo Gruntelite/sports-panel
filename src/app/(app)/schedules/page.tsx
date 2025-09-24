@@ -261,35 +261,54 @@ export default function SchedulesPage() {
                 .filter(event => isSameDay(event.start.toDate(), day))
                 .sort((a, b) => a.start.seconds - b.start.seconds);
 
-            const layoutEvents = [];
-            let lastEnd = -1;
-            let group: any[] = [];
-            
-            for (const event of eventsForDay) {
-                if (event.start.seconds < lastEnd) {
-                    group.push(event);
-                } else {
-                    if (group.length > 0) layoutEvents.push(group);
-                    group = [event];
-                }
-                lastEnd = Math.max(lastEnd, event.end.seconds);
-            }
-            if (group.length > 0) layoutEvents.push(group);
+            const processedEvents: any[] = [];
 
-            const finalLayout: any[] = [];
-            layoutEvents.forEach(group => {
-                const groupWidth = 100 / group.length;
-                group.forEach((event, index) => {
-                     finalLayout.push({
-                        ...event,
-                        layout: {
-                            ...calculateEventPosition(event),
-                            width: `${groupWidth}%`,
-                            left: `${index * groupWidth}%`
+            eventsForDay.forEach((event, index) => {
+                let overlaps = 0;
+                let maxOverlaps = 1;
+                
+                // Find overlapping events
+                for (let i = 0; i < processedEvents.length; i++) {
+                    const otherEvent = processedEvents[i];
+                    if (
+                        (event.start.seconds < otherEvent.end.seconds && event.end.seconds > otherEvent.start.seconds)
+                    ) {
+                        otherEvent.maxOverlaps = Math.max(otherEvent.maxOverlaps, maxOverlaps + 1);
+                        maxOverlaps = Math.max(maxOverlaps, otherEvent.maxOverlaps);
+                        if (otherEvent.overlaps <= overlaps) {
+                           overlaps = otherEvent.overlaps + 1;
                         }
-                    });
-                })
+                    }
+                }
+                
+                processedEvents.push({
+                    ...event,
+                    ...calculateEventPosition(event),
+                    overlaps: overlaps,
+                    maxOverlaps: maxOverlaps
+                });
+
+                 // Re-adjust previous events
+                for (let i = 0; i < processedEvents.length - 1; i++) {
+                    const otherEvent = processedEvents[i];
+                    if (
+                       (event.start.seconds < otherEvent.end.seconds && event.end.seconds > otherEvent.start.seconds)
+                    ) {
+                        otherEvent.maxOverlaps = Math.max(otherEvent.maxOverlaps, maxOverlaps);
+                    }
+                }
             });
+            
+            const finalLayout = processedEvents.map(event => ({
+                ...event,
+                layout: {
+                    top: event.top,
+                    height: event.height,
+                    width: `${100 / event.maxOverlaps}%`,
+                    left: `${(100 / event.maxOverlaps) * event.overlaps}%`,
+                }
+            }))
+            
             daily.set(dayKey, finalLayout);
         });
         return daily;
