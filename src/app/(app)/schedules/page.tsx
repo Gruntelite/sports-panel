@@ -196,13 +196,14 @@ export default function SchedulesPage() {
   const handleOpenModal = (mode: 'add' | 'edit', event?: CalendarEvent) => {
     setModalMode(mode);
     setEventData(event ? 
-        { ...event, repeat: 'none' } : 
+        { ...event, repeat: 'none', repeatUntil: undefined } : 
         { 
             type: 'Evento',
             color: EVENT_TYPES[2].color,
             start: Timestamp.now(), 
             end: Timestamp.now(),
             repeat: 'none',
+            repeatUntil: undefined,
         }
     );
     setIsModalOpen(true);
@@ -219,23 +220,23 @@ export default function SchedulesPage() {
 
     try {
         if(modalMode === 'edit' && eventData.id) {
-            const dataToUpdate = { ...eventData };
-            delete dataToUpdate.repeat;
-            delete dataToUpdate.repeatUntil;
+            const dataToUpdate: Partial<CalendarEvent> = { ...eventData };
+            delete (dataToUpdate as any).repeat;
+            delete (dataToUpdate as any).repeatUntil;
             await updateDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id), dataToUpdate);
             toast({ title: "Evento actualizado" });
         } else {
             const newEvents: Partial<CalendarEvent>[] = [];
-            const baseEvent = { ...eventData };
-            delete baseEvent.repeat;
-            delete baseEvent.repeatUntil;
+            const baseEvent: Partial<CalendarEvent> = { ...eventData };
+            delete (baseEvent as any).repeat;
+            delete (baseEvent as any).repeatUntil;
 
             let currentDate = eventData.start.toDate();
             const repeatUntilDate = eventData.repeatUntil;
             
             newEvents.push(baseEvent);
 
-            if (eventData.repeat !== 'none' && repeatUntilDate) {
+            if (eventData.repeat && eventData.repeat !== 'none' && repeatUntilDate) {
                 while(currentDate <= repeatUntilDate) {
                     if(eventData.repeat === 'daily') {
                        currentDate = addDays(currentDate, 1);
@@ -455,7 +456,7 @@ export default function SchedulesPage() {
                     <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
                     <Textarea id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} className="h-10 resize-none"/>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Tipus d'Esdeveniment</Label>
                         <Select value={eventData.type} onValueChange={handleEventTypeChange}>
@@ -468,15 +469,14 @@ export default function SchedulesPage() {
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label>Equip</Label>
-                        <Select value={eventData.teamId} onValueChange={(value) => setEventData(prev => ({...prev, teamId: value, teamName: teams.find(t => t.id === value)?.name}))}>
-                          <SelectTrigger><SelectValue placeholder="Cap equip"/></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">Cap equip</SelectItem>
-                             {teams.map(team => (
-                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                            ))}
-                          </SelectContent>
+                        <Label>Repetició</Label>
+                        <Select value={eventData.repeat || 'none'} onValueChange={(value: 'none' | 'daily' | 'weekly') => setEventData(prev => ({...prev, repeat: value}))}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="none">No es repeteix</SelectItem>
+                                <SelectItem value="daily">Cada dia</SelectItem>
+                                <SelectItem value="weekly">Cada setmana</SelectItem>
+                            </SelectContent>
                         </Select>
                     </div>
                 </div>
@@ -502,20 +502,19 @@ export default function SchedulesPage() {
                         <Input type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.end) { const [h,m] = e.target.value.split(':'); const newDate = eventData.end.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, end: Timestamp.fromDate(newDate)})}}}/>
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label>Repetició</Label>
-                    <Select value={eventData.repeat || 'none'} onValueChange={(value: 'none' | 'daily' | 'weekly') => setEventData(prev => ({...prev, repeat: value}))}>
-                        <SelectTrigger><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">No es repeteix</SelectItem>
-                            <SelectItem value="daily">Cada dia</SelectItem>
-                            <SelectItem value="weekly">Cada setmana</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
+                
+                 {eventData.repeat && eventData.repeat !== 'none' && (
+                    <div className="space-y-2">
+                        <Label>Repetir fins</Label>
+                         <DatePicker 
+                             date={eventData.repeatUntil} 
+                             onDateChange={(date) => setEventData(prev => ({...prev, repeatUntil: date}))}
+                         />
+                    </div>
+                 )}
                  <div className="space-y-2">
                     <Label>Ubicació</Label>
-                    <Input value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
+                    <Textarea value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
                 </div>
             </div>
             <DialogFooter className="justify-between">
@@ -557,3 +556,5 @@ export default function SchedulesPage() {
     </>
   );
 }
+
+    
