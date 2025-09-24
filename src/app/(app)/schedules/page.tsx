@@ -131,7 +131,7 @@ export default function SchedulesPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [eventData, setEventData] = useState<Partial<CalendarEvent & { repeat?: 'none' | 'daily' | 'weekly', repeatUntil?: Date }>>({});
   
-  const [eventToDelete, setEventToDelete] = useState<{event: CalendarEvent, type: 'single' | 'all' | 'future'} | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<{event: CalendarEvent, type: 'single' | 'all' | null} | null>(null);
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   
   const [saveConfirmationOpen, setSaveConfirmationOpen] = useState(false);
@@ -204,6 +204,13 @@ export default function SchedulesPage() {
     });
     return () => unsubscribe();
   }, [fetchData]);
+  
+    useEffect(() => {
+        if (eventToDelete?.type) {
+            handleDeleteEvent();
+        }
+    }, [eventToDelete]);
+
 
   const changeWeek = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
@@ -251,6 +258,7 @@ export default function SchedulesPage() {
             start: new Date(), 
             end: new Date(),
             repeat: 'none',
+            repeatUntil: undefined
         });
     }
     setIsModalOpen(true);
@@ -271,6 +279,7 @@ export default function SchedulesPage() {
         start: startDate,
         end: endDate,
         repeat: 'none',
+        repeatUntil: undefined,
     });
     setIsModalOpen(true);
   };
@@ -281,7 +290,6 @@ export default function SchedulesPage() {
         setSaveConfirmationOpen(true);
         return;
       }
-      // If not recurring or adding new, default to 'future'
       setSaveType('future');
       return; 
     }
@@ -297,7 +305,6 @@ export default function SchedulesPage() {
       const recurrenceId = (modalMode === 'edit' && eventData.recurrenceId) ? eventData.recurrenceId : uuidv4();
       const originalStartDate = eventData.start as Date;
 
-      // ---- Deletion Phase ----
       if (modalMode === 'edit' && eventData.id) {
         if (saveType === 'future' && eventData.recurrenceId) {
             const seriesQuery = query(
@@ -307,13 +314,9 @@ export default function SchedulesPage() {
             );
             const snapshot = await getDocs(seriesQuery);
             snapshot.forEach(doc => batch.delete(doc.ref));
-        } else { // 'single' or non-recurring edit
-             batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
         }
       }
       
-      // ---- Creation Phase ----
-      let newEvents: Partial<CalendarEvent>[] = [];
       const baseEvent: Partial<CalendarEvent> = { ...eventData };
       delete (baseEvent as any).id;
       delete (baseEvent as any).repeat;
@@ -321,11 +324,13 @@ export default function SchedulesPage() {
       baseEvent.recurrenceId = (eventData.repeat !== 'none' || (eventData.recurrenceId && saveType !== 'single')) ? recurrenceId : null;
 
       if (saveType === 'single' && modalMode === 'edit') {
-        baseEvent.recurrenceId = eventData.recurrenceId; // Keep original recurrenceId
-        baseEvent.recurrenceException = Timestamp.fromDate(originalStartDate);
+        const originalEventRef = doc(db, "clubs", clubId, "calendarEvents", eventData.id!);
+        batch.update(originalEventRef, { recurrenceException: eventData.start });
+        
+        baseEvent.recurrenceId = eventData.recurrenceId; 
         const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
         batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(eventData.start as Date), end: Timestamp.fromDate(eventData.end as Date) });
-      } else { // 'future' or new event
+      } else { 
           let currentDate = new Date(eventData.start as Date);
           const repeatUntilDate = eventData.repeatUntil;
           
@@ -346,7 +351,7 @@ export default function SchedulesPage() {
               } else if (eventData.repeat === 'weekly') {
                   currentDate = addWeeks(currentDate, 1);
               } else {
-                  break; // No repeat
+                  break; 
               }
               firstEvent = false;
           } while (repeatUntilDate && currentDate <= repeatUntilDate);
@@ -369,9 +374,9 @@ export default function SchedulesPage() {
 
 
   const handleDeleteEvent = async () => {
-    if (!clubId || !eventToDelete) return;
+    if (!clubId || !eventToDelete || !eventToDelete.type) return;
 
-    if (eventToDelete.event.recurrenceId && eventToDelete.type === null) {
+    if (eventToDelete.event.recurrenceId && !eventToDelete.type) {
         setDeleteConfirmationOpen(true);
         return;
     }
@@ -668,8 +673,8 @@ export default function SchedulesPage() {
           </AlertDialogHeader>
           <AlertDialogFooter className="flex-col gap-2 sm:flex-row">
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setEventToDelete(prev => prev ? {...prev, type: 'single'} : null); handleDeleteEvent(); }}>Eliminar solo este evento</AlertDialogAction>
-            <AlertDialogAction onClick={() => { setEventToDelete(prev => prev ? {...prev, type: 'all'} : null); handleDeleteEvent(); }}>Eliminar toda la serie</AlertDialogAction>
+            <AlertDialogAction onClick={() => setEventToDelete(prev => prev ? {...prev, type: 'single'} : null)}>Eliminar solo este evento</AlertDialogAction>
+            <AlertDialogAction onClick={() => setEventToDelete(prev => prev ? {...prev, type: 'all'} : null)}>Eliminar toda la serie</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
