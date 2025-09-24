@@ -432,7 +432,7 @@ export default function SchedulesPage() {
                                      <div 
                                         key={event.id}
                                         className={cn("absolute p-2 rounded-lg border flex flex-col cursor-pointer hover:ring-2 hover:ring-primary break-words", event.color)}
-                                        style={{ top: `${event.layout.top}px`, height: `${event.layout.height}px`, width: event.layout.width, left: event.layout.left }}
+                                        style={{ top: `${event.layout.top + 64}px`, height: `${event.layout.height}px`, width: event.layout.width, left: event.layout.left }}
                                         onClick={() => handleOpenModal('edit', event)}
                                      >
                                         <h4 className="font-semibold text-xs leading-tight">{event.title}</h4>
