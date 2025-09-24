@@ -198,8 +198,8 @@ export default function SchedulesPage() {
     setEventData(event ? 
         { ...event, repeat: 'none' } : 
         { 
-            type: 'Entrenamiento',
-            color: EVENT_TYPES[0].color,
+            type: 'Evento',
+            color: EVENT_TYPES[2].color,
             start: Timestamp.now(), 
             end: Timestamp.now(),
             repeat: 'none',
@@ -447,11 +447,11 @@ export default function SchedulesPage() {
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Afegir Nou Esdeveniment' : 'Editar Esdeveniment'}</DialogTitle>
                 <DialogDescription>
-                    Omple els detalls de l'esdeveniment.
+                    Crea un esdeveniment personalitzat al calendari.
                 </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
-                <div className="space-y-2">
+                 <div className="space-y-2">
                     <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
                     <Textarea id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} className="h-10 resize-none"/>
                 </div>
@@ -468,7 +468,21 @@ export default function SchedulesPage() {
                         </Select>
                     </div>
                      <div className="space-y-2">
-                        <Label>Data</Label>
+                        <Label>Equip</Label>
+                        <Select value={eventData.teamId} onValueChange={(value) => setEventData(prev => ({...prev, teamId: value, teamName: teams.find(t => t.id === value)?.name}))}>
+                          <SelectTrigger><SelectValue placeholder="Cap equip"/></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="none">Cap equip</SelectItem>
+                             {teams.map(team => (
+                                <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+                 <div className="grid grid-cols-3 gap-4">
+                     <div className="space-y-2">
+                        <Label>Data de l'esdeveniment</Label>
                         <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => {
                             if (date) {
                                 const newStart = eventData.start?.toDate() || new Date();
@@ -479,9 +493,7 @@ export default function SchedulesPage() {
                             }
                         }} />
                     </div>
-                </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label>Hora d'inici</Label>
                         <Input type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = eventData.start.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: Timestamp.fromDate(newDate)})}}}/>
                     </div>
@@ -490,28 +502,20 @@ export default function SchedulesPage() {
                         <Input type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.end) { const [h,m] = e.target.value.split(':'); const newDate = eventData.end.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, end: Timestamp.fromDate(newDate)})}}}/>
                     </div>
                 </div>
-                 <div className="space-y-2">
-                    <Label>Ubicació (opcional)</Label>
-                    <Input value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
+                <div className="space-y-2">
+                    <Label>Repetició</Label>
+                    <Select value={eventData.repeat || 'none'} onValueChange={(value: 'none' | 'daily' | 'weekly') => setEventData(prev => ({...prev, repeat: value}))}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="none">No es repeteix</SelectItem>
+                            <SelectItem value="daily">Cada dia</SelectItem>
+                            <SelectItem value="weekly">Cada setmana</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label>Repetició</Label>
-                        <Select value={eventData.repeat || 'none'} onValueChange={(value: 'none' | 'daily' | 'weekly') => setEventData(prev => ({...prev, repeat: value}))}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="none">No se repite</SelectItem>
-                                <SelectItem value="daily">Cada día</SelectItem>
-                                <SelectItem value="weekly">Cada semana</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                     {eventData.repeat && eventData.repeat !== 'none' && (
-                        <div className="space-y-2">
-                            <Label>Repetir fins</Label>
-                            <DatePicker date={eventData.repeatUntil ? eventData.repeatUntil instanceof Date ? eventData.repeatUntil : new Date(eventData.repeatUntil) : undefined} onDateChange={(date) => setEventData(prev => ({...prev, repeatUntil: date}))} />
-                        </div>
-                    )}
+                 <div className="space-y-2">
+                    <Label>Ubicació</Label>
+                    <Input value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
                 </div>
             </div>
             <DialogFooter className="justify-between">
@@ -524,10 +528,10 @@ export default function SchedulesPage() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                    <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                    <DialogClose asChild><Button variant="secondary">Cancel·lar</Button></DialogClose>
                     <Button onClick={handleSaveEvent} disabled={saving}>
                         {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                        {t('common.saveChanges')}
+                        Desar Esdeveniment
                     </Button>
                 </div>
             </DialogFooter>
@@ -553,5 +557,3 @@ export default function SchedulesPage() {
     </>
   );
 }
-
-    
