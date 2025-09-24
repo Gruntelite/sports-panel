@@ -447,17 +447,14 @@ export default function SchedulesPage() {
         <DialogContent className="sm:max-w-xl">
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Afegir Nou Esdeveniment' : 'Editar Esdeveniment'}</DialogTitle>
-                <DialogDescription>
-                    Crea un esdeveniment personalitzat al calendari.
-                </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
                  <div className="space-y-2">
                     <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
-                    <Textarea id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} className="h-10 resize-none"/>
+                    <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} />
                 </div>
-                 <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-2">
                         <Label>Tipus d'Esdeveniment</Label>
                         <Select value={eventData.type} onValueChange={handleEventTypeChange}>
                             <SelectTrigger><SelectValue/></SelectTrigger>
@@ -556,5 +553,3 @@ export default function SchedulesPage() {
     </>
   );
 }
-
-    
