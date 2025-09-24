@@ -93,17 +93,17 @@ const timeToMinutes = (time: string) => {
 };
 
 const calculateEventPosition = (event: CalendarEvent) => {
-    const gridStartMinutes = 10 * 60; // 10:00 AM
-    const eventStartMinutes = event.start.toDate().getHours() * 60 + event.start.toDate().getMinutes();
-    const eventEndMinutes = event.end.toDate().getHours() * 60 + event.end.toDate().getMinutes();
+    const gridStartHour = 10;
+    const eventStart = event.start.toDate();
+    const eventEnd = event.end.toDate();
 
-    const startOffsetMinutes = eventStartMinutes - gridStartMinutes;
-    const durationMinutes = eventEndMinutes - eventStartMinutes;
+    const startOffsetMinutes = (eventStart.getHours() - gridStartHour) * 60 + eventStart.getMinutes();
+    const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
     const hourHeight = 80;
     const top = (startOffsetMinutes / 60) * hourHeight;
     const height = (durationMinutes / 60) * hourHeight;
-    
+
     return { top, height: Math.max(height, 40) }; // Minimum height
 };
 
@@ -163,7 +163,7 @@ export default function SchedulesPage() {
         toast({ variant: "destructive", title: t('common.error'), description: "No se pudieron cargar los datos del horario." });
     }
     setLoading(false);
-  }, [toast, currentDate]);
+  }, [toast, currentDate, t]);
 
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
