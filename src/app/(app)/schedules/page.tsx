@@ -93,7 +93,7 @@ const timeToMinutes = (time: string) => {
 };
 
 const calculateEventPosition = (event: CalendarEvent) => {
-    const gridStartHour = 10;
+    const gridStartHour = 0; // Start calendar from 00:00
     const eventStart = event.start.toDate();
     const eventEnd = event.end.toDate();
 
@@ -251,7 +251,7 @@ export default function SchedulesPage() {
         setEventData(prev => ({...prev, type: type as CalendarEvent['type'], color: eventType?.color || '' }));
     }
 
-    const timeSlots = Array.from({ length: 15 }, (_, i) => `${10 + i}:00`);
+    const timeSlots = Array.from({ length: 24 }, (_, i) => `${String(i).padStart(2, '0')}:00`);
 
   return (
     <>
@@ -312,7 +312,6 @@ export default function SchedulesPage() {
                         
                         {filteredEvents.filter(event => isSameDay(event.start.toDate(), day)).map(event => {
                              const { top, height } = calculateEventPosition(event);
-                             const EventIcon = EVENT_TYPES.find(et => et.value === event.type)?.icon || CalendarIcon;
                              return (
                                  <div 
                                     key={event.id}
@@ -320,11 +319,11 @@ export default function SchedulesPage() {
                                     style={{ top: `${top}px`, height: `${height}px` }}
                                     onClick={() => handleOpenModal('edit', event)}
                                  >
-                                    <h4 className="font-bold text-sm leading-tight break-words">{event.title}</h4>
-                                    <div className="text-xs mt-auto space-y-0.5">
-                                        <div className="flex items-center gap-1"><Clock className="h-3 w-3"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
-                                        {event.location && <div className="flex items-center gap-1"><MapPin className="h-3 w-3"/> {event.location}</div>}
-                                        {event.teamName && <div className="flex items-center gap-1"><Shield className="h-3 w-3"/> {event.teamName}</div>}
+                                    <h4 className="font-bold text-xs leading-tight break-words">{event.title}</h4>
+                                    <div className="text-[10px] space-y-0.5 mt-1">
+                                        <div className="flex items-center gap-1"><Clock className="h-2.5 w-2.5"/> {format(event.start.toDate(), 'HH:mm')} - {format(event.end.toDate(), 'HH:mm')}</div>
+                                        {event.location && <div className="flex items-center gap-1"><MapPin className="h-2.5 w-2.5"/> {event.location}</div>}
+                                        {event.teamName && <div className="flex items-center gap-1"><Shield className="h-2.5 w-2.5"/> {event.teamName}</div>}
                                     </div>
                                  </div>
                              );
