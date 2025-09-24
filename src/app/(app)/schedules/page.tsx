@@ -106,7 +106,7 @@ const calculateEventPosition = (event: CalendarEvent) => {
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
     const hourHeight = 80;
-    const top = (startOffsetMinutes / 60) * hourHeight + (16 * 4) ; 
+    const top = (startOffsetMinutes / 60) * hourHeight; 
     const height = (durationMinutes / 60) * hourHeight;
 
     return { top, height: Math.max(height, 40) }; // Minimum height
@@ -195,13 +195,16 @@ export default function SchedulesPage() {
 
   const handleOpenModal = (mode: 'add' | 'edit', event?: CalendarEvent) => {
     setModalMode(mode);
-    setEventData(event || { 
-        type: 'Entrenamiento',
-        color: EVENT_TYPES[0].color,
-        start: Timestamp.now(), 
-        end: Timestamp.now(),
-        repeat: 'none',
-    });
+    setEventData(event ? 
+        { ...event, repeat: 'none' } : 
+        { 
+            type: 'Entrenamiento',
+            color: EVENT_TYPES[0].color,
+            start: Timestamp.now(), 
+            end: Timestamp.now(),
+            repeat: 'none',
+        }
+    );
     setIsModalOpen(true);
   };
 
@@ -452,7 +455,7 @@ export default function SchedulesPage() {
                     <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
                     <Textarea id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} className="h-10 resize-none"/>
                 </div>
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                         <Label>Tipus d'Esdeveniment</Label>
                         <Select value={eventData.type} onValueChange={handleEventTypeChange}>
@@ -464,6 +467,20 @@ export default function SchedulesPage() {
                             </SelectContent>
                         </Select>
                     </div>
+                     <div className="space-y-2">
+                        <Label>Data</Label>
+                        <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => {
+                            if (date) {
+                                const newStart = eventData.start?.toDate() || new Date();
+                                newStart.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                                const newEnd = eventData.end?.toDate() || new Date();
+                                newEnd.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
+                                setEventData({...eventData, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd)})
+                            }
+                        }} />
+                    </div>
+                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label>Hora d'inici</Label>
                         <Input type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = eventData.start.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: Timestamp.fromDate(newDate)})}}}/>
@@ -477,19 +494,7 @@ export default function SchedulesPage() {
                     <Label>Ubicació (opcional)</Label>
                     <Input value={eventData.location || ''} onChange={(e) => setEventData({...eventData, location: e.target.value})} />
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="space-y-2">
-                        <Label>Data</Label>
-                        <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => {
-                            if (date) {
-                                const newStart = eventData.start?.toDate() || new Date();
-                                newStart.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                                const newEnd = eventData.end?.toDate() || new Date();
-                                newEnd.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                                setEventData({...eventData, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd)})
-                            }
-                        }} />
-                    </div>
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label>Repetició</Label>
                         <Select value={eventData.repeat || 'none'} onValueChange={(value: 'none' | 'daily' | 'weekly') => setEventData(prev => ({...prev, repeat: value}))}>
@@ -501,13 +506,13 @@ export default function SchedulesPage() {
                             </SelectContent>
                         </Select>
                     </div>
+                     {eventData.repeat && eventData.repeat !== 'none' && (
+                        <div className="space-y-2">
+                            <Label>Repetir fins</Label>
+                            <DatePicker date={eventData.repeatUntil ? eventData.repeatUntil instanceof Date ? eventData.repeatUntil : new Date(eventData.repeatUntil) : undefined} onDateChange={(date) => setEventData(prev => ({...prev, repeatUntil: date}))} />
+                        </div>
+                    )}
                 </div>
-                {eventData.repeat && eventData.repeat !== 'none' && (
-                    <div className="space-y-2">
-                        <Label>Repetir fins</Label>
-                        <DatePicker date={eventData.repeatUntil} onDateChange={(date) => setEventData(prev => ({...prev, repeatUntil: date}))} />
-                    </div>
-                )}
             </div>
             <DialogFooter className="justify-between">
                 <div>
@@ -548,3 +553,5 @@ export default function SchedulesPage() {
     </>
   );
 }
+
+    
