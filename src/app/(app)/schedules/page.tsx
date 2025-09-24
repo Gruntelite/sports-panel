@@ -101,7 +101,7 @@ const calculateEventPosition = (event: CalendarEvent) => {
     const durationMinutes = (eventEnd.getTime() - eventStart.getTime()) / (1000 * 60);
 
     const hourHeight = 80;
-    const top = (startOffsetMinutes / 60) * hourHeight;
+    const top = (startOffsetMinutes / 60) * hourHeight + (16*4) ; // 16 is header height, 4 is p-4
     const height = (durationMinutes / 60) * hourHeight;
 
     return { top, height: Math.max(height, 40) }; // Minimum height
@@ -292,7 +292,7 @@ export default function SchedulesPage() {
         </div>
 
         <div className="flex-grow overflow-auto">
-          <div className="grid grid-cols-[60px_1fr] h-full">
+          <div className="grid grid-cols-[60px_1fr]">
             <div className="col-start-1 col-end-2 border-r">
                 <div className="sticky top-0 bg-background z-10 h-16"></div> {/* Spacer for day header */}
                 {timeSlots.map(time => (
@@ -317,7 +317,7 @@ export default function SchedulesPage() {
                                  <div 
                                     key={event.id}
                                     className={cn("absolute p-2 rounded-lg border flex flex-col cursor-pointer hover:ring-2 hover:ring-primary w-[calc(100%-8px)] left-1", event.color)}
-                                    style={{ top, height }}
+                                    style={{ top: `${top}px`, height: `${height}px` }}
                                     onClick={() => handleOpenModal('edit', event)}
                                  >
                                     <h4 className="font-bold text-sm leading-tight break-words">{event.title}</h4>
