@@ -789,7 +789,7 @@ export default function PlayersPage() {
               <TableBody>
                 {filteredPlayers.map(player => (
                   <TableRow key={player.id} data-state={selectedPlayers.includes(player.id) && "selected"}>
-                    <TableCell>
+                    <TableCell className="py-2 px-4">
                       <Checkbox
                         checked={selectedPlayers.includes(player.id)}
                         onCheckedChange={(checked) => handleSelectPlayer(player.id, checked as boolean)}
@@ -799,34 +799,28 @@ export default function PlayersPage() {
                     {allPossibleColumns.map(field => (
                           <TableCell 
                             key={field.id} 
-                            className={cn('min-w-[150px]', !visibleColumns.has(field.id) && 'hidden', field.id === 'name' && 'font-medium')}
+                            className={cn('min-w-[150px] py-2 px-4', !visibleColumns.has(field.id) && 'hidden', field.id === 'name' && 'font-medium')}
                           >
                               {field.id === 'name' ? (
-                                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewPlayerDetails(player)}>
-                                    <Avatar className="h-9 w-9">
-                                      <AvatarImage src={player.avatar} alt={player.name} data-ai-hint="foto persona" />
-                                      <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex items-center gap-2">
-                                      <span className="hover:underline">{getCellContent(player, field.id)}</span>
-                                      {player.hasMissingData && (
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                              <AlertCircle className="h-4 w-4 text-destructive" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>{t('players.missingData')}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                    </div>
+                                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleViewPlayerDetails(player)}>
+                                    <span className="hover:underline">{getCellContent(player, field.id)}</span>
+                                    {player.hasMissingData && (
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <AlertCircle className="h-4 w-4 text-destructive" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{t('players.missingData')}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    )}
                                   </div>
                               ) : (
                                   getCellContent(player, field.id)
                               )}
                           </TableCell>
                     ))}
-                    <TableCell>
+                    <TableCell className="py-2 px-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -1240,6 +1234,8 @@ export default function PlayersPage() {
 }
 
 
+
+    
 
     
 

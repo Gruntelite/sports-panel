@@ -802,7 +802,7 @@ export default function CoachesPage() {
               <TableBody>
                 {filteredCoaches.map(coach => (
                   <TableRow key={coach.id} data-state={selectedCoaches.includes(coach.id) && "selected"}>
-                    <TableCell>
+                    <TableCell className="py-2 px-4">
                       <Checkbox
                         checked={selectedCoaches.includes(coach.id)}
                         onCheckedChange={(checked) => handleSelectCoach(coach.id, checked as boolean)}
@@ -813,37 +813,31 @@ export default function CoachesPage() {
                           <TableCell 
                             key={field.id} 
                             className={cn(
-                              'min-w-[150px]',
+                              'min-w-[150px] py-2 px-4',
                               !visibleColumns.has(field.id) && 'hidden',
                               field.id === 'name' && 'font-medium'
                             )}
                           >
                               {field.id === 'name' ? (
-                                  <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewCoachDetails(coach)}>
-                                    <Avatar className="h-9 w-9">
-                                      <AvatarImage src={coach.avatar} alt={coach.name} data-ai-hint="foto persona" />
-                                      <AvatarFallback>{coach.name?.charAt(0)}{coach.lastName?.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex items-center gap-2">
-                                      <span className="hover:underline">{getCellContent(coach, field.id)}</span>
-                                      {coach.hasMissingData && (
-                                        <Tooltip>
-                                            <TooltipTrigger>
-                                              <AlertCircle className="h-4 w-4 text-destructive" />
-                                            </TooltipTrigger>
-                                            <TooltipContent>
-                                              <p>{t('coaches.missingData')}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                      )}
-                                    </div>
+                                  <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleViewCoachDetails(coach)}>
+                                    <span className="hover:underline">{getCellContent(coach, field.id)}</span>
+                                    {coach.hasMissingData && (
+                                    <Tooltip>
+                                        <TooltipTrigger>
+                                            <AlertCircle className="h-4 w-4 text-destructive" />
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p>{t('coaches.missingData')}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                    )}
                                   </div>
                               ) : (
                                   getCellContent(coach, field.id)
                               )}
                           </TableCell>
                     ))}
-                    <TableCell>
+                    <TableCell className="py-2 px-4">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -1261,6 +1255,8 @@ export default function CoachesPage() {
     </TooltipProvider>
   );
 }
+
+    
 
     
 

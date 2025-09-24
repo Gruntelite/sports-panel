@@ -571,17 +571,13 @@ export default function StaffPage() {
                                 <TableCell 
                                   key={field.id} 
                                   className={cn(
-                                    'min-w-[150px]',
+                                    'min-w-[150px] py-2 px-4',
                                     !visibleStaffColumns.has(field.id) && 'hidden',
                                     field.id === 'name' && 'font-medium'
                                   )}
                                 >
                                       {field.id === 'name' ? (
                                           <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewMemberDetails(member, 'staff')}>
-                                            <Avatar className="h-9 w-9">
-                                              <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
-                                              <AvatarFallback>{member.name?.charAt(0)}{member.lastName?.charAt(0)}</AvatarFallback>
-                                            </Avatar>
                                             <div className="flex items-center gap-2">
                                               <span className="hover:underline">{getStaffCellContent(member, field.id)}</span>
                                               {member.hasMissingData && (
@@ -601,7 +597,7 @@ export default function StaffPage() {
                                       )}
                                   </TableCell>
                             ))}
-                            <TableCell>
+                            <TableCell className="py-2 px-4">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -718,17 +714,13 @@ export default function StaffPage() {
                                 <TableCell 
                                   key={field.id}
                                   className={cn(
-                                    "min-w-[150px]",
+                                    "min-w-[150px] py-2 px-4",
                                     !visibleSocioColumns.has(field.id) && 'hidden',
                                     field.id === 'name' && 'font-medium'
                                   )}
                                 >
                                       {field.id === 'name' ? (
                                           <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewMemberDetails(socio, 'socio')}>
-                                            <Avatar className="h-9 w-9">
-                                              <AvatarImage src={socio.avatar} alt={socio.name} data-ai-hint="foto persona" />
-                                              <AvatarFallback>{socio.name?.charAt(0)}{socio.lastName?.charAt(0)}</AvatarFallback>
-                                            </Avatar>
                                             <span className="hover:underline">{getSocioCellContent(socio, field.id)}</span>
                                           </div>
                                       ) : (
@@ -736,7 +728,7 @@ export default function StaffPage() {
                                       )}
                                   </TableCell>
                             ))}
-                            <TableCell>
+                            <TableCell className="py-2 px-4">
                               <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                   <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -925,3 +917,5 @@ export default function StaffPage() {
     </TooltipProvider>
   );
 }
+
+    

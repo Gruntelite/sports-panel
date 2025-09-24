@@ -919,7 +919,7 @@ export default function EditTeamPage() {
                               <TableBody>
                                   {teamMembers.length > 0 ? teamMembers.map(member => (
                                       <TableRow key={member.id} data-state={selectedMembers.includes(member.id) && "selected"}>
-                                          <TableCell>
+                                          <TableCell className="py-2 px-4">
                                             <Checkbox
                                               checked={selectedMembers.includes(member.id)}
                                               onCheckedChange={(checked) => handleSelectMember(member.id, checked as boolean)}
@@ -927,35 +927,29 @@ export default function EditTeamPage() {
                                               disabled={member.role !== 'Jugador'}
                                             />
                                           </TableCell>
-                                          <TableCell className="font-medium">
-                                            <div className="flex items-center gap-3 cursor-pointer" onClick={() => handleViewMemberDetails(member.data as Player | Coach, member.role === 'Jugador' ? 'player' : 'coach')}>
-                                              <Avatar className="h-9 w-9">
-                                                <AvatarImage src={member.avatar} alt={member.name} data-ai-hint="foto persona" />
-                                                <AvatarFallback>{member.name?.split(' ').map(n => n[0]).join('')}</AvatarFallback>
-                                              </Avatar>
-                                              <div className="flex items-center gap-2">
-                                                <span className="hover:underline">{member.name}</span>
-                                                {member.hasMissingData && (
-                                                  <Tooltip>
-                                                      <TooltipTrigger>
-                                                        <AlertCircle className="h-4 w-4 text-destructive" />
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                        <p>{t('teams.editTeam.missingData')}</p>
-                                                      </TooltipContent>
-                                                  </Tooltip>
-                                                )}
-                                              </div>
+                                          <TableCell className="font-medium py-2 px-4">
+                                            <div className="flex items-center gap-2 cursor-pointer" onClick={() => handleViewMemberDetails(member.data as Player | Coach, member.role === 'Jugador' ? 'player' : 'coach')}>
+                                              <span className="hover:underline">{member.name}</span>
+                                              {member.hasMissingData && (
+                                                <Tooltip>
+                                                    <TooltipTrigger>
+                                                      <AlertCircle className="h-4 w-4 text-destructive" />
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                      <p>{t('teams.editTeam.missingData')}</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                              )}
                                             </div>
                                           </TableCell>
-                                          <TableCell>
+                                          <TableCell className="py-2 px-4">
                                             <Badge variant={member.role === 'Jugador' ? 'outline' : 'secondary'}>
                                                 {member.role === 'Jugador' ? <User className="mr-1 h-3 w-3" /> : <UserSquare className="mr-1 h-3 w-3" />}
                                                 {member.role}
                                             </Badge>
                                           </TableCell>
-                                          <TableCell>{member.jerseyNumber || 'N/A'}</TableCell>
-                                          <TableCell>
+                                          <TableCell className="py-2 px-4">{member.jerseyNumber || 'N/A'}</TableCell>
+                                          <TableCell className="py-2 px-4">
                                             <DropdownMenu>
                                               <DropdownMenuTrigger asChild>
                                                 <Button aria-haspopup="true" size="icon" variant="ghost">
@@ -1323,5 +1317,7 @@ export default function EditTeamPage() {
     </TooltipProvider>
   );
 }
+
+    
 
     
