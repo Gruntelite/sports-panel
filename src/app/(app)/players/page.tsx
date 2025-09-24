@@ -830,7 +830,7 @@ export default function PlayersPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>{t('players.actions')}</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleViewPlayerDetails(player)}><Eye className="mr-2 h-4 w-4"/>{t('players.viewProfile')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewPlayerDetails(player)}>{t('players.viewProfile')}</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenModal('edit', player)}>{t('players.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setPlayerToDelete(player)}>

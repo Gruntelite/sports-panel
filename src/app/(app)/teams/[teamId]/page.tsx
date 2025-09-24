@@ -959,7 +959,7 @@ export default function EditTeamPage() {
                                               </DropdownMenuTrigger>
                                               <DropdownMenuContent align="end">
                                                 <DropdownMenuLabel>{t('teams.actions')}</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleViewMemberDetails(member.data as Player | Coach, member.role === 'Jugador' ? 'player' : 'coach')}><Eye className="mr-2 h-4 w-4"/>{t('teams.editTeam.viewProfile')}</DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleViewMemberDetails(member.data as Player | Coach, member.role === 'Jugador' ? 'player' : 'coach')}>{t('teams.editTeam.viewProfile')}</DropdownMenuItem>
                                                 <DropdownMenuItem onClick={() => handleOpenModal('edit', member.role === 'Jugador' ? 'player' : 'coach', member)}>{t('teams.editTeam.edit')}</DropdownMenuItem>
                                                 <DropdownMenuSeparator />
                                                 <DropdownMenuItem className="text-destructive" onClick={() => setMemberToDelete(member)}>

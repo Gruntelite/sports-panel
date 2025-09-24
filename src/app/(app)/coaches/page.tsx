@@ -847,7 +847,7 @@ export default function CoachesPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>{t('coaches.actions')}</DropdownMenuLabel>
-                          <DropdownMenuItem onClick={() => handleViewCoachDetails(coach)}><Eye className="mr-2 h-4 w-4"/>{t('coaches.viewProfile')}</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleViewCoachDetails(coach)}>{t('coaches.viewProfile')}</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleOpenModal('edit', coach)}>{t('coaches.edit')}</DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-destructive" onClick={() => setCoachToDelete(coach)}>

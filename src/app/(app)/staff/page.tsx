@@ -607,7 +607,7 @@ export default function StaffPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>{t('staff.actions')}</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => handleViewMemberDetails(member, 'staff')}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleViewMemberDetails(member, 'staff')}>{t('staff.viewProfile')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleOpenModal('edit', 'staff', member)}>{t('staff.edit')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleRequestUpdate(member.id, 'staff')}>
                                     <Send className="mr-2 h-4 w-4" />
@@ -738,7 +738,7 @@ export default function StaffPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
                                   <DropdownMenuLabel>{t('staff.actions')}</DropdownMenuLabel>
-                                  <DropdownMenuItem onClick={() => handleViewMemberDetails(socio, 'socio')}><Eye className="mr-2 h-4 w-4"/>{t('staff.viewProfile')}</DropdownMenuItem>
+                                  <DropdownMenuItem onClick={() => handleViewMemberDetails(socio, 'socio')}>{t('staff.viewProfile')}</DropdownMenuItem>
                                   <DropdownMenuItem onClick={() => handleOpenModal('edit', 'socio', socio)}>{t('staff.edit')}</DropdownMenuItem>
                                   <DropdownMenuSeparator />
                                   <DropdownMenuItem className="text-destructive" onClick={() => setItemToDelete(socio)}>
