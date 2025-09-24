@@ -407,7 +407,7 @@ export default function SchedulesPage() {
           </div>
            <div className="flex items-center gap-2">
                 <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-                    <SelectTrigger className="w-[180px]">
+                    <SelectTrigger className="w-[180px] border-input">
                         <SelectValue placeholder="Filtrar por tipo..." />
                     </SelectTrigger>
                     <SelectContent>
