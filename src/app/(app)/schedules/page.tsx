@@ -196,12 +196,12 @@ export default function SchedulesPage() {
   const handleOpenModal = (mode: 'add' | 'edit', event?: CalendarEvent) => {
     setModalMode(mode);
     setEventData(event ? 
-        { ...event, repeat: 'none', repeatUntil: undefined } : 
+        { ...event, repeat: 'none', repeatUntil: undefined, start: event.start.toDate(), end: event.end.toDate() } : 
         { 
             type: 'Evento',
             color: EVENT_TYPES[2].color,
-            start: Timestamp.now(), 
-            end: Timestamp.now(),
+            start: new Date(), 
+            end: new Date(),
             repeat: 'none',
             repeatUntil: undefined,
         }
@@ -216,59 +216,68 @@ export default function SchedulesPage() {
     }
     setSaving(true);
     
-    const batch = writeBatch(db);
-
     try {
-        if(modalMode === 'edit' && eventData.id) {
-            const dataToUpdate: Partial<CalendarEvent> = { ...eventData };
-            delete (dataToUpdate as any).repeat;
-            delete (dataToUpdate as any).repeatUntil;
-            await updateDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id), dataToUpdate);
-            toast({ title: "Evento actualizado" });
-        } else {
-            const newEvents: Partial<CalendarEvent>[] = [];
-            const baseEvent: Partial<CalendarEvent> = { ...eventData };
-            delete (baseEvent as any).repeat;
-            delete (baseEvent as any).repeatUntil;
+        const batch = writeBatch(db);
 
-            let currentDate = eventData.start.toDate();
-            const repeatUntilDate = eventData.repeatUntil;
-            
-            newEvents.push(baseEvent);
+        // If editing, delete the old event first
+        if (modalMode === 'edit' && eventData.id) {
+            const oldEventRef = doc(db, "clubs", clubId, "calendarEvents", eventData.id);
+            batch.delete(oldEventRef);
+        }
 
-            if (eventData.repeat && eventData.repeat !== 'none' && repeatUntilDate) {
-                while(currentDate <= repeatUntilDate) {
-                    if(eventData.repeat === 'daily') {
-                       currentDate = addDays(currentDate, 1);
-                    } else if (eventData.repeat === 'weekly') {
-                       currentDate = addWeeks(currentDate, 1);
-                    }
+        const newEvents: Partial<CalendarEvent>[] = [];
+        const baseEvent: Partial<CalendarEvent> = { ...eventData };
+        delete (baseEvent as any).id;
+        delete (baseEvent as any).repeat;
+        delete (baseEvent as any).repeatUntil;
 
-                    if (currentDate <= repeatUntilDate) {
-                        const newStart = new Date(currentDate);
-                        newStart.setHours(eventData.start.toDate().getHours(), eventData.start.toDate().getMinutes());
-                        const newEnd = new Date(currentDate);
-                        newEnd.setHours(eventData.end.toDate().getHours(), eventData.end.toDate().getMinutes());
+        let currentDate = new Date(eventData.start as Date);
+        const repeatUntilDate = eventData.repeatUntil;
+        
+        const originalStart = new Date(eventData.start as Date);
+        const originalEnd = new Date(eventData.end as Date);
+        
+        baseEvent.start = Timestamp.fromDate(originalStart);
+        baseEvent.end = Timestamp.fromDate(originalEnd);
 
-                        newEvents.push({
-                            ...baseEvent,
-                            start: Timestamp.fromDate(newStart),
-                            end: Timestamp.fromDate(newEnd),
-                        });
-                    }
+        newEvents.push(baseEvent);
+
+        if (eventData.repeat && eventData.repeat !== 'none' && repeatUntilDate) {
+            let nextDate = new Date(currentDate);
+
+            while(nextDate <= repeatUntilDate) {
+                if(eventData.repeat === 'daily') {
+                   nextDate = addDays(nextDate, 1);
+                } else if (eventData.repeat === 'weekly') {
+                   nextDate = addWeeks(nextDate, 1);
+                }
+
+                if (nextDate <= repeatUntilDate) {
+                    const newStart = new Date(nextDate);
+                    newStart.setHours(originalStart.getHours(), originalStart.getMinutes());
+                    const newEnd = new Date(nextDate);
+                    newEnd.setHours(originalEnd.getHours(), originalEnd.getMinutes());
+
+                    newEvents.push({
+                        ...baseEvent,
+                        start: Timestamp.fromDate(newStart),
+                        end: Timestamp.fromDate(newEnd),
+                    });
                 }
             }
-
-            newEvents.forEach(event => {
-                const docRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-                batch.set(docRef, event);
-            });
-            await batch.commit();
-
-            toast({ title: "Evento(s) creado(s)" });
         }
+        
+        newEvents.forEach(eventToSave => {
+            const docRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
+            batch.set(docRef, eventToSave);
+        });
+
+        await batch.commit();
+
+        toast({ title: "Evento(s) guardado(s)" });
         setIsModalOpen(false);
         if (clubId) fetchData(clubId);
+
     } catch(e) {
         console.error(e);
         toast({ variant: "destructive", title: t('common.error'), description: "No se pudo guardar el evento." });
@@ -276,7 +285,6 @@ export default function SchedulesPage() {
         setSaving(false);
     }
   };
-
 
   const handleDeleteEvent = async () => {
     if (!clubId || !eventToDelete) return;
@@ -451,9 +459,9 @@ export default function SchedulesPage() {
             <div className="grid gap-4 py-4">
                  <div className="space-y-2">
                     <Label htmlFor="event-title">Títol de l'esdeveniment</Label>
-                    <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})} />
+                    <Input id="event-title" value={eventData.title || ''} onChange={(e) => setEventData({...eventData, title: e.target.value})}/>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-2 gap-4">
                      <div className="space-y-2">
                         <Label>Tipus d'Esdeveniment</Label>
                         <Select value={eventData.type} onValueChange={handleEventTypeChange}>
@@ -480,23 +488,23 @@ export default function SchedulesPage() {
                  <div className="grid grid-cols-3 gap-4">
                      <div className="space-y-2">
                         <Label>Data de l'esdeveniment</Label>
-                        <DatePicker date={eventData.start?.toDate()} onDateChange={(date) => {
+                        <DatePicker date={eventData.start as Date} onDateChange={(date) => {
                             if (date) {
-                                const newStart = eventData.start?.toDate() || new Date();
+                                const newStart = new Date(eventData.start as Date);
                                 newStart.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                                const newEnd = eventData.end?.toDate() || new Date();
+                                const newEnd = new Date(eventData.end as Date);
                                 newEnd.setFullYear(date.getFullYear(), date.getMonth(), date.getDate());
-                                setEventData({...eventData, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd)})
+                                setEventData({...eventData, start: newStart, end: newEnd})
                             }
                         }} />
                     </div>
                     <div className="space-y-2">
                         <Label>Hora d'inici</Label>
-                        <Input type="time" value={eventData.start ? format(eventData.start.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = eventData.start.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: Timestamp.fromDate(newDate)})}}}/>
+                        <Input type="time" value={eventData.start ? format(eventData.start as Date, 'HH:mm') : ''} onChange={(e) => { if(eventData.start) { const [h,m] = e.target.value.split(':'); const newDate = new Date(eventData.start as Date); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, start: newDate})}}}/>
                     </div>
                      <div className="space-y-2">
                         <Label>Hora de fi</Label>
-                        <Input type="time" value={eventData.end ? format(eventData.end.toDate(), 'HH:mm') : ''} onChange={(e) => { if(eventData.end) { const [h,m] = e.target.value.split(':'); const newDate = eventData.end.toDate(); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, end: Timestamp.fromDate(newDate)})}}}/>
+                        <Input type="time" value={eventData.end ? format(eventData.end as Date, 'HH:mm') : ''} onChange={(e) => { if(eventData.end) { const [h,m] = e.target.value.split(':'); const newDate = new Date(eventData.end as Date); newDate.setHours(Number(h), Number(m)); setEventData({...eventData, end: newDate})}}}/>
                     </div>
                 </div>
                 
