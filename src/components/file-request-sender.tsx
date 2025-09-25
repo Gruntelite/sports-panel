@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -144,15 +143,16 @@ export function FileRequestSender() {
         }
 
         const formData = new FormData(e.currentTarget);
-        const documentTitle = formData.get('doc-title') as string;
+        const documentTitles = (formData.get('doc-title') as string).split(',').map(s => s.trim()).filter(Boolean);
         
-        if (!documentTitle.trim()) {
+        if (documentTitles.length === 0) {
             toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.fileRequest.errors.noDocTitle') });
             return;
         }
 
         formData.set('clubId', clubId);
         formData.set('members', JSON.stringify(membersToSend));
+        formData.set('documents', JSON.stringify(documentTitles));
 
         setSending(true);
 

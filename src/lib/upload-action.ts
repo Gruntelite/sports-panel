@@ -1,4 +1,3 @@
-
 'use server';
 
 import { db as adminDb, storage as adminStorage } from './firebase-admin'; // Use Admin SDK
