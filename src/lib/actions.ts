@@ -68,7 +68,6 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
 export async function requestDataUpdateAction(payload: { clubId: string; members: any[]; memberType: 'player' | 'coach'; fields: string[] }) {
   const { clubId, members, memberType, fields } = payload;
 
-
   if (members.length === 0) {
     return { success: false, error: "No se seleccionaron miembros." };
   }
@@ -201,11 +200,6 @@ export async function requestFilesAction(formData: FormData) {
     const clubDocSnap = await clubDocRef.get();
     const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
 
-    const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
-    const settingsSnap = await settingsRef.get();
-    const defaultLanguage = settingsSnap.exists ? settingsSnap.data()!.defaultLanguage || 'es' : 'es';
-    const translations = (await import(`@/locales/${defaultLanguage}.json`)).default;
-
     let emailsSent = 0;
     const batch = adminDb.batch();
     
@@ -245,15 +239,15 @@ export async function requestFilesAction(formData: FormData) {
       const emailResult = await sendEmailWithSmtpAction({
         clubId,
         recipients: [{ email: member.email, name: member.name }],
-        subject: subject || `${translations.emailTemplates.fileRequest.subject} ${clubName}`,
+        subject: subject || `Solicitud de Documentación - ${clubName}`,
         htmlContent: `
-            <h1>${translations.emailTemplates.fileRequest.title}</h1>
-            <p>${translations.emailTemplates.hello} ${member.name},</p>
-            ${customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>${translations.emailTemplates.fileRequest.body.replace('{clubName}', clubName).replace('{documentTitle}', documentTitles.join(', '))}</p>`}
-            <p>${translations.emailTemplates.fileRequest.instruction}:</p>
-            <a href="${uploadUrl}">${translations.emailTemplates.fileRequest.cta}</a>
-            <p>${translations.emailTemplates.thanks},</p>
-            <p>${translations.emailTemplates.team} ${clubName}</p>
+            <h1>Solicitud de Documentación</h1>
+            <p>Hola ${member.name},</p>
+            ${customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>El club ${clubName} solicita que adjuntes la siguiente documentación: <strong>${documentTitles.join(', ')}</strong>.</p>`}
+            <p>Por favor, utiliza el siguiente enlace para subir los archivos de forma segura. El enlace es de un solo uso.</p>
+            <a href="${uploadUrl}">Subir Documentación</a>
+            <p>Gracias,</p>
+            <p>El equipo de ${clubName}</p>
         `,
         attachments: attachment ? [attachment] : []
       });
