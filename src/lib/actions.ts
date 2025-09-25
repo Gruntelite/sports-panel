@@ -203,7 +203,7 @@ export async function requestFilesAction(formData: FormData) {
 
     const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
     const settingsSnap = await settingsRef.get();
-    const defaultLanguage = settingsSnap.exists() ? settingsSnap.data()!.defaultLanguage || 'es' : 'es';
+    const defaultLanguage = settingsSnap.exists ? settingsSnap.data()!.defaultLanguage || 'es' : 'es';
     const translations = (await import(`@/locales/${defaultLanguage}.json`)).default;
 
     let emailsSent = 0;
