@@ -380,12 +380,13 @@ export async function sendServerEventAction(eventData: {
 }
 
 export async function sendReviewAction(reviewData: {
+  clubId: string;
   clubName: string;
   userName: string;
   rating: number;
   comment: string;
 }): Promise<{ success: boolean; error?: string }> {
-  const { clubName, userName, rating, comment } = reviewData;
+  const { clubId, clubName, userName, rating, comment } = reviewData;
 
   const subject = `Nueva reseña de SportsPanel: ${rating} estrellas de ${clubName}`;
   const htmlContent = `
@@ -398,7 +399,7 @@ export async function sendReviewAction(reviewData: {
   `;
   
   const result = await sendEmailWithSmtpAction({
-    clubId: "VWxHRR6HzumBnSdLfTtP", // SportsPanel's own clubId for SMTP
+    clubId: clubId,
     recipients: [{ email: "info.sportspanel@gmail.com", name: "Reseñas SportsPanel" }],
     subject,
     htmlContent,

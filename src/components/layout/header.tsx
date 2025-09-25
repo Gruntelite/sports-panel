@@ -143,8 +143,13 @@ export function Header() {
             toast({ variant: "destructive", title: t('review.errorTitle'), description: t('review.errorDescription') });
             return;
         }
+        if (!clubId) {
+            toast({ variant: "destructive", title: t('common.error'), description: "No se pudo identificar el club para enviar la reseña." });
+            return;
+        }
         setIsSendingReview(true);
         const result = await sendReviewAction({
+            clubId: clubId,
             clubName: clubName || "N/A",
             userName: userProfile?.name || "N/A",
             rating,
