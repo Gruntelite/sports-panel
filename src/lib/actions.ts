@@ -72,7 +72,7 @@ export async function requestDataUpdateAction(payload: { clubId: string; members
   if (members.length === 0) {
     return { success: false, error: "No se seleccionaron miembros." };
   }
-  if (!fields) {
+  if (!fields || fields.length === 0) {
     return { success: false, error: "No se seleccionaron campos para actualizar."};
   }
 
@@ -91,7 +91,7 @@ export async function requestDataUpdateAction(payload: { clubId: string; members
     for (const member of members) {
         if (!member.email) continue;
         
-        const updateUrl = `https://sportspanel.net/update-profile/${member.id}?type=${memberType}&clubId=${clubId}&fields=${fields}`;
+        const updateUrl = `https://sportspanel.net/update-profile/${member.id}?type=${memberType}&clubId=${clubId}&fields=${fields.join(',')}`;
         
         const collectionName = memberType === 'player' ? 'players' : 'coaches';
         const memberRef = adminDb.collection("clubs").doc(clubId).collection(collectionName).doc(member.id);
