@@ -65,13 +65,8 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
 }
 
 
-export async function requestDataUpdateAction(formData: FormData) {
-  const clubId = formData.get('clubId') as string;
-  const members = JSON.parse(formData.get('members') as string);
-  const memberType = formData.get('memberType') as 'player' | 'coach';
-  const fields = formData.get('fields') as string;
-  const subject = formData.get('subject') as string | undefined;
-  const customMessage = formData.get('message') as string | undefined;
+export async function requestDataUpdateAction(payload: { clubId: string; members: any[]; memberType: 'player' | 'coach'; fields: string[] }) {
+  const { clubId, members, memberType, fields } = payload;
 
 
   if (members.length === 0) {
@@ -84,13 +79,10 @@ export async function requestDataUpdateAction(formData: FormData) {
   try {
     const clubDocRef = adminDb.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
-    const clubName = clubDocSnap.exists() ? clubDocSnap.data()!.name : 'Tu Club';
-    
-    const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
-    const settingsSnap = await settingsRef.get();
-    const defaultLanguage = settingsSnap.exists() ? settingsSnap.data()!.defaultLanguage || 'es' : 'es';
-    const translations = (await import(`@/locales/${defaultLanguage}.json`)).default;
-
+    if (!clubDocSnap.exists) {
+        return { success: false, error: "El club especificado no existe." };
+    }
+    const clubName = clubDocSnap.data()!.name || 'Tu Club';
     
     let emailsSent = 0;
     
@@ -109,15 +101,14 @@ export async function requestDataUpdateAction(formData: FormData) {
         const emailResult = await sendEmailWithSmtpAction({
             clubId,
             recipients: [{ email: member.email, name: member.name }],
-            subject: subject || `${translations.emailTemplates.updateData.subject} ${clubName}`,
+            subject: `Actualización de datos para ${clubName}`,
             htmlContent: `
-                <h1>${translations.emailTemplates.updateData.title}</h1>
-                <p>${translations.emailTemplates.hello} ${member.name},</p>
-                ${customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>${translations.emailTemplates.updateData.body}</p>`}
-                <a href="${updateUrl}">${translations.emailTemplates.updateData.cta}</a>
-                <p>${translations.emailTemplates.updateData.singleUse}</p>
-                <p>${translations.emailTemplates.thanks},</p>
-                <p>${translations.emailTemplates.team} ${clubName}</p>
+                <h1>Actualización de Datos</h1>
+                <p>Hola ${member.name},</p>
+                <p>El club ${clubName} solicita que actualices tu información. Por favor, haz clic en el siguiente enlace para revisar y confirmar tus datos. El enlace es de un solo uso y expirará una vez que hayas guardado los cambios.</p>
+                <a href="${updateUrl}">Actualizar mis datos</a>
+                <p>Gracias,</p>
+                <p>El equipo de ${clubName}</p>
             `,
         });
         if (emailResult.success) {
@@ -217,6 +208,15 @@ export async function requestFilesAction(formData: FormData) {
 
     let emailsSent = 0;
     const batch = adminDb.batch();
+    
+    const batchId = adminDb.collection("fileRequestBatches").doc().id;
+     batch.set(adminDb.collection("fileRequestBatches").doc(batchId), {
+        clubId,
+        documentTitle: documentTitles.join(', '),
+        totalSent: members.length,
+        createdAt: Timestamp.now(),
+    });
+
 
     for (const member of members) {
       if (!member.email) continue;
@@ -229,6 +229,7 @@ export async function requestFilesAction(formData: FormData) {
           const requestRef = adminDb.collection("fileRequests").doc();
           batch.set(requestRef, {
             clubId,
+            batchId,
             userId: member.id,
             userName: member.name,
             documentTitle: docTitle,
