@@ -13,13 +13,15 @@ import {
 import { Users, Shield, Calendar, CircleDollarSign, Loader2, MapPin, Clock, UserSquare } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
 import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp } from "firebase/firestore";
-import type { CalendarEvent, ScheduleTemplate } from "@/lib/types";
+import type { CalendarEvent, ScheduleTemplate, Team } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { format } from "date-fns";
 import { es, ca } from "date-fns/locale";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useTranslation } from "@/components/i18n-provider";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
+
 
 const iconMap = {
   Users: Users,
@@ -36,6 +38,7 @@ type TrainingEntry = {
     endTime: string;
     location?: string;
     color: string;
+    teamId: string;
 }
 
 type EventEntry = {
@@ -45,13 +48,18 @@ type EventEntry = {
     endTime: string;
     location?: string;
     color: string;
+    type: string;
 }
 
-function DailySchedule({ selectedDate }: { selectedDate: Date }) {
+function DailySchedule({ selectedDate, teams }: { selectedDate: Date, teams: Team[] }) {
     const { t, locale } = useTranslation();
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [events, setEvents] = useState<EventEntry[]>([]);
     const [loading, setLoading] = useState(true);
+
+    const [trainingFilter, setTrainingFilter] = useState('all');
+    const [eventFilter, setEventFilter] = useState('all');
+
 
     useEffect(() => {
         const fetchDailySchedule = async (clubId: string) => {
@@ -64,22 +72,18 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
                 const dayName = daysOfWeek[scheduleDate.getDay()];
 
-                // 1. Get default template ID first
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
                 const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
 
-                // 2. Check for an override for the selected date
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", dateStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
-                // 3. Determine which template ID to use
                 let templateIdToUse = defaultTemplateId;
                 if (overrideSnap.exists()) {
                     templateIdToUse = overrideSnap.data().templateId;
                 }
                 
-                // 4. Fetch trainings from the determined template
                 let todaysTrainings: TrainingEntry[] = [];
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
@@ -94,6 +98,7 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                             todaysTrainings = daySchedule.map((training: any) => ({
                                 id: `${training.id}-${dateStr}`,
                                 title: training.teamName,
+                                teamId: training.teamId,
                                 startTime: training.startTime,
                                 endTime: training.endTime,
                                 location: training.venueName,
@@ -104,7 +109,6 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                 }
                 setTrainings(todaysTrainings.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
-                // 5. Fetch Custom Events for the day
                 const dayStart = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 0, 0, 0, 0);
                 const dayEnd = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 23, 59, 59, 999);
 
@@ -121,7 +125,8 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
                         startTime: format(event.start.toDate(), 'HH:mm'),
                         endTime: format(event.end.toDate(), 'HH:mm'),
                         location: event.location,
-                        color: event.color
+                        color: event.color,
+                        type: event.type
                     };
                 });
                 setEvents(eventEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
@@ -162,24 +167,41 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
         return 'bg-primary';
     }
 
+    const filteredTrainings = trainings.filter(t => trainingFilter === 'all' || t.teamId === trainingFilter);
+    const filteredEvents = events.filter(e => eventFilter === 'all' || e.type === eventFilter);
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader>
-                    <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.trainingsTitle')} {titleDate}</CardTitle>
-                    <CardDescription>
-                       {t('dashboard.dailySchedule.trainingsDescription')}
-                    </CardDescription>
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
+                         <div>
+                            <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.trainingsTitle')} {titleDate}</CardTitle>
+                            <CardDescription>
+                            {t('dashboard.dailySchedule.trainingsDescription')}
+                            </CardDescription>
+                         </div>
+                         <Select value={trainingFilter} onValueChange={setTrainingFilter}>
+                             <SelectTrigger className="w-full sm:w-[200px]">
+                                <SelectValue placeholder="Filtrar entrenamientos..." />
+                             </SelectTrigger>
+                             <SelectContent>
+                                <SelectItem value="all">Tots els entrenaments</SelectItem>
+                                {teams.map(team => (
+                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                                ))}
+                             </SelectContent>
+                         </Select>
+                    </div>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
                         <div className="flex justify-center items-center h-24">
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
-                    ) : trainings.length > 0 ? (
+                    ) : filteredTrainings.length > 0 ? (
                         <div className="space-y-3">
-                            {trainings.map(item => (
+                            {filteredTrainings.map(item => (
                                 <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
                                     <div className="flex flex-col items-center w-16 md:w-20">
                                         <span className="font-bold text-sm md:text-base">{item.startTime}</span>
@@ -203,19 +225,34 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
 
              <Card>
                 <CardHeader>
-                    <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.eventsTitle')} {titleDate}</CardTitle>
-                    <CardDescription>
-                        {t('dashboard.dailySchedule.eventsDescription')}
-                    </CardDescription>
+                     <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
+                        <div>
+                            <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.eventsTitle')} {titleDate}</CardTitle>
+                            <CardDescription>
+                                {t('dashboard.dailySchedule.eventsDescription')}
+                            </CardDescription>
+                        </div>
+                         <Select value={eventFilter} onValueChange={setEventFilter}>
+                             <SelectTrigger className="w-full sm:w-[200px]">
+                                <SelectValue placeholder="Filtrar eventos..." />
+                             </SelectTrigger>
+                             <SelectContent>
+                                <SelectItem value="all">Tots els esdeveniments</SelectItem>
+                                <SelectItem value="Partido">Partits</SelectItem>
+                                <SelectItem value="Evento">Esdeveniments</SelectItem>
+                                <SelectItem value="Otro">Altres</SelectItem>
+                             </SelectContent>
+                         </Select>
+                     </div>
                 </CardHeader>
                 <CardContent>
                     {loading ? (
                         <div className="flex justify-center items-center h-24">
                             <Loader2 className="h-6 w-6 animate-spin text-primary" />
                         </div>
-                    ) : events.length > 0 ? (
+                    ) : filteredEvents.length > 0 ? (
                         <div className="space-y-3">
-                            {events.map(item => {
+                            {filteredEvents.map(item => {
                                 const separatorColor = getSeparatorColorFromBorder(item.color);
                                 return (
                                 <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
@@ -253,6 +290,7 @@ export default function DashboardPage() {
     { id: "fees", title: "Ingresos Previstos (Mes)", value: "0 €", change: "", icon: 'CircleDollarSign' },
   ]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
+  const [teams, setTeams] = useState<Team[]>([]);
   
   useEffect(() => {
     const fetchStats = async (clubId: string) => {
@@ -262,14 +300,16 @@ export default function DashboardPage() {
             const playersCol = collection(db, "clubs", clubId, "players");
             const coachesCol = collection(db, "clubs", clubId, "coaches");
 
-            const [teamsCountSnap, playersCountSnap, coachesCountSnap, playersSnapshot] = await Promise.all([
-                getCountFromServer(teamsCol),
+            const [teamsSnapshot, playersCountSnap, coachesCountSnap, playersSnapshot] = await Promise.all([
+                getDocs(query(teamsCol, orderBy("order"))),
                 getCountFromServer(playersCol),
                 getCountFromServer(coachesCol),
                 getDocs(playersCol)
             ]);
             
-            const teamsCount = teamsCountSnap.data().count;
+            const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+            setTeams(teamsList);
+
             const playersCount = playersCountSnap.data().count;
             const coachesCount = coachesCountSnap.data().count;
 
@@ -283,7 +323,7 @@ export default function DashboardPage() {
             setStats([
                 { id: "players", title: t('dashboard.stats.totalPlayers'), value: playersCount.toString(), change: "", icon: 'Users' },
                 { id: "coaches", title: t('dashboard.stats.totalCoaches'), value: coachesCount.toString(), change: "", icon: 'UserSquare' },
-                { id: "teams", title: t('dashboard.stats.teams'), value: teamsCount.toString(), change: "", icon: 'Shield' },
+                { id: "teams", title: t('dashboard.stats.teams'), value: teamsList.length.toString(), change: "", icon: 'Shield' },
                 { id: "fees", title: t('dashboard.stats.monthlyIncome'), value: `${expectedIncome.toLocaleString('es-ES')} €`, change: `${t('dashboard.stats.totalIncomeIn')} ${monthName}`, icon: 'CircleDollarSign' },
             ]);
 
@@ -364,7 +404,7 @@ export default function DashboardPage() {
         </CardHeader>
       </Card>
 
-      <DailySchedule selectedDate={selectedDate} />
+      <DailySchedule selectedDate={selectedDate} teams={teams} />
     </div>
   );
 }
