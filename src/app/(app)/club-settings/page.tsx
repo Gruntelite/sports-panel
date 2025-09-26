@@ -400,8 +400,8 @@ export default function ClubSettingsPage() {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>{t('clubSettings.customization.modal.appliesTo')}</Label>
-                                        <div className="flex flex-col sm:flex-row gap-4">
-                                            {(['player', 'coach', 'staff'] as const).map(type => (
+                                        <div className="flex flex-wrap gap-4">
+                                            {(['player', 'coach', 'staff', 'socio'] as const).map(type => (
                                                 <div key={type} className="flex items-center gap-2">
                                                     <Switch
                                                         id={`applies-${type}`}
@@ -433,7 +433,7 @@ export default function ClubSettingsPage() {
                                     <li key={field.id} className="flex items-center justify-between p-3 border rounded-md">
                                         <div>
                                             <p className="font-medium">{field.name}</p>
-                                            <p className="text-xs text-muted-foreground">{t('clubSettings.customization.fieldInfo', { type: field.type, appliesTo: field.appliesTo.join(', ') })}</p>
+                                            <p className="text-xs text-muted-foreground">{t('clubSettings.customization.fieldInfo', { type: field.type, appliesTo: field.appliesTo.map(type => t(`clubSettings.customization.modal.memberTypes.${type}`)).join(', ') })}</p>
                                         </div>
                                         <Button variant="ghost" size="icon" onClick={() => handleRemoveCustomField(field.id)} disabled={saving}>
                                             <Trash2 className="h-4 w-4 text-destructive"/>
@@ -468,3 +468,5 @@ export default function ClubSettingsPage() {
         </div>
     );
 }
+
+    

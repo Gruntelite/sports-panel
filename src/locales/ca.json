@@ -1416,7 +1416,8 @@
                 "memberTypes": {
                     "player": "Jugadors",
                     "coach": "Entrenadors",
-                    "staff": "Staff"
+                    "staff": "Staff",
+                    "socio": "Socis"
                 }
             },
             "fieldInfo": "Tipus: {type}, Aplica a: {appliesTo}",
@@ -1495,3 +1496,5 @@
         }
     }
 }
+
+    
