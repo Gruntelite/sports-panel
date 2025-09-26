@@ -236,14 +236,17 @@ export async function requestFilesAction(formData: FormData) {
       const appUrl = `https://sportspanel.net`;
       const uploadUrl = `${appUrl}/upload/${singleUseToken}`;
 
+      const finalSubject = subject || `Solicitud de Documentación - ${clubName}`;
+      const finalMessage = customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>El club ${clubName} solicita que adjuntes la siguiente documentación: <strong>${documentTitles.join(', ')}</strong>.</p>`;
+
       const emailResult = await sendEmailWithSmtpAction({
         clubId,
         recipients: [{ email: member.email, name: member.name }],
-        subject: subject || `Solicitud de Documentación - ${clubName}`,
+        subject: finalSubject,
         htmlContent: `
             <h1>Solicitud de Documentación</h1>
             <p>Hola ${member.name},</p>
-            ${customMessage ? `<p>${customMessage.replace(/\n/g, '<br>')}</p>` : `<p>El club ${clubName} solicita que adjuntes la siguiente documentación: <strong>${documentTitles.join(', ')}</strong>.</p>`}
+            ${finalMessage}
             <p>Por favor, utiliza el siguiente enlace para subir los archivos de forma segura. El enlace es de un solo uso.</p>
             <a href="${uploadUrl}">Subir Documentación</a>
             <p>Gracias,</p>
@@ -401,3 +404,5 @@ export async function sendReviewAction(reviewData: {
 
   return result;
 }
+
+    

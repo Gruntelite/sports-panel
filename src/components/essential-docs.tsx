@@ -400,11 +400,14 @@ export function EssentialDocs() {
         .map(id => allMembers.find(m => m.id === id))
         .filter(m => m && m.email) as ClubMember[];
         
-    const result = await requestFilesAction({
-        clubId,
-        members: membersToSend,
-        documents: selectedDocsToRequest
-    });
+    const formData = new FormData();
+    formData.append('clubId', clubId);
+    formData.append('members', JSON.stringify(membersToSend));
+    formData.append('documents', JSON.stringify(selectedDocsToRequest));
+    formData.append('subject', 'Solicitud de Documentación Esencial');
+    formData.append('message', `Hola, te recordamos que tienes la siguiente documentación pendiente de entregar: ${selectedDocsToRequest.join(', ')}. Por favor, utiliza el enlace para subirla. ¡Gracias!`);
+
+    const result = await requestFilesAction(formData);
     
     if (result.success) {
         toast({ title: t('clubFiles.essentialDocs.requestsSent'), description: t('clubFiles.essentialDocs.requestsSentDesc', { count: result.count || 0 })});
@@ -604,3 +607,5 @@ export function EssentialDocs() {
     </TooltipProvider>
   );
 }
+
+    
