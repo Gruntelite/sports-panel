@@ -24,6 +24,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Loader2 } from "lucide-react";
+import { Badge } from "../ui/badge";
+import { differenceInDays, isFuture } from "date-fns";
 
 
 const menuGroups = [
@@ -73,6 +75,7 @@ export function Header() {
     const [clubName, setClubName] = useState<string | null>(null);
     const [clubLogo, setClubLogo] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
+    const [trialEndDate, setTrialEndDate] = useState<Timestamp | null>(null);
     
     // Review Dialog State
     const [isReviewOpen, setIsReviewOpen] = useState(false);
@@ -109,6 +112,7 @@ export function Header() {
                         const settingsSnap = await getDoc(settingsRef);
                          if (settingsSnap.exists()) {
                             setClubLogo(settingsSnap.data().logoUrl);
+                            setTrialEndDate(settingsSnap.data().trialEndDate || null);
                         }
 
                         const initials = (rootUserData.name || "U").split(' ').map((n:string) => n[0]).join('').substring(0, 2);
@@ -191,6 +195,7 @@ export function Header() {
     };
     
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
+    const daysLeft = trialEndDate && isFuture(trialEndDate.toDate()) ? differenceInDays(trialEndDate.toDate(), new Date()) : 0;
 
     return (
         <>
@@ -284,6 +289,7 @@ export function Header() {
                             <div className="hidden md:flex flex-col items-start">
                                <span className="font-semibold text-sm">{clubName}</span>
                             </div>
+                           {daysLeft > 0 && <Badge variant="destructive">{daysLeft} {t('sidebar.trialDays', {days: ''})}</Badge>}
                            <ChevronDown className="h-4 w-4 text-muted-foreground hidden md:block" />
                        </Button>
                     </DropdownMenuTrigger>
