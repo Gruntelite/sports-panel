@@ -92,9 +92,12 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
         }
     }
 
-    const filteredItems = viewType === 'trainings' 
-        ? allEvents.filter(e => e.type === 'Entrenamiento')
-        : allEvents.filter(e => e.type.toLowerCase() === viewType.slice(0, -1));
+    const filteredItems = allEvents.filter(e => {
+        if (viewType === 'trainings') return e.type === 'Entrenamiento';
+        if (viewType === 'matches') return e.type === 'Partido';
+        if (viewType === 'events') return e.type === 'Evento' || e.type === 'Otro';
+        return true;
+    });
 
 
     return (
@@ -112,7 +115,7 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
                         <SelectContent>
                             <SelectItem value="trainings">Entrenamientos</SelectItem>
                             <SelectItem value="matches">Partidos</SelectItem>
-                            <SelectItem value="events">Eventos</SelectItem>
+                            <SelectItem value="events">Eventos y Otros</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -126,7 +129,7 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
                                     <span className="font-bold text-sm md:text-base">{item.startTime}</span>
                                     <span className="text-xs text-muted-foreground">{item.endTime}</span>
                                 </div>
-                                <div className={cn("h-10 w-1 rounded-full", viewType === 'trainings' ? 'bg-primary' : getSeparatorColorFromBorder(item.color))}></div>
+                                <div className={cn("h-10 w-1 rounded-full", getSeparatorColorFromBorder(item.color))}></div>
                                 <div className="flex-1">
                                     <p className="font-semibold text-sm md:text-base">{item.title}</p>
                                     {item.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
@@ -189,7 +192,7 @@ function DailyScheduleContainer({ selectedDate, teams }: { selectedDate: Date, t
                                     startTime: training.startTime,
                                     endTime: training.endTime,
                                     location: training.venueName,
-                                    color: 'bg-primary/20 text-primary border border-primary/50',
+                                    color: training.color,
                                     type: 'Entrenamiento'
                                 });
                             });
