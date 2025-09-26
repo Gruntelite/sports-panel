@@ -6,6 +6,7 @@ import { auth as adminAuth, db as adminDb } from './firebase-admin';
 import type { ClubCreationData, ClubMember } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
+import { addDays } from "date-fns";
 
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
@@ -39,8 +40,7 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
             clubId: clubId,
         });
         
-        const trialEndDate = new Date();
-        trialEndDate.setDate(trialEndDate.getDate() + 10);
+        const trialEndDate = addDays(new Date(), 10);
         trialEndDate.setHours(23, 59, 59, 999);
 
         const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
@@ -441,3 +441,6 @@ export async function sendSupportRequestAction(supportData: {
 
     
 
+
+
+    
