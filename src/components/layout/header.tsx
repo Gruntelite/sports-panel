@@ -193,7 +193,7 @@ export function Header() {
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
 
     return (
-        <Dialog>
+        <>
         <header className="flex h-16 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
                  <Sheet>
@@ -304,18 +304,14 @@ export function Header() {
                                 <span>{t('sidebar.userGuide')}</span>
                             </Link>
                         </DropdownMenuItem>
-                        <DialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsReviewOpen(true);}}>
-                                <Star className="mr-2 h-4 w-4" />
-                                <span>{t('sidebar.leaveReview')}</span>
-                            </DropdownMenuItem>
-                        </DialogTrigger>
-                        <DialogTrigger asChild>
-                             <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsSupportOpen(true); }}>
-                                <HelpCircle className="mr-2 h-4 w-4" />
-                                <span>{t('sidebar.helpSupport')}</span>
-                            </DropdownMenuItem>
-                        </DialogTrigger>
+                        <DropdownMenuItem onSelect={() => setIsReviewOpen(true)}>
+                            <Star className="mr-2 h-4 w-4" />
+                            <span>{t('sidebar.leaveReview')}</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onSelect={() => setIsSupportOpen(true)}>
+                            <HelpCircle className="mr-2 h-4 w-4" />
+                            <span>{t('sidebar.helpSupport')}</span>
+                        </DropdownMenuItem>
                          <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                             <LogOut className="mr-2 h-4 w-4" />
@@ -324,9 +320,11 @@ export function Header() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-            
-            {/* Review Dialog */}
-            <DialogContent open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        </header>
+
+        {/* Review Dialog */}
+        <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+            <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{t('sidebar.leaveReview')}</DialogTitle>
                     <DialogDescription>{t('review.reviewDescription')}</DialogDescription>
@@ -364,9 +362,11 @@ export function Header() {
                     </Button>
                 </DialogFooter>
             </DialogContent>
-            
-            {/* Support Dialog */}
-             <DialogContent open={isSupportOpen} onOpenChange={setIsSupportOpen}>
+        </Dialog>
+        
+        {/* Support Dialog */}
+        <Dialog open={isSupportOpen} onOpenChange={setIsSupportOpen}>
+             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>{t('sidebar.supportContact')}</DialogTitle>
                     <DialogDescription>{t('sidebar.supportDescription')}</DialogDescription>
@@ -391,8 +391,8 @@ export function Header() {
                     </Button>
                 </DialogFooter>
             </DialogContent>
-        </header>
         </Dialog>
+        </>
     );
 }
 
