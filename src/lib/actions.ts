@@ -41,7 +41,6 @@ export async function createClubAction(values: ClubCreationData): Promise<{ succ
         });
         
         const trialEndDate = addDays(new Date(), 10);
-        trialEndDate.setHours(23, 59, 59, 999);
 
         const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
         batch.set(settingsRef, {

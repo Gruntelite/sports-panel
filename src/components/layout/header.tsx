@@ -195,7 +195,7 @@ export function Header() {
     };
     
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
-    const daysLeft = trialEndDate && isFuture(trialEndDate.toDate()) ? differenceInDays(trialEndDate.toDate(), new Date()) : 0;
+    const daysLeft = trialEndDate && isFuture(trialEndDate.toDate()) ? Math.ceil(differenceInDays(trialEndDate.toDate(), new Date())) : 0;
 
     return (
         <>
