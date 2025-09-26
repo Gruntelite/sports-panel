@@ -16,7 +16,7 @@ import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Tim
 import type { CalendarEvent, ScheduleTemplate, Team } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { format } from "date-fns";
+import { format, isSameDay } from "date-fns";
 import { es, ca } from "date-fns/locale";
 import { DatePicker } from "@/components/ui/date-picker";
 import { useTranslation } from "@/components/i18n-provider";
@@ -48,10 +48,11 @@ type EventEntry = {
     endTime: string;
     location?: string;
     color: string;
-    type: string;
+    type: 'Entrenamiento' | 'Partido' | 'Evento' | 'Otro';
+    teamName?: string;
 }
 
-function DailyScheduleBlock({ allTrainings, allEvents, teams, selectedDate, blockNumber }: { allTrainings: TrainingEntry[], allEvents: EventEntry[], teams: Team[], selectedDate: Date, blockNumber: number }) {
+function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[], blockNumber: number }) {
     const { t, locale } = useTranslation();
     const [viewType, setViewType] = useState(blockNumber === 1 ? 'trainings' : 'matches');
     
@@ -63,8 +64,6 @@ function DailyScheduleBlock({ allTrainings, allEvents, teams, selectedDate, bloc
         }
         return 'bg-primary';
     }
-
-    const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: locale === 'ca' ? ca : es });
 
     const getTitle = () => {
         switch(viewType) {
@@ -94,7 +93,7 @@ function DailyScheduleBlock({ allTrainings, allEvents, teams, selectedDate, bloc
     }
 
     const filteredItems = viewType === 'trainings' 
-        ? allTrainings
+        ? allEvents.filter(e => e.type === 'Entrenamiento')
         : allEvents.filter(e => e.type.toLowerCase() === viewType.slice(0, -1));
 
 
@@ -146,34 +145,33 @@ function DailyScheduleBlock({ allTrainings, allEvents, teams, selectedDate, bloc
 }
 
 function DailyScheduleContainer({ selectedDate, teams }: { selectedDate: Date, teams: Team[] }) {
-    const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
-    const [events, setEvents] = useState<EventEntry[]>([]);
+    const [allEvents, setAllEvents] = useState<EventEntry[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDailySchedule = async (clubId: string) => {
             if (!selectedDate) return;
             setLoading(true);
+            
+            const finalEvents: EventEntry[] = [];
 
             try {
-                const scheduleDate = selectedDate;
-                const dateStr = format(scheduleDate, "yyyy-MM-dd");
+                const scheduleDateStr = format(selectedDate, "yyyy-MM-dd");
                 const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                const dayName = daysOfWeek[scheduleDate.getDay()];
+                const dayName = daysOfWeek[selectedDate.getDay()];
 
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
-                const defaultTemplateId = settingsSnap.exists ? settingsSnap.data()?.defaultScheduleTemplateId : null;
+                const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
 
-                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", dateStr);
+                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", scheduleDateStr);
                 const overrideSnap = await getDoc(overrideRef);
                 
                 let templateIdToUse = defaultTemplateId;
-                if (overrideSnap.exists()) {
+                if (overrideSnap.exists() && overrideSnap.data().templateId) {
                     templateIdToUse = overrideSnap.data().templateId;
                 }
                 
-                let todaysTrainings: TrainingEntry[] = [];
                 if (templateIdToUse) {
                     const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
                     const templateSnap = await getDoc(templateRef);
@@ -184,43 +182,54 @@ function DailyScheduleContainer({ selectedDate, teams }: { selectedDate: Date, t
                         
                         if (weeklySchedule && weeklySchedule[dayName as keyof typeof weeklySchedule]) {
                             const daySchedule = weeklySchedule[dayName as keyof typeof weeklySchedule];
-                            todaysTrainings = daySchedule.map((training: any) => ({
-                                id: `${training.id}-${dateStr}`,
-                                title: training.teamName,
-                                teamId: training.teamId,
-                                startTime: training.startTime,
-                                endTime: training.endTime,
-                                location: training.venueName,
-                                color: 'bg-primary/20 text-primary border border-primary/50'
-                            }));
+                            daySchedule.forEach((training: any) => {
+                                finalEvents.push({
+                                    id: `${training.id}-${scheduleDateStr}`,
+                                    title: training.teamName,
+                                    startTime: training.startTime,
+                                    endTime: training.endTime,
+                                    location: training.venueName,
+                                    color: 'bg-primary/20 text-primary border border-primary/50',
+                                    type: 'Entrenamiento'
+                                });
+                            });
                         }
                     }
                 }
-                setTrainings(todaysTrainings.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
-                const dayStart = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 0, 0, 0, 0);
-                const dayEnd = new Date(scheduleDate.getFullYear(), scheduleDate.getMonth(), scheduleDate.getDate(), 23, 59, 59, 999);
+                const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
+                const dayEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59, 999);
 
                 const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(dayStart)),
                     where('start', '<=', Timestamp.fromDate(dayEnd))
                 );
                 const customEventsSnapshot = await getDocs(customEventsQuery);
-                const eventEntries = customEventsSnapshot.docs.map(doc => {
-                    const event = doc.data() as CalendarEvent;
-                    const eventType = event.type === 'Partido' ? 'match' : event.type.toLowerCase();
-                    return {
-                        id: doc.id,
+                
+                const exceptionsOnDay: string[] = [];
+                customEventsSnapshot.docs.forEach(docSnap => {
+                    const event = docSnap.data() as CalendarEvent;
+                    if (event.recurrenceException && isSameDay(event.recurrenceException.toDate(), selectedDate)) {
+                        exceptionsOnDay.push(event.recurrenceId!);
+                    }
+                });
+
+                customEventsSnapshot.docs.forEach(docSnap => {
+                    const event = docSnap.data() as CalendarEvent;
+                    if (event.recurrenceId && exceptionsOnDay.includes(event.recurrenceId)) return;
+                    
+                    finalEvents.push({
+                        id: docSnap.id,
                         title: event.title,
                         startTime: format(event.start.toDate(), 'HH:mm'),
                         endTime: format(event.end.toDate(), 'HH:mm'),
                         location: event.location,
                         color: event.color,
-                        type: eventType,
+                        type: event.type,
                         teamName: event.teamName
-                    };
+                    });
                 });
-                setEvents(eventEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
+                setAllEvents(finalEvents.sort((a, b) => a.startTime.localeCompare(b.startTime)));
 
             } catch (error) {
                 console.error("Error fetching daily schedule:", error);
@@ -258,8 +267,8 @@ function DailyScheduleContainer({ selectedDate, teams }: { selectedDate: Date, t
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
-            <DailyScheduleBlock allTrainings={trainings} allEvents={events} teams={teams} selectedDate={selectedDate} blockNumber={1} />
-            <DailyScheduleBlock allTrainings={trainings} allEvents={events} teams={teams} selectedDate={selectedDate} blockNumber={2} />
+            <DailyScheduleBlock allEvents={allEvents} blockNumber={1} />
+            <DailyScheduleBlock allEvents={allEvents} blockNumber={2} />
         </div>
     )
 }
