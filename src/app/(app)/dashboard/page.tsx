@@ -156,71 +156,29 @@ function DailyScheduleContainer({ selectedDate, teams }: { selectedDate: Date, t
             if (!selectedDate) return;
             setLoading(true);
             
-            const finalEvents: EventEntry[] = [];
-
             try {
-                const scheduleDateStr = format(selectedDate, "yyyy-MM-dd");
-                const daysOfWeek = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
-                const dayName = daysOfWeek[selectedDate.getDay()];
-
-                const settingsRef = doc(db, "clubs", clubId, "settings", "config");
-                const settingsSnap = await getDoc(settingsRef);
-                const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
-
-                const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", scheduleDateStr);
-                const overrideSnap = await getDoc(overrideRef);
-                
-                let templateIdToUse = defaultTemplateId;
-                if (overrideSnap.exists() && overrideSnap.data().templateId) {
-                    templateIdToUse = overrideSnap.data().templateId;
-                }
-                
-                if (templateIdToUse) {
-                    const templateRef = doc(db, "clubs", clubId, "schedules", templateIdToUse);
-                    const templateSnap = await getDoc(templateRef);
-
-                    if (templateSnap.exists()) {
-                        const templateData = templateSnap.data() as ScheduleTemplate;
-                        const weeklySchedule = templateData.weeklySchedule;
-                        
-                        if (weeklySchedule && weeklySchedule[dayName as keyof typeof weeklySchedule]) {
-                            const daySchedule = weeklySchedule[dayName as keyof typeof weeklySchedule];
-                            daySchedule.forEach((training: any) => {
-                                finalEvents.push({
-                                    id: `${training.id}-${scheduleDateStr}`,
-                                    title: training.teamName,
-                                    startTime: training.startTime,
-                                    endTime: training.endTime,
-                                    location: training.venueName,
-                                    color: training.color,
-                                    type: 'Entrenamiento'
-                                });
-                            });
-                        }
-                    }
-                }
-
+                const finalEvents: EventEntry[] = [];
                 const dayStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 0, 0, 0, 0);
                 const dayEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), 23, 59, 59, 999);
 
-                const customEventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
+                const eventsQuery = query(collection(db, "clubs", clubId, "calendarEvents"),
                     where('start', '>=', Timestamp.fromDate(dayStart)),
                     where('start', '<=', Timestamp.fromDate(dayEnd))
                 );
-                const customEventsSnapshot = await getDocs(customEventsQuery);
+                const eventsSnapshot = await getDocs(eventsQuery);
                 
                 const exceptionsOnDay: string[] = [];
-                customEventsSnapshot.docs.forEach(docSnap => {
+                eventsSnapshot.docs.forEach(docSnap => {
                     const event = docSnap.data() as CalendarEvent;
                     if (event.recurrenceException && isSameDay(event.recurrenceException.toDate(), selectedDate)) {
                         exceptionsOnDay.push(event.recurrenceId!);
                     }
                 });
-
-                customEventsSnapshot.docs.forEach(docSnap => {
+                
+                eventsSnapshot.docs.forEach(docSnap => {
                     const event = docSnap.data() as CalendarEvent;
-                    if (event.recurrenceId && exceptionsOnDay.includes(event.recurrenceId)) return;
-                    
+                     if (event.recurrenceId && exceptionsOnDay.includes(event.recurrenceId)) return;
+
                     finalEvents.push({
                         id: docSnap.id,
                         title: event.title,
