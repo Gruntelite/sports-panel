@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Users, Shield, Calendar, CircleDollarSign, Loader2, MapPin, Clock, UserSquare } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, where, Timestamp, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, where, Timestamp, orderBy, getCountFromServer } from "firebase/firestore";
 import type { CalendarEvent, ScheduleTemplate, Team } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -367,5 +367,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    
