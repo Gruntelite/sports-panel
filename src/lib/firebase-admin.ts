@@ -7,6 +7,7 @@ if (!admin.apps.length) {
     // This will use the GOOGLE_APPLICATION_CREDENTIALS environment variable
     // for authentication on the server.
     admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
         storageBucket: "sportspanel.firebasestorage.app",
     });
   } catch (e) {
@@ -19,4 +20,3 @@ const auth = admin.auth();
 const storage = admin.storage();
 
 export { db, auth, storage };
-

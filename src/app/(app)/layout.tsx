@@ -5,10 +5,12 @@ import * as React from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc } from 'firebase/firestore';
-import { useRouter } from 'next/navigation';
+import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { isFuture } from 'date-fns';
+
 
 export default function AppLayout({
   children,
@@ -16,6 +18,7 @@ export default function AppLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
 
@@ -32,6 +35,23 @@ export default function AppLayout({
             return;
           }
           
+          const clubId = userDocSnap.data().clubId;
+          if (clubId) {
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            const settingsSnap = await getDoc(settingsRef);
+            if(settingsSnap.exists()) {
+                const settingsData = settingsSnap.data();
+                const trialEndDate = settingsData.trialEndDate as Timestamp | undefined;
+
+                if (trialEndDate && !isFuture(trialEndDate.toDate())) {
+                    if (pathname !== '/subscribe') {
+                         router.push('/subscribe');
+                         return; // Stop further execution to allow redirect to complete
+                    }
+                }
+            }
+          }
+          
           setLoading(false);
 
         } catch (error) {
@@ -45,7 +65,7 @@ export default function AppLayout({
     });
 
     return () => unsubscribeAuth();
-  }, [router, toast]);
+  }, [router, toast, pathname]);
 
   if (loading) {
     return (

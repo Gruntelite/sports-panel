@@ -397,8 +397,9 @@ export async function sendReviewAction(reviewData: {
     <p>${comment.replace(/\n/g, '<br>')}</p>
   `;
   
+  // We use SportsPanel's own clubId to fetch its SMTP settings to send the email
   const result = await sendEmailWithSmtpAction({
-    clubId: clubId,
+    clubId: "VWxHRR6HzumBnSdLfTtP", 
     recipients: [{ email: "info.sportspanel@gmail.com", name: "Reseñas SportsPanel" }],
     subject,
     htmlContent,
@@ -443,3 +444,4 @@ export async function sendSupportRequestAction(supportData: {
 
 
     
+
