@@ -21,7 +21,12 @@ export default function AppLayout({
   const pathname = usePathname();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(true);
+  const [isSubscriptionPage, setIsSubscriptionPage] = React.useState(pathname === '/subscribe');
 
+  React.useEffect(() => {
+    setIsSubscriptionPage(pathname === '/subscribe');
+  }, [pathname]);
+  
   React.useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -43,11 +48,9 @@ export default function AppLayout({
                 const settingsData = settingsSnap.data();
                 const trialEndDate = settingsData.trialEndDate as Timestamp | undefined;
 
-                if (trialEndDate && !isFuture(trialEndDate.toDate())) {
-                    if (pathname !== '/subscribe') {
-                         router.push('/subscribe');
-                         return; // Stop further execution to allow redirect to complete
-                    }
+                if (trialEndDate && !isFuture(trialEndDate.toDate()) && pathname !== '/subscribe') {
+                    router.push('/subscribe');
+                    return; // Stop further execution to allow redirect to complete
                 }
             }
           }
@@ -77,6 +80,11 @@ export default function AppLayout({
     );
   }
 
+  // If it's the subscription page, render only its content without the main layout
+  if (isSubscriptionPage) {
+    return <>{children}</>;
+  }
+
   return (
       <div className="min-h-screen w-full bg-muted/40">
         <Header />
@@ -89,3 +97,4 @@ export default function AppLayout({
       </div>
   );
 }
+
