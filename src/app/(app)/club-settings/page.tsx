@@ -323,7 +323,7 @@ export default function ClubSettingsPage() {
                                 <div className="flex-1 w-full space-y-2">
                                     <Input id="clubLogo" type="file" accept="image/*" onChange={handleLogoChange} className="max-w-xs" />
                                     <Button asChild>
-                                        <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
+                                        <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel_Guia-pas-a-pas.pdf?alt=media&token=8e8e635f-95f7-491e-b7d4-c65094dc3021" target="_blank">
                                         <Download className="mr-2 h-4 w-4" />
                                         {t('clubSettings.general.downloadGuide')}
                                         </Link>

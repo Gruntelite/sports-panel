@@ -256,12 +256,14 @@ export function Header() {
                         </nav>
                         <div className="mt-auto">
                              <div className="p-4 border-t">
-                                <DialogTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start text-base" onClick={() => setIsReviewOpen(true)}>
-                                        <Star className="mr-2 h-4 w-4"/>
-                                        {t('sidebar.leaveReview')}
-                                    </Button>
-                                </DialogTrigger>
+                                <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" className="w-full justify-start text-base">
+                                            <Star className="mr-2 h-4 w-4"/>
+                                            {t('sidebar.leaveReview')}
+                                        </Button>
+                                    </DialogTrigger>
+                                </Dialog>
                              </div>
                         </div>
                     </SheetContent>
@@ -299,7 +301,7 @@ export function Header() {
                            </DropdownMenuPortal>
                          </DropdownMenuSub>
                           <DropdownMenuItem asChild>
-                            <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel%20-%20Gu%C3%ADa%20de%20Uso.pdf?alt=media&token=9a5224e2-caed-42a7-b733-b343e284ce40" target="_blank">
+                            <Link href="https://firebasestorage.googleapis.com/v0/b/sportspanel.firebasestorage.app/o/SportsPanel_Guia-pas-a-pas.pdf?alt=media&token=8e8e635f-95f7-491e-b7d4-c65094dc3021" target="_blank">
                                 <Download className="mr-2 h-4 w-4" />
                                 <span>{t('sidebar.userGuide')}</span>
                             </Link>
