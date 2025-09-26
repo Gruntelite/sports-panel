@@ -1,5 +1,8 @@
 
 import * as admin from 'firebase-admin';
+import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
+import { getStorage } from 'firebase-admin/storage';
 
 // Check if the app is already initialized to prevent errors
 if (!admin.apps.length) {
@@ -15,8 +18,8 @@ if (!admin.apps.length) {
   }
 }
 
-const db = admin.firestore();
-const auth = admin.auth();
-const storage = admin.storage();
+const db = getFirestore();
+const auth = getAuth();
+const storage = getStorage();
 
 export { db, auth, storage };
