@@ -154,13 +154,12 @@ function DailySchedule({ selectedDate }: { selectedDate: Date }) {
     const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: locale === 'ca' ? ca : es });
     
     const getSeparatorColorFromBorder = (colorClass: string) => {
-      if (!colorClass) return 'bg-primary';
-      const match = colorClass.match(/border-([a-z]+)-(\d+)\/(\d+)/) || colorClass.match(/border-primary/);
-       if (match) {
-            if(match[0] === 'border-primary') return 'bg-primary';
+        if (!colorClass) return 'bg-primary';
+        const match = colorClass.match(/border-([a-z]+)-(\d+)/);
+        if (match && match[1]) {
             return `bg-${match[1]}-500`;
         }
-      return 'bg-primary';
+        return 'bg-primary';
     }
 
 
@@ -355,11 +354,13 @@ export default function DashboardPage() {
       
        <Card>
         <CardHeader className="flex-col items-start gap-4 space-y-0 md:flex-row md:items-center">
-          <CardTitle>{t('dashboard.dailySchedule.title')}</CardTitle>
-          <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto">
-            <DatePicker date={selectedDate} onDateChange={(date) => date && setSelectedDate(date)} />
-            <Button variant="outline" onClick={() => setSelectedDate(new Date())}>{t('dashboard.dailySchedule.today')}</Button>
-          </div>
+            <div>
+              <CardTitle>{t('dashboard.dailySchedule.title')}</CardTitle>
+            </div>
+            <div className="flex items-center gap-2 w-full md:w-auto md:ml-auto">
+                <DatePicker date={selectedDate} onDateChange={(date) => date && setSelectedDate(date)} />
+                <Button variant="outline" onClick={() => setSelectedDate(new Date())}>{t('dashboard.dailySchedule.today')}</Button>
+            </div>
         </CardHeader>
       </Card>
 
