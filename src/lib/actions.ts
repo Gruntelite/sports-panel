@@ -198,7 +198,10 @@ export async function requestFilesAction(formData: FormData) {
   try {
     const clubDocRef = adminDb.collection("clubs").doc(clubId);
     const clubDocSnap = await clubDocRef.get();
-    const clubName = clubDocSnap.exists ? clubDocSnap.data()!.name : 'Tu Club';
+    if (!clubDocSnap.exists) {
+        return { success: false, error: "El club especificado no existe." };
+    }
+    const clubName = clubDocSnap.data()!.name || 'Tu Club';
 
     let emailsSent = 0;
     const batch = adminDb.batch();
@@ -207,7 +210,7 @@ export async function requestFilesAction(formData: FormData) {
      batch.set(adminDb.collection("fileRequestBatches").doc(batchId), {
         clubId,
         documentTitle: documentTitles.join(', '),
-        totalSent: members.length,
+        totalSent: members.length * documentTitles.length,
         createdAt: Timestamp.now(),
     });
 

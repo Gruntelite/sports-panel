@@ -87,7 +87,7 @@ function ManualUploadDialog({ open, onOpenChange, manualUploadData, onUpload, cl
     
     const handleManualUpload = async () => {
         if (!clubId || !manualUploadData || !fileToUpload) {
-            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.errors.missingDataDesc') });
+            toast({ variant: "destructive", title: t('common.error'), description: "Faltan datos para realizar la subida." });
             return;
         }
 
@@ -114,7 +114,7 @@ function ManualUploadDialog({ open, onOpenChange, manualUploadData, onUpload, cl
             onOpenChange(false);
             setFileToUpload(null);
         } catch(e) {
-            toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.errors.uploadErrorDesc') });
+            toast({ variant: "destructive", title: t('common.error'), description: "No se pudo subir el archivo." });
         } finally {
             setSaving(false);
         }
@@ -229,7 +229,7 @@ export function EssentialDocs() {
 
     } catch (error) {
       console.error("Error fetching essential docs data:", error);
-      toast({ variant: "destructive", title: t('common.error'), description: "No se pudieron cargar los datos." });
+      toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los datos." });
     }
     setLoading(false);
   };
@@ -298,7 +298,7 @@ export function EssentialDocs() {
         setDocStatuses(newStatuses);
         toast({ title: t('clubFiles.essentialDocs.docAdded') });
     } catch(e) {
-        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.addDoc')});
+        toast({ variant: "destructive", title: t('common.error'), description: "No se pudo añadir el documento."});
     } finally {
         setSaving(false);
     }
@@ -318,7 +318,7 @@ export function EssentialDocs() {
         setDocStatuses(newStatuses);
         toast({ title: t('clubFiles.essentialDocs.docRemoved')});
     } catch(e) {
-        toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.removeDoc')});
+        toast({ variant: "destructive", title: t('common.error'), description: "No se pudo eliminar el documento."});
     } finally {
         setSaving(false);
     }
@@ -350,7 +350,7 @@ export function EssentialDocs() {
                     toast({ title: t('clubFiles.essentialDocs.statusUpdated') });
                 }
             } catch (e) {
-                toast({ variant: "destructive", title: t('common.error'), description: t('clubFiles.essentialDocs.errors.statusUpdate') });
+                toast({ variant: "destructive", title: t('common.error'), description: "No se pudo actualizar el estado del documento." });
             }
         } else {
              const member = allMembers.find(m => m.id === memberId);
@@ -404,15 +404,15 @@ export function EssentialDocs() {
     formData.append('clubId', clubId);
     formData.append('members', JSON.stringify(membersToSend));
     formData.append('documents', JSON.stringify(selectedDocsToRequest));
-    formData.append('subject', 'Solicitud de Documentación Esencial');
+    formData.append('subject', "Solicitud de Documentación Esencial");
     formData.append('message', `Hola, te recordamos que tienes la siguiente documentación pendiente de entregar: ${selectedDocsToRequest.join(', ')}. Por favor, utiliza el enlace para subirla. ¡Gracias!`);
 
     const result = await requestFilesAction(formData);
     
     if (result.success) {
-        toast({ title: t('clubFiles.essentialDocs.requestsSent'), description: t('clubFiles.essentialDocs.requestsSentDesc', { count: result.count || 0 })});
+        toast({ title: "Solicitudes enviadas", description: `Se han enviado ${result.count || 0} correos solicitando la documentación.`});
     } else {
-        toast({ variant: "destructive", title: t('common.error'), description: result.error || t('clubFiles.essentialDocs.errors.noRequestsSent') });
+        toast({ variant: "destructive", title: t('common.error'), description: result.error || "No se pudo enviar ninguna solicitud." });
     }
     
     setIsSending(false);
