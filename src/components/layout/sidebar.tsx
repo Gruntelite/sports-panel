@@ -9,45 +9,45 @@ import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 
 
-const menuGroups = [
-    {
-        title: 'Club',
-        items: [
-            { href: "/dashboard", label: "sidebar.dashboard", icon: Home },
-            { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
-        ]
-    },
-    {
-        title: 'Miembros',
-        items: [
-            { href: "/players", label: "sidebar.players", icon: Users },
-            { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
-            { href: "/teams", label: "sidebar.teams", icon: Shield },
-            { href: "/staff", label: "sidebar.staff", icon: Briefcase},
-        ]
-    },
-     {
-        title: 'Planificación',
-        items: [
-            { href: "/schedules", label: "sidebar.schedules", icon: Clock },
-            { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
-            { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
-        ]
-    },
-    {
-        title: 'Administración',
-        items: [
-            { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
-            { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
-            { href: "/importer", label: "sidebar.importer", icon: Database },
-            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
-        ]
-    }
-];
-
 export function Sidebar() {
     const pathname = usePathname();
     const { t } = useTranslation();
+
+    const menuGroups = [
+        {
+            title: t('sidebar.groups.club'),
+            items: [
+                { href: "/dashboard", label: "sidebar.dashboard", icon: Home },
+                { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
+            ]
+        },
+        {
+            title: t('sidebar.groups.members'),
+            items: [
+                { href: "/players", label: "sidebar.players", icon: Users },
+                { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
+                { href: "/teams", label: "sidebar.teams", icon: Shield },
+                { href: "/staff", label: "sidebar.staff", icon: Briefcase},
+            ]
+        },
+         {
+            title: t('sidebar.groups.planning'),
+            items: [
+                { href: "/schedules", label: "sidebar.schedules", icon: Clock },
+                { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
+                { href: "/incidents", label: "sidebar.incidents", icon: AlertTriangle },
+            ]
+        },
+        {
+            title: t('sidebar.groups.admin'),
+            items: [
+                { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
+                { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
+                { href: "/importer", label: "sidebar.importer", icon: Database },
+                { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
+            ]
+        }
+    ];
 
     return (
         <div className="hidden border-r bg-card text-card-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-40 pt-16">

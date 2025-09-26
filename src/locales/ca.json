@@ -32,7 +32,13 @@
         "logout": "Tancar Sessió",
         "supportContact": "Contacte de Suport",
         "supportDescription": "Tens algun dubte o problema? Emplena el formulari i t'ajudarem el més aviat possible.",
-        "language": "Idioma"
+        "language": "Idioma",
+        "groups": {
+            "club": "Club",
+            "members": "Membres",
+            "planning": "Planificació",
+            "admin": "Administració"
+        }
     },
     "header": {
         "openMenu": "Obrir menú",
@@ -1481,5 +1487,3 @@
         }
     }
 }
-
-    

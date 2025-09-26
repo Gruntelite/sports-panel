@@ -32,7 +32,13 @@
         "logout": "Cerrar Sesión",
         "supportContact": "Contacto de Soporte",
         "supportDescription": "¿Tienes alguna duda o problema? Rellena el formulario y te ayudaremos lo antes posible.",
-        "language": "Idioma"
+        "language": "Idioma",
+        "groups": {
+            "club": "Club",
+            "members": "Miembros",
+            "planning": "Planificación",
+            "admin": "Administración"
+        }
     },
     "header": {
         "openMenu": "Abrir menú",
@@ -1481,5 +1487,3 @@
         }
     }
 }
-
-    
