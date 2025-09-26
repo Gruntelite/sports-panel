@@ -25,7 +25,7 @@ import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
 import { Loader2 } from "lucide-react";
 import { Badge } from "../ui/badge";
-import { differenceInDays, isFuture } from "date-fns";
+import { isFuture } from "date-fns";
 
 
 const menuGroups = [
@@ -195,7 +195,10 @@ export function Header() {
     };
     
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
-    const daysLeft = trialEndDate && isFuture(trialEndDate.toDate()) ? Math.ceil(differenceInDays(trialEndDate.toDate(), new Date())) : 0;
+    
+    const daysLeft = trialEndDate && isFuture(trialEndDate.toDate())
+    ? Math.ceil((trialEndDate.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
     return (
         <>
@@ -410,3 +413,4 @@ type UserProfile = {
     initials: string;
     avatar?: string;
 }
+
