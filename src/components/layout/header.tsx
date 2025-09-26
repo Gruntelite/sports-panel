@@ -289,7 +289,7 @@ export function Header() {
                             <div className="hidden md:flex flex-col items-start">
                                <span className="font-semibold text-sm">{clubName}</span>
                             </div>
-                           {daysLeft > 0 && <Badge variant="destructive">{daysLeft} {t('sidebar.trialDays', {days: ''})}</Badge>}
+                           {daysLeft > 0 && <Badge variant="destructive">{t('sidebar.trialDays', {days: daysLeft})}</Badge>}
                            <ChevronDown className="h-4 w-4 text-muted-foreground hidden md:block" />
                        </Button>
                     </DropdownMenuTrigger>
