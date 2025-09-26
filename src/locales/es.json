@@ -449,12 +449,15 @@
             "trainingsTitle": "Entrenamientos",
             "matchesTitle": "Partidos",
             "eventsTitle": "Eventos",
+            "othersTitle": "Otros",
             "trainingsDescription": "Estos son los entrenamientos programados para el día seleccionado.",
             "matchesDescription": "Estos son los partidos programados para el día seleccionado.",
             "eventsDescription": "Estos son los eventos programados para el día seleccionado.",
+            "othersDescription": "Estos son otros eventos programados para el día seleccionado.",
             "noTrainings": "No hay entrenamientos programados para hoy.",
             "noMatches": "No hay partidos programados para hoy.",
-            "noEvents": "No hay eventos programados para hoy."
+            "noEvents": "No hay eventos programados para hoy.",
+            "noOthers": "No hay otros eventos programados para hoy."
         }
     },
     "treasury": {
@@ -1187,7 +1190,7 @@
             "description": "Añade un nuevo archivo al repositorio del club.",
             "nameLabel": "Nombre del Documento",
             "namePlaceholder": "p.ej., Autorización Desplazamiento",
-            "categoryLabel": "Categoría",
+            "categoryLabel": "Categoria",
             "categoryPlaceholder": "Selecciona una categoría",
             "assignLabel": "Asignar a",
             "ownerPlaceholder": "Seleccionar propietario...",
@@ -1478,3 +1481,5 @@
         }
     }
 }
+
+    

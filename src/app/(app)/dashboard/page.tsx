@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Users, Shield, Calendar, CircleDollarSign, Loader2, MapPin, Clock, UserSquare } from "lucide-react";
 import { auth, db } from "@/lib/firebase";
-import { collection, query, getDocs, doc, getDoc, getCountFromServer, where, Timestamp, orderBy } from "firebase/firestore";
+import { collection, query, getDocs, doc, getDoc, where, Timestamp, orderBy } from "firebase/firestore";
 import type { CalendarEvent, ScheduleTemplate, Team } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
@@ -70,6 +70,7 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
             case 'trainings': return t('dashboard.dailySchedule.trainingsTitle');
             case 'matches': return t('dashboard.dailySchedule.matchesTitle');
             case 'events': return t('dashboard.dailySchedule.eventsTitle');
+            case 'others': return t('dashboard.dailySchedule.othersTitle');
             default: return t('dashboard.dailySchedule.title');
         }
     }
@@ -79,6 +80,7 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
             case 'trainings': return t('dashboard.dailySchedule.trainingsDescription');
             case 'matches': return t('dashboard.dailySchedule.matchesDescription');
             case 'events': return t('dashboard.dailySchedule.eventsDescription');
+            case 'others': return t('dashboard.dailySchedule.othersDescription');
             default: return t('dashboard.dailySchedule.title');
         }
     }
@@ -88,6 +90,7 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
             case 'trainings': return t('dashboard.dailySchedule.noTrainings');
             case 'matches': return t('dashboard.dailySchedule.noMatches');
             case 'events': return t('dashboard.dailySchedule.noEvents');
+            case 'others': return t('dashboard.dailySchedule.noOthers');
             default: return "No hay datos";
         }
     }
@@ -95,7 +98,8 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
     const filteredItems = allEvents.filter(e => {
         if (viewType === 'trainings') return e.type === 'Entrenamiento';
         if (viewType === 'matches') return e.type === 'Partido';
-        if (viewType === 'events') return e.type === 'Evento' || e.type === 'Otro';
+        if (viewType === 'events') return e.type === 'Evento';
+        if (viewType === 'others') return e.type === 'Otro';
         return true;
     });
 
@@ -115,7 +119,8 @@ function DailyScheduleBlock({ allEvents, blockNumber }: { allEvents: EventEntry[
                         <SelectContent>
                             <SelectItem value="trainings">Entrenamientos</SelectItem>
                             <SelectItem value="matches">Partidos</SelectItem>
-                            <SelectItem value="events">Eventos y Otros</SelectItem>
+                            <SelectItem value="events">Eventos</SelectItem>
+                            <SelectItem value="others">Otros</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -362,3 +367,5 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+    

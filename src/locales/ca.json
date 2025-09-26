@@ -221,7 +221,7 @@
         "name": "Nom",
         "lastName": "Cognoms",
         "birthDate": "Data de Naixement",
-        "dni": "DNI/NIF",
+        "dni": "NIF",
         "address": "Adreça",
         "city": "Ciutat",
         "postalCode": "Codi Postal",
@@ -449,12 +449,15 @@
             "trainingsTitle": "Entrenaments",
             "matchesTitle": "Partits",
             "eventsTitle": "Esdeveniments",
+            "othersTitle": "Altres",
             "trainingsDescription": "Aquests són els entrenaments programats per al dia seleccionat.",
             "matchesDescription": "Aquests són els partits programats per al dia seleccionat.",
             "eventsDescription": "Aquests són els esdeveniments programats per al dia seleccionat.",
+            "othersDescription": "Aquests són altres esdeveniments programats per al dia seleccionat.",
             "noTrainings": "No hi ha entrenaments programats per avui.",
             "noMatches": "No hi ha partits programats per avui.",
-            "noEvents": "No hi ha esdeveniments programats per avui."
+            "noEvents": "No hi ha esdeveniments programats per avui.",
+            "noOthers": "No hi ha altres esdeveniments programats per avui."
         }
     },
     "treasury": {
@@ -1478,3 +1481,5 @@
         }
     }
 }
+
+    
