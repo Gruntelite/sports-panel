@@ -199,6 +199,14 @@
         "comment": "Comentari (Opcional)",
         "send": "Enviar Ressenya"
     },
+    "support": {
+        "errorTitle": "Error",
+        "errorDescription": "El missatge no pot estar buit.",
+        "successTitle": "Sol·licitud Enviada",
+        "successDescription": "Hem rebut el teu missatge. Et contactarem el més aviat possible.",
+        "message": "Missatge",
+        "messagePlaceholder": "Descriu el teu problema o pregunta aquí..."
+    },
     "account": {
         "errors": {
             "loadProfile": "No s'ha pogut carregar el teu perfil.",

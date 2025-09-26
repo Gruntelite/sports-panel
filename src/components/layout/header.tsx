@@ -19,7 +19,7 @@ import { Skeleton } from "../ui/skeleton";
 import { sendEmailWithSmtpAction } from "@/lib/email";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "../ui/separator";
-import { sendReviewAction } from "@/lib/actions";
+import { sendReviewAction, sendSupportRequestAction } from "@/lib/actions";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "../ui/dialog";
 import { Label } from "../ui/label";
 import { Textarea } from "../ui/textarea";
@@ -28,14 +28,14 @@ import { Loader2 } from "lucide-react";
 
 const menuGroups = [
     {
-        title: 'Club',
+        title: 'sidebar.groups.club',
         items: [
             { href: "/dashboard", label: "sidebar.dashboard", icon: Home },
             { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
         ]
     },
     {
-        title: 'Miembros',
+        title: 'sidebar.groups.members',
         items: [
             { href: "/players", label: "sidebar.players", icon: Users },
             { href: "/coaches", label: "sidebar.coaches", icon: UserSquare },
@@ -44,7 +44,7 @@ const menuGroups = [
         ]
     },
      {
-        title: 'Planificación',
+        title: 'sidebar.groups.planning',
         items: [
             { href: "/schedules", label: "sidebar.schedules", icon: Clock },
             { href: "/registrations", label: "sidebar.registrations", icon: ClipboardList },
@@ -52,11 +52,12 @@ const menuGroups = [
         ]
     },
     {
-        title: 'Administración',
+        title: 'sidebar.groups.admin',
         items: [
             { href: "/communications", label: "sidebar.communications", icon: MessageSquare },
             { href: "/club-files", label: "sidebar.clubFiles", icon: FolderArchive },
             { href: "/importer", label: "sidebar.importer", icon: Database },
+            { href: "/club-settings", label: "sidebar.clubSettings", icon: Settings },
         ]
     }
 ];
@@ -79,6 +80,12 @@ export function Header() {
     const [hoverRating, setHoverRating] = useState(0);
     const [comment, setComment] = useState("");
     const [isSendingReview, setIsSendingReview] = useState(false);
+    
+    // Support Dialog State
+    const [isSupportOpen, setIsSupportOpen] = useState(false);
+    const [supportMessage, setSupportMessage] = useState("");
+    const [isSendingSupport, setIsSendingSupport] = useState(false);
+
 
      useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged(async (user) => {
@@ -125,18 +132,6 @@ export function Header() {
         await signOut(auth);
         router.push("/login");
     }
-
-    const handleSupportClick = async () => {
-         if (!clubId) {
-            toast({ variant: 'destructive', title: 'Error', description: 'No se ha podido identificar tu club.' });
-            return;
-        }
-
-        const subject = `Soporte SportsPanel - ${clubName || clubId}`;
-        const body = `Hola, necesito ayuda con... (Por favor, detalla tu problema aquí. Incluye tu nombre y el del club para que podamos ayudarte mejor).`;
-        const mailtoLink = `mailto:info.sportspanel@gmail.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-        window.location.href = mailtoLink;
-    }
     
     const handleReviewSubmit = async () => {
         if (rating === 0) {
@@ -167,10 +162,38 @@ export function Header() {
         setIsSendingReview(false);
     }
     
+    const handleSupportSubmit = async () => {
+        if (!supportMessage.trim()) {
+            toast({ variant: "destructive", title: t('support.errorTitle'), description: t('support.errorDescription') });
+            return;
+        }
+        if (!clubId) {
+            toast({ variant: "destructive", title: t('common.error'), description: "No se pudo identificar tu club." });
+            return;
+        }
+        setIsSendingSupport(true);
+        const result = await sendSupportRequestAction({
+            clubId: clubId,
+            clubName: clubName || "N/A",
+            userName: userProfile?.name || "N/A",
+            userEmail: userProfile?.email || "N/A",
+            message: supportMessage,
+        });
+
+        if (result.success) {
+            toast({ title: t('support.successTitle'), description: t('support.successDescription') });
+            setIsSupportOpen(false);
+            setSupportMessage("");
+        } else {
+            toast({ variant: "destructive", title: t('common.error'), description: result.error });
+        }
+        setIsSendingSupport(false);
+    };
+    
     const clubInitials = clubName?.split(' ').map(n => n[0]).join('').substring(0,2) || 'SP';
 
     return (
-        <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+        <Dialog>
         <header className="flex h-16 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
             <div className="flex items-center gap-3">
                  <Sheet>
@@ -195,7 +218,7 @@ export function Header() {
                                 {menuGroups.map((group, groupIndex) => (
                                     <React.Fragment key={group.title}>
                                         {groupIndex > 0 && <Separator className="my-2" />}
-                                        <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{group.title}</h3>
+                                        <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t(group.title)}</h3>
                                          {group.items.map((item) => (
                                                 <SheetClose asChild key={item.href}>
                                                     <Link
@@ -234,7 +257,7 @@ export function Header() {
                         <div className="mt-auto">
                              <div className="p-4 border-t">
                                 <DialogTrigger asChild>
-                                    <Button variant="outline" className="w-full justify-start text-base">
+                                    <Button variant="outline" className="w-full justify-start text-base" onClick={() => setIsReviewOpen(true)}>
                                         <Star className="mr-2 h-4 w-4"/>
                                         {t('sidebar.leaveReview')}
                                     </Button>
@@ -282,15 +305,17 @@ export function Header() {
                             </Link>
                         </DropdownMenuItem>
                         <DialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                            <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsReviewOpen(true);}}>
                                 <Star className="mr-2 h-4 w-4" />
                                 <span>{t('sidebar.leaveReview')}</span>
                             </DropdownMenuItem>
                         </DialogTrigger>
-                        <DropdownMenuItem onClick={handleSupportClick}>
-                            <HelpCircle className="mr-2 h-4 w-4" />
-                            <span>{t('sidebar.helpSupport')}</span>
-                        </DropdownMenuItem>
+                        <DialogTrigger asChild>
+                             <DropdownMenuItem onSelect={(e) => { e.preventDefault(); setIsSupportOpen(true); }}>
+                                <HelpCircle className="mr-2 h-4 w-4" />
+                                <span>{t('sidebar.helpSupport')}</span>
+                            </DropdownMenuItem>
+                        </DialogTrigger>
                          <DropdownMenuSeparator />
                         <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                             <LogOut className="mr-2 h-4 w-4" />
@@ -299,46 +324,74 @@ export function Header() {
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>
-        </header>
-
-         <DialogContent>
-            <DialogHeader>
-                <DialogTitle>{t('sidebar.leaveReview')}</DialogTitle>
-                <DialogDescription>{t('review.reviewDescription')}</DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                 <div className="space-y-2">
-                    <Label>{t('review.rating')}</Label>
-                    <div className="flex items-center gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                        <Star
-                            key={star}
-                            className={cn(
-                            "h-8 w-8 cursor-pointer transition-colors",
-                            (hoverRating || rating) >= star
-                                ? "text-yellow-400 fill-yellow-400"
-                                : "text-gray-300"
-                            )}
-                            onClick={() => setRating(star)}
-                            onMouseEnter={() => setHoverRating(star)}
-                            onMouseLeave={() => setHoverRating(0)}
-                        />
-                        ))}
+            
+            {/* Review Dialog */}
+            <DialogContent open={isReviewOpen} onOpenChange={setIsReviewOpen}>
+                <DialogHeader>
+                    <DialogTitle>{t('sidebar.leaveReview')}</DialogTitle>
+                    <DialogDescription>{t('review.reviewDescription')}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label>{t('review.rating')}</Label>
+                        <div className="flex items-center gap-1">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                                key={star}
+                                className={cn(
+                                "h-8 w-8 cursor-pointer transition-colors",
+                                (hoverRating || rating) >= star
+                                    ? "text-yellow-400 fill-yellow-400"
+                                    : "text-gray-300"
+                                )}
+                                onClick={() => setRating(star)}
+                                onMouseEnter={() => setHoverRating(star)}
+                                onMouseLeave={() => setHoverRating(0)}
+                            />
+                            ))}
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="comment">{t('review.comment')}</Label>
+                        <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
                     </div>
                 </div>
-                <div className="space-y-2">
-                    <Label htmlFor="comment">{t('review.comment')}</Label>
-                    <Textarea id="comment" value={comment} onChange={(e) => setComment(e.target.value)} />
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => setIsReviewOpen(false)}>{t('common.cancel')}</Button>
+                    <Button onClick={handleReviewSubmit} disabled={isSendingReview}>
+                        {isSendingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        {t('review.send')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+            
+            {/* Support Dialog */}
+             <DialogContent open={isSupportOpen} onOpenChange={setIsSupportOpen}>
+                <DialogHeader>
+                    <DialogTitle>{t('sidebar.supportContact')}</DialogTitle>
+                    <DialogDescription>{t('sidebar.supportDescription')}</DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="supportMessage">{t('support.message')}</Label>
+                        <Textarea 
+                            id="supportMessage" 
+                            value={supportMessage} 
+                            onChange={(e) => setSupportMessage(e.target.value)} 
+                            placeholder={t('support.messagePlaceholder')}
+                            className="min-h-[150px]"
+                        />
+                    </div>
                 </div>
-            </div>
-            <DialogFooter>
-                 <Button variant="ghost" onClick={() => setIsReviewOpen(false)}>{t('common.cancel')}</Button>
-                 <Button onClick={handleReviewSubmit} disabled={isSendingReview}>
-                    {isSendingReview && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                    {t('review.send')}
-                 </Button>
-            </DialogFooter>
-        </DialogContent>
+                <DialogFooter>
+                    <Button variant="ghost" onClick={() => setIsSupportOpen(false)}>{t('common.cancel')}</Button>
+                    <Button onClick={handleSupportSubmit} disabled={isSendingSupport}>
+                        {isSendingSupport && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                        {t('common.send')}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </header>
         </Dialog>
     );
 }

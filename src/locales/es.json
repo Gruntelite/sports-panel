@@ -199,6 +199,14 @@
         "comment": "Comentario (Opcional)",
         "send": "Enviar Reseña"
     },
+     "support": {
+        "errorTitle": "Error",
+        "errorDescription": "El mensaje no puede estar vacío.",
+        "successTitle": "Solicitud Enviada",
+        "successDescription": "Hemos recibido tu mensaje. Te contactaremos lo antes posible.",
+        "message": "Mensaje",
+        "messagePlaceholder": "Describe tu problema o pregunta aquí..."
+    },
     "account": {
         "errors": {
             "loadProfile": "No se pudo cargar tu perfil.",
@@ -1196,7 +1204,7 @@
             "description": "Añade un nuevo archivo al repositorio del club.",
             "nameLabel": "Nombre del Documento",
             "namePlaceholder": "p.ej., Autorización Desplazamiento",
-            "categoryLabel": "Categoria",
+            "categoryLabel": "Categoría",
             "categoryPlaceholder": "Selecciona una categoría",
             "assignLabel": "Asignar a",
             "ownerPlaceholder": "Seleccionar propietario...",

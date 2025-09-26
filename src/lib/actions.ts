@@ -408,4 +408,36 @@ export async function sendReviewAction(reviewData: {
   return result;
 }
 
+export async function sendSupportRequestAction(supportData: {
+  clubId: string;
+  clubName: string;
+  userName: string;
+  userEmail: string;
+  message: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { clubId, clubName, userName, userEmail, message } = supportData;
+
+  const subject = `Solicitud de Soporte - ${clubName}`;
+  const htmlContent = `
+    <h1>Nueva Solicitud de Soporte</h1>
+    <p><strong>Club:</strong> ${clubName} (${clubId})</p>
+    <p><strong>Usuario:</strong> ${userName}</p>
+    <p><strong>Email de Contacto:</strong> ${userEmail}</p>
+    <hr>
+    <p><strong>Mensaje:</strong></p>
+    <p>${message.replace(/\n/g, '<br>')}</p>
+  `;
+
+  // We use SportsPanel's own clubId to fetch its SMTP settings to send the email
+  const result = await sendEmailWithSmtpAction({
+    clubId: "VWxHRR6HzumBnSdLfTtP", 
+    recipients: [{ email: "info.sportspanel@gmail.com", name: "Soporte SportsPanel" }],
+    subject,
+    htmlContent,
+  });
+
+  return result;
+}
+
     
+
