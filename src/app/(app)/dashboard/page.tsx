@@ -51,15 +51,104 @@ type EventEntry = {
     type: string;
 }
 
-function DailySchedule({ selectedDate, teams }: { selectedDate: Date, teams: Team[] }) {
+function DailyScheduleBlock({ allTrainings, allEvents, teams, selectedDate, blockNumber }: { allTrainings: TrainingEntry[], allEvents: EventEntry[], teams: Team[], selectedDate: Date, blockNumber: number }) {
     const { t, locale } = useTranslation();
+    const [viewType, setViewType] = useState(blockNumber === 1 ? 'trainings' : 'matches');
+    
+    const getSeparatorColorFromBorder = (colorClass: string) => {
+        if (!colorClass) return 'bg-primary';
+        const match = colorClass.match(/border-([a-z]+)-(\d+)/);
+        if (match && match[1]) {
+            return `bg-${match[1]}-500`;
+        }
+        return 'bg-primary';
+    }
+
+    const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: locale === 'ca' ? ca : es });
+
+    const getTitle = () => {
+        switch(viewType) {
+            case 'trainings': return t('dashboard.dailySchedule.trainingsTitle');
+            case 'matches': return t('dashboard.dailySchedule.matchesTitle');
+            case 'events': return t('dashboard.dailySchedule.eventsTitle');
+            default: return t('dashboard.dailySchedule.title');
+        }
+    }
+
+    const getDescription = () => {
+        switch(viewType) {
+            case 'trainings': return t('dashboard.dailySchedule.trainingsDescription');
+            case 'matches': return t('dashboard.dailySchedule.matchesDescription');
+            case 'events': return t('dashboard.dailySchedule.eventsDescription');
+            default: return t('dashboard.dailySchedule.title');
+        }
+    }
+
+    const getNoDataMessage = () => {
+        switch(viewType) {
+            case 'trainings': return t('dashboard.dailySchedule.noTrainings');
+            case 'matches': return t('dashboard.dailySchedule.noMatches');
+            case 'events': return t('dashboard.dailySchedule.noEvents');
+            default: return "No hay datos";
+        }
+    }
+
+    const filteredItems = viewType === 'trainings' 
+        ? allTrainings
+        : allEvents.filter(e => e.type.toLowerCase() === viewType.slice(0, -1));
+
+
+    return (
+        <Card>
+            <CardHeader>
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
+                    <div>
+                        <CardTitle className="capitalize text-lg md:text-xl">{getTitle()}</CardTitle>
+                        <CardDescription>{getDescription()}</CardDescription>
+                    </div>
+                    <Select value={viewType} onValueChange={setViewType}>
+                        <SelectTrigger className="w-full sm:w-[200px]">
+                            <SelectValue placeholder="Seleccionar tipo..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="trainings">Entrenamientos</SelectItem>
+                            <SelectItem value="matches">Partidos</SelectItem>
+                            <SelectItem value="events">Eventos</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </CardHeader>
+            <CardContent>
+                {filteredItems.length > 0 ? (
+                    <div className="space-y-3">
+                        {filteredItems.map(item => (
+                            <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
+                                <div className="flex flex-col items-center w-16 md:w-20">
+                                    <span className="font-bold text-sm md:text-base">{item.startTime}</span>
+                                    <span className="text-xs text-muted-foreground">{item.endTime}</span>
+                                </div>
+                                <div className={cn("h-10 w-1 rounded-full", viewType === 'trainings' ? 'bg-primary' : getSeparatorColorFromBorder(item.color))}></div>
+                                <div className="flex-1">
+                                    <p className="font-semibold text-sm md:text-base">{item.title}</p>
+                                    {item.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="text-center py-10 text-muted-foreground">
+                        <p>{getNoDataMessage()}</p>
+                    </div>
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function DailyScheduleContainer({ selectedDate, teams }: { selectedDate: Date, teams: Team[] }) {
     const [trainings, setTrainings] = useState<TrainingEntry[]>([]);
     const [events, setEvents] = useState<EventEntry[]>([]);
     const [loading, setLoading] = useState(true);
-
-    const [trainingFilter, setTrainingFilter] = useState('all');
-    const [eventFilter, setEventFilter] = useState('all');
-
 
     useEffect(() => {
         const fetchDailySchedule = async (clubId: string) => {
@@ -74,7 +163,7 @@ function DailySchedule({ selectedDate, teams }: { selectedDate: Date, teams: Tea
 
                 const settingsRef = doc(db, "clubs", clubId, "settings", "config");
                 const settingsSnap = await getDoc(settingsRef);
-                const defaultTemplateId = settingsSnap.exists() ? settingsSnap.data()?.defaultScheduleTemplateId : null;
+                const defaultTemplateId = settingsSnap.exists ? settingsSnap.data()?.defaultScheduleTemplateId : null;
 
                 const overrideRef = doc(db, "clubs", clubId, "calendarOverrides", dateStr);
                 const overrideSnap = await getDoc(overrideRef);
@@ -119,6 +208,7 @@ function DailySchedule({ selectedDate, teams }: { selectedDate: Date, teams: Tea
                 const customEventsSnapshot = await getDocs(customEventsQuery);
                 const eventEntries = customEventsSnapshot.docs.map(doc => {
                     const event = doc.data() as CalendarEvent;
+                    const eventType = event.type === 'Partido' ? 'match' : event.type.toLowerCase();
                     return {
                         id: doc.id,
                         title: event.title,
@@ -126,7 +216,8 @@ function DailySchedule({ selectedDate, teams }: { selectedDate: Date, teams: Tea
                         endTime: format(event.end.toDate(), 'HH:mm'),
                         location: event.location,
                         color: event.color,
-                        type: event.type
+                        type: eventType,
+                        teamName: event.teamName
                     };
                 });
                 setEvents(eventEntries.sort((a, b) => a.startTime.localeCompare(b.startTime)));
@@ -156,128 +247,21 @@ function DailySchedule({ selectedDate, teams }: { selectedDate: Date, teams: Tea
         return () => unsubscribe();
     }, [selectedDate]);
 
-    const titleDate = format(selectedDate, "eeee, d 'de' LLLL", { locale: locale === 'ca' ? ca : es });
-    
-    const getSeparatorColorFromBorder = (colorClass: string) => {
-        if (!colorClass) return 'bg-primary';
-        const match = colorClass.match(/border-([a-z]+)-(\d+)/);
-        if (match && match[1]) {
-            return `bg-${match[1]}-500`;
-        }
-        return 'bg-primary';
+    if(loading) {
+        return (
+            <div className="grid gap-6 md:grid-cols-2">
+                <Card><CardContent className="h-48 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></CardContent></Card>
+                <Card><CardContent className="h-48 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></CardContent></Card>
+            </div>
+        )
     }
-
-    const filteredTrainings = trainings.filter(t => trainingFilter === 'all' || t.teamId === trainingFilter);
-    const filteredEvents = events.filter(e => eventFilter === 'all' || e.type === eventFilter);
 
     return (
         <div className="grid gap-6 md:grid-cols-2">
-            <Card>
-                <CardHeader>
-                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
-                         <div>
-                            <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.trainingsTitle')} {titleDate}</CardTitle>
-                            <CardDescription>
-                            {t('dashboard.dailySchedule.trainingsDescription')}
-                            </CardDescription>
-                         </div>
-                         <Select value={trainingFilter} onValueChange={setTrainingFilter}>
-                             <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filtrar entrenamientos..." />
-                             </SelectTrigger>
-                             <SelectContent>
-                                <SelectItem value="all">Tots els entrenaments</SelectItem>
-                                {teams.map(team => (
-                                    <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
-                                ))}
-                             </SelectContent>
-                         </Select>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    {loading ? (
-                        <div className="flex justify-center items-center h-24">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        </div>
-                    ) : filteredTrainings.length > 0 ? (
-                        <div className="space-y-3">
-                            {filteredTrainings.map(item => (
-                                <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
-                                    <div className="flex flex-col items-center w-16 md:w-20">
-                                        <span className="font-bold text-sm md:text-base">{item.startTime}</span>
-                                        <span className="text-xs text-muted-foreground">{item.endTime}</span>
-                                    </div>
-                                    <div className="h-10 w-1 bg-primary rounded-full"></div>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-sm md:text-base">{item.title}</p>
-                                        {item.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <p>{t('dashboard.dailySchedule.noTrainings')}</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
-
-             <Card>
-                <CardHeader>
-                     <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-2">
-                        <div>
-                            <CardTitle className="capitalize text-lg md:text-xl">{t('dashboard.dailySchedule.eventsTitle')} {titleDate}</CardTitle>
-                            <CardDescription>
-                                {t('dashboard.dailySchedule.eventsDescription')}
-                            </CardDescription>
-                        </div>
-                         <Select value={eventFilter} onValueChange={setEventFilter}>
-                             <SelectTrigger className="w-full sm:w-[200px]">
-                                <SelectValue placeholder="Filtrar eventos..." />
-                             </SelectTrigger>
-                             <SelectContent>
-                                <SelectItem value="all">Tots els esdeveniments</SelectItem>
-                                <SelectItem value="Partido">Partits</SelectItem>
-                                <SelectItem value="Evento">Esdeveniments</SelectItem>
-                                <SelectItem value="Otro">Altres</SelectItem>
-                             </SelectContent>
-                         </Select>
-                     </div>
-                </CardHeader>
-                <CardContent>
-                    {loading ? (
-                        <div className="flex justify-center items-center h-24">
-                            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                        </div>
-                    ) : filteredEvents.length > 0 ? (
-                        <div className="space-y-3">
-                            {filteredEvents.map(item => {
-                                const separatorColor = getSeparatorColorFromBorder(item.color);
-                                return (
-                                <div key={item.id} className={cn("flex items-center gap-4 p-3 rounded-lg border", item.color)}>
-                                    <div className="flex flex-col items-center w-16 md:w-20">
-                                        <span className="font-bold text-sm md:text-base">{item.startTime}</span>
-                                        <span className="text-xs text-muted-foreground">{item.endTime}</span>
-                                    </div>
-                                    <div className={cn("h-10 w-1 rounded-full", separatorColor)}></div>
-                                    <div className="flex-1">
-                                        <p className="font-semibold text-sm md:text-base">{item.title}</p>
-                                        {item.location && <div className="flex items-center gap-1.5 text-xs md:text-sm text-muted-foreground"><MapPin className="h-3.5 w-3.5" /> {item.location}</div>}
-                                    </div>
-                                </div>
-                                );
-                            })}
-                        </div>
-                    ) : (
-                        <div className="text-center py-10 text-muted-foreground">
-                            <p>{t('dashboard.dailySchedule.noEvents')}</p>
-                        </div>
-                    )}
-                </CardContent>
-            </Card>
+            <DailyScheduleBlock allTrainings={trainings} allEvents={events} teams={teams} selectedDate={selectedDate} blockNumber={1} />
+            <DailyScheduleBlock allTrainings={trainings} allEvents={events} teams={teams} selectedDate={selectedDate} blockNumber={2} />
         </div>
-    );
+    )
 }
 
 export default function DashboardPage() {
@@ -404,7 +388,7 @@ export default function DashboardPage() {
         </CardHeader>
       </Card>
 
-      <DailySchedule selectedDate={selectedDate} teams={teams} />
+      <DailyScheduleContainer selectedDate={selectedDate} teams={teams} />
     </div>
   );
 }

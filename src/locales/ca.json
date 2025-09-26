@@ -447,11 +447,14 @@
             "title": "Agenda del Dia",
             "today": "Avui",
             "trainingsTitle": "Entrenaments",
+            "matchesTitle": "Partits",
+            "eventsTitle": "Esdeveniments",
             "trainingsDescription": "Aquests són els entrenaments programats per al dia seleccionat.",
+            "matchesDescription": "Aquests són els partits programats per al dia seleccionat.",
+            "eventsDescription": "Aquests són els esdeveniments programats per al dia seleccionat.",
             "noTrainings": "No hi ha entrenaments programats per avui.",
-            "eventsTitle": "Partits i Esdeveniments",
-            "eventsDescription": "Aquests són els partits i esdeveniments programats per al dia seleccionat.",
-            "noEvents": "No hi ha partits ni esdeveniments per avui."
+            "noMatches": "No hi ha partits programats per avui.",
+            "noEvents": "No hi ha esdeveniments programats per avui."
         }
     },
     "treasury": {

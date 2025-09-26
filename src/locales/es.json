@@ -54,7 +54,7 @@
         "stats": [
             { "title": "AHORRO SEMANAL", "description": "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
             { "title": "TASA DE RETENCIÓN", "description": "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-            { "title": "+130 CLUBS DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
+            { "title": "+130 CLUBES DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
             { "title": "98% DIGITALIZACIÓN", "description": "De los procesos internos del club que se pueden gestionar con nosotros." }
         ],
         "testimonials": {
@@ -447,11 +447,14 @@
             "title": "Agenda del Día",
             "today": "Hoy",
             "trainingsTitle": "Entrenamientos",
+            "matchesTitle": "Partidos",
+            "eventsTitle": "Eventos",
             "trainingsDescription": "Estos son los entrenamientos programados para el día seleccionado.",
+            "matchesDescription": "Estos son los partidos programados para el día seleccionado.",
+            "eventsDescription": "Estos son los eventos programados para el día seleccionado.",
             "noTrainings": "No hay entrenamientos programados para hoy.",
-            "eventsTitle": "Partidos y Eventos",
-            "eventsDescription": "Estos son los partidos y eventos programados para el día seleccionado.",
-            "noEvents": "No hay partidos ni eventos para hoy."
+            "noMatches": "No hay partidos programados para hoy.",
+            "noEvents": "No hay eventos programados para hoy."
         }
     },
     "treasury": {
