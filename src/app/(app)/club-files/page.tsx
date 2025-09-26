@@ -262,8 +262,6 @@ function DocumentsList() {
       
       await uploadBytes(fileRef, fileToUpload);
       
-      const url = await getDownloadURL(fileRef);
-      
       const newDocumentData: Omit<Document, "id" | "url"> = {
         name: documentNameToSave.trim(),
         path: filePath,
