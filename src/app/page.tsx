@@ -268,6 +268,19 @@ export default function LandingPage() {
                          </Link>
                     </SheetHeader>
                     <div className="grid gap-4 py-6">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" className="w-full justify-start text-lg font-medium gap-2 p-0">
+                                    <Languages className="h-5 w-5" />
+                                    {locale === 'es' ? 'Castellano' : 'Català'}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                                <DropdownMenuItem onClick={() => setLocale('es')}>Castellano</DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setLocale('ca')}>Català</DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Separator />
                         <DialogClose asChild>
                             <Link href="#features" className="text-lg font-medium hover:underline underline-offset-4" prefetch={false}>
                                 {t('landing.nav.features')}
