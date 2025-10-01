@@ -589,6 +589,14 @@ function DocumentsList() {
 
 export default function ClubFilesPage() {
     const { t } = useTranslation();
+    const [activeTab, setActiveTab] = useState("documents");
+    
+    const TABS = [
+        { id: "documents", label: t('clubFiles.tabs.documents'), icon: FolderOpen },
+        { id: "essential", label: t('clubFiles.tabs.essential'), icon: FileCheck },
+        { id: "request", label: t('clubFiles.tabs.request'), icon: Send },
+    ]
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -599,24 +607,50 @@ export default function ClubFilesPage() {
           {t('clubFiles.description')}
         </p>
       </div>
-      <Tabs defaultValue="documents">
+
+       <div className="sm:hidden">
+            <Select value={activeTab} onValueChange={setActiveTab}>
+                <SelectTrigger>
+                    <SelectValue placeholder={t('schedules.tabs.selectView')} />
+                </SelectTrigger>
+                <SelectContent>
+                {TABS.map((tab) => (
+                    <SelectItem key={tab.id} value={tab.id}>
+                        <div className="flex items-center gap-2">
+                            <tab.icon className="h-4 w-4" />
+                            {tab.label}
+                        </div>
+                    </SelectItem>
+                ))}
+                </SelectContent>
+            </Select>
+       </div>
+
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="hidden sm:block">
         <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="documents"><FolderOpen className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.documents')}</TabsTrigger>
-          <TabsTrigger value="essential"><FileCheck className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.essential')}</TabsTrigger>
-          <TabsTrigger value="request"><Send className="mr-2 h-4 w-4"/>{t('clubFiles.tabs.request')}</TabsTrigger>
+          {TABS.map(tab => (
+              <TabsTrigger key={tab.id} value={tab.id}><tab.icon className="mr-2 h-4 w-4"/>{tab.label}</TabsTrigger>
+          ))}
         </TabsList>
-        <TabsContent value="documents" className="mt-6">
+      </Tabs>
+      
+      {activeTab === "documents" &&
+        <div className="mt-6 sm:mt-0">
             <DocumentsList/>
-        </TabsContent>
-         <TabsContent value="essential" className="mt-6">
+        </div>
+      }
+       {activeTab === "essential" &&
+        <div className="mt-6 sm:mt-0">
             <EssentialDocs/>
-        </TabsContent>
-        <TabsContent value="request" className="mt-6 space-y-6">
+        </div>
+       }
+       {activeTab === "request" &&
+        <div className="mt-6 sm:mt-0 space-y-6">
             <FileRequestSender />
             <Separator />
             <RequestHistory />
-        </TabsContent>
-      </Tabs>
+        </div>
+       }
     </div>
   );
 }
