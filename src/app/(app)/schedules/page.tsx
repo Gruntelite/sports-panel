@@ -488,25 +488,30 @@ export default function SchedulesPage() {
   return (
     <>
       <div className="flex flex-col h-[calc(100vh-8rem)]">
-        <div className="flex items-center justify-between pb-4 border-b">
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="icon" onClick={() => changeWeek('prev')}>
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <h2 className="text-xl font-bold whitespace-nowrap capitalize">
-              {format(weekDays[0], 'd')} - {format(weekDays[6], 'd ')} 
-              de {format(currentDate, 'MMMM, yyyy', { locale: locale === 'ca' ? ca : es })}
-            </h2>
-            <Button variant="outline" size="icon" onClick={() => changeWeek('next')}>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" onClick={() => setCurrentDate(new Date())}>
-              {t('schedules.calendar.today')}
-            </Button>
-          </div>
-           <div className="flex items-center gap-2">
-                <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-                    <SelectTrigger className="w-[180px]">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b gap-4">
+            <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="icon" onClick={() => changeWeek('prev')}>
+                    <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <h2 className="text-xl font-bold whitespace-nowrap capitalize">
+                    {format(weekDays[0], 'd')} - {format(weekDays[6], 'd ')} 
+                    de {format(currentDate, 'MMMM, yyyy', { locale: locale === 'ca' ? ca : es })}
+                    </h2>
+                    <Button variant="outline" size="icon" onClick={() => changeWeek('next')}>
+                    <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+                 <Button variant="outline" className="hidden sm:inline-flex" onClick={() => setCurrentDate(new Date())}>
+                    {t('schedules.calendar.today')}
+                </Button>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-2">
+                 <Button variant="outline" className="w-full sm:hidden" onClick={() => setCurrentDate(new Date())}>
+                    {t('schedules.calendar.today')}
+                </Button>
+                 <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                    <SelectTrigger className="w-full sm:w-[180px]">
                         <SelectValue placeholder="Filtrar por tipo..." />
                     </SelectTrigger>
                     <SelectContent>
@@ -516,11 +521,11 @@ export default function SchedulesPage() {
                         ))}
                     </SelectContent>
                 </Select>
-               <Button onClick={() => handleOpenModal('add')}>
+               <Button onClick={() => handleOpenModal('add')} className="w-full sm:w-auto">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Afegir Esdeveniment
                 </Button>
-           </div>
+            </div>
         </div>
 
         <div className="flex-grow overflow-auto">
