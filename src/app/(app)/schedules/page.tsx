@@ -138,12 +138,15 @@ export default function SchedulesPage() {
   const [saveType, setSaveType] = useState<'single' | 'future' | null>(null);
 
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
+  const [view, setView] = useState<'week' | 'day'>('week');
 
   const weekDays = eachDayOfInterval({
     start: startOfWeek(currentDate, { weekStartsOn: 1 }),
     end: endOfWeek(currentDate, { weekStartsOn: 1 }),
   });
   
+  const dayToShow = view === 'day' ? [currentDate] : weekDays;
+
   const filteredEvents = useMemo(() => {
     let visibleEvents = events;
     
@@ -191,6 +194,19 @@ export default function SchedulesPage() {
   }, [toast, currentDate, t]);
 
   useEffect(() => {
+    const handleResize = () => {
+        if (window.innerWidth < 768) {
+            setView('day');
+        } else {
+            setView('week');
+        }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
         getDoc(doc(db, "users", user.uid)).then(userDoc => {
@@ -212,10 +228,14 @@ export default function SchedulesPage() {
     }, [eventToDelete]);
 
 
-  const changeWeek = (direction: 'prev' | 'next') => {
+  const changeDate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
         const newDate = new Date(prev);
-        newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+        if (view === 'week') {
+          newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
+        } else {
+          newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
+        }
         return newDate;
     });
   };
@@ -428,7 +448,9 @@ export default function SchedulesPage() {
 
     const dailyEventsWithLayout = useMemo(() => {
         const daily = new Map<string, any[]>();
-        weekDays.forEach(day => {
+        const daysToProcess = view === 'day' ? [currentDate] : weekDays;
+        
+        daysToProcess.forEach(day => {
             const dayKey = format(day, 'yyyy-MM-dd');
             const eventsForDay = filteredEvents
                 .filter(event => isSameDay(event.start.toDate(), day))
@@ -483,7 +505,7 @@ export default function SchedulesPage() {
             daily.set(dayKey, finalLayout);
         });
         return daily;
-    }, [filteredEvents, weekDays]);
+    }, [filteredEvents, weekDays, view, currentDate]);
 
   return (
     <>
@@ -491,14 +513,16 @@ export default function SchedulesPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between pb-4 border-b gap-4">
             <div className="flex items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="icon" onClick={() => changeWeek('prev')}>
+                    <Button variant="outline" size="icon" onClick={() => changeDate('prev')}>
                     <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <h2 className="text-xl font-bold whitespace-nowrap capitalize">
-                    {format(weekDays[0], 'd')} - {format(weekDays[6], 'd ')} 
-                    de {format(currentDate, 'MMMM, yyyy', { locale: locale === 'ca' ? ca : es })}
+                      {view === 'week' ? 
+                        `${format(weekDays[0], 'd')} - ${format(weekDays[6], 'd ')} de ${format(currentDate, 'MMMM, yyyy', { locale: locale === 'ca' ? ca : es })}` :
+                        format(currentDate, "d 'de' MMMM, yyyy", { locale: locale === 'ca' ? ca : es })
+                      }
                     </h2>
-                    <Button variant="outline" size="icon" onClick={() => changeWeek('next')}>
+                    <Button variant="outline" size="icon" onClick={() => changeDate('next')}>
                     <ChevronRight className="h-4 w-4" />
                     </Button>
                 </div>
@@ -527,9 +551,18 @@ export default function SchedulesPage() {
                 </Button>
             </div>
         </div>
+        
+        <div className="md:hidden flex justify-around border-b">
+            {weekDays.map(day => (
+                <Button key={day.toString()} variant={isSameDay(day, currentDate) ? 'secondary' : 'ghost'} size="sm" onClick={() => setCurrentDate(day)}>
+                    {format(day, 'EEE', { locale: locale === 'ca' ? ca : es })}
+                </Button>
+            ))}
+        </div>
+
 
         <div className="flex-grow overflow-auto">
-          <div className="grid grid-cols-[60px_1fr]">
+          <div className={cn("grid", view === 'week' ? 'grid-cols-[60px_1fr]' : 'grid-cols-[60px_1fr]')}>
             <div className="col-start-1 col-end-2 border-r">
                 <div className="sticky top-0 bg-background z-10 h-16"></div>
                 {timeSlots.map(time => (
@@ -538,13 +571,13 @@ export default function SchedulesPage() {
                     </div>
                 ))}
             </div>
-            <div className="col-start-2 col-end-3 grid grid-cols-7 relative">
-                {weekDays.map((day, dayIndex) => {
+            <div className={cn("col-start-2 col-end-3 grid relative", view === 'week' ? 'grid-cols-7' : 'grid-cols-1')}>
+                {dayToShow.map((day, dayIndex) => {
                      const dayKey = format(day, 'yyyy-MM-dd');
                      const dayEvents = dailyEventsWithLayout.get(dayKey) || [];
                      return (
-                        <div key={day.toString()} className={cn("relative border-r", dayIndex === 6 && "border-r-0")}>
-                            <div className="sticky top-0 bg-background z-10 text-center p-2 h-16 border-b">
+                        <div key={day.toString()} className={cn("relative border-r", view === 'week' && dayIndex === 6 && "border-r-0")}>
+                             <div className="hidden md:block sticky top-0 bg-background z-10 text-center p-2 h-16 border-b">
                                 <span className="text-sm font-medium text-muted-foreground">{format(day, 'EEE', { locale: locale === 'ca' ? ca : es })}</span>
                                 <p className={cn("text-2xl font-bold", isSameDay(day, new Date()) && "text-primary")}>{format(day, 'd')}</p>
                             </div>
