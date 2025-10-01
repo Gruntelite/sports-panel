@@ -246,21 +246,6 @@ export function Header() {
                                     </React.Fragment>
                                 ))}
                             </Accordion>
-                             <Separator className="my-2" />
-                            <SheetClose asChild>
-                                <Link
-                                    href="/club-settings"
-                                    className={cn(
-                                        "flex items-center gap-3 rounded-lg px-3 py-2 transition-all",
-                                        pathname.startsWith('/club-settings')
-                                        ? "bg-primary/10 text-primary font-semibold"
-                                        : "text-muted-foreground hover:bg-muted/50 hover:text-foreground"
-                                    )}
-                                >
-                                    <Settings className="h-4 w-4" />
-                                    {t('sidebar.clubSettings')}
-                                </Link>
-                            </SheetClose>
                         </nav>
                         <div className="mt-auto">
                              <div className="p-4 border-t">
@@ -413,4 +398,5 @@ type UserProfile = {
     initials: string;
     avatar?: string;
 }
+
 
