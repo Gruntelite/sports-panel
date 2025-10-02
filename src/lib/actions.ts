@@ -6,7 +6,7 @@ import { auth as adminAuth, db as adminDb } from './firebase-admin';
 import type { ClubCreationData, ClubMember } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
-import { addDays } from "date-fns";
+import { addDays, parse } from "date-fns";
 
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
@@ -155,7 +155,8 @@ export async function importDataAction({
 
         data.forEach(item => {
             const docRef = collectionRef.doc();
-            
+            let processedItem: { [key: string]: any } = {};
+
             if ((collectionName === 'players' || collectionName === 'coaches') && item.teamName) {
                 const team = teams.find(t => t.name.toLowerCase() === item.teamName.toLowerCase());
                 if (team) {
@@ -164,13 +165,23 @@ export async function importDataAction({
             }
 
             for (const key in item) {
-                if (typeof item[key] === 'string') {
-                    if (item[key].toLowerCase() === 'true') item[key] = true;
-                    else if (item[key].toLowerCase() === 'false') item[key] = false;
+                const value = item[key];
+                if (value === null || value === undefined || value === '') continue;
+
+                if (key.toLowerCase().includes('date') && typeof value === 'string') {
+                    // Try to parse date, if invalid, leave it out
+                    const parsedDate = parse(value, 'yyyy-MM-dd', new Date());
+                    if (!isNaN(parsedDate.getTime())) {
+                        processedItem[key] = value;
+                    }
+                } else if (typeof value === 'string' && (value.toLowerCase() === 'true' || value.toLowerCase() === 'false')) {
+                    processedItem[key] = value.toLowerCase() === 'true';
+                } else {
+                    processedItem[key] = value;
                 }
             }
             
-            batch.set(docRef, item);
+            batch.set(docRef, processedItem);
         });
 
         await batch.commit();
@@ -444,5 +455,6 @@ export async function sendSupportRequestAction(supportData: {
 
 
     
+
 
 

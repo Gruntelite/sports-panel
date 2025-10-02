@@ -15,6 +15,7 @@ import { useTranslation } from "@/components/i18n-provider";
 type ColumnInfo = {
     key: string;
     label: string;
+    format?: string;
 };
 
 const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
@@ -41,7 +42,7 @@ const ColumnList = ({ columns }: { columns: ColumnInfo[] }) => {
                 {Array.isArray(columns) && columns.map(col => (
                     <li key={col.key}>
                         <span className="font-semibold text-foreground">{col.label}</span>
-                        <span className="text-xs ml-1">({col.key})</span>
+                        <span className="text-xs ml-1">({col.key}{col.format && <span className="text-destructive"> {col.format}</span>})</span>
                     </li>
                 ))}
             </ol>
@@ -57,8 +58,8 @@ export default function ImporterPage() {
     const playerColumns: ColumnInfo[] = [
         { key: 'name', label: t('importer.columns.players.name') },
         { key: 'lastName', label: t('importer.columns.players.lastName') },
-        { key: 'sex', label: t('importer.columns.players.sex') },
-        { key: 'birthDate', label: t('importer.columns.players.birthDate') },
+        { key: 'sex', label: t('importer.columns.players.sex'), format: '(masculino/femenino)' },
+        { key: 'birthDate', label: t('importer.columns.players.birthDate'), format: '(YYYY-MM-DD)' },
         { key: 'dni', label: t('importer.columns.players.dni') },
         { key: 'nationality', label: t('importer.columns.players.nationality') },
         { key: 'healthCardNumber', label: t('importer.columns.players.healthCardNumber') },
@@ -71,26 +72,26 @@ export default function ImporterPage() {
         { key: 'teamName', label: t('importer.columns.players.teamName') },
         { key: 'jerseyNumber', label: t('importer.columns.players.jerseyNumber') },
         { key: 'monthlyFee', label: t('importer.columns.players.monthlyFee') },
-        { key: 'isOwnTutor', label: t('importer.columns.players.isOwnTutor') },
+        { key: 'isOwnTutor', label: t('importer.columns.players.isOwnTutor'), format: '(TRUE/FALSE)' },
         { key: 'tutorName', label: t('importer.columns.players.tutorName') },
         { key: 'tutorLastName', label: t('importer.columns.players.tutorLastName') },
         { key: 'tutorDni', label: t('importer.columns.players.tutorDni') },
         { key: 'kitSize', label: t('importer.columns.players.kitSize') },
-        { key: 'startDate', label: t('importer.columns.players.startDate') },
-        { key: 'endDate', label: t('importer.columns.players.endDate') },
-        { key: 'hasInterruption', label: t('importer.columns.players.hasInterruption') },
-        { key: 'medicalCheckCompleted', label: t('importer.columns.players.medicalCheckCompleted') }
+        { key: 'startDate', label: t('importer.columns.players.startDate'), format: '(YYYY-MM-DD)' },
+        { key: 'endDate', label: t('importer.columns.players.endDate'), format: '(YYYY-MM-DD)' },
+        { key: 'hasInterruption', label: t('importer.columns.players.hasInterruption'), format: '(TRUE/FALSE)' },
+        { key: 'medicalCheckCompleted', label: t('importer.columns.players.medicalCheckCompleted'), format: '(TRUE/FALSE)' }
     ];
 
     const coachColumns: ColumnInfo[] = [
         { key: 'name', label: t('importer.columns.coaches.name') },
         { key: 'lastName', label: t('importer.columns.coaches.lastName') },
-        { key: 'sex', label: t('importer.columns.coaches.sex') },
+        { key: 'sex', label: t('importer.columns.coaches.sex'), format: '(masculino/femenino)' },
         { key: 'role', label: t('importer.columns.coaches.role') },
         { key: 'email', label: t('importer.columns.coaches.email') },
         { key: 'phone', label: t('importer.columns.coaches.phone') },
         { key: 'teamName', label: t('importer.columns.coaches.teamName') },
-        { key: 'birthDate', label: t('importer.columns.coaches.birthDate') },
+        { key: 'birthDate', label: t('importer.columns.coaches.birthDate'), format: '(YYYY-MM-DD)' },
         { key: 'dni', label: t('importer.columns.coaches.dni') },
         { key: 'nationality', label: t('importer.columns.coaches.nationality') },
         { key: 'healthCardNumber', label: t('importer.columns.coaches.healthCardNumber') },
@@ -98,21 +99,21 @@ export default function ImporterPage() {
         { key: 'city', label: t('importer.columns.coaches.city') },
         { key: 'postalCode', label: t('importer.columns.coaches.postalCode') },
         { key: 'iban', label: t('importer.columns.coaches.iban') },
-        { key: 'isOwnTutor', label: t('importer.columns.coaches.isOwnTutor') },
+        { key: 'isOwnTutor', label: t('importer.columns.coaches.isOwnTutor'), format: '(TRUE/FALSE)' },
         { key: 'tutorName', label: t('importer.columns.coaches.tutorName') },
         { key: 'tutorLastName', label: t('importer.columns.coaches.tutorLastName') },
         { key: 'tutorDni', label: t('importer.columns.coaches.tutorDni') },
         { key: 'monthlyPayment', label: t('importer.columns.coaches.monthlyPayment') },
         { key: 'kitSize', label: t('importer.columns.coaches.kitSize') },
-        { key: 'startDate', label: t('importer.columns.coaches.startDate') },
-        { key: 'endDate', label: t('importer.columns.coaches.endDate') },
-        { key: 'hasInterruption', label: t('importer.columns.coaches.hasInterruption') }
+        { key: 'startDate', label: t('importer.columns.coaches.startDate'), format: '(YYYY-MM-DD)' },
+        { key: 'endDate', label: t('importer.columns.coaches.endDate'), format: '(YYYY-MM-DD)' },
+        { key: 'hasInterruption', label: t('importer.columns.coaches.hasInterruption'), format: '(TRUE/FALSE)' }
     ];
 
     const staffColumns: ColumnInfo[] = [
         { key: 'name', label: t('importer.columns.staff.name') },
         { key: 'lastName', label: t('importer.columns.staff.lastName') },
-        { key: 'sex', label: t('importer.columns.staff.sex') },
+        { key: 'sex', label: t('importer.columns.staff.sex'), format: '(masculino/femenino)' },
         { key: 'role', label: t('importer.columns.staff.role') },
         { key: 'email', label: t('importer.columns.staff.email') },
         { key: 'phone', label: t('importer.columns.staff.phone') }
@@ -124,7 +125,7 @@ export default function ImporterPage() {
         { key: 'email', label: t('importer.columns.socios.email') },
         { key: 'phone', label: t('importer.columns.socios.phone') },
         { key: 'dni', label: t('importer.columns.socios.dni') },
-        { key: 'paymentType', label: t('importer.columns.socios.paymentType') },
+        { key: 'paymentType', label: t('importer.columns.socios.paymentType'), format: '(monthly/annual)' },
         { key: 'fee', label: t('importer.columns.socios.fee') },
         { key: 'socioNumber', label: t('importer.columns.socios.socioNumber') }
     ];
