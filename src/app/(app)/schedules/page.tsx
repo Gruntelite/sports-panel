@@ -65,7 +65,6 @@ import {
   Timestamp,
   writeBatch,
   orderBy,
-  collectionGroup,
   limit,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
@@ -235,32 +234,25 @@ export default function SchedulesPage() {
     });
   };
 
-  const handleOpenModal = async (mode: 'add' | 'edit', event?: CalendarEvent) => {
+  const handleOpenModal = (mode: 'add' | 'edit', event?: CalendarEvent) => {
     setModalMode(mode);
     if (event) {
         let eventToOpen: Partial<CalendarEvent & { repeat?: 'none' | 'daily' | 'weekly', repeatUntil?: Date }> = { 
             ...event,
             start: event.start.toDate(), 
             end: event.end.toDate(),
-            repeat: 'none'
+            repeat: 'none' // Default to none, can be determined later if needed
         };
-
-        if(event.recurrenceId && clubId) {
-            const seriesEventsQuery = query(
-                collection(db, "clubs", clubId, "calendarEvents"), 
-                where('recurrenceId', '==', event.recurrenceId), 
-                orderBy('start'),
-                limit(2)
-            );
-             const seriesSnapshot = await getDocs(seriesEventsQuery);
-            if (seriesSnapshot.docs.length > 1) {
-                const firstEvent = seriesSnapshot.docs[0].data() as CalendarEvent;
-                const secondEvent = seriesSnapshot.docs[1].data() as CalendarEvent;
-                const dayDiff = Math.round(differenceInMilliseconds(secondEvent.start.toDate(), firstEvent.start.toDate()) / (1000 * 60 * 60 * 24));
-                
-                if (dayDiff === 1) eventToOpen.repeat = 'daily';
-                else if (dayDiff === 7) eventToOpen.repeat = 'weekly';
-            }
+        // Simple check to infer recurrence, avoids complex queries
+        if (event.recurrenceId) {
+             const seriesEvents = events.filter(e => e.recurrenceId === event.recurrenceId).sort((a,b) => a.start.seconds - b.start.seconds);
+             if (seriesEvents.length > 1) {
+                const firstEvent = seriesEvents[0].start.toDate();
+                const secondEvent = seriesEvents[1].start.toDate();
+                const dayDiff = Math.round(differenceInMilliseconds(secondEvent, firstEvent) / (1000 * 60 * 60 * 24));
+                 if (dayDiff === 1) eventToOpen.repeat = 'daily';
+                 else if (dayDiff === 7) eventToOpen.repeat = 'weekly';
+             }
         }
         setEventData(eventToOpen);
     } else {
@@ -745,3 +737,5 @@ const executeSave = async (saveType: 'single' | 'future') => {
     </>
   );
 }
+
+    
