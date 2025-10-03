@@ -222,13 +222,6 @@ export default function SchedulesPage() {
     return () => unsubscribe();
   }, [fetchData]);
   
-    useEffect(() => {
-        if (eventToDelete?.type) {
-            handleDeleteEvent();
-        }
-    }, [eventToDelete]);
-
-
   const changeDate = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
         const newDate = new Date(prev);
@@ -416,27 +409,22 @@ const executeSave = async (saveType: 'single' | 'future') => {
   };
 
 
-  const handleDeleteEvent = async () => {
-    if (!clubId || !eventToDelete || !eventToDelete.type) return;
-
-    if (eventToDelete.event.recurrenceId && !eventToDelete.type) {
-        setDeleteConfirmationOpen(true);
-        return;
-    }
-    setSaving(true);
+  const handleDeleteEvent = async (deleteType: 'single' | 'future' | 'all') => {
+    if (!clubId || !eventToDelete) return;
+    
     setDeleteConfirmationOpen(false);
+    setSaving(true);
 
     try {
         const batch = writeBatch(db);
-        if (eventToDelete.type === 'all' && eventToDelete.event.recurrenceId) {
+        if (deleteType === 'all' && eventToDelete.event.recurrenceId) {
             const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventToDelete.event.recurrenceId));
             const snapshot = await getDocs(seriesQuery);
             snapshot.forEach(doc => batch.delete(doc.ref));
-        } else if (eventToDelete.type === 'future' && eventToDelete.event.recurrenceId) {
+        } else if (deleteType === 'future' && eventToDelete.event.recurrenceId) {
             const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
                 where('recurrenceId', '==', eventToDelete.event.recurrenceId),
-                where('start', '>=', eventToDelete.event.start),
-                orderBy('start')
+                where('start', '>=', eventToDelete.event.start)
             );
             const snapshot = await getDocs(seriesQuery);
             snapshot.forEach(doc => batch.delete(doc.ref));
@@ -456,6 +444,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
         if(clubId) fetchData(clubId);
 
     } catch(e) {
+        console.error(e);
         toast({ variant: "destructive", title: t('common.error'), description: "No se pudo eliminar el evento." });
     } finally {
         setSaving(false);
@@ -733,11 +722,11 @@ const executeSave = async (saveType: 'single' | 'future') => {
               Aquest esdeveniment forma part d'una sèrie. Pots eliminar només aquesta ocurrència o tota la sèrie d'esdeveniments.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row">
             <AlertDialogCancel onClick={() => setEventToDelete(null)}>Cancel·lar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => setEventToDelete(prev => prev ? {...prev, type: 'single'} : null)}>Eliminar només aquest</AlertDialogAction>
-            <AlertDialogAction onClick={() => setEventToDelete(prev => prev ? {...prev, type: 'future'} : null)}>Eliminar aquest i futurs</AlertDialogAction>
-            <AlertDialogAction onClick={() => setEventToDelete(prev => prev ? {...prev, type: 'all'} : null)}>Eliminar tota la sèrie</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleDeleteEvent('single')}>Eliminar només aquest</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleDeleteEvent('future')}>Eliminar aquest i futurs</AlertDialogAction>
+            <AlertDialogAction onClick={() => handleDeleteEvent('all')}>Eliminar tota la sèrie</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -750,7 +739,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
               Estàs editant un esdeveniment recurrent. Vols aplicar els canvis només a aquest esdeveniment o a tots els esdeveniments futurs de la sèrie?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter>
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row">
             <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
             <AlertDialogAction onClick={() => executeSave('single')}>Desar només aquest esdeveniment</AlertDialogAction>
             <AlertDialogAction onClick={() => executeSave('future')}>Desar tots els esdeveniments futurs</AlertDialogAction>
@@ -760,5 +749,6 @@ const executeSave = async (saveType: 'single' | 'future') => {
     </>
   );
 }
+
 
 
