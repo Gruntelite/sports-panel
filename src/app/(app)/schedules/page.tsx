@@ -65,6 +65,7 @@ import {
   where,
   Timestamp,
   writeBatch,
+  orderBy,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -251,7 +252,7 @@ export default function SchedulesPage() {
         };
 
         if(event.recurrenceId) {
-            const seriesEventsQuery = query(collection(db, "clubs", clubId!, "calendarEvents"), where('recurrenceId', '==', event.recurrenceId));
+            const seriesEventsQuery = query(collection(db, "clubs", clubId!, "calendarEvents"), where('recurrenceId', '==', event.recurrenceId), orderBy('start'));
             const seriesSnapshot = await getDocs(seriesEventsQuery);
             const seriesEvents = seriesSnapshot.docs
                 .map(d => d.data() as CalendarEvent)
@@ -312,7 +313,7 @@ export default function SchedulesPage() {
     await executeSave('single'); // For new events or non-recurring edits
   };
 
- const executeSave = async (saveType: 'single' | 'future') => {
+const executeSave = async (saveType: 'single' | 'future') => {
     if (!clubId || !eventData.title || !eventData.start || !eventData.end) {
       toast({ variant: "destructive", title: t('common.error'), description: "El título y las fechas son obligatorios." });
       return;
@@ -323,13 +324,9 @@ export default function SchedulesPage() {
     try {
         const batch = writeBatch(db);
         const originalStartDate = eventData.start as Date;
-        const originalEventId = eventData.id;
-        let recurrenceId = eventData.recurrenceId;
 
-        // Determine if this is a new recurring series
-        if (modalMode === 'add' && eventData.repeat !== 'none') {
-            recurrenceId = uuidv4();
-        } else if (modalMode === 'edit' && !recurrenceId && eventData.repeat !== 'none') {
+        let recurrenceId = eventData.recurrenceId;
+        if ((modalMode === 'add' || (modalMode === 'edit' && !recurrenceId)) && eventData.repeat !== 'none') {
             recurrenceId = uuidv4();
         }
 
@@ -338,47 +335,44 @@ export default function SchedulesPage() {
         delete (baseEvent as any).repeat;
         delete (baseEvent as any).repeatUntil;
         
-        // --- Edit Logic ---
-        if (modalMode === 'edit' && originalEventId) {
-             if (saveType === 'future' && recurrenceId) {
-                // Delete all future events in the series
+        if (modalMode === 'edit' && eventData.id) {
+            if (saveType === 'future' && recurrenceId) {
                 const seriesQuery = query(
                     collection(db, "clubs", clubId, "calendarEvents"), 
                     where('recurrenceId', '==', recurrenceId),
-                    where('start', '>=', Timestamp.fromDate(originalStartDate))
+                    where('start', '>=', Timestamp.fromDate(originalStartDate)),
+                    orderBy('start')
                 );
                 const snapshot = await getDocs(seriesQuery);
                 snapshot.forEach(doc => batch.delete(doc.ref));
 
-            } else if (saveType === 'single' && recurrenceId) {
-                // Create an exception for the original event
-                const newExceptionRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-                batch.set(newExceptionRef, {
-                    ...baseEvent,
-                    recurrenceId: recurrenceId,
-                    start: eventData.start,
-                    end: eventData.end,
-                    recurrenceException: null, // This is the new single event
-                });
+            } else if (saveType === 'single') {
+                 if (recurrenceId) { // Editing a single occurrence of a series
+                    const newExceptionRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
+                    batch.set(newExceptionRef, {
+                        ...baseEvent,
+                        start: Timestamp.fromDate(eventData.start as Date),
+                        end: Timestamp.fromDate(eventData.end as Date),
+                        recurrenceId: null, // This is a new single event
+                        recurrenceException: null,
+                    });
 
-                // Mark the original occurence as an exception
-                const originalEventRef = doc(db, "clubs", clubId, "calendarEvents", originalEventId);
-                const originalEventSnap = await getDoc(originalEventRef);
-                const originalEventData = originalEventSnap.data();
+                    const originalEventRef = doc(db, "clubs", clubId, "calendarEvents", eventData.id);
+                    batch.update(originalEventRef, { recurrenceException: Timestamp.fromDate(originalStartDate) });
 
-                if (originalEventData) {
-                    batch.update(originalEventRef, { recurrenceException: originalEventData.start });
+                } else { // Editing a non-recurring event
+                    const eventRef = doc(db, "clubs", clubId, "calendarEvents", eventData.id);
+                    batch.update(eventRef, { ...baseEvent, start: Timestamp.fromDate(eventData.start as Date), end: Timestamp.fromDate(eventData.end as Date) });
                 }
-
-                toast({ title: "Evento actualizado" });
-                setIsModalOpen(false);
-                if (clubId) fetchData(clubId);
-                setSaving(false);
-                return;
+                 await batch.commit();
+                 toast({ title: "Evento actualizado" });
+                 setIsModalOpen(false);
+                 if (clubId) fetchData(clubId);
+                 setSaving(false);
+                 return;
             }
         }
-
-        // --- Creation Logic (for new events or future part of edited series) ---
+        
         let currentDate = new Date(originalStartDate);
         const repeatUntilDate = eventData.repeatUntil;
 
@@ -400,8 +394,8 @@ export default function SchedulesPage() {
                     break;
                 }
             } while (repeatUntilDate && currentDate <= repeatUntilDate);
-        } else { // Single event creation/update
-            const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
+        } else { // Single event creation
+             const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
             batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(eventData.start as Date), end: Timestamp.fromDate(eventData.end as Date) });
         }
 
@@ -441,7 +435,8 @@ export default function SchedulesPage() {
         } else if (eventToDelete.type === 'future' && eventToDelete.event.recurrenceId) {
             const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
                 where('recurrenceId', '==', eventToDelete.event.recurrenceId),
-                where('start', '>=', eventToDelete.event.start)
+                where('start', '>=', eventToDelete.event.start),
+                orderBy('start')
             );
             const snapshot = await getDocs(seriesQuery);
             snapshot.forEach(doc => batch.delete(doc.ref));
@@ -765,4 +760,5 @@ export default function SchedulesPage() {
     </>
   );
 }
+
 
