@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -135,7 +136,6 @@ export default function SchedulesPage() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   
   const [saveConfirmationOpen, setSaveConfirmationOpen] = useState(false);
-  const [saveType, setSaveType] = useState<'single' | 'future' | null>(null);
 
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [view, setView] = useState<'week' | 'day'>('week');
@@ -304,12 +304,15 @@ export default function SchedulesPage() {
     setIsModalOpen(true);
   };
 
- const handleSaveEvent = async () => {
-    if (!saveType && modalMode === 'edit' && eventData.recurrenceId) {
-      setSaveConfirmationOpen(true);
-      return;
+  const handleSaveEvent = async () => {
+    if (modalMode === 'edit' && eventData.recurrenceId) {
+        setSaveConfirmationOpen(true);
+        return;
     }
+    await executeSave('single'); // For new events or non-recurring edits
+  };
 
+ const executeSave = async (saveType: 'single' | 'future') => {
     if (!clubId || !eventData.title || !eventData.start || !eventData.end) {
       toast({ variant: "destructive", title: t('common.error'), description: "El título y las fechas son obligatorios." });
       return;
@@ -349,11 +352,29 @@ export default function SchedulesPage() {
 
             } else if (saveType === 'single' && recurrenceId) {
                 // Create an exception for the original event
+                const newExceptionRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
+                batch.set(newExceptionRef, {
+                    ...baseEvent,
+                    recurrenceId: recurrenceId,
+                    start: eventData.start,
+                    end: eventData.end,
+                    recurrenceException: null, // This is the new single event
+                });
+
+                // Mark the original occurence as an exception
                 const originalEventRef = doc(db, "clubs", clubId, "calendarEvents", originalEventId);
-                batch.update(originalEventRef, { recurrenceException: eventData.start });
-                
-                // We're creating a new single event, so it shouldn't have a recurrenceId
-                baseEvent.recurrenceId = null;
+                const originalEventSnap = await getDoc(originalEventRef);
+                const originalEventData = originalEventSnap.data();
+
+                if (originalEventData) {
+                    batch.update(originalEventRef, { recurrenceException: originalEventData.start });
+                }
+
+                toast({ title: "Evento actualizado" });
+                setIsModalOpen(false);
+                if (clubId) fetchData(clubId);
+                setSaving(false);
+                return;
             }
         }
 
@@ -397,7 +418,6 @@ export default function SchedulesPage() {
       toast({ variant: "destructive", title: t('common.error'), description: "No se pudo guardar el evento." });
     } finally {
       setSaving(false);
-      setSaveType(null); // Reset save type
     }
   };
 
@@ -736,12 +756,13 @@ export default function SchedulesPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setSaveType(null)}>Cancel·lar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setSaveType('single'); handleSaveEvent(); }}>Desar només aquest esdeveniment</AlertDialogAction>
-            <AlertDialogAction onClick={() => { setSaveType('future'); handleSaveEvent(); }}>Desar tots els esdeveniments futurs</AlertDialogAction>
+            <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => executeSave('single')}>Desar només aquest esdeveniment</AlertDialogAction>
+            <AlertDialogAction onClick={() => executeSave('future')}>Desar tots els esdeveniments futurs</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>
   );
 }
+
