@@ -222,20 +222,12 @@ export default function SchedulesPage() {
     const handleOpenModal = async (mode: 'add' | 'edit', event?: CalendarEvent) => {
         setModalMode(mode);
         if (event) {
-            let repeatType: 'none' | 'daily' | 'weekly' = 'none';
-
-            if (event.recurrenceId && clubId) {
-                // Simplified logic to determine recurrence without a complex query
-                repeatType = 'weekly'; // Default to weekly if part of a series, can be refined
-            }
-            
-            const eventToOpen = { 
+            setEventData({ 
                 ...event,
                 start: event.start.toDate(), 
                 end: event.end.toDate(),
-                repeat: repeatType
-            };
-            setEventData(eventToOpen);
+                repeat: event.recurrenceId ? 'weekly' : 'none'
+            });
         } else {
             setEventData({ 
                 type: 'Evento',
@@ -279,8 +271,7 @@ const handleSaveEvent = async () => {
     const batch = writeBatch(db);
 
     try {
-        // Always delete before creating
-        if (modalMode === 'edit' && eventData.id) {
+        if (eventData.id) {
              if (eventData.recurrenceId) {
                 const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventData.recurrenceId));
                 const snapshot = await getDocs(seriesQuery);
@@ -538,7 +529,7 @@ const handleSaveEvent = async () => {
       </div>
 
        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Afegir Nou Esdeveniment' : 'Editar Esdeveniment'}</DialogTitle>
             </DialogHeader>
@@ -613,7 +604,7 @@ const handleSaveEvent = async () => {
                   {modalMode === 'edit' && (
                      <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="destructive">
+                            <Button variant="destructive" onClick={() => setEventToDelete(eventData)}>
                                 <Trash2 className="mr-2 h-4 w-4"/>
                                 Eliminar
                             </Button>
@@ -627,10 +618,7 @@ const handleSaveEvent = async () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => {
-                                  setEventToDelete(eventData);
-                                  handleDeleteEvent();
-                                }}>
+                                <AlertDialogAction onClick={handleDeleteEvent}>
                                     Eliminar
                                 </AlertDialogAction>
                             </AlertDialogFooter>
