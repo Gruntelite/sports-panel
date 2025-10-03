@@ -617,7 +617,7 @@ export default function SchedulesPage() {
       </div>
 
        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-2xl">
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Afegir Nou Esdeveniment' : 'Editar Esdeveniment'}</DialogTitle>
             </DialogHeader>
