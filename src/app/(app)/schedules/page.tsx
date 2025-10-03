@@ -50,6 +50,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { auth, db } from "@/lib/firebase";
 import {
@@ -218,14 +219,28 @@ export default function SchedulesPage() {
     });
   };
 
-  const handleOpenModal = (mode: 'add' | 'edit', event?: CalendarEvent) => {
+  const handleOpenModal = async (mode: 'add' | 'edit', event?: CalendarEvent) => {
     setModalMode(mode);
     if (event) {
+        let repeatType: 'none' | 'daily' | 'weekly' = 'none';
+        if (event.recurrenceId) {
+            const diff = differenceInMilliseconds(
+                event.start.toDate(),
+                event.start.toDate()
+            );
+
+            if (diff > 0) {
+                 const diffDays = diff / (1000 * 60 * 60 * 24);
+                 if (diffDays < 2) repeatType = 'daily';
+                 else if (diffDays < 8) repeatType = 'weekly';
+            }
+        }
+        
         const eventToOpen = { 
             ...event,
             start: event.start.toDate(), 
             end: event.end.toDate(),
-            repeat: 'none'
+            repeat: repeatType
         };
         setEventData(eventToOpen);
     } else {
@@ -271,15 +286,12 @@ const handleSaveEvent = async () => {
     try {
         const batch = writeBatch(db);
 
-        // ALWAYS delete before creating
-        if (modalMode === 'edit' && eventData.id) {
-            if (eventData.recurrenceId) {
-                 const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventData.recurrenceId));
-                 const snapshot = await getDocs(seriesQuery);
-                 snapshot.forEach(doc => batch.delete(doc.ref));
-            } else {
-                 batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
-            }
+        if (eventData.recurrenceId) {
+             const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventData.recurrenceId));
+             const snapshot = await getDocs(seriesQuery);
+             snapshot.forEach(doc => batch.delete(doc.ref));
+        } else if (modalMode === 'edit' && eventData.id) {
+             batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
         }
         
         const recurrenceId = (eventData.repeat && eventData.repeat !== 'none') ? uuidv4() : null;
@@ -530,7 +542,7 @@ const handleSaveEvent = async () => {
       </div>
 
        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-xl">
             <DialogHeader>
                 <DialogTitle>{modalMode === 'add' ? 'Afegir Nou Esdeveniment' : 'Editar Esdeveniment'}</DialogTitle>
             </DialogHeader>
