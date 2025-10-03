@@ -66,6 +66,7 @@ import {
   Timestamp,
   writeBatch,
   orderBy,
+  collectionGroup,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -137,6 +138,8 @@ export default function SchedulesPage() {
   const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
   
   const [saveConfirmationOpen, setSaveConfirmationOpen] = useState(false);
+  const [saveType, setSaveType] = useState<'single' | 'future' | null>(null);
+
 
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [view, setView] = useState<'week' | 'day'>('week');
@@ -247,14 +250,12 @@ export default function SchedulesPage() {
         if(event.recurrenceId) {
             const seriesEventsQuery = query(collection(db, "clubs", clubId!, "calendarEvents"), where('recurrenceId', '==', event.recurrenceId), orderBy('start'));
             const seriesSnapshot = await getDocs(seriesEventsQuery);
-            const seriesEvents = seriesSnapshot.docs
-                .map(d => d.data() as CalendarEvent)
-                .sort((a,b) => a.start.seconds - b.start.seconds);
+            const seriesEvents = seriesSnapshot.docs.map(d => d.data() as CalendarEvent);
             
             if (seriesEvents.length > 1) {
-                const firstEvent = seriesEvents[seriesEvents.length - 1];
-                const secondEvent = seriesEvents[seriesEvents.length - 2];
-                const dayDiff = differenceInMilliseconds(secondEvent.start.toDate(), firstEvent.start.toDate()) / (1000 * 60 * 60 * 24);
+                const firstEvent = seriesEvents[0];
+                const secondEvent = seriesEvents[1];
+                const dayDiff = Math.round(differenceInMilliseconds(secondEvent.start.toDate(), firstEvent.start.toDate()) / (1000 * 60 * 60 * 24));
 
                 if (dayDiff === 1) {
                     eventToOpen.repeat = 'daily';
@@ -298,13 +299,13 @@ export default function SchedulesPage() {
     setIsModalOpen(true);
   };
 
-  const handleSaveEvent = async () => {
+const handleSaveEvent = async () => {
     if (modalMode === 'edit' && eventData.recurrenceId) {
         setSaveConfirmationOpen(true);
         return;
     }
     await executeSave('single'); // For new events or non-recurring edits
-  };
+};
 
 const executeSave = async (saveType: 'single' | 'future') => {
     if (!clubId || !eventData.title || !eventData.start || !eventData.end) {
@@ -322,7 +323,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
         if ((modalMode === 'add' || (modalMode === 'edit' && !recurrenceId)) && eventData.repeat !== 'none') {
             recurrenceId = uuidv4();
         }
-
+        
         const baseEvent: Partial<CalendarEvent> = { ...eventData, recurrenceId: recurrenceId || null };
         delete (baseEvent as any).id;
         delete (baseEvent as any).repeat;
@@ -330,30 +331,29 @@ const executeSave = async (saveType: 'single' | 'future') => {
         
         if (modalMode === 'edit' && eventData.id) {
             if (saveType === 'future' && recurrenceId) {
-                const seriesQuery = query(
-                    collection(db, "clubs", clubId, "calendarEvents"), 
+                const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
                     where('recurrenceId', '==', recurrenceId),
-                    where('start', '>=', Timestamp.fromDate(originalStartDate)),
-                    orderBy('start')
+                    where('start', '>=', Timestamp.fromDate(originalStartDate))
                 );
                 const snapshot = await getDocs(seriesQuery);
                 snapshot.forEach(doc => batch.delete(doc.ref));
 
             } else if (saveType === 'single') {
-                 if (recurrenceId) { // Editing a single occurrence of a series
-                    const newExceptionRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-                    batch.set(newExceptionRef, {
+                 if (recurrenceId) { // Editing a single occurrence of a series, so we create an exception
+                    const newEventData = {
                         ...baseEvent,
                         start: Timestamp.fromDate(eventData.start as Date),
                         end: Timestamp.fromDate(eventData.end as Date),
-                        recurrenceId: null, // This is a new single event
+                        recurrenceId: null, 
                         recurrenceException: null,
-                    });
+                    };
+                    const newExceptionRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
+                    batch.set(newExceptionRef, newEventData);
 
                     const originalEventRef = doc(db, "clubs", clubId, "calendarEvents", eventData.id);
                     batch.update(originalEventRef, { recurrenceException: Timestamp.fromDate(originalStartDate) });
 
-                } else { // Editing a non-recurring event
+                } else { // Editing a simple, non-recurring event
                     const eventRef = doc(db, "clubs", clubId, "calendarEvents", eventData.id);
                     batch.update(eventRef, { ...baseEvent, start: Timestamp.fromDate(eventData.start as Date), end: Timestamp.fromDate(eventData.end as Date) });
                 }
@@ -370,11 +370,11 @@ const executeSave = async (saveType: 'single' | 'future') => {
         const repeatUntilDate = eventData.repeatUntil;
 
         if (eventData.repeat !== 'none' && saveType !== 'single') {
+            const durationMs = (eventData.end as Date).getTime() - (eventData.start as Date).getTime();
             do {
                 const newStart = new Date(currentDate);
                 newStart.setHours((eventData.start as Date).getHours(), (eventData.start as Date).getMinutes());
-                const newEnd = new Date(currentDate);
-                newEnd.setHours((eventData.end as Date).getHours(), (eventData.end as Date).getMinutes());
+                const newEnd = new Date(newStart.getTime() + durationMs);
 
                 const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
                 batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd) });
@@ -722,7 +722,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
               Aquest esdeveniment forma part d'una sèrie. Pots eliminar només aquesta ocurrència o tota la sèrie d'esdeveniments.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row">
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:gap-2">
             <AlertDialogCancel onClick={() => setEventToDelete(null)}>Cancel·lar</AlertDialogCancel>
             <AlertDialogAction onClick={() => handleDeleteEvent('single')}>Eliminar només aquest</AlertDialogAction>
             <AlertDialogAction onClick={() => handleDeleteEvent('future')}>Eliminar aquest i futurs</AlertDialogAction>
@@ -739,7 +739,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
               Estàs editant un esdeveniment recurrent. Vols aplicar els canvis només a aquest esdeveniment o a tots els esdeveniments futurs de la sèrie?
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row">
+          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:gap-2">
             <AlertDialogCancel>Cancel·lar</AlertDialogCancel>
             <AlertDialogAction onClick={() => executeSave('single')}>Desar només aquest esdeveniment</AlertDialogAction>
             <AlertDialogAction onClick={() => executeSave('future')}>Desar tots els esdeveniments futurs</AlertDialogAction>
@@ -749,6 +749,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
     </>
   );
 }
+
 
 
 
