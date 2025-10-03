@@ -67,6 +67,7 @@ import {
   writeBatch,
   orderBy,
   collectionGroup,
+  limit,
 } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -248,7 +249,13 @@ export default function SchedulesPage() {
         };
 
         if(event.recurrenceId) {
-            const seriesEventsQuery = query(collection(db, "clubs", clubId!, "calendarEvents"), where('recurrenceId', '==', event.recurrenceId), orderBy('start'));
+            // This query is expensive and requires an index. Let's optimize.
+            const seriesEventsQuery = query(
+                collection(db, "clubs", clubId!, "calendarEvents"), 
+                where('recurrenceId', '==', event.recurrenceId), 
+                orderBy('start'),
+                limit(2) // We only need the first two to determine the interval
+            );
             const seriesSnapshot = await getDocs(seriesEventsQuery);
             const seriesEvents = seriesSnapshot.docs.map(d => d.data() as CalendarEvent);
             
@@ -262,7 +269,18 @@ export default function SchedulesPage() {
                 } else if (dayDiff === 7) {
                     eventToOpen.repeat = 'weekly';
                 }
-                eventToOpen.repeatUntil = seriesEvents[seriesEvents.length - 1].start.toDate();
+                
+                // To get the end date, we need one more query, but only for the last event.
+                const lastEventQuery = query(
+                    collection(db, "clubs", clubId!, "calendarEvents"),
+                    where('recurrenceId', '==', event.recurrenceId),
+                    orderBy('start', 'desc'),
+                    limit(1)
+                );
+                const lastEventSnapshot = await getDocs(lastEventQuery);
+                if (!lastEventSnapshot.empty) {
+                  eventToOpen.repeatUntil = lastEventSnapshot.docs[0].data().start.toDate();
+                }
             }
         }
         setEventData(eventToOpen);
@@ -302,9 +320,9 @@ export default function SchedulesPage() {
 const handleSaveEvent = async () => {
     if (modalMode === 'edit' && eventData.recurrenceId) {
         setSaveConfirmationOpen(true);
-        return;
+    } else {
+        await executeSave('single'); // For new events or non-recurring edits
     }
-    await executeSave('single'); // For new events or non-recurring edits
 };
 
 const executeSave = async (saveType: 'single' | 'future') => {
@@ -317,20 +335,21 @@ const executeSave = async (saveType: 'single' | 'future') => {
 
     try {
         const batch = writeBatch(db);
-        const originalStartDate = eventData.start as Date;
+        const originalStartDate = eventData.id ? (await getDoc(doc(db, "clubs", clubId, "calendarEvents", eventData.id))).data()?.start.toDate() : eventData.start as Date;
 
         let recurrenceId = eventData.recurrenceId;
-        if ((modalMode === 'add' || (modalMode === 'edit' && !recurrenceId)) && eventData.repeat !== 'none') {
+        if (modalMode === 'add' && eventData.repeat !== 'none') {
             recurrenceId = uuidv4();
         }
         
-        const baseEvent: Partial<CalendarEvent> = { ...eventData, recurrenceId: recurrenceId || null };
+        const baseEvent: Partial<CalendarEvent> = { ...eventData, recurrenceId: recurrenceId || undefined };
         delete (baseEvent as any).id;
         delete (baseEvent as any).repeat;
         delete (baseEvent as any).repeatUntil;
         
         if (modalMode === 'edit' && eventData.id) {
             if (saveType === 'future' && recurrenceId) {
+                // Delete all future instances of the old series
                 const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
                     where('recurrenceId', '==', recurrenceId),
                     where('start', '>=', Timestamp.fromDate(originalStartDate))
@@ -366,10 +385,10 @@ const executeSave = async (saveType: 'single' | 'future') => {
             }
         }
         
-        let currentDate = new Date(originalStartDate);
+        let currentDate = new Date(eventData.start as Date);
         const repeatUntilDate = eventData.repeatUntil;
 
-        if (eventData.repeat !== 'none' && saveType !== 'single') {
+        if (eventData.repeat !== 'none' && (saveType === 'future' || modalMode === 'add')) {
             const durationMs = (eventData.end as Date).getTime() - (eventData.start as Date).getTime();
             do {
                 const newStart = new Date(currentDate);
@@ -377,7 +396,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
                 const newEnd = new Date(newStart.getTime() + durationMs);
 
                 const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-                batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd) });
+                batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd), recurrenceId: recurrenceId || undefined });
                 
                 if (eventData.repeat === 'daily') {
                     currentDate = addDays(currentDate, 1);
@@ -749,6 +768,7 @@ const executeSave = async (saveType: 'single' | 'future') => {
     </>
   );
 }
+
 
 
 
