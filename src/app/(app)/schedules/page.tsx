@@ -133,11 +133,7 @@ export default function SchedulesPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [eventData, setEventData] = useState<Partial<CalendarEvent & { repeat?: 'none' | 'daily' | 'weekly', repeatUntil?: Date }>>({});
   
-  const [eventToDelete, setEventToDelete] = useState<{event: CalendarEvent, type: 'single' | 'all' | 'future' | null} | null>(null);
-  const [deleteConfirmationOpen, setDeleteConfirmationOpen] = useState(false);
-  
-  const [saveConfirmationOpen, setSaveConfirmationOpen] = useState(false);
-
+  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
 
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [view, setView] = useState<'week' | 'day'>('week');
@@ -150,20 +146,8 @@ export default function SchedulesPage() {
   const dayToShow = view === 'day' ? [currentDate] : weekDays;
 
   const filteredEvents = useMemo(() => {
-    let visibleEvents = events;
-    
-    const exceptions = events.filter(e => e.recurrenceException);
-    visibleEvents = visibleEvents.filter(event => {
-      if (!event.recurrenceId) return true; 
-      const hasException = exceptions.some(ex => 
-        ex.recurrenceId === event.recurrenceId && 
-        isSameDay(ex.recurrenceException!.toDate(), event.start.toDate())
-      );
-      return !hasException;
-    });
-
-    if(eventTypeFilter === 'all') return visibleEvents;
-    return visibleEvents.filter(event => event.type === eventTypeFilter);
+    if(eventTypeFilter === 'all') return events;
+    return events.filter(event => event.type === eventTypeFilter);
   }, [events, eventTypeFilter]);
 
 
@@ -228,38 +212,21 @@ export default function SchedulesPage() {
         if (view === 'week') {
           newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
         } else {
-          newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -7));
+          newDate.setDate(newDate.getDate() + (direction === 'next' ? 1 : -1));
         }
         return newDate;
     });
   };
 
-  const handleOpenModal = async (mode: 'add' | 'edit', event?: CalendarEvent) => {
+  const handleOpenModal = (mode: 'add' | 'edit', event?: CalendarEvent) => {
     setModalMode(mode);
     if (event) {
-        let eventToOpen: Partial<CalendarEvent & { repeat?: 'none' | 'daily' | 'weekly', repeatUntil?: Date }> = { 
+        const eventToOpen = { 
             ...event,
             start: event.start.toDate(), 
             end: event.end.toDate(),
-            repeat: 'none' // Default to none, can be determined later if needed
+            repeat: 'none'
         };
-        
-        if (event.recurrenceId && clubId) {
-            const seriesQuery = query(
-                collection(db, "clubs", clubId, "calendarEvents"), 
-                where('recurrenceId', '==', event.recurrenceId),
-                orderBy('start'),
-                limit(2)
-            );
-            const seriesSnapshot = await getDocs(seriesQuery);
-            if (seriesSnapshot.docs.length > 1) {
-                const firstEvent = seriesSnapshot.docs[0].data().start.toDate();
-                const secondEvent = seriesSnapshot.docs[1].data().start.toDate();
-                const dayDiff = Math.round(differenceInMilliseconds(secondEvent, firstEvent) / (1000 * 60 * 60 * 24));
-                 if (dayDiff === 1) eventToOpen.repeat = 'daily';
-                 else if (dayDiff === 7) eventToOpen.repeat = 'weekly';
-            }
-        }
         setEventData(eventToOpen);
     } else {
         setEventData({ 
@@ -304,7 +271,7 @@ const handleSaveEvent = async () => {
     try {
         const batch = writeBatch(db);
 
-        // If editing, always delete the old event(s) first
+        // ALWAYS delete before creating
         if (modalMode === 'edit' && eventData.id) {
             if (eventData.recurrenceId) {
                  const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventData.recurrenceId));
@@ -315,12 +282,9 @@ const handleSaveEvent = async () => {
             }
         }
         
-        let recurrenceId = (modalMode === 'edit' && eventData.recurrenceId) ? eventData.recurrenceId : null;
-        if (eventData.repeat !== 'none' && !recurrenceId) {
-            recurrenceId = uuidv4();
-        }
+        const recurrenceId = (eventData.repeat && eventData.repeat !== 'none') ? uuidv4() : null;
 
-        const baseEvent: Partial<CalendarEvent> = { ...eventData, recurrenceId: recurrenceId || undefined };
+        const baseEvent: Partial<CalendarEvent> = { ...eventData, recurrenceId };
         delete (baseEvent as any).id;
         delete (baseEvent as any).repeat;
         delete (baseEvent as any).repeatUntil;
@@ -329,26 +293,25 @@ const handleSaveEvent = async () => {
         const repeatUntilDate = eventData.repeatUntil;
         const durationMs = (eventData.end as Date).getTime() - (eventData.start as Date).getTime();
 
-        if (eventData.repeat !== 'none') {
-            while (!repeatUntilDate || currentDate <= repeatUntilDate) {
+        if (eventData.repeat && eventData.repeat !== 'none' && repeatUntilDate) {
+            while (currentDate <= repeatUntilDate) {
                 const newStart = new Date(currentDate);
                 const newEnd = new Date(newStart.getTime() + durationMs);
 
                 const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-                batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd), recurrenceId: recurrenceId || undefined });
+                batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(newStart), end: Timestamp.fromDate(newEnd) });
                 
                 if (eventData.repeat === 'daily') {
                     currentDate = addDays(currentDate, 1);
                 } else if (eventData.repeat === 'weekly') {
                     currentDate = addWeeks(currentDate, 1);
                 } else {
-                    break;
+                    break; 
                 }
-                if (!repeatUntilDate) break; // Avoid infinite loop if no end date
             }
-        } else {
+        } else { // Single event
             const newDocRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-            batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(eventData.start as Date), end: Timestamp.fromDate(eventData.end as Date), recurrenceId: null });
+            batch.set(newDocRef, { ...baseEvent, start: Timestamp.fromDate(eventData.start as Date), end: Timestamp.fromDate(eventData.end as Date) });
         }
 
 
@@ -368,37 +331,21 @@ const handleSaveEvent = async () => {
   };
 
 
-  const handleDeleteEvent = async (deleteType: 'single' | 'future' | 'all') => {
+  const handleDeleteEvent = async () => {
     if (!clubId || !eventToDelete) return;
-    
-    setDeleteConfirmationOpen(false);
     setSaving(true);
-
+    
     try {
         const batch = writeBatch(db);
-        if (deleteType === 'all' && eventToDelete.event.recurrenceId) {
-            const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventToDelete.event.recurrenceId));
+        
+        if (eventToDelete.recurrenceId) {
+            const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventToDelete.recurrenceId));
             const snapshot = await getDocs(seriesQuery);
             snapshot.forEach(doc => batch.delete(doc.ref));
-        } else if (deleteType === 'future' && eventToDelete.event.recurrenceId) {
-            const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), 
-                where('recurrenceId', '==', eventToDelete.event.recurrenceId),
-                where('start', '>=', eventToDelete.event.start)
-            );
-            const snapshot = await getDocs(seriesQuery);
-            snapshot.forEach(doc => batch.delete(doc.ref));
-        } else { 
-             if (eventToDelete.event.recurrenceId) {
-                // This creates a "hole" in the series
-                 const newExceptionRef = doc(collection(db, "clubs", clubId, "calendarEvents"));
-                 batch.set(newExceptionRef, { 
-                    recurrenceId: eventToDelete.event.recurrenceId,
-                    recurrenceException: eventToDelete.event.start 
-                });
-             } else {
-                batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventToDelete.event.id));
-             }
+        } else {
+            batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventToDelete.id));
         }
+
         await batch.commit();
 
         toast({ title: "Evento(s) eliminado(s)" });
@@ -410,6 +357,7 @@ const handleSaveEvent = async () => {
     } finally {
         setSaving(false);
         setEventToDelete(null);
+        setIsModalOpen(false);
     }
   };
   
@@ -655,13 +603,28 @@ const handleSaveEvent = async () => {
             <DialogFooter className="justify-between">
                 <div>
                   {modalMode === 'edit' && (
-                     <Button variant="destructive" onClick={() => {
-                        setEventToDelete({event: eventData as CalendarEvent, type: null});
-                        setDeleteConfirmationOpen(true);
-                     }}>
-                        <Trash2 className="mr-2 h-4 w-4"/>
-                        Eliminar
-                    </Button>
+                     <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="destructive">
+                                <Trash2 className="mr-2 h-4 w-4"/>
+                                Eliminar
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Esta acción no se puede deshacer. Se eliminará el evento o la serie de eventos.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteEvent()}>
+                                    Eliminar
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                   )}
                 </div>
                 <div className="flex gap-2">
@@ -675,19 +638,19 @@ const handleSaveEvent = async () => {
         </DialogContent>
       </Dialog>
       
-       <AlertDialog open={deleteConfirmationOpen} onOpenChange={setDeleteConfirmationOpen}>
+       <AlertDialog open={!!eventToDelete} onOpenChange={(open) => !open && setEventToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Com vols eliminar aquest esdeveniment?</AlertDialogTitle>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Aquest esdeveniment forma part d'una sèrie. Pots eliminar només aquesta ocurrència o tota la sèrie d'esdeveniments.
+              Esta acción no se puede deshacer. Se eliminará el evento o la serie de eventos.
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <AlertDialogFooter className="flex-col-reverse sm:flex-row sm:gap-2">
-            <AlertDialogCancel onClick={() => setEventToDelete(null)}>Cancel·lar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => handleDeleteEvent('single')}>Eliminar només aquest</AlertDialogAction>
-            <AlertDialogAction onClick={() => handleDeleteEvent('future')}>Eliminar aquest i futurs</AlertDialogAction>
-            <AlertDialogAction onClick={() => handleDeleteEvent('all')}>Eliminar tota la sèrie</AlertDialogAction>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDeleteEvent()}>
+                Eliminar
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
