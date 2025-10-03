@@ -134,7 +134,7 @@ export default function SchedulesPage() {
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
   const [eventData, setEventData] = useState<Partial<CalendarEvent & { repeat?: 'none' | 'daily' | 'weekly', repeatUntil?: Date }>>({});
   
-  const [eventToDelete, setEventToDelete] = useState<CalendarEvent | null>(null);
+  const [eventToDelete, setEventToDelete] = useState<Partial<CalendarEvent> | null>(null);
 
   const [eventTypeFilter, setEventTypeFilter] = useState('all');
   const [view, setView] = useState<'week' | 'day'>('week');
@@ -219,42 +219,35 @@ export default function SchedulesPage() {
     });
   };
 
-  const handleOpenModal = async (mode: 'add' | 'edit', event?: CalendarEvent) => {
-    setModalMode(mode);
-    if (event) {
-        let repeatType: 'none' | 'daily' | 'weekly' = 'none';
-        if (event.recurrenceId) {
-            const diff = differenceInMilliseconds(
-                event.start.toDate(),
-                event.start.toDate()
-            );
+    const handleOpenModal = async (mode: 'add' | 'edit', event?: CalendarEvent) => {
+        setModalMode(mode);
+        if (event) {
+            let repeatType: 'none' | 'daily' | 'weekly' = 'none';
 
-            if (diff > 0) {
-                 const diffDays = diff / (1000 * 60 * 60 * 24);
-                 if (diffDays < 2) repeatType = 'daily';
-                 else if (diffDays < 8) repeatType = 'weekly';
+            if (event.recurrenceId && clubId) {
+                // Simplified logic to determine recurrence without a complex query
+                repeatType = 'weekly'; // Default to weekly if part of a series, can be refined
             }
+            
+            const eventToOpen = { 
+                ...event,
+                start: event.start.toDate(), 
+                end: event.end.toDate(),
+                repeat: repeatType
+            };
+            setEventData(eventToOpen);
+        } else {
+            setEventData({ 
+                type: 'Evento',
+                color: EVENT_TYPES.find(e => e.value === 'Evento')?.color,
+                start: new Date(), 
+                end: new Date(new Date().getTime() + 60 * 60 * 1000), // Default to 1 hour
+                repeat: 'none',
+                repeatUntil: undefined,
+            });
         }
-        
-        const eventToOpen = { 
-            ...event,
-            start: event.start.toDate(), 
-            end: event.end.toDate(),
-            repeat: repeatType
-        };
-        setEventData(eventToOpen);
-    } else {
-        setEventData({ 
-            type: 'Evento',
-            color: EVENT_TYPES[2].color,
-            start: new Date(), 
-            end: new Date(),
-            repeat: 'none',
-            repeatUntil: undefined,
-        });
-    }
-    setIsModalOpen(true);
-};
+        setIsModalOpen(true);
+    };
   
   const handleTimeslotClick = (day: Date, time: string) => {
     const [hours, minutes] = time.split(':').map(Number);
@@ -283,18 +276,21 @@ const handleSaveEvent = async () => {
     }
     setSaving(true);
 
-    try {
-        const batch = writeBatch(db);
+    const batch = writeBatch(db);
 
-        if (eventData.recurrenceId) {
-             const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventData.recurrenceId));
-             const snapshot = await getDocs(seriesQuery);
-             snapshot.forEach(doc => batch.delete(doc.ref));
-        } else if (modalMode === 'edit' && eventData.id) {
-             batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
+    try {
+        // Always delete before creating
+        if (modalMode === 'edit' && eventData.id) {
+             if (eventData.recurrenceId) {
+                const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventData.recurrenceId));
+                const snapshot = await getDocs(seriesQuery);
+                snapshot.forEach(doc => batch.delete(doc.ref));
+             } else {
+                 batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventData.id));
+             }
         }
         
-        const recurrenceId = (eventData.repeat && eventData.repeat !== 'none') ? uuidv4() : null;
+        const recurrenceId = (eventData.repeat && eventData.repeat !== 'none') ? (eventData.recurrenceId || uuidv4()) : null;
 
         const baseEvent: Partial<CalendarEvent> = { ...eventData, recurrenceId };
         delete (baseEvent as any).id;
@@ -354,7 +350,7 @@ const handleSaveEvent = async () => {
             const seriesQuery = query(collection(db, "clubs", clubId, "calendarEvents"), where('recurrenceId', '==', eventToDelete.recurrenceId));
             const snapshot = await getDocs(seriesQuery);
             snapshot.forEach(doc => batch.delete(doc.ref));
-        } else {
+        } else if (eventToDelete.id) {
             batch.delete(doc(db, "clubs", clubId, "calendarEvents", eventToDelete.id));
         }
 
@@ -631,7 +627,10 @@ const handleSaveEvent = async () => {
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteEvent()}>
+                                <AlertDialogAction onClick={() => {
+                                  setEventToDelete(eventData);
+                                  handleDeleteEvent();
+                                }}>
                                     Eliminar
                                 </AlertDialogAction>
                             </AlertDialogFooter>
@@ -650,7 +649,7 @@ const handleSaveEvent = async () => {
         </DialogContent>
       </Dialog>
       
-       <AlertDialog open={!!eventToDelete} onOpenChange={(open) => !open && setEventToDelete(null)}>
+       <AlertDialog open={!!eventToDelete && !isModalOpen} onOpenChange={(open) => !open && setEventToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
