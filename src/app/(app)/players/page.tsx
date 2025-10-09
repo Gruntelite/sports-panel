@@ -569,10 +569,17 @@ export default function PlayersPage() {
         try {
             const batch = writeBatch(db);
             const valueToUpdate = allPossibleColumns.find(c => c.id === bulkEditField)?.type === 'number' ? Number(bulkEditValue) : bulkEditValue;
+            let updateObject: {[key: string]: any} = {};
+
+            if(bulkEditField.startsWith('custom_')) {
+                updateObject[`customFields.${bulkEditField}`] = valueToUpdate;
+            } else {
+                updateObject[bulkEditField] = valueToUpdate;
+            }
 
             selectedPlayers.forEach(playerId => {
                 const playerRef = doc(db, "clubs", clubId, "players", playerId);
-                batch.update(playerRef, { [bulkEditField]: valueToUpdate });
+                batch.update(playerRef, updateObject);
             });
             await batch.commit();
 
@@ -730,7 +737,7 @@ export default function PlayersPage() {
                             onSelect={(e) => e.preventDefault()}
                             disabled={field.id === 'name'}
                           >
-                            {field.label}
+                            {(field as any).label || (field as any).name}
                           </DropdownMenuCheckboxItem>
                       ))}
                       </ScrollArea>
@@ -896,7 +903,10 @@ export default function PlayersPage() {
                         <SelectContent>
                             <SelectItem value="annualFee">Cuota Anual (€)</SelectItem>
                             <SelectItem value="kitSize">Talla de Equipación</SelectItem>
-                             <SelectItem value="medicalCheckCompleted">Revisión Médica</SelectItem>
+                            <SelectItem value="medicalCheckCompleted">Revisión Médica</SelectItem>
+                            {playerCustomFields.map(field => (
+                                <SelectItem key={field.id} value={field.id}>{field.name}</SelectItem>
+                            ))}
                         </SelectContent>
                     </Select>
                 </div>
@@ -1318,3 +1328,5 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
+
+    
