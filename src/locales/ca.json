@@ -644,7 +644,7 @@
         },
         "editor": {
             "title": "Editor d'Horaris",
-            "description": "Modifica els entrenaments per al {day}.",
+            "description": "Modifica os entrenaments per al {day}.",
             "generalSettings": "Ajustos Generals",
             "templateColor": "Color de la Plantilla",
             "venues": "Instal·lacions",
@@ -766,7 +766,7 @@
             ],
             "sports": [
                 {"id": "teamName", "label": "Equip"}, {"id": "jerseyNumber", "label": "Dorsal"},
-                {"id": "monthlyFee", "label": "Quota Mensual (€)"}, {"id": "kitSize", "label": "Talla d'Equipació"},
+                {"id": "annualFee", "label": "Quota Anual (€)"}, {"id": "kitSize", "label": "Talla d'Equipació"},
                 {"id": "medicalCheckCompleted", "label": "Revisió mèdica completada"}
             ],
             "name": "Nom", "lastName": "Cognoms", "birthDate": "Data de Naixement", "dni": "NIF", "sex": "Sexe", "select": "Seleccionar...",
@@ -870,7 +870,7 @@
     },
     "teams": {
         "title": "Equips",
-        "description": "Organitza i gestiona tots els equips del teu club.",
+        "description": "Organitza y gestiona tots els equips del teu club.",
         "cancelOrder": "Cancel·lar Ordenació",
         "enableOrder": "Habilitar Ordenació",
         "saveOrder": "Desar Ordre",
