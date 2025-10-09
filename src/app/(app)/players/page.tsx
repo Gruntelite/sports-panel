@@ -559,6 +559,38 @@ export default function PlayersPage() {
     }
   };
 
+    const handleBulkEdit = async () => {
+        if (!clubId || selectedPlayers.length === 0 || !bulkEditField || bulkEditValue === '') {
+            toast({ variant: "destructive", title: "Error", description: "Selecciona jugadores, un campo y un valor." });
+            return;
+        }
+
+        setSaving(true);
+        try {
+            const batch = writeBatch(db);
+            const valueToUpdate = allPossibleColumns.find(c => c.id === bulkEditField)?.type === 'number' ? Number(bulkEditValue) : bulkEditValue;
+
+            selectedPlayers.forEach(playerId => {
+                const playerRef = doc(db, "clubs", clubId, "players", playerId);
+                batch.update(playerRef, { [bulkEditField]: valueToUpdate });
+            });
+            await batch.commit();
+
+            toast({ title: "Jugadores actualizados", description: `${selectedPlayers.length} jugadores han sido actualizados.` });
+            setIsBulkEditOpen(false);
+            setBulkEditField('');
+            setBulkEditValue('');
+            setSelectedPlayers([]);
+            if (clubId) fetchData(clubId);
+        } catch (error) {
+            console.error("Error updating players in bulk:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudieron actualizar los jugadores." });
+        } finally {
+            setSaving(false);
+        }
+    };
+
+
   const handleFieldSelection = (fieldId: string, isSelected: boolean) => {
       if (isSelected) {
           setSelectedFields(prev => [...prev, fieldId]);
@@ -845,6 +877,62 @@ export default function PlayersPage() {
           </div>
         </CardFooter>
       </Card>
+      
+      <Dialog open={isBulkEditOpen} onOpenChange={setIsBulkEditOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edición Masiva de Jugadores</DialogTitle>
+                <DialogDescription>
+                    Actualiza un campo para los {selectedPlayers.length} jugadores seleccionados.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+                <div className="space-y-2">
+                    <Label htmlFor="bulk-field">Campo a Actualizar</Label>
+                    <Select value={bulkEditField} onValueChange={setBulkEditField}>
+                        <SelectTrigger id="bulk-field">
+                            <SelectValue placeholder="Selecciona un campo..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="annualFee">Cuota Anual (€)</SelectItem>
+                            <SelectItem value="kitSize">Talla de Equipación</SelectItem>
+                             <SelectItem value="medicalCheckCompleted">Revisión Médica</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+                 {bulkEditField && (
+                    <div className="space-y-2">
+                        <Label htmlFor="bulk-value">Nuevo Valor</Label>
+                         {bulkEditField === 'medicalCheckCompleted' ? (
+                             <Select onValueChange={setBulkEditValue}>
+                                 <SelectTrigger id="bulk-value">
+                                    <SelectValue placeholder="Selecciona un estado..." />
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                    <SelectItem value="true">Completada</SelectItem>
+                                    <SelectItem value="false">Pendiente</SelectItem>
+                                 </SelectContent>
+                             </Select>
+                         ) : (
+                            <Input 
+                                id="bulk-value"
+                                type={allPossibleColumns.find(c => c.id === bulkEditField)?.type || 'text'}
+                                value={bulkEditValue}
+                                onChange={(e) => setBulkEditValue(e.target.value)}
+                            />
+                         )}
+                    </div>
+                 )}
+            </div>
+            <DialogFooter>
+                <DialogClose asChild><Button variant="secondary">{t('common.cancel')}</Button></DialogClose>
+                <Button onClick={handleBulkEdit} disabled={saving || !bulkEditField || bulkEditValue === ''}>
+                    {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    Actualizar Jugadores
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
       {viewingPlayer && (
         <MemberDetailModal 
@@ -1230,13 +1318,3 @@ export default function PlayersPage() {
     </TooltipProvider>
   );
 }
-
-
-
-    
-
-    
-
-    
-
-
