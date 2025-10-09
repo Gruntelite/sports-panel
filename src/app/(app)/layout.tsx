@@ -5,12 +5,13 @@ import * as React from 'react';
 import { Sidebar } from '@/components/layout/sidebar';
 import { Header } from '@/components/layout/header';
 import { auth, db } from '@/lib/firebase';
-import { doc, getDoc, Timestamp } from 'firebase/firestore';
+import { doc, getDoc, getDocs, collection, query, where } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { isFuture } from 'date-fns';
 
+type SubscriptionStatus = 'active' | 'trialing' | 'past_due' | 'unpaid' | 'canceled' | 'incomplete' | 'incomplete_expired';
 
 export default function AppLayout({
   children,
@@ -26,7 +27,7 @@ export default function AppLayout({
   React.useEffect(() => {
     setIsSubscriptionPage(pathname === '/subscribe');
   }, [pathname]);
-  
+
   React.useEffect(() => {
     const unsubscribeAuth = auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -39,19 +40,34 @@ export default function AppLayout({
             router.push('/login');
             return;
           }
-          
+
           const clubId = userDocSnap.data().clubId;
           if (clubId) {
             const settingsRef = doc(db, "clubs", clubId, "settings", "config");
             const settingsSnap = await getDoc(settingsRef);
-            if(settingsSnap.exists()) {
-                const settingsData = settingsSnap.data();
-                const trialEndDate = settingsData.trialEndDate as Timestamp | undefined;
 
-                if (trialEndDate && !isFuture(trialEndDate.toDate()) && pathname !== '/subscribe') {
-                    router.push('/subscribe');
-                    return; // Stop further execution to allow redirect to complete
-                }
+            let trialHasEnded = true;
+            if (settingsSnap.exists()) {
+              const settingsData = settingsSnap.data();
+              const trialEndDate = settingsData.trialEndDate;
+              if (trialEndDate && isFuture(trialEndDate.toDate())) {
+                trialHasEnded = false;
+              }
+            }
+
+            if (trialHasEnded) {
+              // Trial has ended, now check for active Stripe subscription
+              const subscriptionsQuery = query(
+                collection(db, "users", user.uid, "subscriptions"),
+                where("status", "in", ["trialing", "active"])
+              );
+              const subscriptionSnap = await getDocs(subscriptionsQuery);
+
+              if (subscriptionSnap.empty && pathname !== '/subscribe') {
+                 // No active trial and no active subscription, redirect to subscribe
+                router.push('/subscribe');
+                return;
+              }
             }
           }
           
@@ -74,7 +90,7 @@ export default function AppLayout({
     return (
       <div className="flex items-center justify-center min-h-screen bg-background">
         <div className="flex flex-col items-center gap-4">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+          <Loader2 className="h-10 w-10 animate-spin text-primary" />
         </div>
       </div>
     );
@@ -86,15 +102,14 @@ export default function AppLayout({
   }
 
   return (
-      <div className="min-h-screen w-full bg-muted/40">
-        <Header />
-        <Sidebar />
-        <div className="flex flex-col md:pl-[220px] lg:pl-[280px] pt-16">
-          <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
-            {children}
-          </main>
-        </div>
+    <div className="min-h-screen w-full bg-muted/40">
+      <Header />
+      <Sidebar />
+      <div className="flex flex-col md:pl-[220px] lg:pl-[280px] pt-16">
+        <main className="flex flex-1 flex-col gap-4 p-4 lg:gap-6 lg:p-6">
+          {children}
+        </main>
       </div>
+    </div>
   );
 }
-
