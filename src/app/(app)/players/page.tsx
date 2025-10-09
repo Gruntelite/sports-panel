@@ -21,7 +21,8 @@ import {
   Columns,
   Trash,
   Eye,
-  FileText
+  FileText,
+  Edit,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -109,7 +110,7 @@ export default function PlayersPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {}, paymentType: 'monthly' });
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
@@ -125,7 +126,11 @@ export default function PlayersPage() {
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [allMembers, setAllMembers] = useState<ClubMember[]>([]);
 
-  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'monthlyFee', 'tutorEmail']));
+  const [isBulkEditOpen, setIsBulkEditOpen] = useState(false);
+  const [bulkEditField, setBulkEditField] = useState('');
+  const [bulkEditValue, setBulkEditValue] = useState('');
+
+  const [visibleColumns, setVisibleColumns] = useState<Set<string>>(new Set(['name', 'teamName', 'jerseyNumber', 'annualFee', 'tutorEmail']));
   const [filterTeamId, setFilterTeamId] = useState<string>('all');
   
   const playerFields = t('players.fields', { returnObjects: true });
@@ -212,8 +217,8 @@ export default function PlayersPage() {
       'birthDate', 'dni', 'address', 'city', 'postalCode',
       'tutorPhone', 'iban', 'jerseyNumber'
     ];
-    if (player.monthlyFee === undefined || player.monthlyFee === null) {
-      requiredFields.push('monthlyFee');
+    if (player.annualFee === undefined || player.annualFee === null) {
+      requiredFields.push('annualFee');
     }
     if (player.isOwnTutor) {
         // No need for tutor fields if player is their own tutor
@@ -362,7 +367,7 @@ export default function PlayersPage() {
   
   const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
     setModalMode(mode);
-    setPlayerData(mode === 'edit' && player ? player : { customFields: {}, interruptions: [], paymentType: 'monthly' });
+    setPlayerData(mode === 'edit' && player ? player : { customFields: {}, interruptions: [] });
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -398,15 +403,8 @@ export default function PlayersPage() {
         ...playerData,
         teamName,
         avatar: imageUrl === null ? null : (imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`),
+        annualFee: (playerData.annualFee === '' || playerData.annualFee === undefined || playerData.annualFee === null) ? null : Number(playerData.annualFee),
       };
-      
-      if (dataToSave.paymentType === 'monthly') {
-        dataToSave.monthlyFee = (dataToSave.monthlyFee === '' || dataToSave.monthlyFee === undefined || dataToSave.monthlyFee === null) ? null : Number(dataToSave.monthlyFee);
-        delete dataToSave.annualFee;
-      } else {
-        dataToSave.annualFee = (dataToSave.annualFee === '' || dataToSave.annualFee === undefined || dataToSave.annualFee === null) ? null : Number(dataToSave.annualFee);
-        delete dataToSave.monthlyFee;
-      }
       
       delete (dataToSave as Partial<Player>).id;
 
@@ -561,21 +559,6 @@ export default function PlayersPage() {
     }
   };
 
-  const handleRequestUpdate = async (member: Player) => {
-    if (!clubId) return;
-    const result = await requestDataUpdateAction({ 
-      clubId, 
-      members: [{ id: member.id, name: `${member.name} ${member.lastName}`, email: member.tutorEmail || '' }],
-      memberType: 'player',
-      fields: ['dni', 'address', 'tutorPhone', 'iban'] // Example fields
-    });
-    if (result.success) {
-      toast({ title: "Solicitud Enviada", description: "Se ha enviado un correo para la actualización de datos." });
-    } else {
-      toast({ variant: "destructive", title: "Error", description: result.error });
-    }
-  };
-
   const handleFieldSelection = (fieldId: string, isSelected: boolean) => {
       if (isSelected) {
           setSelectedFields(prev => [...prev, fieldId]);
@@ -653,7 +636,7 @@ export default function PlayersPage() {
       switch (columnId) {
           case 'name':
               return `${player.name} ${player.lastName}`;
-          case 'monthlyFee':
+          case 'annualFee':
               return value === null || value === undefined ? 'N/A' : `${value} €`;
           case 'teamName':
               return <Badge variant="outline">{player.teamName || "Sin equipo"}</Badge>;
@@ -743,6 +726,10 @@ export default function PlayersPage() {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => setIsBulkEditOpen(true)}>
+                            <Edit className="mr-2 h-4 w-4"/>
+                            Edición Masiva
+                        </DropdownMenuItem>
                        <DropdownMenuSub>
                          <DropdownMenuSubTrigger>{t('players.assignToTeam')}</DropdownMenuSubTrigger>
                          <DropdownMenuSubContent>
@@ -1088,32 +1075,15 @@ export default function PlayersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="jerseyNumber">{t('players.fields.jerseyNumber')}</Label>
                                     <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>Tipo de Cuota</Label>
-                                    <Select value={playerData.paymentType || 'monthly'} onValueChange={(value) => setPlayerData(prev => ({...prev, paymentType: value as 'monthly' | 'annual'}))}>
-                                        <SelectTrigger><SelectValue /></SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="monthly">Mensual</SelectItem>
-                                            <SelectItem value="annual">Anual</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <Label htmlFor="annualFee">Cuota Anual (€)</Label>
+                                    <Input id="annualFee" type="number" value={playerData.annualFee ?? ''} onChange={handleInputChange} />
                                 </div>
-                                {playerData.paymentType === 'annual' ? (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="annualFee">Cuota Anual (€)</Label>
-                                        <Input id="annualFee" type="number" value={playerData.annualFee ?? ''} onChange={handleInputChange} />
-                                    </div>
-                                ) : (
-                                    <div className="space-y-2">
-                                        <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
-                                        <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
-                                    </div>
-                                )}
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
@@ -1268,4 +1238,5 @@ export default function PlayersPage() {
     
 
     
+
 

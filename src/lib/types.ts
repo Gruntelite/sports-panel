@@ -148,8 +148,7 @@ export type Socio = {
     email: string;
     phone?: string;
     dni?: string;
-    paymentType: 'monthly' | 'annual';
-    fee: number;
+    annualFee?: number;
     avatar?: string;
     socioNumber?: string;
     customFields?: Record<string, any>;
