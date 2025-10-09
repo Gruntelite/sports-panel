@@ -115,7 +115,7 @@ export default function StaffPage() {
   const [viewingMemberDocs, setViewingMemberDocs] = useState<Document[]>([]);
 
   const [staffData, setStaffData] = useState<Partial<Staff>>({});
-  const [socioData, setSocioData] = useState<Partial<Socio>>({});
+  const [socioData, setSocioData] = useState<Partial<Socio>>({ paymentType: 'monthly', fee: 0, excludedMonths: [], customFields: {} });
 
   const [itemToDelete, setItemToDelete] = useState<Staff | Socio | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -854,8 +854,20 @@ export default function StaffPage() {
                             ) : (
                                 <>
                                  <div className="grid grid-cols-2 gap-4">
-                                    <div className="space-y-2"><Label htmlFor="paymentType">{t('staff.feeType')}</Label><Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="monthly">{t('staff.monthly')}</SelectItem><SelectItem value="annual">{t('staff.annual')}</SelectItem></SelectContent></Select></div>
-                                    <div className="space-y-2"><Label htmlFor="fee">{t('staff.feeAmount')}</Label><Input id="fee" type="number" value={socioData.fee || ''} onChange={handleInputChange} /></div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="paymentType">{t('staff.feeType')}</Label>
+                                        <Select value={socioData.paymentType} onValueChange={(value) => handleSelectChange('paymentType', value)}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="monthly">{t('staff.monthly')}</SelectItem>
+                                                <SelectItem value="annual">{t('staff.annual')}</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="fee">{t('staff.feeAmount')}</Label>
+                                        <Input id="fee" type="number" value={socioData.fee ?? ''} onChange={handleInputChange} />
+                                    </div>
                                 </div>
                                 {socioData.paymentType === 'monthly' && (
                                 <div className="space-y-2"><Label>{t('staff.excludedMonthsFee')}</Label><Popover><PopoverTrigger asChild><Button variant="outline" className="w-full justify-start font-normal"><Calendar className="mr-2 h-4 w-4"/>{socioData.excludedMonths && socioData.excludedMonths.length > 0 ? `${socioData.excludedMonths.length} mese(s) seleccionado(s)` : `${t('staff.selectMonths')}...`}</Button></PopoverTrigger><PopoverContent className="p-0"><Command><CommandList><CommandGroup>{MONTHS.map(month => (<CommandItem key={month.value} onSelect={() => {const newSelection = new Set(socioData.excludedMonths || []); if (newSelection.has(month.value)) { newSelection.delete(month.value);} else { newSelection.add(month.value);} setSocioData(prev => ({ ...prev, excludedMonths: Array.from(newSelection) }));}}><Check className={cn("mr-2 h-4 w-4", socioData.excludedMonths?.includes(month.value) ? "opacity-100" : "opacity-0")} />{month.label}</CommandItem>))}</CommandGroup></CommandList></Command></PopoverContent></Popover></div>
@@ -876,7 +888,7 @@ export default function StaffPage() {
                                         <Input
                                             id={field.id}
                                             type={field.type}
-                                            value={currentData.customFields?.[field.id] || ''}
+                                            value={(currentData as any).customFields?.[field.id] || ''}
                                             onChange={(e) => handleCustomFieldChange(field.id, e.target.value)}
                                         />
                                     </div>
@@ -919,3 +931,4 @@ export default function StaffPage() {
 }
 
     
+

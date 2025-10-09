@@ -109,7 +109,7 @@ export default function PlayersPage() {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<'add' | 'edit'>('add');
-  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {}, paymentType: 'monthly' });
   const [playerToDelete, setPlayerToDelete] = useState<Player | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [newImage, setNewImage] = useState<File | null>(null);
@@ -362,7 +362,7 @@ export default function PlayersPage() {
   
   const handleOpenModal = (mode: 'add' | 'edit', player?: Player) => {
     setModalMode(mode);
-    setPlayerData(mode === 'edit' && player ? player : { customFields: {}, interruptions: [] });
+    setPlayerData(mode === 'edit' && player ? player : { customFields: {}, interruptions: [], paymentType: 'monthly' });
     setIsModalOpen(true);
     setNewImage(null);
     setImagePreview(null);
@@ -394,12 +394,19 @@ export default function PlayersPage() {
       
       const teamName = teams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
 
-      const dataToSave = {
+      const dataToSave: Partial<Player> = {
         ...playerData,
         teamName,
         avatar: imageUrl === null ? null : (imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`),
-        monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
+      
+      if (dataToSave.paymentType === 'monthly') {
+        dataToSave.monthlyFee = (dataToSave.monthlyFee === '' || dataToSave.monthlyFee === undefined || dataToSave.monthlyFee === null) ? null : Number(dataToSave.monthlyFee);
+        delete dataToSave.annualFee;
+      } else {
+        dataToSave.annualFee = (dataToSave.annualFee === '' || dataToSave.annualFee === undefined || dataToSave.annualFee === null) ? null : Number(dataToSave.annualFee);
+        delete dataToSave.monthlyFee;
+      }
       
       delete (dataToSave as Partial<Player>).id;
 
@@ -1081,23 +1088,44 @@ export default function PlayersPage() {
                                     </SelectContent>
                                 </Select>
                             </div>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                 <div className="space-y-2">
                                     <Label htmlFor="jerseyNumber">{t('players.fields.jerseyNumber')}</Label>
                                     <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleInputChange} />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
-                                    <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                    <Label>Tipo de Cuota</Label>
+                                    <Select value={playerData.paymentType || 'monthly'} onValueChange={(value) => setPlayerData(prev => ({...prev, paymentType: value as 'monthly' | 'annual'}))}>
+                                        <SelectTrigger><SelectValue /></SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="monthly">Mensual</SelectItem>
+                                            <SelectItem value="annual">Anual</SelectItem>
+                                        </SelectContent>
+                                    </Select>
                                 </div>
+                                {playerData.paymentType === 'annual' ? (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="annualFee">Cuota Anual (€)</Label>
+                                        <Input id="annualFee" type="number" value={playerData.annualFee ?? ''} onChange={handleInputChange} />
+                                    </div>
+                                ) : (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
+                                        <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleInputChange} />
+                                    </div>
+                                )}
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="kitSize">{t('players.fields.kitSize')}</Label>
                                     <Input id="kitSize" placeholder={t('players.fields.kitSizePlaceholder')} value={playerData.kitSize || ''} onChange={handleInputChange} />
                                 </div>
-                            </div>
-                            <div className="flex items-center space-x-2 pt-4">
-                            <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
-                            <Label htmlFor="medicalCheckCompleted">{t('players.fields.medicalCheck')}</Label>
+                                <div className="flex items-end pb-1">
+                                    <div className="flex items-center space-x-2">
+                                        <Checkbox id="medicalCheckCompleted" checked={playerData.medicalCheckCompleted} onCheckedChange={(checked) => handleCheckboxChange('medicalCheckCompleted', checked as boolean)} />
+                                        <Label htmlFor="medicalCheckCompleted">{t('players.fields.medicalCheck')}</Label>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -1240,3 +1268,4 @@ export default function PlayersPage() {
     
 
     
+

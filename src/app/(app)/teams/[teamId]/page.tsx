@@ -120,7 +120,7 @@ export default function EditTeamPage() {
   const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
   const [viewingMemberDocs, setViewingMemberDocs] = useState<Document[]>([]);
 
-  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {}, paymentType: 'monthly' });
   const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [], customFields: {} });
 
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
@@ -479,7 +479,7 @@ export default function EditTeamPage() {
     
     if (mode === 'add') {
       if (memberType === 'player') {
-        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee, interruptions: [], customFields: {} });
+        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee, interruptions: [], customFields: {}, paymentType: 'monthly' });
         setCoachData({interruptions: [], customFields: {}});
       } else {
         setCoachData({ teamId: teamId, interruptions: [], customFields: {} });
@@ -534,12 +534,19 @@ export default function EditTeamPage() {
       
       const teamName = allTeams.find(t => t.id === playerData.teamId)?.name || "Sin equipo";
 
-      const dataToSave = {
+      const dataToSave: Partial<Player> = {
         ...playerData,
         teamName,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
-        monthlyFee: (playerData.monthlyFee === '' || playerData.monthlyFee === undefined || playerData.monthlyFee === null) ? null : Number(playerData.monthlyFee),
       };
+
+      if (dataToSave.paymentType === 'monthly') {
+        dataToSave.monthlyFee = (dataToSave.monthlyFee === '' || dataToSave.monthlyFee === undefined || dataToSave.monthlyFee === null) ? null : Number(dataToSave.monthlyFee);
+        delete dataToSave.annualFee;
+      } else {
+        dataToSave.annualFee = (dataToSave.annualFee === '' || dataToSave.annualFee === undefined || dataToSave.annualFee === null) ? null : Number(dataToSave.annualFee);
+        delete dataToSave.monthlyFee;
+      }
 
       if (modalMode === 'edit' && playerData.id) {
         const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
@@ -1198,25 +1205,29 @@ export default function EditTeamPage() {
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
                                     <div className="space-y-2">
-                                        <Label htmlFor="teamId">{t('coaches.fields.team')}</Label>
-                                        <Select onValueChange={(value) => handleSelectChange('teamId', value)} value={playerData.teamId}>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder="..." />
-                                            </SelectTrigger>
+                                        <Label>Tipo de Cuota</Label>
+                                        <Select value={playerData.paymentType || 'monthly'} onValueChange={(value) => setPlayerData(prev => ({...prev, paymentType: value as 'monthly' | 'annual'}))}>
+                                            <SelectTrigger><SelectValue /></SelectTrigger>
                                             <SelectContent>
-                                                {allTeams.map(t => (
-                                                    <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                                ))}
+                                                <SelectItem value="monthly">Mensual</SelectItem>
+                                                <SelectItem value="annual">Anual</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>
-                                    <div className="space-y-2">
+                                    {playerData.paymentType === 'annual' ? (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="annualFee">Cuota Anual (€)</Label>
+                                            <Input id="annualFee" type="number" value={playerData.annualFee ?? ''} onChange={handleMemberInputChange} />
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
+                                            <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
+                                        </div>
+                                    )}
+                                     <div className="space-y-2">
                                         <Label htmlFor="jerseyNumber">{t('players.fields.jerseyNumber')}</Label>
                                         <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleMemberInputChange} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
-                                        <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1247,20 +1258,6 @@ export default function EditTeamPage() {
                                         <Label htmlFor="monthlyPayment">{t('coaches.fields.monthlyPayment')}</Label>
                                         <Input id="monthlyPayment" type="number" value={coachData.monthlyPayment ?? ''} onChange={handleMemberInputChange} />
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="teamId">{t('coaches.fields.team')}</Label>
-                                    <Select onValueChange={(value) => handleSelectChange('teamId' as any, value)} value={coachData.teamId || 'unassigned'}>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="..." />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="unassigned">{t('coaches.unassigned')}</SelectItem>
-                                            {allTeams.map(t => (
-                                                <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
                                 </div>
                             </div>
                         )}
@@ -1321,3 +1318,4 @@ export default function EditTeamPage() {
     
 
     
+

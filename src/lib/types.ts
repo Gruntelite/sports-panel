@@ -69,7 +69,9 @@ export type Player = {
     jerseyNumber?: number;
     position?: string;
     avatar?: string;
+    paymentType?: 'monthly' | 'annual';
     monthlyFee?: number;
+    annualFee?: number;
     paymentStatus?: 'paid' | 'pending' | 'overdue';
     isOwnTutor?: boolean;
     tutorName?: string;
