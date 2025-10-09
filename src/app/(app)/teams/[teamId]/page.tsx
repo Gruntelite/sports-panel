@@ -120,7 +120,7 @@ export default function EditTeamPage() {
   const [viewingMember, setViewingMember] = useState<{member: Player | Coach, type: 'player' | 'coach'} | null>(null);
   const [viewingMemberDocs, setViewingMemberDocs] = useState<Document[]>([]);
 
-  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {}, paymentType: 'monthly' });
+  const [playerData, setPlayerData] = useState<Partial<Player>>({ interruptions: [], customFields: {} });
   const [coachData, setCoachData] = useState<Partial<Coach>>({ interruptions: [], customFields: {} });
 
   const [memberToDelete, setMemberToDelete] = useState<TeamMember | null>(null);
@@ -200,8 +200,8 @@ export default function EditTeamPage() {
       'birthDate', 'dni', 'address', 'city', 'postalCode',
       'tutorPhone', 'iban', 'jerseyNumber'
     ];
-    if (player.monthlyFee === undefined || player.monthlyFee === null) {
-      requiredFields.push('monthlyFee');
+    if (player.annualFee === undefined || player.annualFee === null) {
+      requiredFields.push('annualFee');
     }
     if (player.isOwnTutor) {
         // No need for tutor fields if player is their own tutor
@@ -378,25 +378,25 @@ export default function EditTeamPage() {
         imageUrl = await getDownloadURL(imageRef);
       }
 
-      const teamDataToUpdate = {
+      const teamDataToUpdate: Partial<Team> = {
         name: team.name,
         level: team.level || null,
         minAge: team.minAge ? Number(team.minAge) : null,
         maxAge: team.maxAge ? Number(team.maxAge) : null,
-        defaultMonthlyFee: (team.defaultMonthlyFee === '' || team.defaultMonthlyFee === undefined || team.defaultMonthlyFee === null) ? null : Number(team.defaultMonthlyFee),
+        defaultAnnualFee: (team.defaultAnnualFee === '' || team.defaultAnnualFee === undefined || team.defaultAnnualFee === null) ? null : Number(team.defaultAnnualFee),
         image: imageUrl || team.image,
       };
       
       const teamDocRef = doc(db, "clubs", clubId, "teams", teamId);
       batch.update(teamDocRef, teamDataToUpdate);
       
-      const newFee = teamDataToUpdate.defaultMonthlyFee;
+      const newFee = teamDataToUpdate.defaultAnnualFee;
       if (newFee !== null && newFee !== undefined) {
           const playersQuery = query(collection(db, "clubs", clubId, "players"), where("teamId", "==", teamId));
           const playersSnapshot = await getDocs(playersQuery);
           playersSnapshot.forEach(playerDoc => {
               const playerRef = doc(db, "clubs", clubId, "players", playerDoc.id);
-              batch.update(playerRef, { monthlyFee: newFee });
+              batch.update(playerRef, { annualFee: newFee });
           });
       }
       
@@ -479,7 +479,7 @@ export default function EditTeamPage() {
     
     if (mode === 'add') {
       if (memberType === 'player') {
-        setPlayerData({ teamId: teamId, monthlyFee: team.defaultMonthlyFee, interruptions: [], customFields: {}, paymentType: 'monthly' });
+        setPlayerData({ teamId: teamId, annualFee: team.defaultAnnualFee, interruptions: [], customFields: {} });
         setCoachData({interruptions: [], customFields: {}});
       } else {
         setCoachData({ teamId: teamId, interruptions: [], customFields: {} });
@@ -538,15 +538,8 @@ export default function EditTeamPage() {
         ...playerData,
         teamName,
         avatar: imageUrl || playerData.avatar || `https://placehold.co/40x40.png?text=${(playerData.name || '').charAt(0)}`,
+        annualFee: (playerData.annualFee === '' || playerData.annualFee === undefined || playerData.annualFee === null) ? null : Number(playerData.annualFee),
       };
-
-      if (dataToSave.paymentType === 'monthly') {
-        dataToSave.monthlyFee = (dataToSave.monthlyFee === '' || dataToSave.monthlyFee === undefined || dataToSave.monthlyFee === null) ? null : Number(dataToSave.monthlyFee);
-        delete dataToSave.annualFee;
-      } else {
-        dataToSave.annualFee = (dataToSave.annualFee === '' || dataToSave.annualFee === undefined || dataToSave.annualFee === null) ? null : Number(dataToSave.annualFee);
-        delete dataToSave.monthlyFee;
-      }
 
       if (modalMode === 'edit' && playerData.id) {
         const playerRef = doc(db, "clubs", clubId, "players", playerData.id);
@@ -836,8 +829,8 @@ export default function EditTeamPage() {
                               </div>
                           </div>
                            <div className="space-y-2">
-                              <Label htmlFor="defaultMonthlyFee">{t('teams.editTeam.defaultFee')}</Label>
-                              <Input id="defaultMonthlyFee" type="number" value={team.defaultMonthlyFee ?? ''} onChange={handleTeamInputChange} />
+                              <Label htmlFor="defaultAnnualFee">Cuota Anual por Defecto (€)</Label>
+                              <Input id="defaultAnnualFee" type="number" value={team.defaultAnnualFee ?? ''} onChange={handleTeamInputChange} />
                           </div>
                            <Button onClick={handleSaveChanges} disabled={saving} className="w-full">
                               {saving ? <Loader2 className="animate-spin" /> : t('common.saveChanges')}
@@ -1204,27 +1197,10 @@ export default function EditTeamPage() {
                                     <Input id="iban" value={playerData.iban || ''} onChange={handleMemberInputChange} />
                                 </div>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-                                    <div className="space-y-2">
-                                        <Label>Tipo de Cuota</Label>
-                                        <Select value={playerData.paymentType || 'monthly'} onValueChange={(value) => setPlayerData(prev => ({...prev, paymentType: value as 'monthly' | 'annual'}))}>
-                                            <SelectTrigger><SelectValue /></SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value="monthly">Mensual</SelectItem>
-                                                <SelectItem value="annual">Anual</SelectItem>
-                                            </SelectContent>
-                                        </Select>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="annualFee">Cuota Anual (€)</Label>
+                                        <Input id="annualFee" type="number" value={playerData.annualFee ?? ''} onChange={handleMemberInputChange} />
                                     </div>
-                                    {playerData.paymentType === 'annual' ? (
-                                        <div className="space-y-2">
-                                            <Label htmlFor="annualFee">Cuota Anual (€)</Label>
-                                            <Input id="annualFee" type="number" value={playerData.annualFee ?? ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            <Label htmlFor="monthlyFee">{t('players.fields.monthlyFee')}</Label>
-                                            <Input id="monthlyFee" type="number" value={playerData.monthlyFee ?? ''} onChange={handleMemberInputChange} />
-                                        </div>
-                                    )}
                                      <div className="space-y-2">
                                         <Label htmlFor="jerseyNumber">{t('players.fields.jerseyNumber')}</Label>
                                         <Input id="jerseyNumber" type="number" value={playerData.jerseyNumber || ''} onChange={handleMemberInputChange} />
@@ -1318,4 +1294,5 @@ export default function EditTeamPage() {
     
 
     
+
 
