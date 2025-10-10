@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import type { ClubSettings } from "@/lib/types";
+import { doc, getDoc, updateDoc, collection, getDocs, query, orderBy } from "firebase/firestore";
+import type { ClubSettings, Player, Team } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle, Calendar as CalendarIcon, Save } from "lucide-react";
+import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle, Calendar as CalendarIcon, Save, Search, Users } from "lucide-react";
 import { createStripeConnectAccountLinkAction } from "@/lib/actions";
 import { useTranslation } from "@/components/i18n-provider";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -18,6 +18,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Command, CommandGroup, CommandList, CommandItem } from "@/components/ui/command";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 export default function FeesPage() {
   const { t } = useTranslation();
@@ -34,7 +37,20 @@ export default function FeesPage() {
   const [feeChargeDay, setFeeChargeDay] = useState<number>(1);
   const [feeChargeMonths, setFeeChargeMonths] = useState<number[]>([]);
 
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTeam, setSelectedTeam] = useState("all");
+
   const MONTHS = t('months', { returnObjects: true }) as { label: string; value: number }[];
+
+   const filteredPlayers = useMemo(() => {
+    return players.filter(player => {
+      const nameMatch = `${player.name} ${player.lastName}`.toLowerCase().includes(searchTerm.toLowerCase());
+      const teamMatch = selectedTeam === 'all' || player.teamId === selectedTeam;
+      return nameMatch && teamMatch;
+    });
+  }, [players, searchTerm, selectedTeam]);
 
   useEffect(() => {
     const processPage = async (user: any) => {
@@ -56,6 +72,7 @@ export default function FeesPage() {
             return;
         }
 
+        // Fetch settings
         const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
         let settingsData: ClubSettings = {};
         
@@ -66,7 +83,7 @@ export default function FeesPage() {
             setFeeChargeMonths(settingsData.feeChargeMonths || []);
         }
 
-        // Check if returning from Stripe onboarding
+        // Check for Stripe onboarding return
         if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
            await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
            setOnboardingComplete(true);
@@ -75,6 +92,28 @@ export default function FeesPage() {
         } else {
             setOnboardingComplete(settingsData.stripeConnectOnboardingComplete || false);
         }
+
+        // Fetch teams
+        const teamsQuery = query(collection(db, "clubs", currentClubId, "teams"), orderBy("order"));
+        const teamsSnapshot = await getDocs(teamsQuery);
+        const teamsList = teamsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Team));
+        setTeams(teamsList);
+        
+        // Fetch players
+        const playersQuery = query(collection(db, "clubs", currentClubId, "players"));
+        const playersSnapshot = await getDocs(playersQuery);
+        const playersList = playersSnapshot.docs.map(doc => {
+            const data = doc.data() as Player;
+            const team = teamsList.find(t => t.id === data.teamId);
+            return {
+                id: doc.id,
+                ...data,
+                teamName: team ? team.name : "Sin equipo",
+            };
+        });
+        setPlayers(playersList);
+
+
       } catch (error) {
         console.error("Error processing fees page:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo cargar la información de la página."});
@@ -261,6 +300,75 @@ export default function FeesPage() {
                 <Save className="mr-2 h-4 w-4"/>
                 Guardar Configuración
              </Button>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+            <CardTitle>Cuotas Anuales de Jugadores</CardTitle>
+            <CardDescription>Consulta y gestiona las cuotas asignadas a cada jugador.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+                <div className="relative w-full sm:max-w-xs">
+                    <Search className="absolute left-2.5 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Buscar por nombre..."
+                        className="pl-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <Select value={selectedTeam} onValueChange={setSelectedTeam}>
+                    <SelectTrigger className="w-full sm:w-[200px]">
+                        <SelectValue placeholder="Filtrar por equipo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">Todos los equipos</SelectItem>
+                        {teams.map(team => (
+                            <SelectItem key={team.id} value={team.id}>{team.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+             <div className="border rounded-md overflow-hidden">
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Jugador</TableHead>
+                            <TableHead>Equipo</TableHead>
+                            <TableHead className="text-right">Cuota Anual</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {filteredPlayers.length > 0 ? (
+                            filteredPlayers.map(player => (
+                                <TableRow key={player.id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar className="h-9 w-9">
+                                                <AvatarImage src={player.avatar} alt={player.name} />
+                                                <AvatarFallback>{player.name?.charAt(0)}{player.lastName?.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <span className="font-medium">{player.name} {player.lastName}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{player.teamName || 'Sin equipo'}</TableCell>
+                                    <TableCell className="text-right font-medium">
+                                        {player.annualFee?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'}) ?? 'No asignada'}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        ) : (
+                            <TableRow>
+                                <TableCell colSpan={3} className="h-24 text-center">
+                                    No se encontraron jugadores.
+                                </TableCell>
+                            </TableRow>
+                        )}
+                    </TableBody>
+                </Table>
+            </div>
         </CardContent>
       </Card>
     </div>
