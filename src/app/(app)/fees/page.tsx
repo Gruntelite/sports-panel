@@ -27,47 +27,55 @@ export default function FeesPage() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
-    const checkOnboardingStatus = async (currentClubId: string) => {
-        try {
-            const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-            const settingsSnap = await getDoc(settingsRef);
-            
-            if (settingsSnap.exists()) {
-                const settings = settingsSnap.data() as ClubSettings;
-                const isComplete = settings.stripeConnectOnboardingComplete || false;
-                setOnboardingComplete(isComplete);
-
-                // If redirected from Stripe successfully and not yet marked as complete in DB
-                if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId && !isComplete) {
-                   await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
-                   setOnboardingComplete(true); // Update state immediately
-                   toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
-                   router.replace('/fees'); // Clean URL params
-                }
-            }
-        } catch (error) {
-            console.error("Error checking Stripe status: ", error);
-            toast({ variant: "destructive", title: "Error", description: "No se pudo verificar el estado de la conexión con Stripe."});
-        } finally {
-            setLoading(false);
-        }
-    };
-    
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
-      if (user) {
+    const processPage = async (user: any) => {
+      try {
         const userDocRef = doc(db, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
-        if (userDocSnap.exists()) {
-          const currentClubId = userDocSnap.data().clubId;
-          setClubId(currentClubId);
-          if (currentClubId) {
-            checkOnboardingStatus(currentClubId);
-          } else {
-             setLoading(false);
-          }
-        } else {
-            setLoading(false);
+
+        if (!userDocSnap.exists()) {
+          setLoading(false);
+          router.push('/login');
+          return;
         }
+
+        const currentClubId = userDocSnap.data().clubId;
+        setClubId(currentClubId);
+        
+        if (!currentClubId) {
+            setLoading(false);
+            return;
+        }
+
+        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+        
+        // Handle redirect from Stripe
+        if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
+           await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
+           setOnboardingComplete(true);
+           toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
+           router.replace('/fees'); // Clean URL params
+           setLoading(false);
+           return;
+        }
+
+        // Fetch current status
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+            const settings = settingsSnap.data() as ClubSettings;
+            setOnboardingComplete(settings.stripeConnectOnboardingComplete || false);
+        }
+
+      } catch (error) {
+        console.error("Error processing fees page:", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudo cargar la información de la página."});
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        processPage(user);
       } else {
         setLoading(false);
         router.push('/login');
@@ -75,7 +83,7 @@ export default function FeesPage() {
     });
 
     return () => unsubscribe();
-  }, [searchParams, router, toast, t]);
+  }, [searchParams, router, toast]);
 
   const handleConnectStripe = async () => {
     if (!clubId) {
