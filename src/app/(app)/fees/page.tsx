@@ -8,10 +8,16 @@ import type { ClubSettings } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react";
+import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle, Calendar as CalendarIcon, Save } from "lucide-react";
 import { createStripeConnectAccountLinkAction } from "@/lib/actions";
 import { useTranslation } from "@/components/i18n-provider";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandGroup, CommandList, CommandItem } from "@/components/ui/command";
+import { Check } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function FeesPage() {
   const { t } = useTranslation();
@@ -20,9 +26,15 @@ export default function FeesPage() {
   const searchParams = useSearchParams();
 
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
+
+  const [feeChargeDay, setFeeChargeDay] = useState<number>(1);
+  const [feeChargeMonths, setFeeChargeMonths] = useState<number[]>([]);
+
+  const MONTHS = t('months', { returnObjects: true }) as { label: string; value: number }[];
 
   useEffect(() => {
     const processPage = async (user: any) => {
@@ -50,6 +62,8 @@ export default function FeesPage() {
         const settingsSnap = await getDoc(settingsRef);
         if (settingsSnap.exists()) {
             settingsData = settingsSnap.data() as ClubSettings;
+            setFeeChargeDay(settingsData.feeChargeDay || 1);
+            setFeeChargeMonths(settingsData.feeChargeMonths || []);
         }
 
         // Check if returning from Stripe onboarding
@@ -98,6 +112,23 @@ export default function FeesPage() {
     }
   };
   
+    const handleSaveFeeSettings = async () => {
+        if (!clubId) return;
+        setSaving(true);
+        try {
+            const settingsRef = doc(db, "clubs", clubId, "settings", "config");
+            await updateDoc(settingsRef, {
+                feeChargeDay,
+                feeChargeMonths,
+            });
+            toast({ title: "Configuración guardada", description: "Los ajustes de cobro de cuotas han sido actualizados." });
+        } catch (e) {
+            toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
+        } finally {
+            setSaving(false);
+        }
+    };
+
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
   }
@@ -171,6 +202,67 @@ export default function FeesPage() {
              </CardContent>
         </Card>
       </div>
+
+       <Card>
+        <CardHeader>
+          <CardTitle>Configuración de Cobro de Cuotas</CardTitle>
+          <CardDescription>
+            Define cuándo se realizarán los cobros automáticos de las cuotas a los miembros.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                    <Label>Día del mes para el cobro</Label>
+                     <Select value={feeChargeDay.toString()} onValueChange={(value) => setFeeChargeDay(Number(value))}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {Array.from({ length: 28 }, (_, i) => i + 1).map(day => (
+                                <SelectItem key={day} value={day.toString()}>{day}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div className="space-y-2">
+                    <Label>Meses en los que se cobra la cuota</Label>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start font-normal">
+                                <CalendarIcon className="mr-2 h-4 w-4" />
+                                {feeChargeMonths.length > 0 ? `${feeChargeMonths.length} meses seleccionados` : "Seleccionar meses..."}
+                            </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0">
+                            <Command>
+                                <CommandList>
+                                    <CommandGroup>
+                                        {MONTHS.map((month) => (
+                                            <CommandItem key={month.value} onSelect={() => {
+                                                const newSelection = new Set(feeChargeMonths);
+                                                if(newSelection.has(month.value)) newSelection.delete(month.value);
+                                                else newSelection.add(month.value);
+                                                setFeeChargeMonths(Array.from(newSelection));
+                                            }}>
+                                                <Check className={cn("mr-2 h-4 w-4", feeChargeMonths.includes(month.value) ? "opacity-100" : "opacity-0")} />
+                                                {month.label}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                </div>
+            </div>
+             <Button onClick={handleSaveFeeSettings} disabled={saving}>
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                <Save className="mr-2 h-4 w-4"/>
+                Guardar Configuración
+             </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }

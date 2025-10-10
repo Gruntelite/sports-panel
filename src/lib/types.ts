@@ -1,3 +1,4 @@
+
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -328,6 +329,8 @@ export type ClubSettings = {
     essentialDocs?: string[];
     stripeConnectAccountId?: string;
     stripeConnectOnboardingComplete?: boolean;
+    feeChargeDay?: number;
+    feeChargeMonths?: number[];
 }
 
 export type Incident = {
