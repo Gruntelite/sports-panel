@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect } from "react";
@@ -26,13 +25,32 @@ export default function FeesPage() {
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
-    const handleStripeSuccess = async (currentClubId: string, settingsRef: any) => {
-        await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
-        setOnboardingComplete(true);
-        toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
-        router.replace('/fees'); // Clean URL params
-    };
+    const checkOnboardingStatus = async (currentClubId: string) => {
+        try {
+            const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+            const settingsSnap = await getDoc(settingsRef);
+            
+            if (settingsSnap.exists()) {
+                const settings = settingsSnap.data() as ClubSettings;
+                const isComplete = settings.stripeConnectOnboardingComplete || false;
+                setOnboardingComplete(isComplete);
 
+                // If redirected from Stripe successfully and not yet marked as complete in DB
+                if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId && !isComplete) {
+                   await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
+                   setOnboardingComplete(true); // Update state immediately
+                   toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
+                   router.replace('/fees'); // Clean URL params
+                }
+            }
+        } catch (error) {
+            console.error("Error checking Stripe status: ", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo verificar el estado de la conexión con Stripe."});
+        } finally {
+            setLoading(false);
+        }
+    };
+    
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid);
@@ -41,21 +59,17 @@ export default function FeesPage() {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
           if (currentClubId) {
-            const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-            const settingsSnap = await getDoc(settingsRef);
-            if (settingsSnap.exists()) {
-                const settings = settingsSnap.data() as ClubSettings;
-                const onboardingStatus = settings.stripeConnectOnboardingComplete || false;
-                setOnboardingComplete(onboardingStatus);
-
-                if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId && !onboardingStatus) {
-                   await handleStripeSuccess(currentClubId, settingsRef);
-                }
-            }
+            checkOnboardingStatus(currentClubId);
+          } else {
+             setLoading(false);
           }
+        } else {
+            setLoading(false);
         }
+      } else {
+        setLoading(false);
+        router.push('/login');
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
