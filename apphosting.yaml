@@ -22,6 +22,8 @@ runConfig:
     - META_PIXEL_ID
     - META_ACCESS_TOKEN
     - GMAIL_APP_PASSWORD
+    - STRIPE_CONNECT_SECRET_KEY
+    - STRIPE_CONNECT_WEBHOOK_SECRET
 
 # Defines a scheduled job that will be triggered by Cloud Scheduler.
 # The job will send a POST request to the specified path.

@@ -1,4 +1,3 @@
-
 'use server';
 
 import { Timestamp } from "firebase-admin/firestore";
@@ -7,6 +6,7 @@ import type { ClubCreationData, ClubMember } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
 import { addDays, parse } from "date-fns";
+import Stripe from 'stripe';
 
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
@@ -307,6 +307,44 @@ export async function createStripeCheckoutAction(uid: string): Promise<{ session
   }
 }
 
+export async function createStripeConnectAccountLinkAction({ clubId }: { clubId: string }): Promise<{ success: boolean; url?: string; error?: string }> {
+    if (!clubId) {
+        return { success: false, error: "Club ID is missing." };
+    }
+
+    const stripe = new Stripe(process.env.STRIPE_CONNECT_SECRET_KEY!, {
+        apiVersion: "2024-06-20",
+    });
+
+    try {
+        const settingsRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
+        const settingsSnap = await settingsRef.get();
+        let accountId = settingsSnap.data()?.stripeConnectAccountId;
+
+        if (!accountId) {
+            const account = await stripe.accounts.create({
+                type: 'express',
+            });
+            accountId = account.id;
+            await settingsRef.set({ stripeConnectAccountId: accountId }, { merge: true });
+        }
+
+        const accountLink = await stripe.accountLinks.create({
+            account: accountId,
+            refresh_url: `https://sportspanel.net/fees?reauth=true&clubId=${clubId}`,
+            return_url: `https://sportspanel.net/fees?success=true&clubId=${clubId}`,
+            type: 'account_onboarding',
+        });
+
+        return { success: true, url: accountLink.url };
+
+    } catch (error: any) {
+        console.error("Error creating Stripe Connect account link:", error);
+        return { success: false, error: error.message };
+    }
+}
+
+
 // Meta Conversions API Action
 export async function sendServerEventAction(eventData: { 
     eventName: string; 
@@ -455,6 +493,7 @@ export async function sendSupportRequestAction(supportData: {
 
 
     
+
 
 
 

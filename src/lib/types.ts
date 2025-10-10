@@ -1,4 +1,3 @@
-
 import type { Timestamp } from "firebase/firestore";
 
 export type Document = {
@@ -148,7 +147,8 @@ export type Socio = {
     email: string;
     phone?: string;
     dni?: string;
-    annualFee?: number;
+    paymentType: 'monthly' | 'annual';
+    fee: number;
     avatar?: string;
     socioNumber?: string;
     customFields?: Record<string, any>;
@@ -326,6 +326,8 @@ export type ClubSettings = {
     trialEndDate?: Timestamp;
     defaultLanguage?: 'es' | 'ca';
     essentialDocs?: string[];
+    stripeConnectAccountId?: string;
+    stripeConnectOnboardingComplete?: boolean;
 }
 
 export type Incident = {
