@@ -161,7 +161,7 @@ export default function FeesPage() {
                 feeChargeDay,
                 feeChargeMonths,
             });
-            toast({ title: "Configuración guardada", description: "Los ajustes de cobro de cuotas han sido actualizados." });
+            toast({ title: "Configuración guardada", description: "Los ajustes de cobro de cuotas han sido actualizados. Por favor, actualiza la página para ver los cambios." });
         } catch (e) {
             toast({ variant: "destructive", title: "Error", description: "No se pudieron guardar los cambios." });
         } finally {
