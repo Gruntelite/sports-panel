@@ -27,17 +27,28 @@ export default function FeesPage() {
 
   useEffect(() => {
     const fetchClubData = async (currentClubId: string) => {
-        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
-        if (settingsSnap.exists()) {
-            const settings = settingsSnap.data() as ClubSettings;
-            const onboardingStatus = settings.stripeConnectOnboardingComplete || false;
-            setOnboardingComplete(onboardingStatus);
+        try {
+            const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+            const settingsSnap = await getDoc(settingsRef);
+            if (settingsSnap.exists()) {
+                const settings = settingsSnap.data() as ClubSettings;
+                const onboardingStatus = settings.stripeConnectOnboardingComplete || false;
+                setOnboardingComplete(onboardingStatus);
+                
+                // If we are coming back from a successful Stripe redirect, update the DB
+                if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId && !onboardingStatus) {
+                   await handleStripeSuccess(currentClubId, settingsRef);
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching club settings:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo cargar la configuración de Stripe." });
+        } finally {
+            setLoading(false);
         }
     };
-
-    const handleStripeSuccess = async (currentClubId: string) => {
-        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+    
+    const handleStripeSuccess = async (currentClubId: string, settingsRef: any) => {
         await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
         setOnboardingComplete(true);
         toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
@@ -53,13 +64,16 @@ export default function FeesPage() {
           setClubId(currentClubId);
           if (currentClubId) {
             await fetchClubData(currentClubId);
-            if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
-                await handleStripeSuccess(currentClubId);
-            }
+          } else {
+             setLoading(false);
           }
+        } else {
+             setLoading(false);
         }
+      } else {
+        setLoading(false);
+        router.push('/login');
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
