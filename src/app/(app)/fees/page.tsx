@@ -53,7 +53,8 @@ export default function FeesPage() {
            await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
            setOnboardingComplete(true);
            toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
-           router.replace('/fees'); // Clean URL params
+           // Clean URL params without full page reload
+           router.replace('/fees', { scroll: false });
            setLoading(false);
            return;
         }
@@ -125,11 +126,16 @@ export default function FeesPage() {
             <CardContent>
                 <div className="space-y-4">
                     <p className="text-muted-foreground">Para empezar, necesitas conectar tu cuenta de Stripe. Serás redirigido a Stripe para completar un proceso de onboarding seguro.</p>
-                    <Button onClick={handleConnectStripe} disabled={connecting}>
+                    <Button onClick={handleConnectStripe} disabled={connecting || onboardingComplete}>
                         {connecting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
                                 Redirigiendo a Stripe...
+                            </>
+                        ) : onboardingComplete ? (
+                            <>
+                                <CheckCircle className="mr-2 h-4 w-4"/>
+                                Conectado
                             </>
                         ) : (
                             <>
