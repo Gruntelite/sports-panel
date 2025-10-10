@@ -470,7 +470,8 @@ export async function sendSupportRequestAction(supportData: {
   const subject = `Solicitud de Soporte - ${clubName}`;
   const htmlContent = `
     <h1>Nueva Solicitud de Soporte</h1>
-    <p><strong>Club:</strong> ${clubName} (${clubId})</p>
+    <p><strong>Club:</strong> ${clubId}</p>
+    <p><strong>Club:</strong> ${clubName}</p>
     <p><strong>Usuario:</strong> ${userName}</p>
     <p><strong>Email de Contacto:</strong> ${userEmail}</p>
     <hr>
