@@ -7,11 +7,23 @@ import { useTranslation } from "../i18n-provider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
 import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
+import { useState, useEffect } from "react";
+import { auth } from "@/lib/firebase";
 
 
 export function Sidebar() {
     const pathname = usePathname();
     const { t } = useTranslation();
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+
+    useEffect(() => {
+        const unsubscribe = auth.onAuthStateChanged(user => {
+            if (user) {
+                setUserEmail(user.email);
+            }
+        });
+        return () => unsubscribe();
+    }, []);
 
     const menuGroups = [
         {
@@ -48,6 +60,20 @@ export function Sidebar() {
             ]
         }
     ];
+
+    // Conditionally add the 'Fees' item
+    const showFees = userEmail === 'guillemrc25@gmail.com';
+    if (showFees) {
+        const clubGroup = menuGroups.find(g => g.title === t('sidebar.groups.club'));
+        if (clubGroup) {
+            // Insert 'Fees' after 'Treasury'
+            const treasuryIndex = clubGroup.items.findIndex(item => item.href === '/treasury');
+            if (treasuryIndex !== -1) {
+                clubGroup.items.splice(treasuryIndex + 1, 0, { href: "/fees", label: "sidebar.fees", icon: CircleDollarSign });
+            }
+        }
+    }
+
 
     return (
         <div className="hidden border-r bg-card text-card-foreground md:fixed md:flex md:flex-col md:h-full md:w-[220px] lg:w-[280px] z-40 pt-16">

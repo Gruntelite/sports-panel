@@ -12,6 +12,7 @@
     "sidebar": {
         "dashboard": "Panell",
         "treasury": "Tresoreria",
+        "fees": "Cuotas",
         "players": "Jugadors",
         "coaches": "Entrenadors",
         "teams": "Equips",
@@ -1341,7 +1342,7 @@
             "missingDocsTitle": "Documentació Pendent: {docs}",
             "requestMessage": "Hola {name}, et sol·licitem que pugis la següent documentació pendent: {docs}. Fes servir l'enllaç segur que trobaràs al correu. Gràcies!",
             "requestsSent": "Sol·licituds Enviades",
-            "requestsSentDesc": "S'han enviat {count} correus electrònics sol·licitant la documentació pendent.",
+            "requestsSentDesc": "S'han enviat {count} correus electrònics sol·licitando la documentación pendiente.",
             "statuses": {
                 "all": "Tots",
                 "pending": "Pendents",

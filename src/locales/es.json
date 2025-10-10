@@ -12,6 +12,7 @@
     "sidebar": {
         "dashboard": "Panel",
         "treasury": "Tesorería",
+        "fees": "Cuotas",
         "players": "Jugadores",
         "coaches": "Entrenadores",
         "teams": "Equipos",
@@ -1021,7 +1022,7 @@
         "confirmDeleteDesc": "Estás a punto de eliminar el evento '{eventName}' y todas sus datos de inscripción. Esta acción es irreversible.",
         "modal": {
             "createTitle": "Crear Nuevo Formulario de Inscripción",
-            "editTitle": "Editar Formulari",
+            "editTitle": "Editar Formulario",
             "description": "Configura los detalles y los campos de tu formulario.",
             "selectSection": "Seleccionar sección...",
             "tabs": {
@@ -1040,7 +1041,7 @@
             "paymentIBAN": "IBAN para Pagos (si aplica)",
             "regStartDate": "Fecha Inicio Inscripción",
             "regEndDate": "Fecha Límite Inscripción",
-            "formFields": "Camps del Formulario",
+            "formFields": "Campos del Formulario",
             "selectedFields": "{count} campo(s) seleccionado(s)",
             "selectFields": "Seleccionar campos...",
             "searchField": "Buscar campo...",
@@ -1059,7 +1060,7 @@
             },
             "addField": "Añadir Campo",
             "saving": "Guardando...",
-            "createButton": "Crear Formulari",
+            "createButton": "Crear Formulario",
             "updateSuccessTitle": "Formulario Actualizado",
             "updateSuccessDesc": "Los cambios en el formulario se han guardado correctamente.",
             "createSuccessTitle": "¡Formulario Creado!",
@@ -1341,7 +1342,7 @@
             "missingDocsTitle": "Documentación Pendiente: {docs}",
             "requestMessage": "Hola {name}, te solicitamos que subas la siguiente documentación pendiente: {docs}. Usa el enlace seguro que encontrarás en el correo. ¡Gracias!",
             "requestsSent": "Solicitudes Enviadas",
-            "requestsSentDesc": "Se han enviado {count} correos electrónicos sol·licitando la documentación pendiente.",
+            "requestsSentDesc": "Se han enviado {count} correos electrónicos solicitando la documentación pendiente.",
             "statuses": {
                 "all": "Todos",
                 "pending": "Pendientes",

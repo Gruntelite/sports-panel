@@ -1,4 +1,3 @@
-
 "use client";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -200,6 +199,16 @@ export function Header() {
     ? Math.ceil((trialEndDate.toDate().getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
     : 0;
 
+    const showFees = userProfile?.email === 'guillemrc25@gmail.com';
+    const dynamicMenuGroups = JSON.parse(JSON.stringify(menuGroups));
+    if (showFees) {
+        const clubGroup = dynamicMenuGroups.find((g:any) => g.title === 'sidebar.groups.club');
+        if (clubGroup) {
+            clubGroup.items.splice(2, 0, { href: "/fees", label: "sidebar.fees", icon: CircleDollarSign });
+        }
+    }
+
+
     return (
         <>
         <header className="flex h-16 items-center gap-4 border-b bg-header px-4 lg:px-6 fixed top-0 left-0 right-0 z-50">
@@ -223,11 +232,11 @@ export function Header() {
                         </SheetHeader>
                         <nav className="grid gap-2 text-lg font-medium overflow-y-auto">
                             <Accordion type="multiple" defaultValue={['Club', 'Miembros']} className="w-full">
-                                {menuGroups.map((group, groupIndex) => (
+                                {dynamicMenuGroups.map((group: any, groupIndex: number) => (
                                     <React.Fragment key={group.title}>
                                         {groupIndex > 0 && <Separator className="my-2" />}
                                         <h3 className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t(group.title)}</h3>
-                                         {group.items.map((item) => (
+                                         {group.items.map((item: any) => (
                                                 <SheetClose asChild key={item.href}>
                                                     <Link
                                                         href={item.href}
@@ -398,5 +407,6 @@ type UserProfile = {
     initials: string;
     avatar?: string;
 }
+
 
 
