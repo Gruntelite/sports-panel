@@ -1,9 +1,10 @@
+
 "use client";
 import Link from "next/link";
 import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "../ui/dropdown-menu";
-import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages, HelpCircle, Star, Download, LogOut, Building, ChevronDown, Home } from "lucide-react";
+import { Menu, Shield, LayoutDashboard, Users, MessageSquare, UserCog, Clock, UserSquare, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, X, Settings, Languages, HelpCircle, Star, Download, LogOut, Building, ChevronDown, Home, Banknote } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -204,7 +205,7 @@ export function Header() {
     if (showFees) {
         const clubGroup = dynamicMenuGroups.find((g:any) => g.title === 'sidebar.groups.club');
         if (clubGroup) {
-            clubGroup.items.splice(2, 0, { href: "/fees", label: "sidebar.fees", icon: CircleDollarSign });
+            clubGroup.items.splice(2, 0, { href: "/fees", label: "sidebar.fees", icon: Banknote });
         }
     }
 
@@ -407,6 +408,7 @@ type UserProfile = {
     initials: string;
     avatar?: string;
 }
+
 
 
 
