@@ -12,8 +12,6 @@ import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle } from "lucide-
 import { createStripeConnectAccountLinkAction } from "@/lib/actions";
 import { useTranslation } from "@/components/i18n-provider";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
-
 
 export default function FeesPage() {
   const { t } = useTranslation();
@@ -47,25 +45,21 @@ export default function FeesPage() {
         }
 
         const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
         
-        // Handle redirect from Stripe
+        if (settingsSnap.exists()) {
+            const settings = settingsSnap.data() as ClubSettings;
+            if(settings.stripeConnectOnboardingComplete) {
+                setOnboardingComplete(true);
+            }
+        }
+
         if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
            await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
            setOnboardingComplete(true);
            toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
-           // Clean URL params without full page reload
            router.replace('/fees', { scroll: false });
-           setLoading(false);
-           return;
         }
-
-        // Fetch current status
-        const settingsSnap = await getDoc(settingsRef);
-        if (settingsSnap.exists()) {
-            const settings = settingsSnap.data() as ClubSettings;
-            setOnboardingComplete(settings.stripeConnectOnboardingComplete || false);
-        }
-
       } catch (error) {
         console.error("Error processing fees page:", error);
         toast({ variant: "destructive", title: "Error", description: "No se pudo cargar la información de la página."});
@@ -126,24 +120,21 @@ export default function FeesPage() {
             <CardContent>
                 <div className="space-y-4">
                     <p className="text-muted-foreground">Para empezar, necesitas conectar tu cuenta de Stripe. Serás redirigido a Stripe para completar un proceso de onboarding seguro.</p>
-                    <Button onClick={handleConnectStripe} disabled={connecting || onboardingComplete}>
-                        {connecting ? (
-                            <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                Redirigiendo a Stripe...
-                            </>
-                        ) : onboardingComplete ? (
-                            <>
-                                <CheckCircle className="mr-2 h-4 w-4"/>
-                                Conectado
-                            </>
-                        ) : (
-                            <>
-                                <Link className="mr-2 h-4 w-4"/>
-                                Conectar con Stripe
-                            </>
-                        )}
-                    </Button>
+                     {!onboardingComplete && (
+                        <Button onClick={handleConnectStripe} disabled={connecting}>
+                            {connecting ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                    Redirigiendo a Stripe...
+                                </>
+                            ) : (
+                                <>
+                                    <Link className="mr-2 h-4 w-4"/>
+                                    Conectar con Stripe
+                                </>
+                            )}
+                        </Button>
+                     )}
                 </div>
             </CardContent>
         </Card>
