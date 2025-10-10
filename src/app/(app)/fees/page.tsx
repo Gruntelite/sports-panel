@@ -8,7 +8,7 @@ import type { ClubSettings, Player, Team } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle, Calendar as CalendarIcon, Save, Search, Users } from "lucide-react";
+import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle, Calendar as CalendarIcon, Save, Search, Users, Send } from "lucide-react";
 import { createStripeConnectAccountLinkAction } from "@/lib/actions";
 import { useTranslation } from "@/components/i18n-provider";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -21,6 +21,7 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 
 export default function FeesPage() {
   const { t } = useTranslation();
@@ -81,6 +82,7 @@ export default function FeesPage() {
             settingsData = settingsSnap.data() as ClubSettings;
             setFeeChargeDay(settingsData.feeChargeDay || 1);
             setFeeChargeMonths(settingsData.feeChargeMonths || []);
+            setOnboardingComplete(settingsData.stripeConnectOnboardingComplete || false);
         }
 
         // Check for Stripe onboarding return
@@ -89,9 +91,8 @@ export default function FeesPage() {
            setOnboardingComplete(true);
            toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
            router.replace('/fees', { scroll: false });
-        } else {
-            setOnboardingComplete(settingsData.stripeConnectOnboardingComplete || false);
         }
+
 
         // Fetch teams
         const teamsQuery = query(collection(db, "clubs", currentClubId, "teams"), orderBy("order"));
@@ -167,6 +168,19 @@ export default function FeesPage() {
             setSaving(false);
         }
     };
+    
+    const getStatusBadge = (status: Player['paymentStatus']) => {
+        switch(status) {
+            case 'paid':
+                return <Badge variant="secondary" className="bg-green-100 text-green-800">Pagado</Badge>;
+            case 'pending':
+                return <Badge variant="outline" className="bg-yellow-100 text-yellow-800">Pendiente</Badge>;
+            case 'overdue':
+                return <Badge variant="destructive">Atrasado</Badge>;
+            default:
+                return <Badge variant="outline">Sin estado</Badge>;
+        }
+    }
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -337,7 +351,9 @@ export default function FeesPage() {
                         <TableRow>
                             <TableHead>Jugador</TableHead>
                             <TableHead>Equipo</TableHead>
-                            <TableHead className="text-right">Cuota Anual</TableHead>
+                            <TableHead>Cuota Anual</TableHead>
+                            <TableHead>Estado</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -354,14 +370,23 @@ export default function FeesPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{player.teamName || 'Sin equipo'}</TableCell>
-                                    <TableCell className="text-right font-medium">
+                                    <TableCell className="font-medium">
                                         {player.annualFee !== null && player.annualFee !== undefined ? `${player.annualFee} €` : 'No asignada'}
+                                    </TableCell>
+                                    <TableCell>
+                                        {getStatusBadge(player.paymentStatus)}
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button variant="outline" size="sm">
+                                            <Send className="mr-2 h-4 w-4"/>
+                                            Enviar enlace
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                             ))
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={3} className="h-24 text-center">
+                                <TableCell colSpan={5} className="h-24 text-center">
                                     No se encontraron jugadores.
                                 </TableCell>
                             </TableRow>
@@ -374,5 +399,3 @@ export default function FeesPage() {
     </div>
   );
 }
-
-    
