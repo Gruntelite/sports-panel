@@ -71,7 +71,7 @@ export default function ImporterPage() {
         { key: 'iban', label: t('importer.columns.players.iban') },
         { key: 'teamName', label: t('importer.columns.players.teamName') },
         { key: 'jerseyNumber', label: t('importer.columns.players.jerseyNumber') },
-        { key: 'monthlyFee', label: t('importer.columns.players.monthlyFee') },
+        { key: 'annualFee', label: 'Cuota Anual (€)' },
         { key: 'isOwnTutor', label: t('importer.columns.players.isOwnTutor'), format: '(TRUE/FALSE)' },
         { key: 'tutorName', label: t('importer.columns.players.tutorName') },
         { key: 'tutorLastName', label: t('importer.columns.players.tutorLastName') },
@@ -200,5 +200,3 @@ export default function ImporterPage() {
     </div>
   );
 }
-
-    

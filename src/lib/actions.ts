@@ -1,3 +1,4 @@
+
 'use server';
 
 import { Timestamp } from "firebase-admin/firestore";
@@ -174,6 +175,11 @@ export async function importDataAction({
                     const parsedDate = parse(value, 'yyyy-MM-dd', new Date());
                     if (!isNaN(parsedDate.getTime())) {
                         processedItem[key] = value;
+                    }
+                } else if (key === 'annualFee' && value !== null) {
+                    const fee = Number(String(value).replace(/,/g, '.'));
+                    if(!isNaN(fee)) {
+                        processedItem[key] = fee;
                     }
                 } else if (typeof value === 'string' && (value.toLowerCase() === 'true' || value.toLowerCase() === 'false')) {
                     processedItem[key] = value.toLowerCase() === 'true';
