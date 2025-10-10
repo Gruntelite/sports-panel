@@ -352,13 +352,20 @@ export default function FeesPage() {
                             <TableHead>Jugador</TableHead>
                             <TableHead>Equipo</TableHead>
                             <TableHead>Cuota Anual</TableHead>
+                            <TableHead>Cuota Mensual</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {filteredPlayers.length > 0 ? (
-                            filteredPlayers.map(player => (
+                            filteredPlayers.map(player => {
+                                const monthlyFee =
+                                  feeChargeMonths.length > 0 && player.annualFee
+                                    ? (player.annualFee / feeChargeMonths.length).toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })
+                                    : "N/A";
+
+                                return(
                                 <TableRow key={player.id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -371,7 +378,10 @@ export default function FeesPage() {
                                     </TableCell>
                                     <TableCell>{player.teamName || 'Sin equipo'}</TableCell>
                                     <TableCell className="font-medium">
-                                        {player.annualFee !== null && player.annualFee !== undefined ? `${player.annualFee} €` : 'No asignada'}
+                                        {player.annualFee !== null && player.annualFee !== undefined ? `${player.annualFee.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}` : 'No asignada'}
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                        {monthlyFee}
                                     </TableCell>
                                     <TableCell>
                                         {getStatusBadge(player.paymentStatus)}
@@ -383,10 +393,10 @@ export default function FeesPage() {
                                         </Button>
                                     </TableCell>
                                 </TableRow>
-                            ))
+                            )})
                         ) : (
                             <TableRow>
-                                <TableCell colSpan={5} className="h-24 text-center">
+                                <TableCell colSpan={6} className="h-24 text-center">
                                     No se encontraron jugadores.
                                 </TableCell>
                             </TableRow>
