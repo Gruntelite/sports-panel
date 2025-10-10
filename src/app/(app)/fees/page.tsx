@@ -355,7 +355,7 @@ export default function FeesPage() {
                                     </TableCell>
                                     <TableCell>{player.teamName || 'Sin equipo'}</TableCell>
                                     <TableCell className="text-right font-medium">
-                                        {player.annualFee?.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'}) ?? 'No asignada'}
+                                        {player.annualFee !== null && player.annualFee !== undefined ? player.annualFee.toLocaleString('es-ES', { style: 'currency', currency: 'EUR'}) : 'No asignada'}
                                     </TableCell>
                                 </TableRow>
                             ))
