@@ -3,25 +3,47 @@
 
 import { useState, useEffect } from "react";
 import { auth, db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import type { ClubSettings } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Loader2, Link, CheckCircle, ExternalLink } from "lucide-react";
 import { createStripeConnectAccountLinkAction } from "@/lib/actions";
-import { loadStripe } from "@stripe/stripe-js";
 import { useTranslation } from "@/components/i18n-provider";
+import { useSearchParams, useRouter } from "next/navigation";
+
 
 export default function FeesPage() {
   const { t } = useTranslation();
   const { toast } = useToast();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [loading, setLoading] = useState(true);
   const [connecting, setConnecting] = useState(false);
   const [clubId, setClubId] = useState<string | null>(null);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
 
   useEffect(() => {
+    const fetchClubData = async (currentClubId: string) => {
+        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+            const settings = settingsSnap.data() as ClubSettings;
+            const onboardingStatus = settings.stripeConnectOnboardingComplete || false;
+            setOnboardingComplete(onboardingStatus);
+        }
+    };
+
+    const handleStripeSuccess = async (currentClubId: string) => {
+        const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+        await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
+        setOnboardingComplete(true);
+        toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
+        router.replace('/fees'); // Clean URL params
+    };
+
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       if (user) {
         const userDocRef = doc(db, "users", user.uid);
@@ -30,19 +52,18 @@ export default function FeesPage() {
           const currentClubId = userDocSnap.data().clubId;
           setClubId(currentClubId);
           if (currentClubId) {
-            const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-            const settingsSnap = await getDoc(settingsRef);
-            if (settingsSnap.exists()) {
-              const settings = settingsSnap.data() as ClubSettings;
-              setOnboardingComplete(settings.stripeConnectOnboardingComplete || false);
+            await fetchClubData(currentClubId);
+            if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
+                await handleStripeSuccess(currentClubId);
             }
           }
         }
       }
       setLoading(false);
     });
+
     return () => unsubscribe();
-  }, []);
+  }, [searchParams, router, toast]);
 
   const handleConnectStripe = async () => {
     if (!clubId) {

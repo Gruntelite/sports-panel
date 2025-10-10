@@ -488,14 +488,3 @@ export async function sendSupportRequestAction(supportData: {
 
   return result;
 }
-
-    
-
-
-
-    
-
-
-
-
-
