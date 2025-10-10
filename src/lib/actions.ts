@@ -7,6 +7,7 @@ import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
 import { addDays, parse } from "date-fns";
 import Stripe from 'stripe';
+import 'dotenv/config';
 
 
 export async function createClubAction(values: ClubCreationData): Promise<{ success: boolean; error?: string; userId?: string }> {
@@ -493,6 +494,7 @@ export async function sendSupportRequestAction(supportData: {
 
 
     
+
 
 
 
