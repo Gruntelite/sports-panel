@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -7,10 +8,11 @@ import type { ClubSettings } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Link, CheckCircle, ExternalLink } from "lucide-react";
+import { Loader2, Link, CheckCircle, ExternalLink, AlertTriangle } from "lucide-react";
 import { createStripeConnectAccountLinkAction } from "@/lib/actions";
 import { useTranslation } from "@/components/i18n-provider";
 import { useSearchParams, useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 
 export default function FeesPage() {
@@ -104,28 +106,16 @@ export default function FeesPage() {
           Conecta tu cuenta de Stripe para empezar a cobrar cuotas a tus miembros de forma automática.
         </p>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Stripe Connect</CardTitle>
-          <CardDescription>
-            Conecta tu cuenta de Stripe para gestionar los pagos de cuotas de tus miembros de forma segura a través de nuestra plataforma.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="text-center">
-            {onboardingComplete ? (
+      <div className="space-y-6">
+        <Card>
+            <CardHeader>
+            <CardTitle>Stripe Connect</CardTitle>
+            <CardDescription>
+                Conecta tu cuenta de Stripe para gestionar los pagos de cuotas de tus miembros de forma segura a través de nuestra plataforma.
+            </CardDescription>
+            </CardHeader>
+            <CardContent>
                 <div className="space-y-4">
-                    <CheckCircle className="h-16 w-16 text-green-500 mx-auto"/>
-                    <h3 className="text-xl font-semibold">¡Tu cuenta está conectada!</h3>
-                    <p className="text-muted-foreground">Ya puedes empezar a configurar y cobrar las cuotas a los miembros de tu club.</p>
-                     <Button asChild variant="outline">
-                        <a href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer">
-                            <ExternalLink className="mr-2 h-4 w-4"/>
-                            Ir a mi panel de Stripe
-                        </a>
-                    </Button>
-                </div>
-            ) : (
-                 <div className="space-y-4">
                     <p className="text-muted-foreground">Para empezar, necesitas conectar tu cuenta de Stripe. Serás redirigido a Stripe para completar un proceso de onboarding seguro.</p>
                     <Button onClick={handleConnectStripe} disabled={connecting}>
                         {connecting ? (
@@ -140,10 +130,41 @@ export default function FeesPage() {
                             </>
                         )}
                     </Button>
-                 </div>
-            )}
-        </CardContent>
-      </Card>
+                </div>
+            </CardContent>
+        </Card>
+
+        <Card>
+             <CardHeader>
+                <CardTitle>Estado de la Conexión</CardTitle>
+             </CardHeader>
+             <CardContent>
+                {onboardingComplete ? (
+                     <div className="flex items-center gap-4 p-4 bg-green-500/10 border border-green-500/20 rounded-lg">
+                        <CheckCircle className="h-8 w-8 text-green-500 flex-shrink-0"/>
+                        <div className="flex-grow">
+                            <h3 className="font-semibold text-green-700">Cuenta Conectada</h3>
+                            <p className="text-sm text-green-600">¡Todo listo para empezar a gestionar los cobros!</p>
+                        </div>
+                        <Button asChild variant="outline" size="sm">
+                            <a href="https://dashboard.stripe.com/" target="_blank" rel="noopener noreferrer">
+                                <ExternalLink className="mr-2 h-4 w-4"/>
+                                Ir a mi panel de Stripe
+                            </a>
+                        </Button>
+                    </div>
+                ) : (
+                     <div className="flex items-center gap-4 p-4 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <AlertTriangle className="h-8 w-8 text-yellow-600 flex-shrink-0"/>
+                         <div>
+                            <h3 className="font-semibold text-yellow-800">Conexión Pendiente</h3>
+                            <p className="text-sm text-yellow-700">Completa el proceso de conexión con Stripe para activar el cobro de cuotas.</p>
+                        </div>
+                    </div>
+                )}
+             </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
