@@ -26,12 +26,13 @@ export default function FeesPage() {
 
   useEffect(() => {
     const processPage = async (user: any) => {
+      setLoading(true);
       try {
         const userDocRef = doc(db, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
 
         if (!userDocSnap.exists()) {
-          setLoading(false);
+          toast({ variant: "destructive", title: "Error", description: "Usuario no encontrado." });
           router.push('/login');
           return;
         }
@@ -45,20 +46,23 @@ export default function FeesPage() {
         }
 
         const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
-        const settingsSnap = await getDoc(settingsRef);
         
-        if (settingsSnap.exists()) {
-            const settings = settingsSnap.data() as ClubSettings;
-            if(settings.stripeConnectOnboardingComplete) {
-                setOnboardingComplete(true);
-            }
-        }
-
+        // Check if returning from Stripe onboarding
         if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
            await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
            setOnboardingComplete(true);
            toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
+           // Clean up URL params
            router.replace('/fees', { scroll: false });
+        } else {
+            // Regular page load, just fetch the status
+            const settingsSnap = await getDoc(settingsRef);
+            if (settingsSnap.exists()) {
+                const settings = settingsSnap.data() as ClubSettings;
+                if(settings.stripeConnectOnboardingComplete) {
+                    setOnboardingComplete(true);
+                }
+            }
         }
       } catch (error) {
         console.error("Error processing fees page:", error);
