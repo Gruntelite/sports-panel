@@ -26,7 +26,6 @@ export default function FeesPage() {
 
   useEffect(() => {
     const processPage = async (user: any) => {
-      setLoading(true);
       try {
         const userDocRef = doc(db, "users", user.uid);
         const userDocSnap = await getDoc(userDocRef);
@@ -46,23 +45,21 @@ export default function FeesPage() {
         }
 
         const settingsRef = doc(db, "clubs", currentClubId, "settings", "config");
+        let settingsData: ClubSettings = {};
         
+        const settingsSnap = await getDoc(settingsRef);
+        if (settingsSnap.exists()) {
+            settingsData = settingsSnap.data() as ClubSettings;
+        }
+
         // Check if returning from Stripe onboarding
         if (searchParams.get('success') === 'true' && searchParams.get('clubId') === currentClubId) {
            await updateDoc(settingsRef, { stripeConnectOnboardingComplete: true });
            setOnboardingComplete(true);
            toast({ title: "¡Cuenta conectada!", description: "Tu cuenta de Stripe se ha conectado correctamente." });
-           // Clean up URL params
            router.replace('/fees', { scroll: false });
         } else {
-            // Regular page load, just fetch the status
-            const settingsSnap = await getDoc(settingsRef);
-            if (settingsSnap.exists()) {
-                const settings = settingsSnap.data() as ClubSettings;
-                if(settings.stripeConnectOnboardingComplete) {
-                    setOnboardingComplete(true);
-                }
-            }
+            setOnboardingComplete(settingsData.stripeConnectOnboardingComplete || false);
         }
       } catch (error) {
         console.error("Error processing fees page:", error);
@@ -113,7 +110,7 @@ export default function FeesPage() {
           Conecta tu cuenta de Stripe para empezar a cobrar cuotas a tus miembros de forma automática.
         </p>
       </div>
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
             <CardHeader>
             <CardTitle>Stripe Connect</CardTitle>
