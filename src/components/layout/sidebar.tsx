@@ -2,7 +2,7 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Users, MessageSquare, Clock, UserSquare, Shield, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, Settings, Home, Banknote } from "lucide-react";
+import { LayoutDashboard, Users, MessageSquare, Clock, UserSquare, Shield, ClipboardList, Briefcase, FolderArchive, CircleDollarSign, Database, AlertTriangle, Settings, Home, Banknote, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "../i18n-provider";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "../ui/accordion";
@@ -31,7 +31,7 @@ export function Sidebar() {
             title: t('sidebar.groups.club'),
             items: [
                 { href: "/dashboard", label: "sidebar.dashboard", icon: Home },
-                { href: "/treasury", label: "sidebar.treasury", icon: CircleDollarSign },
+                { href: "/treasury", label: "sidebar.treasury", icon: BarChart3 },
             ]
         },
         {
@@ -70,7 +70,7 @@ export function Sidebar() {
             // Insert 'Fees' after 'Treasury'
             const treasuryIndex = clubGroup.items.findIndex(item => item.href === '/treasury');
             if (treasuryIndex !== -1) {
-                clubGroup.items.splice(treasuryIndex + 1, 0, { href: "/fees", label: "sidebar.fees", icon: Banknote });
+                clubGroup.items.splice(treasuryIndex + 1, 0, { href: "/fees", label: "sidebar.fees", icon: CircleDollarSign });
             }
         }
     }
