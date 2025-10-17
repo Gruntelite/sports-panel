@@ -56,12 +56,12 @@
         },
         "title": "El Software que Automatitza el teu Club i Estalvia Hores de Gestió",
         "subtitle": "Centralitza la Base de Dades, tresoreria, emmagatzematge d'arxius i comunicació amb famílies en un únic panell.",
-        "cta": "Prova-ho gratis",
+        "cta": "Prova-ho gratis!",
         "ctaNote": "Sense targeta de crèdit · Cancel·la quan vulguis",
         "stats": [
             { "title": "ESTALVI SETMANAL", "description": "Temps mitjà que els nostres clubs estalvien en tasques administratives." },
             { "title": "TAXA DE RETENCIÓ", "description": "Dels clubs que proven SportsPanel, la gran majoria s'hi queda." },
-            { "title": "+130 CLUBS ESPORTIUS", "description": "Que ja confien en la nostra plataforma per a la seva gestió diària." },
+            { "title": "CLUBS ESPORTIUS", "description": "Que ja confien en la nostra plataforma per a la seva gestió diària." },
             { "title": "98% DIGITALITZACIÓ", "description": "Dels processos interns del club que es poden gestionar amb nosaltres." }
         ],
         "testimonials": {
@@ -206,7 +206,7 @@
         "successTitle": "Sol·licitud Enviada",
         "successDescription": "Hem rebut el teu missatge. Et contactarem el més aviat possible.",
         "message": "Missatge",
-        "messagePlaceholder": "Descriu el teu problema o pregunta aquí..."
+        "messagePlaceholder": "Descriu el teu problema o pregunta here..."
     },
     "account": {
         "errors": {

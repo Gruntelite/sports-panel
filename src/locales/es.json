@@ -56,12 +56,12 @@
         },
         "title": "El Software que Automatiza tu Club y Ahorra Horas de Gestión",
         "subtitle": "Centraliza la Base de Datos, tesorería, almacenamiento de archivos y comunicación con familias en un único panel.",
-        "cta": "Pruébalo gratis",
+        "cta": "¡Pruébalo gratis!",
         "ctaNote": "Sin tarjeta de crédito · Cancela cuando quieras",
         "stats": [
             { "title": "AHORRO SEMANAL", "description": "Tiempo medio que nuestros clubs ahorran en tareas administrativas." },
             { "title": "TASA DE RETENCIÓN", "description": "De los clubs que prueban SportsPanel, la gran mayoría se queda." },
-            { "title": "+130 CLUBES DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
+            { "title": "CLUBES DEPORTIVOS", "description": "Que ya confían en nuestra plataforma para su gestión diaria." },
             { "title": "98% DIGITALIZACIÓN", "description": "De los procesos internos del club que se pueden gestionar con nosotros." }
         ],
         "testimonials": {
@@ -554,7 +554,7 @@
             "actions": "Acciones",
             "none": "Todavía no has añadido ningún patrocinio.",
             "modal": {
-                "createTitle": "Añadir Nuevo Patrocino",
+                "createTitle": "Añadir Nuevo Patrocinio",
                 "editTitle": "Editar Patrocinio",
                 "description": "Rellena la información del acuerdo de patrocinio.",
                 "sponsorName": "Nombre del Patrocinador",
