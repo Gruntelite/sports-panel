@@ -1,8 +1,8 @@
 
 'use server';
 
-import { Timestamp } from "firebase-admin/firestore";
 import { auth as adminAuth, db as adminDb } from './firebase-admin';
+import { Timestamp } from "firebase-admin/firestore";
 import type { ClubCreationData, ClubMember } from "./types";
 import { sendEmailWithSmtpAction } from "./email";
 import { createHmac }from 'crypto';
@@ -349,6 +349,148 @@ export async function createStripeConnectAccountLinkAction({ clubId }: { clubId:
         console.error("Error creating Stripe Connect account link:", error);
         return { success: false, error: error.message };
     }
+}
+ 
+/**
+ * Create a Stripe Payment Link for a single club member (player)
+ * Stores a transaction doc under clubs/{clubId}/feesTransactions/{id}
+ */
+export async function createStripePaymentLinkAction({
+  clubId,
+  memberId,
+  amount,
+  currency = "eur",
+  description,
+}: {
+  clubId: string;
+  memberId: string;
+  amount: number; // Euros
+  currency?: string;
+  description?: string;
+}): Promise<{ success: boolean; url?: string; error?: string }> {
+  if (!clubId || !memberId || !amount) {
+    return { success: false, error: "Incomplete data to generate payment link." };
+  }
+
+  try {
+    console.log("createStripePaymentLinkAction", clubId, memberId, amount, currency);
+
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
+
+    // 🔹 Get club config (Stripe Account + Commission)
+    const configRef = adminDb.collection("clubs").doc(clubId).collection("settings").doc("config");
+    const configSnap = await configRef.get();
+    const config = configSnap.data();
+    const stripeAccountId = config?.stripeConnectAccountId;
+
+    if (!stripeAccountId) {
+      return { success: false, error: "Club is not connected to Stripe." };
+    }
+
+    // 🔹 Platform commission (in cents)
+    const platformCommissionCents = config?.platformCommissionCents ?? 0;
+
+    // 🔹 Player info
+    const playerRef = adminDb.collection("clubs").doc(clubId).collection("players").doc(memberId);
+    const playerSnap = await playerRef.get();
+    const player = playerSnap.exists ? playerSnap.data() : null;
+    const playerEmail = player?.email;
+
+    const unitAmountCents = Math.round(amount * 100);
+
+    // 🔹 Create Checkout Session
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      customer_email: playerEmail || undefined,
+      line_items: [
+        {
+          price_data: {
+            currency,
+            product_data: {
+              name: description || `Club Fee - Member ${memberId}`,
+              metadata: { clubId, memberId },
+            },
+            unit_amount: unitAmountCents,
+          },
+          quantity: 1,
+        },
+      ],
+      payment_intent_data: {
+        transfer_data: {
+          destination: stripeAccountId,
+        },
+        // ✅ Apply platform commission fee
+        application_fee_amount: platformCommissionCents,
+        metadata: { clubId, memberId },
+      },
+      allow_promotion_codes: false,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/fees?payment=success&clubId=${clubId}&memberId=${memberId}`,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/fees?payment=cancel&clubId=${clubId}&memberId=${memberId}`,
+      metadata: { clubId, memberId },
+    });
+
+    // 🔹 Save transaction in Firestore
+    const txRef = adminDb.collection("clubs").doc(clubId).collection("feesTransactions").doc();
+    await txRef.set({
+      clubId,
+      memberId,
+      amount,
+      currency,
+      paymentLink: session.url || null,
+      stripeSessionId: session.id,
+      stripePaymentIntentId: session.payment_intent || null,
+      platformCommissionCents,
+      status: "pending",
+      createdAt: Timestamp.now(),
+      updatedAt: Timestamp.now(),
+    });
+
+    // 🔹 Send email (if player email exists)
+    if (playerEmail) {
+      await sendEmailWithSmtpAction({
+        clubId,
+        recipients: [{ email: playerEmail, name: player?.name || "" }],
+        subject: "Complete your club fee payment",
+        htmlContent: `<p>Hello ${player?.name || ""},</p>
+        <p>Click the link below to complete your payment:</p>
+        <p><a href="${session.url}">Pay Now</a></p>`,
+      });
+    }
+
+    return { success: true, url: session.url || undefined };
+  } catch (err: any) {
+    console.error("createStripePaymentLinkAction error:", err);
+    return { success: false, error: err.message || "Error creating payment link." };
+  }
+}
+
+
+export async function updateFeesConfigAction({
+  clubId,
+  billingDay,
+  activeMonths,
+  commissionPerMonth,
+}: {
+  clubId: string;
+  billingDay: number;
+  activeMonths: number[]; // [1..12]
+  commissionPerMonth: number; // euros, e.g. 0.24
+}): Promise<{ success: boolean; error?: string }> {
+  if (!clubId) return { success: false, error: "ClubId faltante." };
+  try {
+    const cfgRef = adminDb.collection("clubs").doc(clubId).collection("feesConfig").doc("settings");
+    await cfgRef.set({
+      billingDay,
+      activeMonths,
+      commissionPerMonth,
+      updatedAt: Timestamp.now(),
+    }, { merge: true });
+    return { success: true };
+  } catch (err: any) {
+    console.error("updateFeesConfigAction error:", err);
+    return { success: false, error: err.message || "Error al actualizar configuración de cuotas." };
+  }
 }
 
 
