@@ -1,28 +1,22 @@
 
-import * as admin from 'firebase-admin';
-import { getAuth } from 'firebase-admin/auth';
-import { getFirestore } from 'firebase-admin/firestore';
-import { getStorage } from 'firebase-admin/storage';
-
+import * as admin from 'firebase-admin'; 
 
 // Check if the app is already initialized to prevent errors
 if (!admin.apps.length) {
-  try { 
- 
+  try {
+    // This will use the GOOGLE_APPLICATION_CREDENTIALS environment variable
+    // for authentication on the server.
     admin.initializeApp({
-      credential: admin.credential.applicationDefault(),
-      storageBucket: "sportspanel.appspot.com",
+        credential: admin.credential.applicationDefault(),
+        storageBucket: "sportspanel.appspot.com",
     });
-    
-    console.log("✅ Firebase Admin initialized successfully");
   } catch (e) {
-    console.error("❌ Firebase Admin initialization error:", e);
+    console.error('Firebase admin initialization error', e);
   }
-} 
+}
 
+const db = admin.firestore();
+const auth = admin.auth();
+const storage = admin.storage();
 
-const db = getFirestore();
-const auth = getAuth();
-const storage = getStorage(); 
-
-export { admin, db, auth, storage }; 
+export { db, auth, storage };

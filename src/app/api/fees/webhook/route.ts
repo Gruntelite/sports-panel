@@ -3,9 +3,18 @@ import Stripe from "stripe";
 import { db as adminDb } from "@/lib/firebase-admin";
 import { Timestamp } from "firebase-admin/firestore";
 
-export const runtime = "edge"; // or remove if not using edge
+export const runtime = "nodejs"; // Use Node.js runtime for firebase-admin compatibility
 
 export async function POST(req: Request) {
+  // Check if Firebase Admin is properly initialized
+  if (!adminDb) {
+    console.error("❌ Firebase Admin database not initialized");
+    return NextResponse.json(
+      { received: false, error: "Database not initialized" },
+      { status: 500 }
+    );
+  }
+
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: "2024-06-20",
   });
