@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { createStripePaymentLinkAction } from "@/lib/actions"; // Make sure path is correct
 
 export async function POST(req: Request) {
-  try {
-    console.log("✅ /api/fees/sendlink called");
-
+  try { 
     const body = await req.json();
     const { clubId, memberId, amount } = body;
 

@@ -565,7 +565,7 @@ export default function FeesPage() {
                           {getStatusBadge(player.paymentStatus)}
                         </TableCell>
                         <TableCell className="text-right">
-                          <SendPaymentLinkButton
+                          <SendPaymentLinkButton 
                             clubId={clubId || ""}
                             memberId={player.id}
                             amount={

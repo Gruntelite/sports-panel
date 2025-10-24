@@ -319,7 +319,7 @@ export async function createStripeConnectAccountLinkAction({ clubId }: { clubId:
         return { success: false, error: "Club ID is missing." };
     }
 
-    const stripe = new Stripe(process.env.STRIPE_CONNECT_SECRET_KEY!, {
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
         apiVersion: "2024-06-20",
     });
 
@@ -372,9 +372,7 @@ export async function createStripePaymentLinkAction({
     return { success: false, error: "Incomplete data to generate payment link." };
   }
 
-  try {
-    console.log("createStripePaymentLinkAction", clubId, memberId, amount, currency);
-
+  try { 
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: "2024-06-20" });
 
     // 🔹 Get club config (Stripe Account + Commission)

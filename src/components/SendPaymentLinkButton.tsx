@@ -1,11 +1,14 @@
 "use client";
 import React, { useState } from "react";
+import { Button } from "./ui/button";
+import { Send } from "lucide-react";
 
 export default function SendPaymentLinkButton({ clubId, memberId, amount }: { clubId: string; memberId: string; amount: number }) {
   const [loading, setLoading] = useState(false);
   const handleClick = async () => {
     setLoading(true);
     try {
+      console.log(clubId, memberId, amount);
       const res = await fetch("/api/fees/sendlink", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -25,8 +28,9 @@ export default function SendPaymentLinkButton({ clubId, memberId, amount }: { cl
   };
 
   return (
-    <button onClick={handleClick} disabled={loading} className="btn btn-primary">
+    <Button variant="outline" size="sm" onClick={handleClick} disabled={loading}>
+      <Send className="mr-2 h-4 w-4"/>
       {loading ? "Enviando..." : "Enviar enlace de pago"}
-    </button>
+    </Button>
   );
 }

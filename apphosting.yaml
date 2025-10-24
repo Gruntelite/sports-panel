@@ -17,13 +17,17 @@ runConfig:
     - FIREBASE_MESSAGING_SENDER_ID
     - FIREBASE_APP_ID
     - FIREBASE_MEASUREMENT_ID
+    # Firebase Admin SDK credentials
+    - FIREBASE_CLIENT_EMAIL
+    - FIREBASE_PRIVATE_KEY
+    # Third-party service credentials
     - STRIPE_SECRET_KEY
     - STRIPE_WEBHOOK_SECRET
     - META_PIXEL_ID
     - META_ACCESS_TOKEN
     - GMAIL_APP_PASSWORD
-    - STRIPE_CONNECT_SECRET_KEY
-    - STRIPE_CONNECT_WEBHOOK_SECRET
+    - TOKEN_SECRET
+    - NEXT_PUBLIC_APP_URL 
 
 # Defines a scheduled job that will be triggered by Cloud Scheduler.
 # The job will send a POST request to the specified path.
