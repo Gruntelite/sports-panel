@@ -38,3 +38,5 @@ scheduledJobs:
 cloudFunctions:
   - entryPoint: onFileDelete
     source: src/functions/index.ts
+  - entryPoint: monthlySubscriptionCheck
+    source: src/functions/index.ts

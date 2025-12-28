@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { adminDb } from '@/lib/firebase-admin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(process.env.STRIPE_CONNECT_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
 });
 
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_CONNECT_WEBHOOK_SECRET!;
 
 export async function POST(req: NextRequest) {
   try {
