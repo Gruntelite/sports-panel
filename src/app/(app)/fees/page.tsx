@@ -42,6 +42,7 @@ export default function FeesPage() {
   const [teams, setTeams] = useState<Team[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedTeam, setSelectedTeam] = useState("all");
+  const [sendingLink, setSendingLink] = useState<string | null>(null);
 
   const MONTHS = t('months', { returnObjects: true }) as { label: string; value: number }[];
 
@@ -181,6 +182,62 @@ export default function FeesPage() {
                 return <Badge variant="outline">Sin estado</Badge>;
         }
     }
+    
+    const handleSendPaymentLink = async (playerId: string) => {
+        if (!clubId) {
+            toast({ variant: "destructive", title: "Error", description: "No se pudo identificar tu club." });
+            return;
+        }
+        
+        if (!onboardingComplete) {
+            toast({ variant: "destructive", title: "Error", description: "Primero debes conectar tu cuenta de Stripe." });
+            return;
+        }
+        
+        if (feeChargeMonths.length === 0) {
+            toast({ variant: "destructive", title: "Error", description: "Debes configurar los meses de cobro antes de enviar el enlace." });
+            return;
+        }
+        
+        setSendingLink(playerId);
+        
+        try {
+            const response = await fetch('/api/fees/create-subscription', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    playerId,
+                    clubId,
+                }),
+            });
+            
+            const data = await response.json();
+            
+            if (!response.ok) {
+                throw new Error(data.error || 'Error al crear la suscripción');
+            }
+            
+            if (data.checkoutUrl) {
+                // Open checkout URL in new tab
+                window.open(data.checkoutUrl, '_blank');
+                toast({
+                    title: "Enlace generado",
+                    description: "Se ha abierto el enlace de pago en una nueva ventana. También puedes copiarlo para enviarlo al jugador.",
+                });
+            }
+        } catch (error: any) {
+            console.error('Error sending payment link:', error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: error.message || "No se pudo generar el enlace de pago.",
+            });
+        } finally {
+            setSendingLink(null);
+        }
+    };
 
   if (loading) {
     return <div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>;
@@ -332,7 +389,16 @@ export default function FeesPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                </div>
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => handleSendPaymentLink(player.id)}
+                                            disabled={sendingLink === player.id || !player.annualFee || player.annualFee <= 0}
+                                        >
+                                            {sendingLink === player.id ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            ) : (
+                                                <Send className="mr-2 h-4 w-4"/>
+                                            )}
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                     <SelectTrigger className="w-full sm:w-[200px]">
                         <SelectValue placeholder="Filtrar por equipo" />
