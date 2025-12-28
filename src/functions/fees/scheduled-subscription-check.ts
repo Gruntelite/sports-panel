@@ -21,7 +21,7 @@ export async function checkAndUpdateSubscriptions() {
     for (const clubDoc of clubsSnapshot.docs) {
       const clubId = clubDoc.id;
       
-      // Get club settings
+      // Get club settings for stripeConnectAccountId
       const settingsDoc = await db
         .collection('clubs')
         .doc(clubId)
@@ -33,11 +33,8 @@ export async function checkAndUpdateSubscriptions() {
       
       const settings = settingsDoc.data();
       const stripeConnectAccountId = settings?.stripeConnectAccountId;
-      const feeChargeMonths = settings?.feeChargeMonths || [];
       
-      if (!stripeConnectAccountId || feeChargeMonths.length === 0) continue;
-      
-      const shouldChargeThisMonth = feeChargeMonths.includes(currentMonth);
+      if (!stripeConnectAccountId) continue;
       
       // Get all players with active subscriptions
       const playersSnapshot = await db
@@ -50,8 +47,16 @@ export async function checkAndUpdateSubscriptions() {
       for (const playerDoc of playersSnapshot.docs) {
         const player = playerDoc.data();
         const subscriptionId = player.stripeSubscriptionId;
+        const subscriptionConfig = player.subscriptionConfigSnapshot;
         
-        if (!subscriptionId) continue;
+        if (!subscriptionId || !subscriptionConfig) continue;
+        
+        // Use player's individual subscription configuration
+        const chargeMonths = subscriptionConfig.chargeMonths || [];
+        
+        if (chargeMonths.length === 0) continue;
+        
+        const shouldChargeThisMonth = chargeMonths.includes(currentMonth);
         
         try {
           // Get current subscription status
@@ -64,7 +69,7 @@ export async function checkAndUpdateSubscriptions() {
           
           const isPaused = subscription.pause_collection !== null;
           
-          // Update subscription based on current month
+          // Update subscription based on current month and player's config
           if (shouldChargeThisMonth && isPaused) {
             // Resume subscription for this month
             await stripe.subscriptions.update(
@@ -77,7 +82,7 @@ export async function checkAndUpdateSubscriptions() {
               }
             );
             
-            console.log(`Resumed subscription ${subscriptionId} for month ${currentMonth}`);
+            console.log(`Resumed subscription ${subscriptionId} for player ${playerDoc.id} in month ${currentMonth}`);
             
           } else if (!shouldChargeThisMonth && !isPaused) {
             // Pause subscription for this month
@@ -93,11 +98,11 @@ export async function checkAndUpdateSubscriptions() {
               }
             );
             
-            console.log(`Paused subscription ${subscriptionId} for month ${currentMonth}`);
+            console.log(`Paused subscription ${subscriptionId} for player ${playerDoc.id} in month ${currentMonth}`);
           }
           
         } catch (error) {
-          console.error(`Error updating subscription ${subscriptionId}:`, error);
+          console.error(`Error updating subscription ${subscriptionId} for player ${playerDoc.id}:`, error);
         }
       }
     }
