@@ -2,12 +2,27 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/firebase-admin';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+// Log para debugging
+console.log('STRIPE_SECRET_KEY available:', !!process.env.STRIPE_SECRET_KEY);
+
+if (!process.env.STRIPE_SECRET_KEY) {
+  console.error('STRIPE_SECRET_KEY is not set in environment variables');
+}
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2024-12-18.acacia',
 });
 
 export async function POST(req: NextRequest) {
   try {
+    // Check if Stripe is properly configured
+    if (!process.env.STRIPE_SECRET_KEY) {
+      return NextResponse.json(
+        { error: 'Stripe is not configured. Missing STRIPE_SECRET_KEY.' },
+        { status: 500 }
+      );
+    }
+
     const { playerId, clubId } = await req.json();
 
     if (!playerId || !clubId) {
