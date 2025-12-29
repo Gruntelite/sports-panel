@@ -389,16 +389,7 @@ export default function FeesPage() {
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                                            variant="outline" 
-                                            size="sm"
-                                            onClick={() => handleSendPaymentLink(player.id)}
-                                            disabled={sendingLink === player.id || !player.annualFee || player.annualFee <= 0}
-                                        >
-                                            {sendingLink === player.id ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
-                                            ) : (
-                                                <Send className="mr-2 h-4 w-4"/>
-                                            )}
+                </div>
                 <Select value={selectedTeam} onValueChange={setSelectedTeam}>
                     <SelectTrigger className="w-full sm:w-[200px]">
                         <SelectValue placeholder="Filtrar por equipo" />
@@ -453,8 +444,17 @@ export default function FeesPage() {
                                         {getStatusBadge(player.paymentStatus)}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <Button variant="outline" size="sm">
-                                            <Send className="mr-2 h-4 w-4"/>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm"
+                                            onClick={() => handleSendPaymentLink(player.id)}
+                                            disabled={sendingLink === player.id || !player.annualFee || player.annualFee <= 0}
+                                        >
+                                            {sendingLink === player.id ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin"/>
+                                            ) : (
+                                                <Send className="mr-2 h-4 w-4"/>
+                                            )}
                                             Enviar enlace
                                         </Button>
                                     </TableCell>
