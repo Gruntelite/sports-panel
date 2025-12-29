@@ -3,11 +3,11 @@ import Stripe from 'stripe';
 import { db } from '@/lib/firebase-admin';
 
 // Log para debugging
-const stripeKey = process.env['firestore-stripe-payments-STRIPE_API_KEY'];
+const stripeKey = process.env.STRIPE_SECRET_KEY;
 console.log('Stripe API Key available:', !!stripeKey);
 
 if (!stripeKey) {
-  console.error('firestore-stripe-payments-STRIPE_API_KEY is not set in environment variables');
+  console.error('STRIPE_SECRET_KEY is not set in environment variables');
 }
 
 const stripe = new Stripe(stripeKey || '', {
@@ -17,7 +17,7 @@ const stripe = new Stripe(stripeKey || '', {
 export async function POST(req: NextRequest) {
   try {
     // Check if Stripe is properly configured
-    if (!process.env['firestore-stripe-payments-STRIPE_API_KEY']) {
+    if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: 'Stripe is not configured. Missing API key.' },
         { status: 500 }
