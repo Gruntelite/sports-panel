@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { adminDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase-admin';
 
 const stripe = new Stripe(process.env.STRIPE_CONNECT_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get club settings
-    const settingsRef = adminDb.collection('clubs').doc(clubId).collection('settings').doc('config');
+    const settingsRef = db.collection('clubs').doc(clubId).collection('settings').doc('config');
     const settingsDoc = await settingsRef.get();
     
     if (!settingsDoc.exists) {
@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Get player data
-    const playerRef = adminDb.collection('clubs').doc(clubId).collection('players').doc(playerId);
+    const playerRef = db.collection('clubs').doc(clubId).collection('players').doc(playerId);
     const playerDoc = await playerRef.get();
     
     if (!playerDoc.exists) {

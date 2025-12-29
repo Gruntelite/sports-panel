@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import { adminDb } from '@/lib/firebase-admin';
+import { db } from '@/lib/firebase-admin';
 
 const stripe = new Stripe(process.env.STRIPE_CONNECT_SECRET_KEY!, {
   apiVersion: '2024-12-18.acacia',
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         const { playerId, clubId } = session.metadata || {};
 
         if (playerId && clubId) {
-          const playerRef = adminDb.collection('clubs').doc(clubId).collection('players').doc(playerId);
+          const playerRef = db.collection('clubs').doc(clubId).collection('players').doc(playerId);
           await playerRef.update({
             stripeSubscriptionId: session.subscription,
             subscriptionStatus: 'active',
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
         const { playerId, clubId } = invoice.subscription_details?.metadata || {};
 
         if (playerId && clubId) {
-          const playerRef = adminDb.collection('clubs').doc(clubId).collection('players').doc(playerId);
+          const playerRef = db.collection('clubs').doc(clubId).collection('players').doc(playerId);
           await playerRef.update({
             paymentStatus: 'paid',
             lastPaymentDate: new Date().toISOString(),
@@ -96,7 +96,7 @@ export async function POST(req: NextRequest) {
         const { playerId, clubId } = invoice.subscription_details?.metadata || {};
 
         if (playerId && clubId) {
-          const playerRef = adminDb.collection('clubs').doc(clubId).collection('players').doc(playerId);
+          const playerRef = db.collection('clubs').doc(clubId).collection('players').doc(playerId);
           await playerRef.update({
             paymentStatus: 'overdue',
           });
@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
         const { playerId, clubId } = subscription.metadata || {};
 
         if (playerId && clubId) {
-          const playerRef = adminDb.collection('clubs').doc(clubId).collection('players').doc(playerId);
+          const playerRef = db.collection('clubs').doc(clubId).collection('players').doc(playerId);
           await playerRef.update({
             subscriptionStatus: 'canceled',
             paymentStatus: 'pending',
@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
         const { playerId, clubId } = subscription.metadata || {};
 
         if (playerId && clubId) {
-          const playerRef = adminDb.collection('clubs').doc(clubId).collection('players').doc(playerId);
+          const playerRef = db.collection('clubs').doc(clubId).collection('players').doc(playerId);
           await playerRef.update({
             subscriptionStatus: 'active',
           });
