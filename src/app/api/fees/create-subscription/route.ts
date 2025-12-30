@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { db } from '@/lib/firebase-admin';
 
-// Log para debugging
-const stripeKey = process.env.STRIPE_CONNECT_SECRET_KEY;
+// La clave puede venir con guiones en el nombre, accedemos directamente
+const stripeKey = process.env['firestore-stripe-payments-STRIPE_API_KEY'] || process.env.STRIPE_CONNECT_SECRET_KEY;
 console.log('Stripe API Key available:', !!stripeKey);
 
 if (!stripeKey) {
-  console.error('STRIPE_CONNECT_SECRET_KEY is not set in environment variables');
+  console.error('No Stripe key found in environment variables');
 }
 
 const stripe = new Stripe(stripeKey || '', {
@@ -17,7 +17,8 @@ const stripe = new Stripe(stripeKey || '', {
 export async function POST(req: NextRequest) {
   try {
     // Check if Stripe is properly configured
-    if (!process.env.STRIPE_CONNECT_SECRET_KEY) {
+    const apiKey = process.env['firestore-stripe-payments-STRIPE_API_KEY'] || process.env.STRIPE_CONNECT_SECRET_KEY;
+    if (!apiKey) {
       return NextResponse.json(
         { error: 'Stripe is not configured. Missing API key.' },
         { status: 500 }
