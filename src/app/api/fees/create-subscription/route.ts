@@ -4,7 +4,11 @@ import { db } from '@/lib/firebase-admin';
 
 // La clave puede venir con guiones en el nombre, accedemos directamente
 const stripeKey = process.env['firestore-stripe-payments-STRIPE_API_KEY'] || process.env.STRIPE_CONNECT_SECRET_KEY;
-console.log('Stripe API Key available:', !!stripeKey);
+console.log('Environment variables check:');
+console.log('- firestore-stripe-payments-STRIPE_API_KEY:', !!process.env['firestore-stripe-payments-STRIPE_API_KEY']);
+console.log('- STRIPE_CONNECT_SECRET_KEY:', !!process.env.STRIPE_CONNECT_SECRET_KEY);
+console.log('- Selected key available:', !!stripeKey);
+console.log('- All env keys:', Object.keys(process.env).filter(k => k.includes('STRIPE')));
 
 if (!stripeKey) {
   console.error('No Stripe key found in environment variables');
